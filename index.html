@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jim | Projects</title>
+  <meta name="description" content="Personal projects and mini-apps by Jim." />
+  <style>
+    :root { --bg: #0f1115; --panel: #141820; --text: #e6e7ea; --muted: #9aa3b2; --accent: #ff3b3b; --ring: #ffae00; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text); background: radial-gradient(1200px 800px at 100% -10%, #1a1f2b, var(--bg));
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .brand .logo {
+      width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--ring));
+      box-shadow: 0 6px 18px rgba(255,59,59,0.25), inset 0 0 18px rgba(255,174,0,0.25);
+    }
+    h1 { font-size: 1.25rem; margin: 0; letter-spacing: .3px; }
+    .muted { color: var(--muted); font-size: .95rem; }
+    .panel {
+      background: color-mix(in oklab, var(--panel) 92%, black 8%);
+      border: 1px solid #232837; border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+      margin-top: 14px;
+    }
+    .card {
+      display: grid; gap: 10px; padding: 16px; background: #121621; border: 1px solid #232837; border-radius: 14px;
+      text-decoration: none; color: inherit; transition: transform .12s ease, border-color .12s ease;
+    }
+    .card:hover { transform: translateY(-2px); border-color: #2f374b; }
+    .card h3 { margin: 0; font-size: 1.05rem; }
+    .tag { display: inline-block; font-size: .75rem; padding: 2px 8px; border: 1px solid #2b3244; border-radius: 999px; color: var(--muted); }
+    footer {
+      margin-top: 32px; color: #7e8797; font-size: .9rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      border-top: 1px solid #232837; padding-top: 16px;
+    }
+    a.inline { color: #c7d2fe; text-decoration: none; border-bottom: 1px dashed #3b82f6; }
+    a.inline:hover { border-bottom-style: solid; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="/">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Jim’s Projects</h1>
+          <div class="muted">Little tools, games, and experiments</div>
+        </div>
+      </a>
+      <nav class="muted">
+        <a class="inline" href="https://github.com/<your-username>">GitHub</a>
+      </nav>
+    </header>
+
+    <section class="panel">
+      <div class="muted">Featured</div>
+      <div class="grid">
+        <a class="card" href="/apps/card-maker/">
+          <span class="tag">App</span>
+          <h3>MTG Card Maker</h3>
+          <p class="muted">Generate custom card images right in your browser. No server needed.</p>
+        </a>
+        <a class="card" href="/apps/pixel-ski/">
+          <span class="tag">Game</span>
+          <h3>Mountain Descent (Web build)</h3>
+          <p class="muted">A tiny browser prototype—procedural slopes and good vibes.</p>
+        </a>
+        <a class="card" href="/apps/tools/">
+          <span class="tag">Utilities</span>
+          <h3>Misc Tools</h3>
+          <p class="muted">Grab bag: image helpers, text formatters, tiny calculators.</p>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <div>© <span id="y"></span> Jim</div>
+      <div class="muted">Hosted on GitHub Pages</div>
+    </footer>
+  </div>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>
