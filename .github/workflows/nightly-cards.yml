@@ -1,0 +1,54 @@
+name: Nightly cards.ndjson.gz
+
+on:
+  schedule:
+    # Scryfall 'default_cards' usually lands around 09:00 UTC.
+    - cron: '0 9 * * *'
+    - cron: '0 10 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cards-nightly
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      TZ: America/Denver
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # gh CLI reads this
+
+    # Run all shell steps inside apps/mtg-browser/
+    defaults:
+      run:
+        working-directory: apps/mtg-browser
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install deps
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Build NDJSON (auto-fetch Scryfall → gzip NDJSON)
+        run: |
+          # Writes apps/mtg-browser/cards.ndjson.gz
+          python fetch_scryfall_to_ndjson.py --output cards.ndjson.gz
+
+      - name: Ensure 'cards' release exists
+        run: |
+          gh release view cards >/dev/null 2>&1 || \
+          gh release create cards -t "Cards data" -n "Nightly auto-update" --latest
+
+      - name: Upload/replace asset on 'cards' release
+        # Path is relative to working-directory
+        run: gh release upload cards cards.ndjson.gz --clobber
