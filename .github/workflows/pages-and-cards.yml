@@ -14,49 +14,42 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      TZ: America/Denver
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Install converter deps
         run: |
-          if [ -f apps/mtg-browser/requirements.txt ]; then pip install -r apps/mtg-browser/requirements.txt; fi
+          if [ -f apps/mtg-browser/requirements.txt ]; then
+            pip install -r apps/mtg-browser/requirements.txt
+          fi
 
-      - name: Generate NDJSON (gz + plain)
+      - name: Generate NDJSON (.gz only)
         run: |
-          python apps/mtg-browser/fetch_scryfall_to_ndjson.py --output cards.ndjson.gz
-          python apps/mtg-browser/fetch_scryfall_to_ndjson.py --output cards.ndjson --plain
+          set -euxo pipefail
+          python apps/mtg-browser/fetch_scryfall_to_ndjson.py --output /tmp/cards.ndjson.gz
+          ls -lh /tmp/cards.ndjson.gz
 
-      - name: Prepare Pages artifact (site + /db files)
+      - name: Prepare Pages artifact
         run: |
-          set -e
+          set -euxo pipefail
+          rm -rf public
           mkdir -p public/db
-          # copy the site into public/ (rsync is available on ubuntu-latest)
-          rsync -a --delete --exclude '.git' --exclude '.github' ./ public/
-          # drop the NDJSON files into /db
-          mv cards.ndjson.gz public/db/
-          mv cards.ndjson    public/db/
+          rsync -a --delete --exclude '.git' --exclude '.github' --exclude 'public' ./ public/
+          mv /tmp/cards.ndjson.gz public/db/
+          du -h public/db/cards.ndjson.gz
+          test -s public/db/cards.ndjson.gz
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: public
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: public }
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    permissions:
-      pages: write
-      id-token: write
+    environment: { name: github-pages }
+    permissions: { pages: write, id-token: write }
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v4
