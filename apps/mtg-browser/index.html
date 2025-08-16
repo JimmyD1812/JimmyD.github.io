@@ -234,7 +234,7 @@ document.getElementById('autoLoadToggle').checked = AUTOLOAD;
 document.getElementById('btnLoadURL').addEventListener('click', async () => {
   const url = prompt(
     'NDJSON or NDJSON.GZ URL to load:',
-    localStorage.getItem('ndjson_url') || 'https://github.com/<OWNER>/<REPO>/releases/download/cards/cards.ndjson.gz'
+    localStorage.getItem('ndjson_url') || 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz'
   );
   if (!url) return;
   localStorage.setItem('ndjson_url', url);
