@@ -52,7 +52,6 @@
     .inline-msg{font-size:12px;color:var(--muted)}
     .err{color:#ffb3b3}
     .suggest{color:#c6f6d5}
-    .notice{background:#0e141a;border:1px dashed var(--border);padding:10px 12px;border-radius:12px;margin:0 0 12px 0}
   </style>
 </head>
 <body>
@@ -139,7 +138,6 @@
             <div id="csvNote" class="muted small"></div>
           </div>
 
-          <!-- Unmatched resolver panel -->
           <div id="resolveBox" class="panel" style="display:none; margin-bottom:12px">
             <div class="head">
               <strong>Resolve Unmatched Import Rows</strong>
@@ -213,181 +211,178 @@ const els = {
   resolveClear: document.getElementById('resolveClear'),
 };
 
-/* ---------- Remote NDJSON autoload with HEAD/ETag + .gz→plain + CORS-proxy fallback ---------- */
-const NDJSON_URL_GZ    = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
-const NDJSON_URL_PLAIN = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson';
+/* ---------- Remote NDJSON autoload: same-origin → release → proxied ---------- */
+/* If you later commit data files to the repo, serve from these same-origin URLs (no CORS): */
+const NDJSON_LOCAL_GZ    = '/data/cards.ndjson.gz';
+const NDJSON_LOCAL_PLAIN = '/data/cards.ndjson';
 
-/* public proxies we can fall back to if GitHub Releases blocks CORS */
+/* Current GitHub Release assets (CORS-hostile for browsers): */
+const NDJSON_REL_GZ    = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
+const NDJSON_REL_PLAIN = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson';
+
+/* Public proxy fallback for Releases (binary-safe, streaming): */
 const CORS_PROXIES = [
-  'https://cors.isomorphic-git.org/',   // binary-safe, streams
+  'https://cors.isomorphic-git.org/',
 ];
 
-function pickBestUrl() {
-  return ('DecompressionStream' in window) ? NDJSON_URL_GZ : NDJSON_URL_PLAIN;
-}
+function pickBestUrl(){ return ('DecompressionStream' in window) ? NDJSON_REL_GZ : NDJSON_REL_PLAIN; }
+const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+const fmt = (n)=> (typeof n==='number'? n.toLocaleString(): n);
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const fmt   = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
-
+/* HEAD/ETag helpers */
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
-  const resp = await fetch(url, { method:'HEAD', mode:'cors', cache:'no-store', redirect:'follow' });
+  const resp = await fetch(url, { method:'HEAD', mode:'cors', cache:'no-store', redirect:'follow', referrerPolicy:'no-referrer' });
   if (!resp.ok && resp.status !== 304) throw new Error(`HEAD ${resp.status} ${resp.statusText}`);
-  return {
-    etag: resp.headers.get('etag') || '',
-    last: resp.headers.get('last-modified') || '',
-    len:  resp.headers.get('content-length') || ''
-  };
+  return { etag: resp.headers.get('etag')||'', last: resp.headers.get('last-modified')||'', len: resp.headers.get('content-length')||'' };
 }
-function saveHeadMeta(url, meta){ try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch{} }
-function loadHeadMeta(url){ try { return JSON.parse(localStorage.getItem(headKey(url)) || 'null'); } catch { return null; } }
+function saveHeadMeta(url, meta){ try{ localStorage.setItem(headKey(url), JSON.stringify(meta)); }catch{} }
+function loadHeadMeta(url){ try{ return JSON.parse(localStorage.getItem(headKey(url))||'null'); }catch{ return null; } }
 async function isRemoteUnchanged(url){
   const remote = await getRemoteHead(url);
   const prev = loadHeadMeta(url);
   if (!prev) return false;
-  if (remote.etag && prev.etag) return remote.etag === prev.etag;
-  if (remote.last && prev.last) return remote.last === prev.last;
+  if (remote.etag && prev.etag) return remote.etag===prev.etag;
+  if (remote.last && prev.last) return remote.last===prev.last;
   return false;
 }
 
-/* helpers for proxy handling */
-function isProxied(u){ return CORS_PROXIES.some(p => u.startsWith(p)); }
-function withProxy(u){ return CORS_PROXIES.map(p => p + u); }
-function dedupe(arr){ return [...new Set(arr)]; }
+/* proxy helpers */
+const isProxied = (u)=> CORS_PROXIES.some(p=>u.startsWith(p));
+const withProxy = (u)=> CORS_PROXIES.map(p=>p+u);
+const dedupe = (arr)=> [...new Set(arr)];
 
-/* Try direct .gz/.ndjson, then proxied versions. Skip HEAD check for proxied URLs. */
-async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
-  const gz    = NDJSON_URL_GZ;
-  const plain = NDJSON_URL_PLAIN;
-
-  const preferred = url || pickBestUrl();
-  const alternate = preferred.endsWith('.gz') ? plain : gz;
-
-  const attempts = dedupe([
-    preferred,
-    alternate,
-    ...withProxy(preferred),
-    ...withProxy(alternate),
+/* Build attempt order */
+function buildAttemptList(preferredUrl){
+  const preferGz = preferredUrl?.endsWith('.gz') ?? ('DecompressionStream' in window);
+  const localBest = preferGz? NDJSON_LOCAL_GZ: NDJSON_LOCAL_PLAIN;
+  const localAlt  = preferGz? NDJSON_LOCAL_PLAIN: NDJSON_LOCAL_GZ;
+  const relBest   = preferGz? NDJSON_REL_GZ: NDJSON_REL_PLAIN;
+  const relAlt    = preferGz? NDJSON_REL_PLAIN: NDJSON_REL_GZ;
+  return dedupe([
+    localBest, localAlt,          // same-origin first (fast, no CORS)
+    relBest, relAlt,              // then direct releases
+    ...withProxy(relBest),        // finally proxied releases
+    ...withProxy(relAlt),
   ]);
+}
 
+/* Orchestrator: try each URL; skip HEAD check on proxied URLs */
+async function importNDJSONFromURL(url, {skipIfUnchanged=true}={}){
+  const tries = buildAttemptList(url || pickBestUrl());
   let lastErr;
-  for (const u of attempts){
-    try {
+  for (const u of tries){
+    try{
       await doImport(u, { skipIfUnchanged: skipIfUnchanged && !isProxied(u) });
       if (isProxied(u)) els.importNote.textContent += ' (via CORS proxy)';
       return;
-    } catch (err) {
+    }catch(err){
       lastErr = err;
       console.warn('Import attempt failed:', u, err);
     }
   }
   throw lastErr;
 }
+/* Back-compat alias used by callers below */
+async function importNDJSONWithFallback(opts){ return importNDJSONFromURL(undefined, opts); }
 
+/* Core importer: stream NDJSON (gz if browser supports DecompressionStream) */
 async function doImport(url, { skipIfUnchanged = true } = {}){
   els.importBox.style.display = '';
   els.importProgress.value = 0;
   els.importNote.textContent = `Fetching ${url} …`;
 
-  if (skipIfUnchanged) {
-    try {
+  if (skipIfUnchanged){
+    try{
       const skip = await isRemoteUnchanged(url);
       const count = await db.cards.count();
-      if (skip && count > 0) {
+      if (skip && count > 0){
         els.importProgress.value = 100;
         els.importNote.textContent = 'Remote file unchanged; skipped re-index.';
         els.status.textContent = 'Remote unchanged; using existing DB';
         return;
       }
-    } catch (e) {
-      console.warn('HEAD check failed; continuing with import:', e);
-    }
+    }catch(e){ console.warn('HEAD check failed; continuing:', e); }
   }
 
   let headMeta = null;
-  try { headMeta = await getRemoteHead(url); } catch {}
+  try{ headMeta = await getRemoteHead(url); }catch{}
 
-  const resp = await fetch(url, { mode:'cors', cache:'no-store', redirect:'follow' });
+  const resp = await fetch(url, { mode:'cors', cache:'no-store', redirect:'follow', referrerPolicy:'no-referrer' });
   if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
   let stream = resp.body;
   if (!stream) throw new Error('Streaming unsupported for this response');
 
   const ct = resp.headers.get('content-type') || '';
   const looksGzip = /\.gz($|\?)/i.test(url) || /gzip/.test(ct);
-  if (looksGzip) {
-    if ('DecompressionStream' in window) {
+  if (looksGzip){
+    if ('DecompressionStream' in window){
       stream = stream.pipeThrough(new DecompressionStream('gzip'));
-    } else {
+    }else{
       throw new Error('Browser lacks DecompressionStream for .gz');
     }
   }
 
   const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
-
   const CHUNK = 200;
-  let leftover = '';
-  let batch = [];
-  let inserted = 0;
+  let leftover = ''; let batch = []; let inserted = 0;
   els.status.textContent = 'Indexing remote cards…';
 
   await db.transaction('rw', db.cards, async () => {
-    for (;;) {
-      const { value, done } = await reader.read();
+    for(;;){
+      const {value, done} = await reader.read();
       if (done) break;
       leftover += value;
       let idx;
-      while ((idx = leftover.indexOf('\n')) >= 0) {
+      while((idx = leftover.indexOf('\n')) >= 0){
         const line = leftover.slice(0, idx).trim();
-        leftover = leftover.slice(idx + 1);
+        leftover = leftover.slice(idx+1);
         if (!line) continue;
-        try {
+        try{
           const raw = JSON.parse(line);
           batch.push(normalizeCard(raw));
-          if (batch.length >= CHUNK) {
+          if (batch.length >= CHUNK){
             await db.cards.bulkPut(batch);
-            inserted += batch.length;
-            batch = [];
-            els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100)); // visual estimate
+            inserted += batch.length; batch = [];
+            els.importProgress.value = Math.min(100, Math.round(inserted/5000*100));
             els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
             await sleep(0);
           }
-        } catch {}
+        }catch{}
       }
     }
-    if (leftover.trim()) {
-      try { const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); } catch {}
+    if (leftover.trim()){
+      try{ const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); }catch{}
     }
-    if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
+    if (batch.length){ await db.cards.bulkPut(batch); inserted += batch.length; }
   });
 
   els.importProgress.value = 100;
   els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
   els.status.textContent = 'Remote import complete';
   await refreshStats();
-
   if (headMeta) saveHeadMeta(url, headMeta);
 }
 
-// Kick off automatically on load (tries .gz, falls back to plain)
+/* Auto-load on page open */
 window.addEventListener('DOMContentLoaded', async () => {
-  try { await importNDJSONWithFallback({ skipIfUnchanged:true }); }
-  catch (e) {
+  try{ await importNDJSONWithFallback({ skipIfUnchanged:true }); }
+  catch(e){
     console.error(e);
     els.status.textContent = 'Remote import failed.';
     els.importNote.textContent = `Error: ${e?.message || e}`;
   }
 });
 
-// Force reindex button (normal click = reindex; Alt-click = full rebuild)
+/* Force reindex button (Alt = clear DB first) */
 els.btnUpdateDB.addEventListener('click', async (e) => {
   const fullRebuild = e.altKey;
   const msg = fullRebuild
     ? 'This will CLEAR the local card database, then re-download and re-index.\nYour collection quantities are kept.\nProceed?'
     : 'Re-index from the remote NDJSON now? (Skips HEAD check and imports even if unchanged.)';
   if (!confirm(msg)) return;
-
-  try {
-    if (fullRebuild) {
+  try{
+    if (fullRebuild){
       els.status.textContent = 'Clearing local card DB…';
       await db.cards.clear();
       await refreshStats();
@@ -396,8 +391,8 @@ els.btnUpdateDB.addEventListener('click', async (e) => {
     await importNDJSONWithFallback({ skipIfUnchanged:false });
     els.status.textContent = 'Update complete.';
     await refreshStats();
-    try { await search(); } catch {}
-  } catch (err) {
+    try{ await search(); }catch{}
+  }catch(err){
     console.error(err);
     els.status.textContent = 'Update failed.';
     els.importNote.textContent = `Error: ${err?.message || err}`;
@@ -409,45 +404,38 @@ els.btnUpdateDB.addEventListener('click', async (e) => {
 function stripSepAndBOM(text){
   if (!text) return text;
   if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-  const firstLineEnd = text.indexOf('\n');
-  const firstLine = firstLineEnd >= 0 ? text.slice(0, firstLineEnd).trim() : text.trim();
-  if (/^sep\s*=\s*./i.test(firstLine)) {
-    text = firstLineEnd >= 0 ? text.slice(firstLineEnd+1) : '';
-  }
+  const e = text.indexOf('\n');
+  const firstLine = e >= 0 ? text.slice(0, e).trim() : text.trim();
+  if (/^sep\s*=\s*./i.test(firstLine)) text = e >= 0 ? text.slice(e+1) : '';
   return text;
 }
-
-// RFC4180-ish CSV parser (handles quotes, BOM, and 'sep=,' directive)
-function parseCSV(text) {
+function parseCSV(text){
   text = stripSepAndBOM(text);
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i+1] === '"') { field += '"'; i++; }
-        else { inQuotes = false; }
-      } else { field += c; }
-    } else {
-      if (c === '"') inQuotes = true;
-      else if (c === ',') { row.push(field); field = ''; }
-      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
-      else if (c === '\r') { /* ignore CR */ }
-      else { field += c; }
+  const rows=[]; let row=[], field='', inQ=false;
+  for (let i=0;i<text.length;i++){
+    const c=text[i];
+    if (inQ){
+      if (c === '"'){ if (text[i+1] === '"'){ field+='"'; i++; } else { inQ=false; } }
+      else field+=c;
+    }else{
+      if (c === '"') inQ=true;
+      else if (c === ','){ row.push(field); field=''; }
+      else if (c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if (c === '\r'){ }
+      else field+=c;
     }
   }
   row.push(field);
-  if (row.length && (row.length > 1 || row[0] !== '')) rows.push(row);
+  if (row.length && (row.length>1 || row[0]!=='')) rows.push(row);
   return rows;
 }
 
 /* -------------------- Card helpers -------------------- */
-function normalizeCard(raw) {
+function normalizeCard(raw){
   const img = raw.image_uris?.normal || raw.card_faces?.[0]?.image_uris?.normal || null;
-  const oracle_text = raw.oracle_text || (raw.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n')) || '';
-  const mana_cost = raw.mana_cost || (raw.card_faces?.map(f => f.mana_cost).filter(Boolean).join(' // ')) || '';
-  const type_line = raw.type_line || (raw.card_faces?.map(f => f.type_line).join(' // ')) || '';
+  const oracle_text = raw.oracle_text || (raw.card_faces?.map(f=>f.oracle_text).filter(Boolean).join('\n')) || '';
+  const mana_cost = raw.mana_cost || (raw.card_faces?.map(f=>f.mana_cost).filter(Boolean).join(' // ')) || '';
+  const type_line = raw.type_line || (raw.card_faces?.map(f=>f.type_line).join(' // ')) || '';
   const power = raw.power ?? raw.card_faces?.[0]?.power ?? null;
   const toughness = raw.toughness ?? raw.card_faces?.[0]?.toughness ?? null;
   const loyalty = raw.loyalty ?? raw.card_faces?.[0]?.loyalty ?? null;
@@ -471,17 +459,15 @@ function normalizeCard(raw) {
   };
 }
 
-function cardKingdomURL(card) {
+function cardKingdomURL(card){
   const name = encodeURIComponent(card.name);
-  const set = encodeURIComponent(card.set_name || '');
+  const set  = encodeURIComponent(card.set_name || '');
   return `https://www.cardkingdom.com/catalog/search?search=mtg_advanced&name=${name}&filter%5Bedition%5D=${set}`;
 }
 
-function renderCardCard(card, qty=0) {
-  const colors = (card.color_identity?.length ? card.color_identity : ['C'])
-    .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
-  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>`
-            : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
+function renderCardCard(card, qty=0){
+  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c=>`<span class="dot ${c}" title="${c}"></span>`).join('');
+  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>` : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
   const mc = card.mana_cost ? `<span class="stat" title="Mana Cost">${card.mana_cost}</span>` : '';
   const rare = card.rarity ? `<span class="chip">${card.rarity}</span>` : '';
   const type = `<span class="chip">${card.type_line}</span>`;
@@ -492,12 +478,9 @@ function renderCardCard(card, qty=0) {
         <div class="line"><strong>${card.name}</strong> <span class="colors">${colors}</span></div>
         <div class="line"><span class="muted small">${card.set_name || ''} ${card.collector_number ? `• #${card.collector_number}` : ''}</span> ${rare}</div>
         <div class="line small">${type}</div>
-        <div class="small" style="white-space:pre-wrap">${(card.oracle_text || '').replaceAll('{', '<span class=chip>{').replaceAll('}', '}</span>')}</div>
+        <div class="small" style="white-space:pre-wrap">${(card.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>')}</div>
         <div class="line">
-          <div class="row">
-            ${pt}
-            ${mc}
-          </div>
+          <div class="row">${pt}${mc}</div>
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
@@ -516,11 +499,10 @@ function renderCardCard(card, qty=0) {
     </div>`;
 }
 
-// Quick lookup map for Temp Page
+/* Temp page helpers */
 window.__cardsById = {};
 function buildTempPageHTML(card){
-  const colors = (card.color_identity?.length ? card.color_identity : ['C'])
-    .map(c => `<span class="dot ${c}"></span>`).join('');
+  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c=>`<span class="dot ${c}"></span>`).join('');
   const pt = card.power || card.toughness ? `${card.power ?? ''}/${card.toughness ?? ''}` : (card.loyalty ? `Loyalty ${card.loyalty}` : '');
   const tcg = card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : '';
   const ck = `<a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>`;
@@ -574,12 +556,12 @@ function openTempPageById(id){
   w.document.close();
 }
 
+/* Stats + collection helpers */
 async function refreshStats(){
   const cardCount = await db.cards.count();
   const collCount = await db.collection.count();
   els.dbStats.textContent = `DB: ${fmt(cardCount)} cards • Collection: ${fmt(collCount)} entries`;
 }
-
 async function addToCollection(id, delta){
   const cur = await db.collection.get(id) || { id, qty: 0 };
   cur.qty = Math.max(0, (cur.qty || 0) + delta);
@@ -596,28 +578,23 @@ function colorsMatch(cardCI, selectedColors){
   const sel = new Set(selectedColors);
   const includeC = sel.has('C');
   sel.delete('C');
-
   const ci = Array.isArray(cardCI) ? cardCI : [];
-  if (ci.length === 0) return includeC;       // include colorless only if C is selected
-  if (sel.size === 0) return false;           // user selected only C, so exclude non-colorless here
-
-  for (const c of ci) if (!sel.has(c)) return false; // disallow extra colors not selected
-  return true; // mono colors in sel, or exact combos subset of sel
+  if (ci.length === 0) return includeC;
+  if (sel.size === 0) return false;
+  for (const c of ci) if (!sel.has(c)) return false;
+  return true;
 }
-
-function matchCard(card, filters){
+function matchCard(card, f){
   const name_lc = (card.name_lc||'');
   const type_lc = (card.type_lc||'');
   const subtype_lc = (card.subtype_lc||'');
   const oracle_lc = (card.oracle_text||'').toLowerCase();
-
-  if (filters.name && !name_lc.startsWith(filters.name)) return false;
-  if (filters.type && !type_lc.includes(filters.type.toLowerCase())) return false;
-  if (filters.subtype && !subtype_lc.includes(filters.subtype)) return false;
-  if (filters.rarity && card.rarity !== filters.rarity) return false;
-  if (filters.text && !oracle_lc.includes(filters.text)) return false;
-  if (!colorsMatch(card.color_identity, filters.colors)) return false;
-
+  if (f.name && !name_lc.startsWith(f.name)) return false;
+  if (f.type && !type_lc.includes(f.type.toLowerCase())) return false;
+  if (f.subtype && !subtype_lc.includes(f.subtype)) return false;
+  if (f.rarity && card.rarity !== f.rarity) return false;
+  if (f.text && !oracle_lc.includes(f.text)) return false;
+  if (!colorsMatch(card.color_identity, f.colors)) return false;
   return true;
 }
 
@@ -631,7 +608,6 @@ async function search(){
     rarity: els.qRarity.value,
     colors: Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value)
   };
-
   els.status.textContent = 'Searching your collection…';
 
   const owned = await db.collection.where('qty').above(0).toArray();
@@ -641,7 +617,6 @@ async function search(){
     els.status.textContent = 'Your collection is empty — import CSV to add cards.';
     return;
   }
-
   const ids = owned.map(e=>e.id);
   const cards = await db.cards.bulkGet(ids);
 
@@ -654,11 +629,9 @@ async function search(){
       if (out.length >= limit) break;
     }
   }
-
   els.results.innerHTML = out.map(c => { window.__cardsById[c.id] = c; return renderCardCard(c, qtyMap[c.id]||0); }).join('');
   els.status.textContent = `Showing ${out.length} result(s) from your collection`;
 }
-
 els.btnSearch.addEventListener('click', search);
 ['qName','qText','qType','qSubtype','qRarity'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
 document.querySelectorAll('.ci').forEach(el => el.addEventListener('change', search));
@@ -670,33 +643,30 @@ els.btnExport.addEventListener('click', async () => {
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'mtg-collection.json' });
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
 });
-
 els.importCollection.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
   const text = await file.text();
-  try {
+  try{
     const data = JSON.parse(text);
     const entries = Array.isArray(data) ? data : (data.entries || []);
     await db.collection.clear();
     await db.collection.bulkPut(entries);
     await refreshStats();
     els.status.textContent = `Imported ${fmt(entries.length)} collection entries.`;
-  } catch {
-    alert('Could not parse collection JSON');
-  }
+  }catch{ alert('Could not parse collection JSON'); }
   e.target.value='';
 });
 
-/* -------------------- CSV import helpers -------------------- */
+/* -------------------- CSV helpers + unmatched resolver -------------------- */
 function selectCardByNameAndSet(candidates, setCode, setName, strict){
   let card = null;
-  if (setCode) {
+  if (setCode){
     const sc = setCode.toLowerCase();
     card = candidates.find(c => (c.set||'').toLowerCase() === sc) || null;
     if (!card && strict) return null;
   }
-  if (!card && setName) {
+  if (!card && setName){
     const sn = setName.toLowerCase();
     card = candidates.find(c => (c.set_name||'').toLowerCase() === sn) || null;
     if (!card && strict && (setCode || setName)) return null;
@@ -704,28 +674,21 @@ function selectCardByNameAndSet(candidates, setCode, setName, strict){
   if (!card && !strict) card = candidates[0] || null;
   return card;
 }
-
-/* -------------------- Unmatched resolver UI -------------------- */
-let __unmatchedRows = []; // [{row, name, setCode, setName, qty, resolved:false}]
-
+let __unmatchedRows = [];
 els.resolveClear.addEventListener('click', () => {
   els.resolveBox.style.display = 'none';
   els.resolveList.innerHTML = '';
   els.resolveStats.textContent = '0 unresolved';
   __unmatchedRows = [];
 });
-
-// token helpers for fuzzy suggest
 function tokenizeName(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean); }
 function tokenMatchRatio(aName, bName){
   const a = tokenizeName(aName);
   const bSet = new Set(tokenizeName(bName));
   if (!a.length) return 0;
-  let hit = 0;
-  for (const t of a){ if (bSet.has(t)) hit++; }
-  return hit / a.length;
+  let hit=0; for (const t of a){ if (bSet.has(t)) hit++; }
+  return hit/a.length;
 }
-
 async function renderResolveUnmatched(list){
   __unmatchedRows = list.map(x => ({...x, resolved:false}));
   if (!__unmatchedRows.length){
@@ -740,57 +703,41 @@ async function renderResolveUnmatched(list){
 
   for (const item of __unmatchedRows){
     const nameLC = item.name.toLowerCase();
-    // Exact-name candidates
     let candidates = await db.cards.where('name_lc').equals(nameLC).toArray();
-    // Prefix fallback for double-faced/split names
-    if (!candidates.length){
-      candidates = await db.cards.where('name_lc').startsWith(nameLC).toArray();
-    }
+    if (!candidates.length) candidates = await db.cards.where('name_lc').startsWith(nameLC).toArray();
 
     if (!candidates.length){
       const wrap = document.createElement('div');
-      wrap.style.borderTop = '1px solid var(--border)';
-      wrap.style.padding = '10px 0';
+      wrap.style.borderTop='1px solid var(--border)'; wrap.style.padding='10px 0';
       wrap.innerHTML = `<div><strong>${item.name}</strong> &nbsp;<span class="muted2">CSV set: ${item.setCode || '(none)'} ${item.setName ? '— '+item.setName : ''}</span> &nbsp;•&nbsp; Qty: ${item.qty} &nbsp;•&nbsp; <span class="muted2">Row ${item.row}</span></div>
                         <div class="muted small" style="margin-top:6px">Card not recognized in local DB (or wrong name).</div>`;
       addManualCorrectionRow(wrap, item);
       els.resolveList.appendChild(wrap);
       continue;
     }
-
-    // Group by set and check PLST first
     const bySet = new Map();
     for (const c of candidates){
       const key = (c.set||'').toUpperCase();
       if (!bySet.has(key)) bySet.set(key, {set:key, set_name:c.set_name || '', any: c});
     }
-
-    if (bySet.has('PLST')) {
+    if (bySet.has('PLST')){
       const v = bySet.get('PLST');
       await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
       continue;
     }
-
-    // Otherwise render picker + manual correction
     const wrap = document.createElement('div');
-    wrap.style.borderTop = '1px solid var(--border)';
-    wrap.style.padding = '10px 0';
-
+    wrap.style.borderTop='1px solid var(--border)'; wrap.style.padding='10px 0';
     const title = document.createElement('div');
     title.innerHTML = `<strong>${item.name}</strong> &nbsp;<span class="muted2">CSV set: ${item.setCode || '(none)'} ${item.setName ? '— '+item.setName : ''}</span> &nbsp;•&nbsp; Qty: ${item.qty} &nbsp;•&nbsp; <span class="muted2">Row ${item.row}</span>`;
     wrap.appendChild(title);
-
     const row = document.createElement('div');
-    row.style.marginTop = '8px';
-    row.className = 'row';
+    row.style.marginTop='8px'; row.className='row';
     const prompt = document.createElement('div');
-    prompt.className = 'muted small';
-    prompt.textContent = 'Pick a set:';
+    prompt.className='muted small'; prompt.textContent='Pick a set:';
     row.appendChild(prompt);
-
     for (const v of bySet.values()){
       const btn = document.createElement('button');
-      btn.className = 'btn';
+      btn.className='btn';
       btn.textContent = `${v.set} — ${v.set_name || ''}`;
       btn.addEventListener('click', async () => {
         await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
@@ -799,297 +746,153 @@ async function renderResolveUnmatched(list){
       row.appendChild(btn);
     }
     wrap.appendChild(row);
-
     addManualCorrectionRow(wrap, item);
     els.resolveList.appendChild(wrap);
   }
 }
-
 function addManualCorrectionRow(wrap, item){
-  const fix = document.createElement('div');
-  fix.className = 'row';
-  fix.style.marginTop = '8px';
-
-  const label = document.createElement('div');
-  label.className = 'muted small';
-  label.textContent = 'Try a set code:';
-  fix.appendChild(label);
-
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'e.g., TSR, TSP, MB1…';
-  input.style.maxWidth = '140px';
-  fix.appendChild(input);
-
-  const tryBtn = document.createElement('button');
-  tryBtn.className = 'btn';
-  tryBtn.textContent = 'Try';
-  fix.appendChild(tryBtn);
-
-  const message = document.createElement('div');
-  message.className = 'inline-msg';
-  message.style.minHeight = '18px';
-  fix.appendChild(message);
-
-  const spacer = document.createElement('div');
-  spacer.className = 'grow';
-  fix.appendChild(spacer);
-
-  const clearBtn = document.createElement('button');
-  clearBtn.className = 'btn ghost';
-  clearBtn.textContent = 'Clear';
-  clearBtn.addEventListener('click', () => {
-    item.resolved = true;
-    updateResolveStats();
-    wrap.remove();
-  });
-  fix.appendChild(clearBtn);
+  const fix = document.createElement('div'); fix.className='row'; fix.style.marginTop='8px';
+  const label = document.createElement('div'); label.className='muted small'; label.textContent='Try a set code:'; fix.appendChild(label);
+  const input = document.createElement('input'); input.type='text'; input.placeholder='e.g., TSR, TSP, MB1…'; input.style.maxWidth='140px'; fix.appendChild(input);
+  const tryBtn = document.createElement('button'); tryBtn.className='btn'; tryBtn.textContent='Try'; fix.appendChild(tryBtn);
+  const message = document.createElement('div'); message.className='inline-msg'; message.style.minHeight='18px'; fix.appendChild(message);
+  const spacer = document.createElement('div'); spacer.className='grow'; fix.appendChild(spacer);
+  const clearBtn = document.createElement('button'); clearBtn.className='btn ghost'; clearBtn.textContent='Clear';
+  clearBtn.addEventListener('click', () => { item.resolved=true; updateResolveStats(); wrap.remove(); }); fix.appendChild(clearBtn);
 
   tryBtn.addEventListener('click', async () => {
     const codeRaw = (input.value || '').trim();
     message.textContent = '';
-    if (!codeRaw) { message.innerHTML = `<span class="err">Enter a set code.</span>`; return; }
+    if (!codeRaw){ message.innerHTML = `<span class="err">Enter a set code.</span>`; return; }
     const sc = codeRaw.toLowerCase();
-
-    // 1) Is this set code present at all?
     const existsAny = await db.cards.where('set').equals(sc).limit(1).count();
-    if (!existsAny){
-      message.innerHTML = `<span class="err">Invalid set code.</span>`;
-      return;
-    }
-
-    // 2) Exact name in that set?
+    if (!existsAny){ message.innerHTML = `<span class="err">Invalid set code.</span>`; return; }
     const exactNameCandidates = await db.cards.where('name_lc').equals(item.name.toLowerCase()).toArray();
     let exact = exactNameCandidates.find(c => (c.set||'').toLowerCase() === sc) || null;
-
-    // 2b) Prefix fallback within the set (for double-faced/split names)
     if (!exact){
       const prefixInSet = await db.cards.where('name_lc').startsWith(item.name.toLowerCase()).and(c => (c.set||'').toLowerCase() === sc).toArray();
       exact = prefixInSet[0] || null;
     }
+    if (exact){ await resolveOneUnmatched(item, exact.id, exact.set, exact.set_name); wrap.remove(); return; }
 
-    if (exact){
-      await resolveOneUnmatched(item, exact.id, exact.set, exact.set_name);
-      wrap.remove();
-      return;
-    }
-
-    // 3) Fuzzy suggestion within that set (>=60% overlap)
     const inSet = await db.cards.where('set').equals(sc).toArray();
-    let best = null, bestScore = 0;
+    let best=null, bestScore=0;
     for (const c of inSet){
       const score = tokenMatchRatio(item.name, c.name);
-      if (score > bestScore){ bestScore = score; best = c; }
+      if (score > bestScore){ bestScore=score; best=c; }
     }
-
     if (best && bestScore >= 0.6){
       message.innerHTML = `<span class="suggest">Did you mean <strong>${best.name}</strong>?</span> `;
-      const yes = document.createElement('button');
-      yes.className = 'btn';
-      yes.textContent = 'Yes';
-      const no = document.createElement('button');
-      no.className = 'btn ghost';
-      no.textContent = 'No';
-
-      yes.addEventListener('click', async () => {
-        await resolveOneUnmatched(item, best.id, best.set, best.set_name);
-        wrap.remove();
-      });
-      no.addEventListener('click', () => { message.textContent = ''; });
-
-      message.appendChild(yes);
-      message.appendChild(no);
-    } else {
+      const yes = document.createElement('button'); yes.className='btn'; yes.textContent='Yes';
+      const no  = document.createElement('button');  no.className='btn ghost'; no.textContent='No';
+      yes.addEventListener('click', async () => { await resolveOneUnmatched(item, best.id, best.set, best.set_name); wrap.remove(); });
+      no.addEventListener('click', () => { message.textContent=''; });
+      message.appendChild(yes); message.appendChild(no);
+    }else{
       message.innerHTML = `<span class="err">Card not found in ${codeRaw.toUpperCase()}.</span>`;
     }
   });
-
   wrap.appendChild(fix);
 }
+async function resolveOneUnmatched(item, chosenId){ const cur = await db.collection.get(chosenId) || { id:chosenId, qty:0 }; cur.qty += (item.qty||0); await db.collection.put(cur); item.resolved=true; updateResolveStats(); await refreshStats(); search(); }
+function updateResolveStats(){ const remaining = __unmatchedRows.filter(x=>!x.resolved).length; els.resolveStats.textContent = `${remaining} unresolved`; if (!remaining){ setTimeout(()=>{ els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }, 200); } }
 
-async function resolveOneUnmatched(item, chosenId, setCode, setName){
-  const cur = await db.collection.get(chosenId) || { id: chosenId, qty: 0 };
-  cur.qty += (item.qty || 0);
-  await db.collection.put(cur);
-  item.resolved = true;
-  updateResolveStats();
-  await refreshStats();
-  search();
-}
-
-function updateResolveStats(){
-  const remaining = __unmatchedRows.filter(x => !x.resolved).length;
-  els.resolveStats.textContent = `${remaining} unresolved`;
-  if (remaining === 0){
-    setTimeout(() => {
-      els.resolveBox.style.display = 'none';
-      els.resolveList.innerHTML = '';
-    }, 200);
-  }
-}
-
-/* -------------------- Import collection (CSV; additive) -------------------- */
+/* -------------------- CSV import (additive) -------------------- */
 els.importCSV.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
-  els.csvBox.style.display = '';
-  els.csvProgress.value = 0;
-  els.csvNote.textContent = `Reading ${file.name}…`;
-  try {
+  els.csvBox.style.display = ''; els.csvProgress.value = 0; els.csvNote.textContent = `Reading ${file.name}…`;
+  try{
     const text = await file.text();
-    const rows = parseCSV(text); // handles BOM + "sep=," header
-    if (!rows.length) { els.csvNote.textContent = 'No rows found.'; e.target.value=''; return; }
-    const headerRaw = rows[0].map(h => (h||'').trim());
-    const header = headerRaw.map(h => h.toLowerCase().replace(/[^a-z0-9]/g,''));
-    const col = (name) => header.indexOf(name.toLowerCase().replace(/[^a-z0-9]/g,''));
-    const iName = col('cardname');
-    const iQty = col('quantity');
-    const iSetCode = col('setcode');
-    const iSetName = col('setname');
-    const iDate = col('datebought'); // parsed but not stored yet
-    if (iName === -1 || iQty === -1) { alert('CSV must include at least Card Name and Quantity columns.'); e.target.value=''; return; }
-
+    const rows = parseCSV(text);
+    if (!rows.length){ els.csvNote.textContent='No rows found.'; e.target.value=''; return; }
+    const headerRaw = rows[0].map(h=>(h||'').trim());
+    const header = headerRaw.map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
+    const col = (name)=> header.indexOf(name.toLowerCase().replace(/[^a-z0-9]/g,''));
+    const iName = col('cardname'); const iQty = col('quantity'); const iSetCode = col('setcode'); const iSetName = col('setname'); const iDate = col('datebought');
+    if (iName===-1 || iQty===-1){ alert('CSV must include at least Card Name and Quantity columns.'); e.target.value=''; return; }
     const strict = !!els.csvStrict.checked;
 
-    const increments = {}; // id -> qty
-    const unmatched = [];
-    const totalRows = rows.length - 1;
-    let processed = 0;
-
-    for (let r = 1; r < rows.length; r++) {
-      const row = rows[r];
-      if (!row || !row.length) continue;
-      const name = (row[iName] || '').trim();
-      const qty = parseInt((row[iQty] || '0').trim(), 10) || 0;
-      const setCode = iSetCode >= 0 ? (row[iSetCode] || '').trim() : '';
-      const setName = iSetName >= 0 ? (row[iSetName] || '').trim() : '';
-      // const dateBought = iDate >= 0 ? (row[iDate] || '').trim() : '';
-      if (!name || qty <= 0) { processed++; continue; }
+    const increments = {}; const unmatched = []; const totalRows = rows.length-1; let processed=0;
+    for (let r=1; r<rows.length; r++){
+      const row = rows[r]; if (!row || !row.length) continue;
+      const name = (row[iName]||'').trim(); const qty = parseInt((row[iQty]||'0').trim(), 10) || 0;
+      const setCode = iSetCode>=0 ? (row[iSetCode]||'').trim() : ''; const setName = iSetName>=0 ? (row[iSetName]||'').trim() : '';
+      if (!name || qty<=0){ processed++; continue; }
 
       const nameLC = name.toLowerCase();
-
-      // Exact-name candidates first
       let candidates = await db.cards.where('name_lc').equals(nameLC).toArray();
-      // Prefix fallback for double-faced/split names (e.g., "Name // Other Side")
-      if (!candidates.length){
-        candidates = await db.cards.where('name_lc').startsWith(nameLC).toArray();
-      }
+      if (!candidates.length) candidates = await db.cards.where('name_lc').startsWith(nameLC).toArray();
 
       let card = null;
       if (candidates.length) card = selectCardByNameAndSet(candidates, setCode, setName, strict);
-
-      if (!card) unmatched.push({ row: r+1, name, setCode, setName, qty });
-      else increments[card.id] = (increments[card.id] || 0) + qty;
+      if (!card) unmatched.push({ row:r+1, name, setCode, setName, qty });
+      else increments[card.id] = (increments[card.id]||0) + qty;
 
       processed++;
-      if (processed % 50 === 0 || processed === totalRows) {
+      if (processed % 50 === 0 || processed === totalRows){
         els.csvProgress.value = Math.round((processed/Math.max(1,totalRows))*100);
         els.csvNote.textContent = `Matched ${Object.keys(increments).length} unique; ${unmatched.length} unmatched…`;
         await sleep(0);
       }
     }
 
-    // Apply increments
     const ids = Object.keys(increments);
     await db.transaction('rw', db.collection, async () => {
-      for (const id of ids) {
+      for (const id of ids){
         const cur = await db.collection.get(id) || { id, qty: 0 };
         cur.qty += increments[id];
         await db.collection.put(cur);
       }
     });
 
-    els.csvProgress.value = 100;
+    els.csvProgress.value=100;
     const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
     els.csvNote.textContent = `Imported ${ids.length} unique; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
-    await refreshStats();
-    els.status.textContent = 'CSV import complete.';
-    search();
-
-    // Render unmatched resolver if any (with PLST auto-resolve and Try/Clear)
-    if (unmatched.length){
-      renderResolveUnmatched(unmatched);
-    } else {
-      els.resolveBox.style.display = 'none';
-      els.resolveList.innerHTML = '';
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Failed to import CSV.');
-  }
+    await refreshStats(); els.status.textContent = 'CSV import complete.'; search();
+    if (unmatched.length){ renderResolveUnmatched(unmatched); } else { els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }
+  }catch(err){ console.error(err); alert('Failed to import CSV.'); }
   e.target.value='';
 });
 
 /* -------------------- Clear actions -------------------- */
 els.btnClearDB.addEventListener('click', async () => {
   if (!confirm('Delete ALL cards from local DB? This does NOT remove your collection.')) return;
-  await db.cards.clear();
-  await refreshStats();
-  els.results.innerHTML = '';
-  els.status.textContent = 'Cleared DB.';
+  await db.cards.clear(); await refreshStats(); els.results.innerHTML=''; els.status.textContent='Cleared DB.';
 });
-
 els.btnClearCollection.addEventListener('click', async () => {
   if (!confirm('Clear your collection quantities?')) return;
-  await db.collection.clear();
-  await refreshStats();
-  document.querySelectorAll('.qty-in').forEach(el=>el.value=0);
-  els.status.textContent = 'Cleared collection.';
+  await db.collection.clear(); await refreshStats(); document.querySelectorAll('.qty-in').forEach(el=>el.value=0); els.status.textContent='Cleared collection.';
 });
-
 refreshStats();
 
 /* -------------------- Self-tests -------------------- */
 function runTests(){
-  const out = [];
-  const pass = (msg) => { out.push(`<div class="test-pass">✔ ${msg}</div>`); console.log('PASS:', msg); };
-  const fail = (msg) => { out.push(`<div class="test-fail">✘ ${msg}</div>`); console.error('FAIL:', msg); };
-  try {
-    // CSV basic test (+ sep=,)
+  const out=[]; const pass=(m)=>{ out.push(`<div class="test-pass">✔ ${m}</div>`); }; const fail=(m)=>{ out.push(`<div class="test-fail">✘ ${m}</div>`); };
+  try{
     const csv = `sep=,\nFolder Name,Quantity,Trade Quantity,Card Name,Set Code,Set Name,Card Number,Condition,Printing,Language,Price Bought,Date Bought,LOW,MID,MARKET\nrandom box,1,0,Abnormal Endurance,M19,Core Set 2019,85,NearMint,Normal,English,0.04,2025-06-16,0.01,0.25,0.08\n`;
-    const rows = parseCSV(csv);
-    const h = rows[0]; const r = rows[1];
-    if (rows.length===2 && h[1]==='Quantity' && r[3]==='Abnormal Endurance' && r[4]==='M19') pass('CSV parse: BOM/sep=, handled, header+row parsed'); else fail('CSV parse: header/sep=, not handled');
+    const rows = parseCSV(csv); const h=rows[0], r=rows[1];
+    if (rows.length===2 && h[1]==='Quantity' && r[3]==='Abnormal Endurance' && r[4]==='M19') pass('CSV parse: BOM/sep=, handled'); else fail('CSV parse: header/sep=, not handled');
 
-    // Fuzzy token tests
-    const ratio1 = tokenMatchRatio('Coral Trickster', 'Coral Trickster');
-    const ratio2 = tokenMatchRatio('Mystic Elf Sage', 'Mystic Sage');
-    if (ratio1 === 1) pass('Fuzzy: exact ratio = 1'); else fail('Fuzzy: exact ratio bad');
+    const ratio1 = tokenMatchRatio('Coral Trickster','Coral Trickster');
+    const ratio2 = tokenMatchRatio('Mystic Elf Sage','Mystic Sage');
+    if (ratio1 === 1) pass('Fuzzy: exact = 1'); else fail('Fuzzy: exact ratio bad');
     if (ratio2 >= 2/3) pass('Fuzzy: partial overlap ≥ 0.66'); else fail('Fuzzy: partial overlap bad');
 
-    // Color filtering tests
-    const cR = { id:'R1', name_lc:'mountain goblin', type_lc:'creature — goblin', subtype_lc:'goblin', rarity:'common', oracle_text:'', color_identity:['R'] };
-    const cG = { id:'G1', name_lc:'forest elf', type_lc:'creature — elf', subtype_lc:'elf', rarity:'common', oracle_text:'', color_identity:['G'] };
-    const cRG = { id:'RG1', name_lc:'grull friend', type_lc:'creature — warrior', subtype_lc:'warrior', rarity:'uncommon', oracle_text:'', color_identity:['R','G'] };
-    const cRGB = { id:'RGB1', name_lc:'tricolor beast', type_lc:'creature — beast', subtype_lc:'beast', rarity:'rare', oracle_text:'', color_identity:['R','G','B'] };
-    const cC = { id:'C1', name_lc:'wastes rock', type_lc:'land', subtype_lc:'', rarity:'common', oracle_text:'', color_identity:[] };
-    const qtyMap = { 'R1':1, 'G1':1, 'RG1':1, 'RGB1':1, 'C1':1 };
-
-    function applyColors(cards, colors){
-      const filters = { name:'', text:'', type:'', subtype:'', rarity:'', colors:colors };
-      return cards.filter(c => qtyMap[c.id] > 0 && matchCard(c, filters));
-    }
-
-    const onlyR = applyColors([cR,cG,cRG,cRGB,cC], ['R']);
-    if (onlyR.length===1 && onlyR[0]===cR) pass('Color filter: only R returns monored only'); else fail('Color filter: only R failed');
-
-    const rg = applyColors([cR,cG,cRG,cRGB,cC], ['R','G']);
-    const okRG = rg.length===3 && rg.includes(cR) && rg.includes(cG) && rg.includes(cRG) && !rg.includes(cRGB) && !rg.includes(cC);
-    if (okRG) pass('Color filter: R+G returns mono R, mono G, and RG only'); else fail('Color filter: R+G failed');
-
-    const rgc = applyColors([cR,cG,cRG,cRGB,cC], ['R','G','C']);
-    const okRGC = rgc.length===4 && rgc.includes(cR) && rgc.includes(cG) && rgc.includes(cRG) && rgc.includes(cC) && !rgc.includes(cRGB);
-    if (okRGC) pass('Color filter: R+G+C includes colorless too'); else fail('Color filter: R+G+C failed');
-
-    const onlyC = applyColors([cR,cG,cRG,cRGB,cC], ['C']);
-    if (onlyC.length===1 && onlyC[0]===cC) pass('Color filter: only C returns colorless only'); else fail('Color filter: only C failed');
-
-    const allColors = applyColors([cR,cG,cRG,cRGB,cC], ['W','U','B','R','G']);
-    const okAll = allColors.length===4 && allColors.includes(cR) && allColors.includes(cG) && allColors.includes(cRG) && allColors.includes(cRGB) && !allColors.includes(cC);
-    if (okAll) pass('Color filter: all five colors excludes colorless'); else fail('Color filter: five colors failed');
-
+    const cR={id:'R1',name_lc:'mountain goblin',type_lc:'creature — goblin',subtype_lc:'goblin',rarity:'common',oracle_text:'',color_identity:['R']};
+    const cG={id:'G1',name_lc:'forest elf',type_lc:'creature — elf',subtype_lc:'elf',rarity:'common',oracle_text:'',color_identity:['G']};
+    const cRG={id:'RG1',name_lc:'grull friend',type_lc:'creature — warrior',subtype_lc:'warrior',rarity:'uncommon',oracle_text:'',color_identity:['R','G']};
+    const cRGB={id:'RGB1',name_lc:'tricolor beast',type_lc:'creature — beast',subtype_lc:'beast',rarity:'rare',oracle_text:'',color_identity:['R','G','B']};
+    const cC={id:'C1',name_lc:'wastes rock',type_lc:'land',subtype_lc:'',rarity:'common',oracle_text:'',color_identity:[]};
+    const qtyMap={'R1':1,'G1':1,'RG1':1,'RGB1':1,'C1':1};
+    function applyColors(cards,colors){ const f={name:'',text:'',type:'',subtype:'',rarity:'',colors}; return cards.filter(c=>qtyMap[c.id]>0 && matchCard(c,f)); }
+    const onlyR=applyColors([cR,cG,cRG,cRGB,cC],['R']); if (onlyR.length===1 && onlyR[0]===cR) pass('Color: only R'); else fail('Color: only R');
+    const rg=applyColors([cR,cG,cRG,cRGB,cC],['R','G']); if (rg.length===3 && rg.includes(cR)&&rg.includes(cG)&&rg.includes(cRG)&&!rg.includes(cRGB)&&!rg.includes(cC)) pass('Color: R+G'); else fail('Color: R+G');
+    const rgc=applyColors([cR,cG,cRG,cRGB,cC],['R','G','C']); if (rgc.length===4 && rgc.includes(cR)&&rgc.includes(cG)&&rgc.includes(cRG)&&rgc.includes(cC)&&!rgc.includes(cRGB)) pass('Color: R+G+C'); else fail('Color: R+G+C');
+    const onlyC=applyColors([cR,cG,cRG,cRGB,cC],['C']); if (onlyC.length===1 && onlyC[0]===cC) pass('Color: only C'); else fail('Color: only C');
+    const all=applyColors([cR,cG,cRG,cRGB,cC],['W','U','B','R','G']); if (all.length===4 && all.includes(cR)&&all.includes(cG)&&all.includes(cRG)&&all.includes(cRGB)&&!all.includes(cC)) pass('Color: five colors exclude colorless'); else fail('Color: five color fail');
     pass('Self-tests completed.');
-  } catch (e) { out.push(`<div class="test-fail">✘ Unexpected error: ${e.message}</div>`); }
+  }catch(e){ out.push(`<div class="test-fail">✘ Unexpected error: ${e.message}</div>`); }
   els.testOut.innerHTML = out.join('');
 }
 els.btnRunTests.addEventListener('click', runTests);
