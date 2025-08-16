@@ -48,6 +48,9 @@
     .small{font-size:12px}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Monaco,monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
     .test-pass{color:#9fff9f}.test-fail{color:#ff9f9f}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);margin:4px 4px 0 0}
+    .pill .meta{display:inline-flex;gap:6px}
+    .muted2{color:#8b95a1}
   </style>
 </head>
 <body>
@@ -135,6 +138,21 @@
             <div>Importing CSV… <progress id="csvProgress" max="100" value="0"></progress></div>
             <div id="csvNote" class="muted small"></div>
           </div>
+
+          <!-- New unmatched resolver panel -->
+          <div id="resolveBox" class="panel" style="display:none; margin-bottom:12px">
+            <div class="head">
+              <strong>Resolve Unmatched Import Rows</strong>
+              <div class="muted small" id="resolveStats">0 unresolved</div>
+            </div>
+            <div class="body">
+              <div class="muted small" style="margin-bottom:8px">
+                We couldn't match these CSV rows. Pick the correct set for each card (based on your local Scryfall DB). If no candidates show up, that name isn't in your local database or the set is invalid.
+              </div>
+              <div id="resolveList" class="small"></div>
+            </div>
+          </div>
+
           <div id="results" class="results"></div>
         </div>
       </section>
@@ -155,7 +173,6 @@
 <script>
 // -------------------- IndexedDB (Dexie) --------------------
 const db = new Dexie('mtgDB');
-// Indexes: id (primary), name_lc, rarity, set, set_name, type_lc, subtype_lc, color_identity (multiEntry)
 db.version(1).stores({
   cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
   collection: 'id, qty'
@@ -187,6 +204,9 @@ const els = {
   btnClearCollection: document.getElementById('btnClearCollection'),
   btnRunTests: document.getElementById('btnRunTests'),
   testOut: document.getElementById('testOut'),
+  resolveBox: document.getElementById('resolveBox'),
+  resolveList: document.getElementById('resolveList'),
+  resolveStats: document.getElementById('resolveStats'),
 };
 
 // -------------------- Utils --------------------
@@ -195,9 +215,7 @@ const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 
 function stripSepAndBOM(text){
   if (!text) return text;
-  // BOM
-  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-  // Excel "sep=," directive
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM
   const firstLineEnd = text.indexOf('\n');
   const firstLine = firstLineEnd >= 0 ? text.slice(0, firstLineEnd).trim() : text.trim();
   if (/^sep\s*=\s*./i.test(firstLine)) {
@@ -206,7 +224,7 @@ function stripSepAndBOM(text){
   return text;
 }
 
-// RFC4180-ish CSV parser (handles quotes, commas, CRLF) + Excel sep= directive and BOM
+// RFC4180-ish CSV parser
 function parseCSV(text) {
   text = stripSepAndBOM(text);
   const rows = [];
@@ -215,7 +233,7 @@ function parseCSV(text) {
     const c = text[i];
     if (inQuotes) {
       if (c === '"') {
-        if (text[i+1] === '"') { field += '"'; i++; } // escaped quote
+        if (text[i+1] === '"') { field += '"'; i++; }
         else { inQuotes = false; }
       } else { field += c; }
     } else {
@@ -383,26 +401,19 @@ function colorsMatch(cardCI, selectedColors){
   if (!selectedColors || selectedColors.length === 0) return true; // no color filter
   const sel = new Set(selectedColors);
   const includeC = sel.has('C');
-  sel.delete('C'); // remainder are W U B R G
+  sel.delete('C'); // remainder: W U B R G
 
   const ci = Array.isArray(cardCI) ? cardCI : [];
   if (ci.length === 0) {
-    // Card is colorless. Only include if 'C' selected (alone or alongside colors)
-    return includeC;
+    return includeC; // colorless only when C chosen
   }
-  // Card has colors. If only 'C' was selected, exclude colored cards.
-  if (sel.size === 0) return false;
+  if (sel.size === 0) return false; // only C chosen -> exclude colored
 
-  // All colors on the card must be within the selected set (subset rule).
-  for (const c of ci) {
-    if (!sel.has(c)) return false;
-  }
-  // And the card must not contain any color outside selection (already ensured by loop).
-  // Mono colors and any subset combos inside selection are allowed.
+  // Subset rule: every card color must be within selected set
+  for (const c of ci) { if (!sel.has(c)) return false; }
   return true;
 }
 
-// Match a card against current filters (used by search and tests)
 function matchCard(card, filters){
   const name_lc = (card.name_lc||'');
   const type_lc = (card.type_lc||'');
@@ -432,7 +443,6 @@ async function search(){
 
   els.status.textContent = 'Searching your collection…';
 
-  // Only owned cards (qty > 0)
   const owned = await db.collection.where('qty').above(0).toArray();
   const qtyMap = Object.fromEntries(owned.map(e=>[e.id, e.qty]));
   if (!owned.length){
@@ -442,13 +452,12 @@ async function search(){
   }
 
   const ids = owned.map(e=>e.id);
-  // Fetch corresponding card records from NDJSON-backed store
   const cards = await db.cards.bulkGet(ids);
 
   const limit = 200;
   const out = [];
   for (const card of cards){
-    if (!card) continue; // in case NDJSON missing this id
+    if (!card) continue;
     if (matchCard(card, filters)){
       out.push(card);
       if (out.length >= limit) break;
@@ -569,6 +578,101 @@ function selectCardByNameAndSet(candidates, setCode, setName, strict){
   return card;
 }
 
+// -------------------- Unmatched resolver UI --------------------
+let __unmatchedRows = []; // [{row, name, setCode, setName, qty, resolved:false}]
+async function renderResolveUnmatched(list){
+  __unmatchedRows = list.map(x => ({...x, resolved:false}));
+  if (!__unmatchedRows.length){
+    els.resolveBox.style.display = 'none';
+    els.resolveList.innerHTML = '';
+    els.resolveStats.textContent = '0 unresolved';
+    return;
+  }
+  els.resolveBox.style.display = '';
+  els.resolveList.innerHTML = '';
+  els.resolveStats.textContent = `${__unmatchedRows.length} unresolved`;
+
+  for (const item of __unmatchedRows){
+    const wrap = document.createElement('div');
+    wrap.style.borderTop = '1px solid var(--border)';
+    wrap.style.padding = '10px 0';
+
+    const title = document.createElement('div');
+    title.innerHTML = `<strong>${item.name}</strong> &nbsp;<span class="muted2">CSV set: ${item.setCode || '(none)'} ${item.setName ? '— '+item.setName : ''}</span> &nbsp;•&nbsp; Qty: ${item.qty} &nbsp;•&nbsp; <span class="muted2">Row ${item.row}</span>`;
+    wrap.appendChild(title);
+
+    const candidates = await db.cards.where('name_lc').equals(item.name.toLowerCase()).toArray();
+
+    if (!candidates.length){
+      const msg = document.createElement('div');
+      msg.className = 'muted small';
+      msg.style.marginTop = '6px';
+      msg.textContent = 'Card not recognized in local DB (or wrong name).';
+      wrap.appendChild(msg);
+    } else {
+      // Group by set code to follow “change set code” intent
+      const bySet = new Map();
+      for (const c of candidates){
+        const key = (c.set||'').toUpperCase();
+        if (!bySet.has(key)) bySet.set(key, {set:key, set_name:c.set_name || '', any: c});
+      }
+      const row = document.createElement('div');
+      row.style.marginTop = '8px';
+      row.className = 'row';
+      const prompt = document.createElement('div');
+      prompt.className = 'muted small';
+      prompt.textContent = 'Pick a set:';
+      row.appendChild(prompt);
+
+      for (const v of bySet.values()){
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = `${v.set} — ${v.set_name || ''}`;
+        btn.addEventListener('click', async () => {
+          await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
+          wrap.querySelectorAll('button').forEach(b => b.disabled = true);
+          wrap.style.opacity = 0.75;
+        });
+        row.appendChild(btn);
+      }
+
+      // Also show "no change / skip"
+      const skipBtn = document.createElement('button');
+      skipBtn.className = 'btn ghost';
+      skipBtn.textContent = 'Skip';
+      skipBtn.addEventListener('click', () => {
+        item.resolved = true; // skipped but marked done
+        updateResolveStats();
+        wrap.querySelectorAll('button').forEach(b => b.disabled = true);
+        wrap.style.opacity = 0.75;
+      });
+      row.appendChild(skipBtn);
+
+      wrap.appendChild(row);
+    }
+
+    els.resolveList.appendChild(wrap);
+  }
+}
+
+async function resolveOneUnmatched(item, chosenId, setCode, setName){
+  const cur = await db.collection.get(chosenId) || { id: chosenId, qty: 0 };
+  cur.qty += (item.qty || 0);
+  await db.collection.put(cur);
+  item.resolved = true;
+  updateResolveStats();
+  await refreshStats();
+  search();
+}
+
+function updateResolveStats(){
+  const remaining = __unmatchedRows.filter(x => !x.resolved).length;
+  els.resolveStats.textContent = `${remaining} unresolved`;
+  if (remaining === 0){
+    setTimeout(() => { els.resolveBox.style.display = 'none'; }, 300);
+  }
+}
+
 // -------------------- Import collection (CSV; additive) --------------------
 els.importCSV.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
@@ -617,7 +721,7 @@ els.importCSV.addEventListener('change', async (e) => {
       processed++;
       if (processed % 50 === 0 || processed === totalRows) {
         els.csvProgress.value = Math.round((processed/Math.max(1,totalRows))*100);
-        els.csvNote.textContent = `Matched ${Object.keys(increments).length} unique cards; ${unmatched.length} unmatched…`;
+        els.csvNote.textContent = `Matched ${Object.keys(increments).length} unique; ${unmatched.length} unmatched…`;
         await sleep(0);
       }
     }
@@ -634,16 +738,18 @@ els.importCSV.addEventListener('change', async (e) => {
 
     els.csvProgress.value = 100;
     const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
-    els.csvNote.textContent = `Imported ${ids.length} unique cards; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
+    els.csvNote.textContent = `Imported ${ids.length} unique; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
     await refreshStats();
-    if (unmatched.length) {
-      const blob = new Blob([JSON.stringify({ strict, unmatched }, null, 2)], { type: 'application/json' });
-      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'unmatched-rows.json' });
-      a.textContent = 'Download unmatched rows'; a.className = 'btn';
-      const div = document.createElement('div'); div.style.marginTop = '8px'; div.appendChild(a); els.csvBox.appendChild(div);
-    }
     els.status.textContent = 'CSV import complete.';
     search();
+
+    // Render unmatched resolver if any
+    if (unmatched.length){
+      renderResolveUnmatched(unmatched);
+    } else {
+      els.resolveBox.style.display = 'none';
+      els.resolveList.innerHTML = '';
+    }
   } catch (err) {
     console.error(err);
     alert('Failed to import CSV.');
@@ -698,7 +804,7 @@ function runTests(){
     const rows4 = parseCSV(csv4);
     if (rows4[0][0]==='Card Name' && rows4[1][0]==='Xyz') pass('CSV parse: BOM handled'); else fail('CSV parse: BOM not handled');
 
-    // Collection-only + color filtering tests
+    // Color filtering tests
     const cR = { id:'R1', name_lc:'mountain goblin', type_lc:'creature — goblin', subtype_lc:'goblin', rarity:'common', oracle_text:'', color_identity:['R'] };
     const cG = { id:'G1', name_lc:'forest elf', type_lc:'creature — elf', subtype_lc:'elf', rarity:'common', oracle_text:'', color_identity:['G'] };
     const cRG = { id:'RG1', name_lc:'grull friend', type_lc:'creature — warrior', subtype_lc:'warrior', rarity:'uncommon', oracle_text:'', color_identity:['R','G'] };
@@ -711,30 +817,24 @@ function runTests(){
       return cards.filter(c => qtyMap[c.id] > 0 && matchCard(c, filters));
     }
 
-    // Only Red -> only {R}
     const onlyR = applyColors([cR,cG,cRG,cRGB,cC], ['R']);
     if (onlyR.length===1 && onlyR[0]===cR) pass('Color filter: only R returns monored only'); else fail('Color filter: only R failed');
 
-    // R+G -> {R},{G},{R,G}, exclude RGB and colorless
     const rg = applyColors([cR,cG,cRG,cRGB,cC], ['R','G']);
     const okRG = rg.length===3 && rg.includes(cR) && rg.includes(cG) && rg.includes(cRG) && !rg.includes(cRGB) && !rg.includes(cC);
     if (okRG) pass('Color filter: R+G returns mono R, mono G, and RG only'); else fail('Color filter: R+G failed');
 
-    // R+G+C -> include {R},{G},{R,G}, and colorless; exclude RGB
     const rgc = applyColors([cR,cG,cRG,cRGB,cC], ['R','G','C']);
     const okRGC = rgc.length===4 && rgc.includes(cR) && rgc.includes(cG) && rgc.includes(cRG) && rgc.includes(cC) && !rgc.includes(cRGB);
     if (okRGC) pass('Color filter: R+G+C includes colorless too'); else fail('Color filter: R+G+C failed');
 
-    // Only colorless
     const onlyC = applyColors([cR,cG,cRG,cRGB,cC], ['C']);
     if (onlyC.length===1 && onlyC[0]===cC) pass('Color filter: only C returns colorless only'); else fail('Color filter: only C failed');
 
-    // All five colors (no C) -> include all colored (mono to five), exclude colorless
     const allColors = applyColors([cR,cG,cRG,cRGB,cC], ['W','U','B','R','G']);
     const okAll = allColors.length===4 && allColors.includes(cR) && allColors.includes(cG) && allColors.includes(cRG) && allColors.includes(cRGB) && !allColors.includes(cC);
     if (okAll) pass('Color filter: all five colors excludes colorless'); else fail('Color filter: five colors failed');
 
-    // UR selection should NOT include URB
     const cUR = { id:'UR1', name_lc:'izzet friend', type_lc:'creature — wizard', subtype_lc:'wizard', rarity:'uncommon', oracle_text:'', color_identity:['U','R'] };
     const cURB = { id:'URB1', name_lc:'grixis pal', type_lc:'creature — rogue', subtype_lc:'rogue', rarity:'rare', oracle_text:'', color_identity:['U','R','B'] };
     const qtyMap2 = { 'UR1':1, 'URB1':1 };
@@ -742,7 +842,8 @@ function runTests(){
     const ur = applyColors2([cUR,cURB], ['U','R']);
     if (ur.length===1 && ur[0]===cUR) pass('Color filter: UR excludes URB'); else fail('Color filter: UR should exclude URB');
 
-  } catch (e) { fail('Unexpected error: '+e.message); }
+    pass('Self-tests completed.');
+  } catch (e) { out.push(`<div class="test-fail">✘ Unexpected error: ${e.message}</div>`); }
   els.testOut.innerHTML = out.join('');
 }
 els.btnRunTests.addEventListener('click', runTests);
