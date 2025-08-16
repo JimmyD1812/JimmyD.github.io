@@ -1,9 +1,9 @@
-name: Build site + nightly cards.ndjson(.gz)
+name: Build site + nightly cards.ndjson.gz
 
 on:
   schedule:
-    - cron: '0 10 * * *'   # 10:00 UTC
-    - cron: '0 9 * * *'    # 09:00 UTC
+    - cron: '0 10 * * *'   # after Scryfall updates
+    - cron: '0 9 * * *'
   workflow_dispatch:
 
 permissions:
@@ -15,9 +15,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Show tree (debug)
+        run: |
+          echo "Repo root:"
+          ls -la
+          echo "apps/mtg-browser:"
+          ls -la apps/mtg-browser || true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -26,30 +38,50 @@ jobs:
           if [ -f apps/mtg-browser/requirements.txt ]; then
             pip install -r apps/mtg-browser/requirements.txt
           fi
+          python -V
 
       - name: Generate NDJSON (.gz only)
+        shell: bash
         run: |
           set -euxo pipefail
+          # Generate into /tmp so we don't clash with site files
           python apps/mtg-browser/fetch_scryfall_to_ndjson.py --output /tmp/cards.ndjson.gz
           ls -lh /tmp/cards.ndjson.gz
+          test -s /tmp/cards.ndjson.gz
 
-      - name: Prepare Pages artifact
+      - name: Prepare Pages artifact (copy site + /db)
+        shell: bash
         run: |
           set -euxo pipefail
           rm -rf public
           mkdir -p public/db
-          rsync -a --delete --exclude '.git' --exclude '.github' --exclude 'public' ./ public/
+
+          # Copy the site into public/ WITHOUT copying public/ back into itself.
+          # Using bash globbing instead of rsync to avoid exit 2 recursion edge-cases.
+          shopt -s dotglob extglob
+          cp -a !(public|.git|.github) public/
+          shopt -u dotglob extglob
+
           mv /tmp/cards.ndjson.gz public/db/
           du -h public/db/cards.ndjson.gz
           test -s public/db/cards.ndjson.gz
 
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: public }
+          echo "Public tree:"
+          ls -la public/db
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: { name: github-pages }
-    permissions: { pages: write, id-token: write }
+    environment:
+      name: github-pages
+    permissions:
+      pages: write
+      id-token: write
     steps:
-      - uses: actions/deploy-pages@v4
+      - name: Deploy
+        uses: actions/deploy-pages@v4
