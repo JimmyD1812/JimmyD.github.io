@@ -48,8 +48,7 @@
     .small{font-size:12px}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Monaco,monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
     .test-pass{color:#9fff9f}.test-fail{color:#ff9f9f}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);margin:4px 4px 0 0}
-    .pill .meta{display:inline-flex;gap:6px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);margin:6px 6px 0 0}
     .muted2{color:#8b95a1}
   </style>
 </head>
@@ -139,15 +138,18 @@
             <div id="csvNote" class="muted small"></div>
           </div>
 
-          <!-- New unmatched resolver panel -->
+          <!-- Unmatched resolver panel -->
           <div id="resolveBox" class="panel" style="display:none; margin-bottom:12px">
             <div class="head">
               <strong>Resolve Unmatched Import Rows</strong>
-              <div class="muted small" id="resolveStats">0 unresolved</div>
+              <div class="row" style="gap:8px;align-items:center">
+                <div class="muted small" id="resolveStats">0 unresolved</div>
+                <button class="btn" id="resolveClear" title="Hide this panel">Clear</button>
+              </div>
             </div>
             <div class="body">
               <div class="muted small" style="margin-bottom:8px">
-                We couldn't match these CSV rows. Pick the correct set for each card (based on your local Scryfall DB). If no candidates show up, that name isn't in your local database or the set is invalid.
+                We couldn't match these CSV rows. Pick the correct set for each card (based on your local Scryfall DB). If we detect a printing on <strong>PLST — The List</strong>, we will auto-select it and let you know for 2s.
               </div>
               <div id="resolveList" class="small"></div>
             </div>
@@ -207,6 +209,7 @@ const els = {
   resolveBox: document.getElementById('resolveBox'),
   resolveList: document.getElementById('resolveList'),
   resolveStats: document.getElementById('resolveStats'),
+  resolveClear: document.getElementById('resolveClear'),
 };
 
 // -------------------- Utils --------------------
@@ -247,6 +250,15 @@ function parseCSV(text) {
   row.push(field);
   if (row.length && (row.length > 1 || row[0] !== '')) rows.push(row);
   return rows;
+}
+
+// Small toast/pill helper (2s)
+function showEphemeral(parent, text){
+  const pill = document.createElement('div');
+  pill.className = 'pill';
+  pill.textContent = text;
+  parent.appendChild(pill);
+  setTimeout(() => { pill.remove(); }, 2000);
 }
 
 // -------------------- Card helpers --------------------
@@ -401,17 +413,15 @@ function colorsMatch(cardCI, selectedColors){
   if (!selectedColors || selectedColors.length === 0) return true; // no color filter
   const sel = new Set(selectedColors);
   const includeC = sel.has('C');
-  sel.delete('C'); // remainder: W U B R G
+  sel.delete('C'); // keep only W U B R G
 
   const ci = Array.isArray(cardCI) ? cardCI : [];
-  if (ci.length === 0) {
-    return includeC; // colorless only when C chosen
-  }
-  if (sel.size === 0) return false; // only C chosen -> exclude colored
+  if (ci.length === 0) return includeC;             // colorless needs C selected
+  if (sel.size === 0) return false;                 // only C selected -> exclude colored
 
-  // Subset rule: every card color must be within selected set
-  for (const c of ci) { if (!sel.has(c)) return false; }
-  return true;
+  // Subset rule: every color on the card must be in the selected set
+  for (const c of ci) if (!sel.has(c)) return false;
+  return true; // allows mono and multi within the chosen subset
 }
 
 function matchCard(card, filters){
@@ -580,6 +590,14 @@ function selectCardByNameAndSet(candidates, setCode, setName, strict){
 
 // -------------------- Unmatched resolver UI --------------------
 let __unmatchedRows = []; // [{row, name, setCode, setName, qty, resolved:false}]
+
+els.resolveClear.addEventListener('click', () => {
+  els.resolveBox.style.display = 'none';
+  els.resolveList.innerHTML = '';
+  els.resolveStats.textContent = '0 unresolved';
+  __unmatchedRows = [];
+});
+
 async function renderResolveUnmatched(list){
   __unmatchedRows = list.map(x => ({...x, resolved:false}));
   if (!__unmatchedRows.length){
@@ -590,7 +608,7 @@ async function renderResolveUnmatched(list){
   }
   els.resolveBox.style.display = '';
   els.resolveList.innerHTML = '';
-  els.resolveStats.textContent = `${__unmatchedRows.length} unresolved`;
+  updateResolveStats();
 
   for (const item of __unmatchedRows){
     const wrap = document.createElement('div');
@@ -609,49 +627,63 @@ async function renderResolveUnmatched(list){
       msg.style.marginTop = '6px';
       msg.textContent = 'Card not recognized in local DB (or wrong name).';
       wrap.appendChild(msg);
-    } else {
-      // Group by set code to follow “change set code” intent
-      const bySet = new Map();
-      for (const c of candidates){
-        const key = (c.set||'').toUpperCase();
-        if (!bySet.has(key)) bySet.set(key, {set:key, set_name:c.set_name || '', any: c});
-      }
-      const row = document.createElement('div');
-      row.style.marginTop = '8px';
-      row.className = 'row';
-      const prompt = document.createElement('div');
-      prompt.className = 'muted small';
-      prompt.textContent = 'Pick a set:';
-      row.appendChild(prompt);
-
-      for (const v of bySet.values()){
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        btn.textContent = `${v.set} — ${v.set_name || ''}`;
-        btn.addEventListener('click', async () => {
-          await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
-          wrap.querySelectorAll('button').forEach(b => b.disabled = true);
-          wrap.style.opacity = 0.75;
-        });
-        row.appendChild(btn);
-      }
-
-      // Also show "no change / skip"
-      const skipBtn = document.createElement('button');
-      skipBtn.className = 'btn ghost';
-      skipBtn.textContent = 'Skip';
-      skipBtn.addEventListener('click', () => {
-        item.resolved = true; // skipped but marked done
-        updateResolveStats();
-        wrap.querySelectorAll('button').forEach(b => b.disabled = true);
-        wrap.style.opacity = 0.75;
-      });
-      row.appendChild(skipBtn);
-
-      wrap.appendChild(row);
+      els.resolveList.appendChild(wrap);
+      continue;
     }
 
+    // Group by set code, keep a representative card for each set
+    const bySet = new Map();
+    for (const c of candidates){
+      const key = (c.set||'').toUpperCase();
+      if (!bySet.has(key)) bySet.set(key, {set:key, set_name:c.set_name || '', any: c});
+    }
+
+    const row = document.createElement('div');
+    row.style.marginTop = '8px';
+    row.className = 'row';
+    const prompt = document.createElement('div');
+    prompt.className = 'muted small';
+    prompt.textContent = 'Pick a set:';
+    row.appendChild(prompt);
+
+    for (const v of bySet.values()){
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = `${v.set} — ${v.set_name || ''}`;
+      btn.addEventListener('click', async () => {
+        await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
+        row.querySelectorAll('button').forEach(b => b.disabled = true);
+        wrap.style.opacity = 0.75;
+      });
+      row.appendChild(btn);
+    }
+
+    // Skip button
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'btn ghost';
+    skipBtn.textContent = 'Skip';
+    skipBtn.addEventListener('click', () => {
+      item.resolved = true; // skipped but marked done
+      updateResolveStats();
+      row.querySelectorAll('button').forEach(b => b.disabled = true);
+      wrap.style.opacity = 0.75;
+    });
+    row.appendChild(skipBtn);
+
+    wrap.appendChild(row);
     els.resolveList.appendChild(wrap);
+
+    // -------- Default to PLST — The List if available --------
+    if (bySet.has('PLST')) {
+      const v = bySet.get('PLST');
+      showEphemeral(wrap, 'Defaulted to PLST — The List');
+      // Resolve then disable buttons / fade row
+      // Resolve asynchronously but we don't want duplicate clicks:
+      row.querySelectorAll('button').forEach(b => b.disabled = true);
+      await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
+      wrap.style.opacity = 0.75;
+      // The pill fades itself after 2s via showEphemeral
+    }
   }
 }
 
@@ -669,7 +701,10 @@ function updateResolveStats(){
   const remaining = __unmatchedRows.filter(x => !x.resolved).length;
   els.resolveStats.textContent = `${remaining} unresolved`;
   if (remaining === 0){
-    setTimeout(() => { els.resolveBox.style.display = 'none'; }, 300);
+    setTimeout(() => {
+      els.resolveBox.style.display = 'none';
+      els.resolveList.innerHTML = '';
+    }, 300);
   }
 }
 
