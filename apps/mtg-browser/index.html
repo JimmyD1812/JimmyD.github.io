@@ -62,22 +62,22 @@
       <div class="muted">Local-first • Works offline • Zero backend</div>
     </header>
 
-	<div class="bar" style="margin-bottom:12px">
-	<button class="btn" id="btnUpdateDB" title="Force reindex from remote NDJSON now">Update database</button>
-	  <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
-	  <label class="btn file">⬆️ Import Collection (JSON)
-		<input id="importCollection" type="file" accept=".json" />
-	  </label>
-	  <label class="btn file">📄 Import Collection (CSV)
-		<input id="importCSV" type="file" accept=".csv" />
-	  </label>
-	  <label class="btn" style="display:flex;align-items:center;gap:8px">
-		<input id="csvStrict" type="checkbox" checked /> Strict set match
-	  </label>
-	  <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database">🗑️ Clear Card DB</button>
-	  <button class="btn danger" id="btnClearCollection" title="Clear only your collection quantities">🧹 Clear Collection</button>
-	  <div class="muted small">Tip: Prefer <span class="kbd">NDJSON</span> (one card per line) for huge files.</div>
-	</div>
+    <div class="bar" style="margin-bottom:12px">
+      <button class="btn" id="btnUpdateDB" title="Force reindex now (Alt-click for full rebuild)">Update database</button>
+      <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
+      <label class="btn file">⬆️ Import Collection (JSON)
+        <input id="importCollection" type="file" accept=".json" />
+      </label>
+      <label class="btn file">📄 Import Collection (CSV)
+        <input id="importCSV" type="file" accept=".csv" />
+      </label>
+      <label class="btn" style="display:flex;align-items:center;gap:8px">
+        <input id="csvStrict" type="checkbox" checked /> Strict set match
+      </label>
+      <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database">🗑️ Clear Card DB</button>
+      <button class="btn danger" id="btnClearCollection" title="Clear only your collection quantities">🧹 Clear Collection</button>
+      <div class="muted small">Tip: Best results from <span class="kbd">MTG Scanner — Dragon Shield</span> CSV export.</div>
+    </div>
 
     <div class="grid">
       <section class="panel details">
@@ -130,12 +130,6 @@
           <div class="muted small" id="status">Ready.</div>
         </div>
         <div class="body">
-          <!-- First-load tip -->
-          <div id="tipBox" class="notice" style="display:none">
-            ✅ Best matching results come from the <strong>MTG Scanner – Dragon Shield</strong> CSV export. 
-            <button id="tipDismiss" class="btn ghost" style="margin-left:10px">Dismiss</button>
-          </div>
-
           <div id="importBox" class="muted small" style="display:none; margin-bottom:12px">
             <div>Importing… <progress id="importProgress" max="100" value="0"></progress></div>
             <div id="importNote" class="muted small"></div>
@@ -156,7 +150,7 @@
             </div>
             <div class="body">
               <div class="muted small" style="margin-bottom:8px">
-                We couldn't match these CSV rows. If a printing exists on <strong>PLST — The List</strong>, we auto-select it and don’t show a row.
+                If a printing exists on <strong>PLST — The List</strong>, we auto-select it and don’t show a row.
               </div>
               <div id="resolveList" class="small"></div>
             </div>
@@ -180,14 +174,14 @@
   </div>
 
 <script>
-// -------------------- IndexedDB (Dexie) --------------------
+/* -------------------- IndexedDB (Dexie) -------------------- */
 const db = new Dexie('mtgDB');
 db.version(1).stores({
   cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
   collection: 'id, qty'
 });
 
-// -------------------- Element refs --------------------
+/* -------------------- Element refs -------------------- */
 const els = {
   btnUpdateDB: document.getElementById('btnUpdateDB'),
   importBox: document.getElementById('importBox'),
@@ -217,50 +211,54 @@ const els = {
   resolveList: document.getElementById('resolveList'),
   resolveStats: document.getElementById('resolveStats'),
   resolveClear: document.getElementById('resolveClear'),
-  tipBox: document.getElementById('tipBox'),
-  tipDismiss: document.getElementById('tipDismiss'),
 };
 
-// ---------- Remote NDJSON autoload (with HEAD/ETag check) ----------
-const NDJSON_URL = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
+/* ---------- Remote NDJSON autoload with HEAD/ETag + .gz→plain fallback ---------- */
+const NDJSON_URL_GZ = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
+const NDJSON_URL_PLAIN = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson';
+
+function pickBestUrl() {
+  return ('DecompressionStream' in window) ? NDJSON_URL_GZ : NDJSON_URL_PLAIN;
+}
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 
 function headKey(url){ return `ndjson_head::${url}`; }
-
 async function getRemoteHead(url){
-  const resp = await fetch(url, {
-    method: 'HEAD',
-    mode: 'cors',
-    cache: 'no-store',
-    redirect: 'follow'
-  });
-  if (!resp.ok && resp.status !== 304) {
-    throw new Error(`HEAD ${resp.status} ${resp.statusText}`);
-  }
+  const resp = await fetch(url, { method:'HEAD', mode:'cors', cache:'no-store', redirect:'follow' });
+  if (!resp.ok && resp.status !== 304) throw new Error(`HEAD ${resp.status} ${resp.statusText}`);
   return {
     etag: resp.headers.get('etag') || '',
     last: resp.headers.get('last-modified') || '',
     len: resp.headers.get('content-length') || ''
   };
 }
-
-function saveHeadMeta(url, meta){
-  try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch {}
-}
-
-function loadHeadMeta(url){
-  try { return JSON.parse(localStorage.getItem(headKey(url)) || 'null'); } catch { return null; }
-}
-
+function saveHeadMeta(url, meta){ try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch{} }
+function loadHeadMeta(url){ try { return JSON.parse(localStorage.getItem(headKey(url)) || 'null'); } catch { return null; } }
 async function isRemoteUnchanged(url){
   const remote = await getRemoteHead(url);
   const prev = loadHeadMeta(url);
-  if (!prev) return false; // never imported before
+  if (!prev) return false;
   if (remote.etag && prev.etag) return remote.etag === prev.etag;
   if (remote.last && prev.last) return remote.last === prev.last;
-  return false; // no comparable headers -> assume changed
+  return false;
 }
 
+// Thin wrapper: try chosen URL; if it's .gz and fails, retry the plain URL
 async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
+  try {
+    return await doImport(url, { skipIfUnchanged });
+  } catch (err) {
+    const isGz = /\.gz($|\?)/i.test(url);
+    if (isGz) {
+      console.warn('GZ import failed; retrying with plain NDJSON…', err);
+      return await doImport(NDJSON_URL_PLAIN, { skipIfUnchanged });
+    }
+    throw err;
+  }
+}
+
+async function doImport(url, { skipIfUnchanged = true } = {}){
   els.importBox.style.display = '';
   els.importProgress.value = 0;
   els.importNote.textContent = `Fetching ${url} …`;
@@ -283,15 +281,19 @@ async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
   let headMeta = null;
   try { headMeta = await getRemoteHead(url); } catch {}
 
-  const resp = await fetch(url, { mode: 'cors', cache: 'no-store', redirect: 'follow' });
+  const resp = await fetch(url, { mode:'cors', cache:'no-store', redirect:'follow' });
   if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
-
   let stream = resp.body;
+  if (!stream) throw new Error('Streaming unsupported for this response');
+
   const ct = resp.headers.get('content-type') || '';
   const looksGzip = /\.gz($|\?)/i.test(url) || /gzip/.test(ct);
-
-  if (looksGzip && 'DecompressionStream' in window) {
-    stream = stream.pipeThrough(new DecompressionStream('gzip'));
+  if (looksGzip) {
+    if ('DecompressionStream' in window) {
+      stream = stream.pipeThrough(new DecompressionStream('gzip'));
+    } else {
+      throw new Error('Browser lacks DecompressionStream for .gz');
+    }
   }
 
   const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
@@ -301,210 +303,6 @@ async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
   let batch = [];
   let inserted = 0;
   els.status.textContent = 'Indexing remote cards…';
-
-  await db.transaction('rw', db.cards, async () => {
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      leftover += value;
-      let idx;
-      while ((idx = leftover.indexOf('\n')) >= 0) {
-        const line = leftover.slice(0, idx).trim();
-        leftover = leftover.slice(idx + 1);
-        if (!line) continue;
-        try {
-          const raw = JSON.parse(line);
-          // reuse your normalizeCard
-          batch.push(normalizeCard(raw));
-          if (batch.length >= CHUNK) {
-            await db.cards.bulkPut(batch); inserted += batch.length; batch = [];
-            els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100));
-            els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
-            await sleep(0);
-          }
-        } catch {}
-      }
-    }
-    if (leftover.trim()) {
-      try { const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); } catch {}
-    }
-    if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
-  });
-
-  els.importProgress.value = 100;
-  els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
-  els.status.textContent = 'Remote import complete';
-  await refreshStats();
-
-  if (headMeta) saveHeadMeta(url, headMeta);
-}
-
-// Kick off automatically on load
-window.addEventListener('DOMContentLoaded', async () => {
-  try { await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged: true }); }
-  catch (e) {
-    console.error(e);
-    els.status.textContent = 'Remote import failed (see console).';
-  }
-});
-
-// Force reindex button (normal click = reindex; Alt-click = full rebuild)
-els.btnUpdateDB.addEventListener('click', async (e) => {
-  const fullRebuild = e.altKey; // hold Alt to clear DB first
-  const msg = fullRebuild
-    ? 'This will CLEAR the local card database, then re-download and re-index.\nYour collection quantities are kept.\nProceed?'
-    : 'Re-index from the remote NDJSON now? (Skips HEAD check and imports even if unchanged.)';
-
-  if (!confirm(msg)) return;
-
-  try {
-    if (fullRebuild) {
-      els.status.textContent = 'Clearing local card DB…';
-      await db.cards.clear();
-      await refreshStats();
-    }
-    els.status.textContent = fullRebuild ? 'Rebuilding database…' : 'Updating database…';
-    await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged: false });
-    els.status.textContent = 'Update complete.';
-    await refreshStats();
-    // Optionally re-run the current search so results refresh right away
-    try { await search(); } catch {}
-  } catch (err) {
-    console.error(err);
-    els.status.textContent = 'Update failed — see console.';
-    alert('Update failed. Check the console for details.');
-  }
-});
-
-
-// Auto-load on visit (only if remote changed OR DB is empty)
-window.addEventListener('DOMContentLoaded', async () => {
-  const url = localStorage.getItem('ndjson_url');
-  const autoload = localStorage.getItem('ndjson_autoload') === '1';
-  if (!autoload || !url) return;
-  try {
-    const count = await db.cards.count();
-    const skip = await isRemoteUnchanged(url);
-    if (skip && count > 0) {
-      els.status.textContent = 'Remote file unchanged; using existing index.';
-      return;
-    }
-  } catch (e) {
-    console.warn('HEAD check failed, importing anyway:', e);
-  }
-  await importNDJSONFromURL(url, { skipIfUnchanged: false });
-});
-
-
-// -------------------- First-load tip --------------------
-(function setupTip(){
-  const key = 'mtg_scanner_tip_dismissed';
-  if (!localStorage.getItem(key)) {
-    els.tipBox.style.display = '';
-  }
-  els.tipDismiss.addEventListener('click', () => {
-    els.tipBox.style.display = 'none';
-    localStorage.setItem(key, '1');
-  });
-})();
-
-// -------------------- Utils --------------------
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
-
-function stripSepAndBOM(text){
-  // Remove BOM and a leading 'sep=,' line (or any single-char sep directive)
-  if (!text) return text;
-  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-  const firstLineEnd = text.indexOf('\n');
-  const firstLine = firstLineEnd >= 0 ? text.slice(0, firstLineEnd).trim() : text.trim();
-  if (/^sep\s*=\s*./i.test(firstLine)) {
-    text = firstLineEnd >= 0 ? text.slice(firstLineEnd+1) : '';
-  }
-  return text;
-}
-
-function headKey(url){ return `ndjson_head::${url}`; }
-
-async function getRemoteHead(url){
-  const resp = await fetch(url, {
-    method: 'HEAD',
-    mode: 'cors',
-    cache: 'no-store',  // ask CDN/origin for fresh headers
-    redirect: 'follow'
-  });
-  if (!resp.ok && resp.status !== 304) {
-    throw new Error(`HEAD ${resp.status} ${resp.statusText}`);
-  }
-  return {
-    etag: resp.headers.get('etag') || '',
-    last: resp.headers.get('last-modified') || '',
-    len: resp.headers.get('content-length') || ''
-  };
-}
-
-function saveHeadMeta(url, meta){
-  try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch {}
-}
-
-function loadHeadMeta(url){
-  try { return JSON.parse(localStorage.getItem(headKey(url)) || 'null'); } catch { return null; }
-}
-
-async function isRemoteUnchanged(url){
-  const remote = await getRemoteHead(url);
-  const prev = loadHeadMeta(url);
-  if (!prev) return false; // never imported before
-  // Prefer ETag; fall back to Last-Modified
-  if (remote.etag && prev.etag) return remote.etag === prev.etag;
-  if (remote.last && prev.last) return remote.last === prev.last;
-  // No comparable signal -> assume changed to be safe
-  return false;
-}
-
-async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
-  els.importBox.style.display = '';
-  els.importProgress.value = 0;
-  els.importNote.textContent = `Fetching ${url} …`;
-
-  // Optional early exit
-  if (skipIfUnchanged) {
-    try {
-      const skip = await isRemoteUnchanged(url);
-      const count = await db.cards.count();
-      if (skip && count > 0) {
-        els.importProgress.value = 100;
-        els.importNote.textContent = 'Remote file unchanged; skipped re-index.';
-        els.status.textContent = 'Remote unchanged; using existing DB';
-        return;
-      }
-    } catch (e) {
-      console.warn('HEAD check failed; continuing with import:', e);
-    }
-  }
-
-  // Pull headers up front (to save for later)
-  let headMeta = null;
-  try { headMeta = await getRemoteHead(url); } catch {}
-
-  const resp = await fetch(url, { mode: 'cors', cache: 'no-store', redirect: 'follow' });
-  if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
-
-  let stream = resp.body;
-  const ct = resp.headers.get('content-type') || '';
-  const looksGzip = /\.gz($|\?)/i.test(url) || /gzip/.test(ct);
-
-  if (looksGzip && 'DecompressionStream' in window) {
-    stream = stream.pipeThrough(new DecompressionStream('gzip'));
-  }
-
-  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
-
-  const CHUNK = 200;
-  let leftover = '';
-  let batch = [];
-  let inserted = 0;
-  els.status.textContent = 'Indexing (remote)…';
 
   await db.transaction('rw', db.cards, async () => {
     for (;;) {
@@ -541,10 +339,57 @@ async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
   els.status.textContent = 'Remote import complete';
   await refreshStats();
 
-  // Persist the head meta so next time we can skip
   if (headMeta) saveHeadMeta(url, headMeta);
 }
 
+// Kick off automatically on load (tries .gz, falls back to plain)
+window.addEventListener('DOMContentLoaded', async () => {
+  try { await importNDJSONFromURL(pickBestUrl(), { skipIfUnchanged: true }); }
+  catch (e) {
+    console.error(e);
+    els.status.textContent = 'Remote import failed.';
+    els.importNote.textContent = `Error: ${e?.message || e}`;
+  }
+});
+
+// Force reindex button (normal click = reindex; Alt-click = full rebuild)
+els.btnUpdateDB.addEventListener('click', async (e) => {
+  const fullRebuild = e.altKey;
+  const msg = fullRebuild
+    ? 'This will CLEAR the local card database, then re-download and re-index.\nYour collection quantities are kept.\nProceed?'
+    : 'Re-index from the remote NDJSON now? (Skips HEAD check and imports even if unchanged.)';
+  if (!confirm(msg)) return;
+
+  try {
+    if (fullRebuild) {
+      els.status.textContent = 'Clearing local card DB…';
+      await db.cards.clear();
+      await refreshStats();
+    }
+    els.status.textContent = fullRebuild ? 'Rebuilding database…' : 'Updating database…';
+    await importNDJSONFromURL(pickBestUrl(), { skipIfUnchanged: false });
+    els.status.textContent = 'Update complete.';
+    await refreshStats();
+    try { await search(); } catch {}
+  } catch (err) {
+    console.error(err);
+    els.status.textContent = 'Update failed.';
+    els.importNote.textContent = `Error: ${err?.message || err}`;
+    alert('Update failed.');
+  }
+});
+
+/* -------------------- CSV utils + parser -------------------- */
+function stripSepAndBOM(text){
+  if (!text) return text;
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const firstLineEnd = text.indexOf('\n');
+  const firstLine = firstLineEnd >= 0 ? text.slice(0, firstLineEnd).trim() : text.trim();
+  if (/^sep\s*=\s*./i.test(firstLine)) {
+    text = firstLineEnd >= 0 ? text.slice(firstLineEnd+1) : '';
+  }
+  return text;
+}
 
 // RFC4180-ish CSV parser (handles quotes, BOM, and 'sep=,' directive)
 function parseCSV(text) {
@@ -571,15 +416,15 @@ function parseCSV(text) {
   return rows;
 }
 
-// -------------------- Card helpers --------------------
+/* -------------------- Card helpers -------------------- */
 function normalizeCard(raw) {
-  const img = raw.image_uris?.["normal"] || raw.card_faces?.[0]?.image_uris?.["normal"] || null;
-  const oracle_text = raw.oracle_text || raw.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n') || '';
-  const mana_cost = raw.mana_cost || raw.card_faces?.map(f => f.mana_cost).filter(Boolean).join(' // ') || '';
+  const img = raw.image_uris?.normal || raw.card_faces?.[0]?.image_uris?.normal || null;
+  const oracle_text = raw.oracle_text || (raw.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n')) || '';
+  const mana_cost = raw.mana_cost || (raw.card_faces?.map(f => f.mana_cost).filter(Boolean).join(' // ')) || '';
   const type_line = raw.type_line || (raw.card_faces?.map(f => f.type_line).join(' // ')) || '';
-  const power = raw.power || raw.card_faces?.[0]?.power || null;
-  const toughness = raw.toughness || raw.card_faces?.[0]?.toughness || null;
-  const loyalty = raw.loyalty || raw.card_faces?.[0]?.loyalty || null;
+  const power = raw.power ?? raw.card_faces?.[0]?.power ?? null;
+  const toughness = raw.toughness ?? raw.card_faces?.[0]?.toughness ?? null;
+  const loyalty = raw.loyalty ?? raw.card_faces?.[0]?.loyalty ?? null;
   const { name, id, set, set_name, rarity, color_identity = [] } = raw;
   const subtype = (type_line.split('—')[1] || '').trim();
   return {
@@ -607,8 +452,10 @@ function cardKingdomURL(card) {
 }
 
 function renderCardCard(card, qty=0) {
-  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
-  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>` : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
+  const colors = (card.color_identity?.length ? card.color_identity : ['C'])
+    .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
+  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>`
+            : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
   const mc = card.mana_cost ? `<span class="stat" title="Mana Cost">${card.mana_cost}</span>` : '';
   const rare = card.rarity ? `<span class="chip">${card.rarity}</span>` : '';
   const type = `<span class="chip">${card.type_line}</span>`;
@@ -645,9 +492,9 @@ function renderCardCard(card, qty=0) {
 
 // Quick lookup map for Temp Page
 window.__cardsById = {};
-
 function buildTempPageHTML(card){
-  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c => `<span class="dot ${c}"></span>`).join('');
+  const colors = (card.color_identity?.length ? card.color_identity : ['C'])
+    .map(c => `<span class="dot ${c}"></span>`).join('');
   const pt = card.power || card.toughness ? `${card.power ?? ''}/${card.toughness ?? ''}` : (card.loyalty ? `Loyalty ${card.loyalty}` : '');
   const tcg = card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : '';
   const ck = `<a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>`;
@@ -692,7 +539,6 @@ function buildTempPageHTML(card){
   </div>
 </div></body></html>`;
 }
-
 function openTempPageById(id){
   const card = window.__cardsById[id];
   if (!card) return;
@@ -718,7 +564,7 @@ async function addToCollection(id, delta){
 }
 window.addToCollection = addToCollection;
 
-// -------------------- Filtering helpers --------------------
+/* -------------------- Filtering helpers -------------------- */
 function colorsMatch(cardCI, selectedColors){
   if (!selectedColors || selectedColors.length === 0) return true;
   const sel = new Set(selectedColors);
@@ -726,11 +572,11 @@ function colorsMatch(cardCI, selectedColors){
   sel.delete('C');
 
   const ci = Array.isArray(cardCI) ? cardCI : [];
-  if (ci.length === 0) return includeC;
-  if (sel.size === 0) return false;
+  if (ci.length === 0) return includeC;       // include colorless only if C is selected
+  if (sel.size === 0) return false;           // user selected only C, so exclude non-colorless here
 
-  for (const c of ci) if (!sel.has(c)) return false;
-  return true;
+  for (const c of ci) if (!sel.has(c)) return false; // disallow extra colors not selected
+  return true; // mono colors in sel, or exact combos subset of sel
 }
 
 function matchCard(card, filters){
@@ -749,7 +595,7 @@ function matchCard(card, filters){
   return true;
 }
 
-// -------------------- Search (collection-only) --------------------
+/* -------------------- Search (collection-only) -------------------- */
 async function search(){
   const filters = {
     name: els.qName.value.trim().toLowerCase(),
@@ -791,9 +637,7 @@ els.btnSearch.addEventListener('click', search);
 ['qName','qText','qType','qSubtype','qRarity'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
 document.querySelectorAll('.ci').forEach(el => el.addEventListener('change', search));
 
-
-
-// -------------------- Export/Import collection (JSON) --------------------
+/* -------------------- Export/Import collection (JSON) -------------------- */
 els.btnExport.addEventListener('click', async () => {
   const all = await db.collection.toArray();
   const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), entries: all }, null, 2)], { type: 'application/json' });
@@ -818,7 +662,7 @@ els.importCollection.addEventListener('change', async (e) => {
   e.target.value='';
 });
 
-// -------------------- CSV import helpers --------------------
+/* -------------------- CSV import helpers -------------------- */
 function selectCardByNameAndSet(candidates, setCode, setName, strict){
   let card = null;
   if (setCode) {
@@ -835,7 +679,7 @@ function selectCardByNameAndSet(candidates, setCode, setName, strict){
   return card;
 }
 
-// -------------------- Unmatched resolver UI --------------------
+/* -------------------- Unmatched resolver UI -------------------- */
 let __unmatchedRows = []; // [{row, name, setCode, setName, qty, resolved:false}]
 
 els.resolveClear.addEventListener('click', () => {
@@ -846,9 +690,7 @@ els.resolveClear.addEventListener('click', () => {
 });
 
 // token helpers for fuzzy suggest
-function tokenizeName(s){
-  return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
-}
+function tokenizeName(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean); }
 function tokenMatchRatio(aName, bName){
   const a = tokenizeName(aName);
   const bSet = new Set(tokenizeName(bName));
@@ -874,7 +716,7 @@ async function renderResolveUnmatched(list){
     const nameLC = item.name.toLowerCase();
     // Exact-name candidates
     let candidates = await db.cards.where('name_lc').equals(nameLC).toArray();
-    // Prefix fallback for double-faced/split/AFR module names, etc.
+    // Prefix fallback for double-faced/split names
     if (!candidates.length){
       candidates = await db.cards.where('name_lc').startsWith(nameLC).toArray();
     }
@@ -1060,7 +902,7 @@ function updateResolveStats(){
   }
 }
 
-// -------------------- Import collection (CSV; additive) --------------------
+/* -------------------- Import collection (CSV; additive) -------------------- */
 els.importCSV.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -1152,7 +994,7 @@ els.importCSV.addEventListener('change', async (e) => {
   e.target.value='';
 });
 
-// -------------------- Clear actions --------------------
+/* -------------------- Clear actions -------------------- */
 els.btnClearDB.addEventListener('click', async () => {
   if (!confirm('Delete ALL cards from local DB? This does NOT remove your collection.')) return;
   await db.cards.clear();
@@ -1171,7 +1013,7 @@ els.btnClearCollection.addEventListener('click', async () => {
 
 refreshStats();
 
-// -------------------- Self-tests --------------------
+/* -------------------- Self-tests -------------------- */
 function runTests(){
   const out = [];
   const pass = (msg) => { out.push(`<div class="test-pass">✔ ${msg}</div>`); console.log('PASS:', msg); };
