@@ -211,23 +211,12 @@ const els = {
   resolveClear: document.getElementById('resolveClear'),
 };
 
-/* ---------- Remote NDJSON autoload: same-origin → release → proxied ---------- */
-/* If you later commit data files to the repo, serve from these same-origin URLs (no CORS): */
-const NDJSON_LOCAL_GZ    = '/data/cards.ndjson.gz';
-const NDJSON_LOCAL_PLAIN = '/data/cards.ndjson';
+/* ---------- Remote NDJSON: same-origin paths ---------- */
+const NDJSON_URL_GZ    = '/db/cards.ndjson.gz';
+const NDJSON_URL_PLAIN = '/db/cards.ndjson';
 
-/* Current GitHub Release assets (CORS-hostile for browsers): */
-const NDJSON_REL_GZ    = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
-const NDJSON_REL_PLAIN = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson';
-
-/* Public proxy fallback for Releases (binary-safe, streaming): */
-const CORS_PROXIES = [
-  'https://cors.isomorphic-git.org/',
-];
-
-function pickBestUrl(){ return ('DecompressionStream' in window) ? NDJSON_REL_GZ : NDJSON_REL_PLAIN; }
-const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
-const fmt = (n)=> (typeof n==='number'? n.toLocaleString(): n);
+function pickBestUrl() {
+  return ('DecompressionStream' in window) ? NDJSON_URL_GZ : NDJSON_URL_PLAIN;
 
 /* HEAD/ETag helpers */
 function headKey(url){ return `ndjson_head::${url}`; }
