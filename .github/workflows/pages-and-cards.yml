@@ -56,18 +56,23 @@ jobs:
           rm -rf public
           mkdir -p public/db
 
-          # Copy the site into public/ WITHOUT copying public/ back into itself.
-          # Using bash globbing instead of rsync to avoid exit 2 recursion edge-cases.
+          # Copy everything except .git, .github, and the public/ we are building.
           shopt -s dotglob extglob
           cp -a !(public|.git|.github) public/
           shopt -u dotglob extglob
 
+          # Ensure Jekyll doesn't try to process the site (serve raw files)
+          touch public/.nojekyll
+
+          # Move generated data into /db
           mv /tmp/cards.ndjson.gz public/db/
+
+          echo "Public tree (top-level):"
+          ls -la public
+          echo "Public tree (/db):"
+          ls -la public/db
           du -h public/db/cards.ndjson.gz
           test -s public/db/cards.ndjson.gz
-
-          echo "Public tree:"
-          ls -la public/db
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
