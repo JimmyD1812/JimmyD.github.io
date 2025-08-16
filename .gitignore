@@ -1,0 +1,23 @@
+# --- data dumps (don’t commit these) ---
+cards.ndjson
+cards.ndjson.gz
+*.ndjson
+*.ndjson.gz
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- optional web build caches (only if you ever add these) ---
+node_modules/
+dist/
+build/
