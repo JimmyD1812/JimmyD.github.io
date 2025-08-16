@@ -1,11 +1,23 @@
-name: Nightly cards.ndjson.gz
+name: Nightly cards.ndjson(.gz)
 
 on:
   schedule:
-    # Scryfall 'default_cards' usually lands around 09:00 UTC.
     - cron: '0 9 * * *'
     - cron: '0 10 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Skip upload (dry run)?'
+        required: false
+        default: 'false'
+      tag:
+        description: 'Release tag to upload (cards or cards-test)'
+        required: false
+        default: 'cards'
+      limit:
+        description: 'For testing: only fetch first N cards (blank = full)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -19,12 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: America/Denver
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # gh CLI reads this
-
-    # Run all shell steps inside apps/mtg-browser/
-    defaults:
-      run:
-        working-directory: apps/mtg-browser
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repo
@@ -36,19 +43,33 @@ jobs:
           python-version: '3.x'
 
       - name: Install deps
+        working-directory: apps/mtg-browser
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Build NDJSON (auto-fetch Scryfall → gzip NDJSON)
+      - name: Build NDJSON (one pass → gz + plain)
+        working-directory: apps/mtg-browser
         run: |
-          # Writes apps/mtg-browser/cards.ndjson.gz
-          python fetch_scryfall_to_ndjson.py --output cards.ndjson.gz
+          LIMIT="${{ github.event.inputs.limit }}"
+          if [ -n "$LIMIT" ]; then
+            python fetch_scryfall_to_ndjson.py --output cards.ndjson.gz --also-plain cards.ndjson --limit "$LIMIT"
+          else
+            python fetch_scryfall_to_ndjson.py --output cards.ndjson.gz --also-plain cards.ndjson
+          fi
+          ls -lh cards.ndjson cards.ndjson.gz || true
 
-      - name: Ensure 'cards' release exists
+      - name: Ensure release exists
         run: |
-          gh release view cards >/dev/null 2>&1 || \
-          gh release create cards -t "Cards data" -n "Nightly auto-update" --latest
+          TAG="${{ github.event.inputs.tag }}"
+          [ -z "$TAG" ] && TAG="cards"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+          gh release create "$TAG" -t "Cards data" -n "Auto-update" --latest
 
-      - name: Upload/replace asset on 'cards' release
-        # Path is relative to working-directory
-        run: gh release upload cards cards.ndjson.gz --clobber
+      - name: Upload/replace assets
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        working-directory: apps/mtg-browser
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          [ -z "$TAG" ] && TAG="cards"
+          gh release upload "$TAG" cards.ndjson.gz --clobber
+          gh release upload "$TAG" cards.ndjson     --clobber
