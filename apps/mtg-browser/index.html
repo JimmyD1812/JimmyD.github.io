@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MTG Collection Browser</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+  <style>
+    :root{
+      --bg:#0b0d0f;--panel:#12161a;--muted:#9aa4ad;--text:#e8edf2;--accent:#6ee7ff;--danger:#ff7d7d;--card:#171c22;--chip:#222a32;--border:#24303a
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial}
+    a{color:var(--accent)}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+    header .title{font-weight:800;letter-spacing:.3px;font-size:22px}
+    .bar{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;text-decoration:none}
+    .btn:hover{border-color:var(--accent)}
+    .btn.danger:hover{border-color:var(--danger)}
+    .ghost{background:transparent}
+    .file{position:relative;overflow:hidden}
+    .file input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px}
+    .panel .head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .panel .body{padding:14px 16px}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .grow{flex:1 1 auto}
+    input[type=text],select{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;width:100%}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--chip);border:1px solid var(--border);padding:4px 8px;border-radius:999px;font-size:12px}
+    .stat{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;background:var(--chip);border:1px solid var(--border);border-radius:999px;font-size:12px}
+    .colors{display:flex;gap:6px}
+    .dot{width:12px;height:12px;border-radius:999px;border:1px solid #0006;box-shadow:0 0 0 1px #0004 inset}
+    .W{background:#f9f5d7}.U{background:#79a6ff}.B{background:#5c5c5c}.R{background:#ff8f8f}.G{background:#67c77a}.C{background:#cbd5e1}
+    .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+    .card img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:#111}
+    .card .meta{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+    .card .line{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .qty{display:flex;align-items:center;gap:6px}
+    .qty input{width:56px;text-align:center}
+    .details{position:sticky;top:16px}
+    progress{width:100%;height:12px;accent-color:var(--accent)}
+    .small{font-size:12px}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
+    .test-pass{color:#9fff9f}
+    .test-fail{color:#ff9f9f}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">🧰 MTG Collection Browser</div>
+      <div class="muted">Local-first • Works offline • Zero backend</div>
+    </header>
+
+    <div class="bar" style="margin-bottom:12px">
+      <label class="btn file">📥 Import Scryfall file (.ndjson or .json)
+        <input id="fileInput" type="file" accept=".json,.ndjson,.txt" />
+      </label>
+      <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
+      <label class="btn file">⬆️ Import Collection (JSON)
+        <input id="importCollection" type="file" accept=".json" />
+      </label>
+      <label class="btn file">📄 Import Collection (CSV)
+        <input id="importCSV" type="file" accept=".csv" />
+      </label>
+      <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database">🗑️ Clear Card DB</button>
+      <button class="btn danger" id="btnClearCollection" title="Clear only your collection quantities">🧹 Clear Collection</button>
+      <div class="muted small">Tip: Prefer <span class="kbd">NDJSON</span> (one card per line) for huge files.</div>
+    </div>
+
+    <div class="grid">
+      <section class="panel details">
+        <div class="head"><strong>Search</strong></div>
+        <div class="body">
+          <div class="row" style="margin-bottom:8px">
+            <input id="qName" type="text" placeholder="Name starts with… (e.g., Fury Sliver)" />
+          </div>
+          <div class="row" style="margin-bottom:8px">
+            <input id="qText" type="text" placeholder="Oracle text contains… (e.g., double strike)" />
+          </div>
+          <div class="row" style="margin-bottom:8px">
+            <select id="qType">
+              <option value="">Any Type</option>
+              <option>Creature</option>
+              <option>Instant</option>
+              <option>Sorcery</option>
+              <option>Artifact</option>
+              <option>Enchantment</option>
+              <option>Planeswalker</option>
+              <option>Land</option>
+            </select>
+            <select id="qRarity">
+              <option value="">Any Rarity</option>
+              <option>common</option>
+              <option>uncommon</option>
+              <option>rare</option>
+              <option>mythic</option>
+            </select>
+            <input id="qSubtype" type="text" placeholder="Subtype (e.g., Sliver)" />
+          </div>
+          <div class="row" style="margin-bottom:8px">
+            <div class="colors">
+              <label class="chip"><input type="checkbox" class="ci" value="W"> <span class="dot W"></span> W</label>
+              <label class="chip"><input type="checkbox" class="ci" value="U"> <span class="dot U"></span> U</label>
+              <label class="chip"><input type="checkbox" class="ci" value="B"> <span class="dot B"></span> B</label>
+              <label class="chip"><input type="checkbox" class="ci" value="R"> <span class="dot R"></span> R</label>
+              <label class="chip"><input type="checkbox" class="ci" value="G"> <span class="dot G"></span> G</label>
+              <label class="chip"><input type="checkbox" class="ci" value="C"> <span class="dot C"></span> C</label>
+            </div>
+            <button class="btn" id="btnSearch">Search</button>
+          </div>
+          <div class="muted small" id="dbStats">DB: — cards • Collection: — entries</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="head">
+          <strong>Results</strong>
+          <div class="muted small" id="status">Ready.</div>
+        </div>
+        <div class="body">
+          <div id="importBox" class="muted small" style="display:none; margin-bottom:12px">
+            <div>Importing… <progress id="importProgress" max="100" value="0"></progress></div>
+            <div id="importNote" class="muted small"></div>
+          </div>
+          <div id="csvBox" class="muted small" style="display:none; margin-bottom:12px">
+            <div>Importing CSV… <progress id="csvProgress" max="100" value="0"></progress></div>
+            <div id="csvNote" class="muted small"></div>
+          </div>
+          <div id="results" class="results"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><strong>Tests</strong></div>
+        <div class="body">
+          <div class="row">
+            <button class="btn" id="btnRunTests">Run Self-Tests</button>
+            <div class="muted small">(Console also logs details)</div>
+          </div>
+          <div id="testOut" class="small" style="margin-top:8px"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+// -------------------- IndexedDB (Dexie) --------------------
+const db = new Dexie('mtgDB');
+// Indexes: id (primary), name_lc, rarity, set, set_name, type_lc, subtype_lc, color_identity (multiEntry)
+db.version(1).stores({
+  cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
+  collection: 'id, qty'
+});
+
+// -------------------- Element refs --------------------
+const els = {
+  file: document.getElementById('fileInput'),
+  importBox: document.getElementById('importBox'),
+  importProgress: document.getElementById('importProgress'),
+  importNote: document.getElementById('importNote'),
+  status: document.getElementById('status'),
+  results: document.getElementById('results'),
+  qName: document.getElementById('qName'),
+  qText: document.getElementById('qText'),
+  qType: document.getElementById('qType'),
+  qSubtype: document.getElementById('qSubtype'),
+  qRarity: document.getElementById('qRarity'),
+  btnSearch: document.getElementById('btnSearch'),
+  dbStats: document.getElementById('dbStats'),
+  btnExport: document.getElementById('btnExport'),
+  importCollection: document.getElementById('importCollection'),
+  importCSV: document.getElementById('importCSV'),
+  csvBox: document.getElementById('csvBox'),
+  csvProgress: document.getElementById('csvProgress'),
+  csvNote: document.getElementById('csvNote'),
+  btnClearDB: document.getElementById('btnClearDB'),
+  btnClearCollection: document.getElementById('btnClearCollection'),
+  btnRunTests: document.getElementById('btnRunTests'),
+  testOut: document.getElementById('testOut'),
+};
+
+// -------------------- Utils --------------------
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
+
+// RFC4180-ish CSV parser (handles quotes, commas, CRLF)
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; } // escaped quote
+        else { inQuotes = false; }
+      } else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r') { /* ignore CR */ }
+      else { field += c; }
+    }
+  }
+  row.push(field);
+  if (row.length && (row.length > 1 || row[0] !== '')) rows.push(row);
+  return rows;
+}
+
+// -------------------- Card helpers --------------------
+function normalizeCard(raw) {
+  const img = raw.image_uris?.normal || raw.card_faces?.[0]?.image_uris?.normal || null;
+  const oracle_text = raw.oracle_text || raw.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n') || '';
+  const mana_cost = raw.mana_cost || raw.card_faces?.map(f => f.mana_cost).filter(Boolean).join(' // ') || '';
+  const type_line = raw.type_line || (raw.card_faces?.map(f => f.type_line).join(' // ')) || '';
+  const power = raw.power || raw.card_faces?.[0]?.power || null;
+  const toughness = raw.toughness || raw.card_faces?.[0]?.toughness || null;
+  const loyalty = raw.loyalty || raw.card_faces?.[0]?.loyalty || null;
+  const { name, id, set, set_name, rarity, color_identity = [] } = raw;
+  const subtype = (type_line.split('—')[1] || '').trim();
+  return {
+    id, name, name_lc: name.toLowerCase(),
+    set, set_name: set_name || '',
+    rarity: rarity || '',
+    image: img, oracle_text, mana_cost,
+    cmc: raw.cmc ?? null,
+    type_line,
+    type_lc: type_line.toLowerCase(),
+    subtype_lc: subtype.toLowerCase(),
+    colors: raw.colors || [],
+    color_identity,
+    power, toughness, loyalty,
+    collector_number: raw.collector_number || '',
+    purchase_uris: raw.purchase_uris || {},
+    scryfall_uri: raw.scryfall_uri || '',
+  };
+}
+
+function cardKingdomURL(card) {
+  const name = encodeURIComponent(card.name);
+  const set = encodeURIComponent(card.set_name || '');
+  return `https://www.cardkingdom.com/catalog/search?search=mtg_advanced&name=${name}&filter%5Bedition%5D=${set}`;
+}
+
+function renderCardCard(card, qty=0) {
+  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
+  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>` : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
+  const mc = card.mana_cost ? `<span class="stat" title="Mana Cost">${card.mana_cost}</span>` : '';
+  const rare = card.rarity ? `<span class="chip">${card.rarity}</span>` : '';
+  const type = `<span class="chip">${card.type_line}</span>`;
+  return `
+    <div class="card">
+      <img loading="lazy" alt="${card.name}" src="${card.image || ''}" onerror="this.src=''; this.style.background='#0b0d0f'">
+      <div class="meta">
+        <div class="line"><strong>${card.name}</strong> <span class="colors">${colors}</span></div>
+        <div class="line"><span class="muted small">${card.set_name || ''} ${card.collector_number ? `• #${card.collector_number}` : ''}</span> ${rare}</div>
+        <div class="line small">${type}</div>
+        <div class="small" style="white-space:pre-wrap">${(card.oracle_text || '').replaceAll('{', '<span class=chip>{').replaceAll('}', '}</span>')}</div>
+        <div class="line">
+          <div class="row">
+            ${pt}
+            ${mc}
+          </div>
+          <div class="qty">
+            <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
+            <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
+            <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
+          </div>
+        </div>
+        <div class="row" style="justify-content:space-between">
+          <div class="row">
+            <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
+            ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
+            <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
+          </div>
+          <button class="btn" onclick="openTempPageById('${card.id}')">Temp Page</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Quick lookup map for Temp Page
+window.__cardsById = {};
+
+function buildTempPageHTML(card){
+  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c => `<span class="dot ${c}"></span>`).join('');
+  const pt = card.power || card.toughness ? `${card.power ?? ''}/${card.toughness ?? ''}` : (card.loyalty ? `Loyalty ${card.loyalty}` : '');
+  const tcg = card.purchase_uris?.tcgplayer ? `<a class=\"btn\" href=\"${card.purchase_uris.tcgplayer}\" target=\"_blank\">TCGplayer</a>` : '';
+  const ck = `<a class=\"btn\" href=\"${cardKingdomURL(card)}\" target=\"_blank\">Card Kingdom</a>`;
+  return `<!doctype html>
+<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${card.name} — Deck View</title>
+<style>
+  body{margin:0;background:#0b0d0f;color:#e8edf2;font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:16px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:#12161a;border:1px solid #24303a;border-radius:14px;overflow:hidden}
+  .img{background:#0d1117;display:block}
+  img{width:100%;display:block;aspect-ratio:3/4;object-fit:contain}
+  .body{padding:14px 16px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{background:#222a32;border:1px solid #24303a;padding:4px 8px;border-radius:999px;font-size:12px}
+  .dot{width:12px;height:12px;border-radius:999px;border:1px solid #0006;display:inline-block;margin-right:6px}
+  .W{background:#f9f5d7}.U{background:#79a6ff}.B{background:#5c5c5c}.R{background:#ff8f8f}.G{background:#67c77a}.C{background:#cbd5e1}
+  .btn{background:#171c22;border:1px solid #24303a;color:#e8edf2;padding:8px 12px;border-radius:10px;text-decoration:none}
+  .btn:hover{border-color:#6ee7ff}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  pre{white-space:pre-wrap}
+</style></head>
+<body><div class="wrap">
+  <h2 style="margin:0 0 12px 0">${card.name}</h2>
+  <div class="grid">
+    <div class="panel img">${card.image ? `<img alt="${card.name}" src="${card.image}">` : ''}</div>
+    <div class="panel"><div class="body">
+      <div class="row" style="justify-content:space-between">
+        <div class="chips">${colors}</div>
+        <div class="chip">${card.rarity || ''}</div>
+      </div>
+      <div class="chip" style="margin-top:10px">${card.type_line || ''}</div>
+      ${card.mana_cost ? `<div class="chip" style="margin-top:10px">${card.mana_cost}</div>`:''}
+      ${pt ? `<div class="chip" style="margin-top:10px">${pt}</div>`:''}
+      <h3 style="margin-top:18px">Text</h3>
+      <pre>${(card.oracle_text||'')}</pre>
+      <div class="row" style="margin-top:14px"><a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>${tcg}${ck}</div>
+      <div style="margin-top:8px;color:#9aa4ad;font-size:12px">${card.set_name || ''} ${card.collector_number ? `• #${card.collector_number}` : ''}</div>
+    </div></div>
+  </div>
+</div></body></html>`;
+}
+
+function openTempPageById(id){
+  const card = window.__cardsById[id];
+  if (!card) return;
+  const w = window.open('about:blank','_blank');
+  w.document.open('text/html','replace');
+  w.document.write(buildTempPageHTML(card));
+  w.document.close();
+}
+
+async function refreshStats(){
+  const cardCount = await db.cards.count();
+  const collCount = await db.collection.count();
+  els.dbStats.textContent = `DB: ${fmt(cardCount)} cards • Collection: ${fmt(collCount)} entries`;
+}
+
+async function addToCollection(id, delta){
+  const cur = await db.collection.get(id) || { id, qty: 0 };
+  cur.qty = Math.max(0, (cur.qty || 0) + delta);
+  if (cur.qty === 0) await db.collection.delete(id); else await db.collection.put(cur);
+  const input = document.getElementById('qty-'+id);
+  if (input) input.value = cur.qty;
+  refreshStats();
+}
+window.addToCollection = addToCollection;
+
+async function search(){
+  const name = els.qName.value.trim().toLowerCase();
+  const text = els.qText.value.trim().toLowerCase();
+  const type = els.qType.value;
+  const subtype = els.qSubtype.value.trim().toLowerCase();
+  const rarity = els.qRarity.value;
+  const cis = Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value);
+
+  els.status.textContent = 'Searching…';
+
+  let base = null;
+  if (name) base = db.cards.where('name_lc').startsWith(name);
+  else if (rarity) base = db.cards.where('rarity').equals(rarity);
+  else base = db.cards.toCollection();
+
+  const limit = 200;
+  const out = [];
+  const coll = await db.collection.toArray();
+  const qtyMap = Object.fromEntries(coll.map(c=>[c.id, c.qty]));
+
+  await base.each(card => {
+    if (out.length >= limit) return;
+    if (type && !card.type_lc.includes(type.toLowerCase())) return;
+    if (subtype && !card.subtype_lc.includes(subtype)) return;
+    if (rarity && card.rarity !== rarity) return;
+    if (cis.length) {
+      const set = new Set(card.color_identity && card.color_identity.length ? card.color_identity : ['C']);
+      for (const need of cis) if (!set.has(need)) return;
+    }
+    if (text && !(card.oracle_text||'').toLowerCase().includes(text)) return;
+    out.push(card);
+  });
+
+  els.results.innerHTML = out.map(c => { window.__cardsById[c.id] = c; return renderCardCard(c, qtyMap[c.id]||0); }).join('');
+  els.status.textContent = `Showing ${out.length} result(s)`;
+}
+
+els.btnSearch.addEventListener('click', search);
+['qName','qText','qType','qSubtype','qRarity'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
+
+document.querySelectorAll('.ci').forEach(el => el.addEventListener('change', search));
+
+// -------------------- Bulk import (NDJSON preferred) --------------------
+els.file.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  els.importBox.style.display = '';
+  els.importNote.textContent = `Reading ${file.name} (${fmt(file.size)} bytes)…`;
+  els.importProgress.value = 0;
+
+  const CHUNK = 200;
+  let inserted = 0;
+
+  const isLikelyNDJSON = file.name.endsWith('.ndjson') || file.type === 'application/x-ndjson';
+
+  await db.transaction('rw', db.cards, async () => {
+    if (isLikelyNDJSON) {
+      const stream = file.stream().pipeThrough(new TextDecoderStream());
+      const reader = stream.getReader();
+      let leftover = '';
+      let batch = [];
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        leftover += value;
+        let idx;
+        while ((idx = leftover.indexOf('\n')) >= 0) {
+          const line = leftover.slice(0, idx).trim();
+          leftover = leftover.slice(idx + 1);
+          if (!line) continue;
+          try {
+            const raw = JSON.parse(line);
+            batch.push(normalizeCard(raw));
+            if (batch.length >= CHUNK) {
+              await db.cards.bulkPut(batch); inserted += batch.length; batch = [];
+              els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100));
+              els.importNote.textContent = `Indexed ${fmt(inserted)} cards…`;
+              await sleep(0);
+            }
+          } catch {}
+        }
+      }
+      if (leftover.trim()) {
+        try { const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); } catch {}
+      }
+      if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
+    } else {
+      const text = await file.text();
+      let data; try { data = JSON.parse(text); } catch { alert('Could not parse JSON. Prefer NDJSON for large files.'); return; }
+      const arr = Array.isArray(data) ? data : (data.data || []);
+      let batch = [];
+      for (const raw of arr) {
+        batch.push(normalizeCard(raw));
+        if (batch.length >= CHUNK) { await db.cards.bulkPut(batch); inserted += batch.length; batch = []; els.importNote.textContent = `Indexed ${fmt(inserted)}…`; await sleep(0); }
+      }
+      if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
+    }
+  });
+
+  els.importProgress.value = 100;
+  els.importNote.textContent = `Done. Indexed ${fmt(inserted)} cards.`;
+  await refreshStats();
+  els.status.textContent = 'Import complete';
+  e.target.value = '';
+});
+
+// -------------------- Export/Import collection (JSON) --------------------
+els.btnExport.addEventListener('click', async () => {
+  const all = await db.collection.toArray();
+  const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), entries: all }, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'mtg-collection.json' });
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+});
+
+els.importCollection.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const text = await file.text();
+  try {
+    const data = JSON.parse(text);
+    const entries = Array.isArray(data) ? data : (data.entries || []);
+    await db.collection.clear();
+    await db.collection.bulkPut(entries);
+    await refreshStats();
+    els.status.textContent = `Imported ${fmt(entries.length)} collection entries.`;
+  } catch {
+    alert('Could not parse collection JSON');
+  }
+  e.target.value='';
+});
+
+// -------------------- Import collection (CSV; additive) --------------------
+els.importCSV.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  els.csvBox.style.display = '';
+  els.csvProgress.value = 0;
+  els.csvNote.textContent = `Reading ${file.name}…`;
+  try {
+    const text = await file.text();
+    const rows = parseCSV(text);
+    if (!rows.length) { els.csvNote.textContent = 'No rows found.'; e.target.value=''; return; }
+    const headerRaw = rows[0].map(h => (h||'').trim());
+    const header = headerRaw.map(h => h.toLowerCase().replace(/[^a-z0-9]/g,''));
+    const col = (name) => header.indexOf(name.toLowerCase().replace(/[^a-z0-9]/g,''));
+    const iName = col('cardname');
+    const iQty = col('quantity');
+    const iSetCode = col('setcode');
+    const iSetName = col('setname');
+    const iDate = col('datebought'); // parsed but not stored yet
+    if (iName === -1 || iQty === -1) { alert('CSV must include at least Card Name and Quantity columns.'); e.target.value=''; return; }
+
+    const increments = {}; // id -> qty
+    const unmatched = [];
+    const totalRows = rows.length - 1;
+    let processed = 0;
+
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r];
+      if (!row || !row.length) continue;
+      const name = (row[iName] || '').trim();
+      const qty = parseInt((row[iQty] || '0').trim(), 10) || 0;
+      const setCode = iSetCode >= 0 ? (row[iSetCode] || '').trim() : '';
+      const setName = iSetName >= 0 ? (row[iSetName] || '').trim() : '';
+      // const dateBought = iDate >= 0 ? (row[iDate] || '').trim() : '';
+      if (!name || qty <= 0) { processed++; continue; }
+
+      const candidates = await db.cards.where('name_lc').equals(name.toLowerCase()).toArray();
+      let card = null;
+      if (candidates.length) {
+        if (setCode) {
+          const sc = setCode.toLowerCase();
+          card = candidates.find(c => (c.set||'').toLowerCase() === sc) || null;
+        }
+        if (!card && setName) {
+          const sn = setName.toLowerCase();
+          card = candidates.find(c => (c.set_name||'').toLowerCase() === sn) || null;
+        }
+        if (!card) card = candidates[0];
+      }
+      if (!card) unmatched.push({ name, setCode, setName, qty });
+      else increments[card.id] = (increments[card.id] || 0) + qty;
+
+      processed++;
+      if (processed % 50 === 0 || processed === totalRows) {
+        els.csvProgress.value = Math.round((processed/Math.max(1,totalRows))*100);
+        els.csvNote.textContent = `Matched ${Object.keys(increments).length} unique cards; ${unmatched.length} unmatched…`;
+        await sleep(0);
+      }
+    }
+
+    // Apply increments
+    const ids = Object.keys(increments);
+    await db.transaction('rw', db.collection, async () => {
+      for (const id of ids) {
+        const cur = await db.collection.get(id) || { id, qty: 0 };
+        cur.qty += increments[id];
+        await db.collection.put(cur);
+      }
+    });
+
+    els.csvProgress.value = 100;
+    const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
+    els.csvNote.textContent = `Imported ${ids.length} unique cards; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
+    await refreshStats();
+    if (unmatched.length) {
+      const blob = new Blob([JSON.stringify({ unmatched }, null, 2)], { type: 'application/json' });
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'unmatched-rows.json' });
+      a.textContent = 'Download unmatched rows'; a.className = 'btn';
+      const div = document.createElement('div'); div.style.marginTop = '8px'; div.appendChild(a); els.csvBox.appendChild(div);
+    }
+    els.status.textContent = 'CSV import complete.';
+    search();
+  } catch (err) {
+    console.error(err);
+    alert('Failed to import CSV.');
+  }
+  e.target.value='';
+});
+
+// -------------------- Clear actions --------------------
+els.btnClearDB.addEventListener('click', async () => {
+  if (!confirm('Delete ALL cards from local DB? This does NOT remove your collection.')) return;
+  await db.cards.clear();
+  await refreshStats();
+  els.results.innerHTML = '';
+  els.status.textContent = 'Cleared DB.';
+});
+
+els.btnClearCollection.addEventListener('click', async () => {
+  if (!confirm('Clear your collection quantities?')) return;
+  await db.collection.clear();
+  await refreshStats();
+  document.querySelectorAll('.qty-in').forEach(el=>el.value=0);
+  els.status.textContent = 'Cleared collection.';
+});
+
+refreshStats();
+
+// -------------------- Self-tests --------------------
+function runTests(){
+  const out = [];
+  const pass = (msg) => { out.push(`<div class=\"test-pass\">✔ ${msg}</div>`); console.log('PASS:', msg); };
+  const fail = (msg) => { out.push(`<div class=\"test-fail\">✘ ${msg}</div>`); console.error('FAIL:', msg); };
+  try {
+    // CSV basic test (user sample)
+    const csv = `Folder Name,Quantity,Trade Quantity,Card Name,Set Code,Set Name,Card Number,Condition,Printing,Language,Price Bought,Date Bought,LOW,MID,MARKET\nrandom box,1,0,Abnormal Endurance,M19,Core Set 2019,85,NearMint,Normal,English,0.04,2025-06-16,0.01,0.25,0.08\n`;
+    const rows = parseCSV(csv);
+    const h = rows[0];
+    const r = rows[1];
+    if (rows.length===2 && h[1]==='Quantity' && r[1]==='1' && r[3]==='Abnormal Endurance' && r[4]==='M19' && r[5]==='Core Set 2019' && r[11]==='2025-06-16') pass('CSV parse: sample row parsed correctly');
+    else fail('CSV parse: sample row mismatch');
+
+    // CSV quoted/commas test
+    const csv2 = 'Card Name,Quantity\n"Goblin, Ringleader",2\n';
+    const rows2 = parseCSV(csv2);
+    if (rows2[1][0]==='Goblin, Ringleader' && rows2[1][1]==='2') pass('CSV parse: quoted comma field handled'); else fail('CSV parse: quoted comma failed');
+
+    // Temp page HTML build test
+    const mock = { name:'Fury Sliver', image:'https://example/img.jpg', rarity:'uncommon', type_line:'Creature — Sliver', mana_cost:'{5}{R}', power:'3', toughness:'3', oracle_text:'All Sliver creatures have double strike.', color_identity:['R'], set_name:'Time Spiral', collector_number:'157', purchase_uris:{tcgplayer:'https://tcg'}, scryfall_uri:'https://scry'};
+    const html = buildTempPageHTML(mock);
+    if (html.includes('Fury Sliver') && html.includes('Card Kingdom') && html.includes('All Sliver creatures')) pass('Temp page HTML contains key fields'); else fail('Temp page HTML missing fields');
+
+  } catch (e) { fail('Unexpected error: '+e.message); }
+  els.testOut.innerHTML = out.join('');
+}
+els.btnRunTests.addEventListener('click', runTests);
+</script>
+</body>
+</html>
