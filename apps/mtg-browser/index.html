@@ -48,7 +48,6 @@
     .small{font-size:12px}
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Monaco,monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
     .test-pass{color:#9fff9f}.test-fail{color:#ff9f9f}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--chip);margin:6px 6px 0 0}
     .muted2{color:#8b95a1}
   </style>
 </head>
@@ -149,7 +148,7 @@
             </div>
             <div class="body">
               <div class="muted small" style="margin-bottom:8px">
-                We couldn't match these CSV rows. Pick the correct set for each card (based on your local Scryfall DB). If we detect a printing on <strong>PLST — The List</strong>, we will auto-select it and let you know for 2s.
+                We couldn't match these CSV rows. Pick the correct set for each card (based on your local Scryfall DB). If a printing exists on <strong>PLST — The List</strong>, we auto-select it and don’t show this row.
               </div>
               <div id="resolveList" class="small"></div>
             </div>
@@ -250,15 +249,6 @@ function parseCSV(text) {
   row.push(field);
   if (row.length && (row.length > 1 || row[0] !== '')) rows.push(row);
   return rows;
-}
-
-// Small toast/pill helper (2s)
-function showEphemeral(parent, text){
-  const pill = document.createElement('div');
-  pill.className = 'pill';
-  pill.textContent = text;
-  parent.appendChild(pill);
-  setTimeout(() => { pill.remove(); }, 2000);
 }
 
 // -------------------- Card helpers --------------------
@@ -611,6 +601,35 @@ async function renderResolveUnmatched(list){
   updateResolveStats();
 
   for (const item of __unmatchedRows){
+    // Find all printings by name
+    const candidates = await db.cards.where('name_lc').equals(item.name.toLowerCase()).toArray();
+
+    if (!candidates.length){
+      const wrap = document.createElement('div');
+      wrap.style.borderTop = '1px solid var(--border)';
+      wrap.style.padding = '10px 0';
+      wrap.innerHTML = `<div><strong>${item.name}</strong> &nbsp;<span class="muted2">CSV set: ${item.setCode || '(none)'} ${item.setName ? '— '+item.setName : ''}</span> &nbsp;•&nbsp; Qty: ${item.qty} &nbsp;•&nbsp; <span class="muted2">Row ${item.row}</span></div>
+                        <div class="muted small" style="margin-top:6px">Card not recognized in local DB (or wrong name).</div>`;
+      els.resolveList.appendChild(wrap);
+      continue;
+    }
+
+    // Group by set; check PLST first
+    const bySet = new Map();
+    for (const c of candidates){
+      const key = (c.set||'').toUpperCase();
+      if (!bySet.has(key)) bySet.set(key, {set:key, set_name:c.set_name || '', any: c});
+    }
+
+    // Auto-resolve to PLST — The List, and DO NOT render UI for this row
+    if (bySet.has('PLST')) {
+      const v = bySet.get('PLST');
+      await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
+      // No DOM entry; move on
+      continue;
+    }
+
+    // Otherwise render "Pick a set" UI
     const wrap = document.createElement('div');
     wrap.style.borderTop = '1px solid var(--border)';
     wrap.style.padding = '10px 0';
@@ -618,25 +637,6 @@ async function renderResolveUnmatched(list){
     const title = document.createElement('div');
     title.innerHTML = `<strong>${item.name}</strong> &nbsp;<span class="muted2">CSV set: ${item.setCode || '(none)'} ${item.setName ? '— '+item.setName : ''}</span> &nbsp;•&nbsp; Qty: ${item.qty} &nbsp;•&nbsp; <span class="muted2">Row ${item.row}</span>`;
     wrap.appendChild(title);
-
-    const candidates = await db.cards.where('name_lc').equals(item.name.toLowerCase()).toArray();
-
-    if (!candidates.length){
-      const msg = document.createElement('div');
-      msg.className = 'muted small';
-      msg.style.marginTop = '6px';
-      msg.textContent = 'Card not recognized in local DB (or wrong name).';
-      wrap.appendChild(msg);
-      els.resolveList.appendChild(wrap);
-      continue;
-    }
-
-    // Group by set code, keep a representative card for each set
-    const bySet = new Map();
-    for (const c of candidates){
-      const key = (c.set||'').toUpperCase();
-      if (!bySet.has(key)) bySet.set(key, {set:key, set_name:c.set_name || '', any: c});
-    }
 
     const row = document.createElement('div');
     row.style.marginTop = '8px';
@@ -652,38 +652,23 @@ async function renderResolveUnmatched(list){
       btn.textContent = `${v.set} — ${v.set_name || ''}`;
       btn.addEventListener('click', async () => {
         await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
-        row.querySelectorAll('button').forEach(b => b.disabled = true);
-        wrap.style.opacity = 0.75;
+        wrap.remove(); // remove row immediately
       });
       row.appendChild(btn);
     }
 
-    // Skip button
     const skipBtn = document.createElement('button');
     skipBtn.className = 'btn ghost';
     skipBtn.textContent = 'Skip';
     skipBtn.addEventListener('click', () => {
-      item.resolved = true; // skipped but marked done
+      item.resolved = true;
       updateResolveStats();
-      row.querySelectorAll('button').forEach(b => b.disabled = true);
-      wrap.style.opacity = 0.75;
+      wrap.remove(); // remove row immediately
     });
     row.appendChild(skipBtn);
 
     wrap.appendChild(row);
     els.resolveList.appendChild(wrap);
-
-    // -------- Default to PLST — The List if available --------
-    if (bySet.has('PLST')) {
-      const v = bySet.get('PLST');
-      showEphemeral(wrap, 'Defaulted to PLST — The List');
-      // Resolve then disable buttons / fade row
-      // Resolve asynchronously but we don't want duplicate clicks:
-      row.querySelectorAll('button').forEach(b => b.disabled = true);
-      await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
-      wrap.style.opacity = 0.75;
-      // The pill fades itself after 2s via showEphemeral
-    }
   }
 }
 
@@ -704,7 +689,7 @@ function updateResolveStats(){
     setTimeout(() => {
       els.resolveBox.style.display = 'none';
       els.resolveList.innerHTML = '';
-    }, 300);
+    }, 200);
   }
 }
 
