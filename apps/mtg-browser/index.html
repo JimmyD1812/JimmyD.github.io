@@ -49,6 +49,9 @@
     .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Monaco,monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
     .test-pass{color:#9fff9f}.test-fail{color:#ff9f9f}
     .muted2{color:#8b95a1}
+    .inline-msg{font-size:12px;color:var(--muted)}
+    .err{color:#ffb3b3}
+    .suggest{color:#c6f6d5}
   </style>
 </head>
 <body>
@@ -143,12 +146,12 @@
               <strong>Resolve Unmatched Import Rows</strong>
               <div class="row" style="gap:8px;align-items:center">
                 <div class="muted small" id="resolveStats">0 unresolved</div>
-                <button class="btn" id="resolveClear" title="Hide this panel">Clear</button>
+                <button class="btn" id="resolveClear" title="Hide this panel">Clear All</button>
               </div>
             </div>
             <div class="body">
               <div class="muted small" style="margin-bottom:8px">
-                We couldn't match these CSV rows. Pick the correct set for each card (based on your local Scryfall DB). If a printing exists on <strong>PLST — The List</strong>, we auto-select it and don’t show this row.
+                We couldn't match these CSV rows. If a printing exists on <strong>PLST — The List</strong>, we auto-select it and don’t show a row.
               </div>
               <div id="resolveList" class="small"></div>
             </div>
@@ -400,18 +403,17 @@ window.addToCollection = addToCollection;
 
 // -------------------- Filtering helpers --------------------
 function colorsMatch(cardCI, selectedColors){
-  if (!selectedColors || selectedColors.length === 0) return true; // no color filter
+  if (!selectedColors || selectedColors.length === 0) return true;
   const sel = new Set(selectedColors);
   const includeC = sel.has('C');
-  sel.delete('C'); // keep only W U B R G
+  sel.delete('C');
 
   const ci = Array.isArray(cardCI) ? cardCI : [];
-  if (ci.length === 0) return includeC;             // colorless needs C selected
-  if (sel.size === 0) return false;                 // only C selected -> exclude colored
+  if (ci.length === 0) return includeC;
+  if (sel.size === 0) return false;
 
-  // Subset rule: every color on the card must be in the selected set
   for (const c of ci) if (!sel.has(c)) return false;
-  return true; // allows mono and multi within the chosen subset
+  return true;
 }
 
 function matchCard(card, filters){
@@ -588,6 +590,18 @@ els.resolveClear.addEventListener('click', () => {
   __unmatchedRows = [];
 });
 
+function tokenizeName(s){
+  return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);
+}
+function tokenMatchRatio(aName, bName){
+  const a = tokenizeName(aName);
+  const bSet = new Set(tokenizeName(bName));
+  if (!a.length) return 0;
+  let hit = 0;
+  for (const t of a){ if (bSet.has(t)) hit++; }
+  return hit / a.length;
+}
+
 async function renderResolveUnmatched(list){
   __unmatchedRows = list.map(x => ({...x, resolved:false}));
   if (!__unmatchedRows.length){
@@ -610,6 +624,8 @@ async function renderResolveUnmatched(list){
       wrap.style.padding = '10px 0';
       wrap.innerHTML = `<div><strong>${item.name}</strong> &nbsp;<span class="muted2">CSV set: ${item.setCode || '(none)'} ${item.setName ? '— '+item.setName : ''}</span> &nbsp;•&nbsp; Qty: ${item.qty} &nbsp;•&nbsp; <span class="muted2">Row ${item.row}</span></div>
                         <div class="muted small" style="margin-top:6px">Card not recognized in local DB (or wrong name).</div>`;
+      // manual correction row (input/Try/Clear) still shown for invalid-name case
+      addManualCorrectionRow(wrap, item);
       els.resolveList.appendChild(wrap);
       continue;
     }
@@ -625,11 +641,10 @@ async function renderResolveUnmatched(list){
     if (bySet.has('PLST')) {
       const v = bySet.get('PLST');
       await resolveOneUnmatched(item, v.any.id, v.set, v.set_name);
-      // No DOM entry; move on
       continue;
     }
 
-    // Otherwise render "Pick a set" UI
+    // Otherwise render "Pick a set" UI + manual correction row
     const wrap = document.createElement('div');
     wrap.style.borderTop = '1px solid var(--border)';
     wrap.style.padding = '10px 0';
@@ -656,20 +671,111 @@ async function renderResolveUnmatched(list){
       });
       row.appendChild(btn);
     }
-
-    const skipBtn = document.createElement('button');
-    skipBtn.className = 'btn ghost';
-    skipBtn.textContent = 'Skip';
-    skipBtn.addEventListener('click', () => {
-      item.resolved = true;
-      updateResolveStats();
-      wrap.remove(); // remove row immediately
-    });
-    row.appendChild(skipBtn);
-
     wrap.appendChild(row);
+
+    // Manual correction: input + Try + per-row Clear
+    addManualCorrectionRow(wrap, item);
+
     els.resolveList.appendChild(wrap);
   }
+}
+
+function addManualCorrectionRow(wrap, item){
+  const fix = document.createElement('div');
+  fix.className = 'row';
+  fix.style.marginTop = '8px';
+
+  const label = document.createElement('div');
+  label.className = 'muted small';
+  label.textContent = 'Try a set code:';
+  fix.appendChild(label);
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'e.g., TSR, TSP, MB1…';
+  input.style.maxWidth = '140px';
+  fix.appendChild(input);
+
+  const tryBtn = document.createElement('button');
+  tryBtn.className = 'btn';
+  tryBtn.textContent = 'Try';
+  fix.appendChild(tryBtn);
+
+  const message = document.createElement('div');
+  message.className = 'inline-msg';
+  message.style.minHeight = '18px';
+  fix.appendChild(message);
+
+  const spacer = document.createElement('div');
+  spacer.className = 'grow';
+  fix.appendChild(spacer);
+
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'btn ghost';
+  clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', () => {
+    item.resolved = true;
+    updateResolveStats();
+    wrap.remove();
+  });
+  fix.appendChild(clearBtn);
+
+  tryBtn.addEventListener('click', async () => {
+    const codeRaw = (input.value || '').trim();
+    message.textContent = '';
+    if (!codeRaw) { message.innerHTML = `<span class="err">Enter a set code.</span>`; return; }
+    const sc = codeRaw.toLowerCase();
+
+    // 1) Is this set code present at all (in local DB)?
+    const existsAny = await db.cards.where('set').equals(sc).limit(1).count();
+    if (!existsAny){
+      message.innerHTML = `<span class="err">Invalid set code.</span>`;
+      return;
+    }
+
+    // 2) Exact card name within that set?
+    const exactNameCandidates = await db.cards.where('name_lc').equals(item.name.toLowerCase()).toArray();
+    const exact = exactNameCandidates.find(c => (c.set||'').toLowerCase() === sc) || null;
+    if (exact){
+      await resolveOneUnmatched(item, exact.id, exact.set, exact.set_name);
+      wrap.remove();
+      return;
+    }
+
+    // 3) Fuzzy suggestion within that set (>=60% token overlap)
+    const inSet = await db.cards.where('set').equals(sc).toArray();
+    let best = null, bestScore = 0;
+    for (const c of inSet){
+      const score = tokenMatchRatio(item.name, c.name);
+      if (score > bestScore){ bestScore = score; best = c; }
+    }
+
+    if (best && bestScore >= 0.6){
+      // Render Yes/No prompt
+      message.innerHTML = `<span class="suggest">Did you mean <strong>${best.name}</strong>?</span> `;
+      const yes = document.createElement('button');
+      yes.className = 'btn';
+      yes.textContent = 'Yes';
+      const no = document.createElement('button');
+      no.className = 'btn ghost';
+      no.textContent = 'No';
+
+      yes.addEventListener('click', async () => {
+        await resolveOneUnmatched(item, best.id, best.set, best.set_name);
+        wrap.remove();
+      });
+      no.addEventListener('click', () => {
+        message.textContent = ''; // keep input active
+      });
+
+      message.appendChild(yes);
+      message.appendChild(no);
+    } else {
+      message.innerHTML = `<span class="err">Card not found in ${codeRaw.toUpperCase()}.</span>`;
+    }
+  });
+
+  wrap.appendChild(fix);
 }
 
 async function resolveOneUnmatched(item, chosenId, setCode, setName){
@@ -824,7 +930,18 @@ function runTests(){
     const rows4 = parseCSV(csv4);
     if (rows4[0][0]==='Card Name' && rows4[1][0]==='Xyz') pass('CSV parse: BOM handled'); else fail('CSV parse: BOM not handled');
 
-    // Color filtering tests
+    // Fuzzy matching tests
+    const ratio1 = tokenMatchRatio('Coral Trickster', 'Coral Trickster');
+    const ratio2 = tokenMatchRatio('Coral Trickster', 'Coralhelm Chronicler');
+    const ratio3 = tokenMatchRatio('Mystic Elf Sage', 'Mystic Sage');
+    if (ratio1 === 1) pass('Fuzzy: exact name ratio = 1');
+    else fail('Fuzzy: exact name ratio not 1');
+    if (ratio2 < 0.6) pass('Fuzzy: unrelated stays below 0.6');
+    else fail('Fuzzy: unrelated should be < 0.6');
+    if (ratio3 >= 0.66) pass('Fuzzy: partial overlap meets threshold');
+    else fail('Fuzzy: partial overlap should pass');
+
+    // Color filtering tests (subset rules)
     const cR = { id:'R1', name_lc:'mountain goblin', type_lc:'creature — goblin', subtype_lc:'goblin', rarity:'common', oracle_text:'', color_identity:['R'] };
     const cG = { id:'G1', name_lc:'forest elf', type_lc:'creature — elf', subtype_lc:'elf', rarity:'common', oracle_text:'', color_identity:['G'] };
     const cRG = { id:'RG1', name_lc:'grull friend', type_lc:'creature — warrior', subtype_lc:'warrior', rarity:'uncommon', oracle_text:'', color_identity:['R','G'] };
