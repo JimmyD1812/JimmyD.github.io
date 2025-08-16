@@ -213,15 +213,21 @@ const els = {
   resolveClear: document.getElementById('resolveClear'),
 };
 
-/* ---------- Remote NDJSON autoload with HEAD/ETag + .gz→plain fallback ---------- */
-const NDJSON_URL_GZ = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
+/* ---------- Remote NDJSON autoload with HEAD/ETag + .gz→plain + CORS-proxy fallback ---------- */
+const NDJSON_URL_GZ    = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson.gz';
 const NDJSON_URL_PLAIN = 'https://github.com/JimmyD1812/JimmyD.github.io/releases/download/cards/cards.ndjson';
+
+/* public proxies we can fall back to if GitHub Releases blocks CORS */
+const CORS_PROXIES = [
+  'https://cors.isomorphic-git.org/',   // binary-safe, streams
+];
 
 function pickBestUrl() {
   return ('DecompressionStream' in window) ? NDJSON_URL_GZ : NDJSON_URL_PLAIN;
 }
+
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
+const fmt   = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
@@ -230,7 +236,7 @@ async function getRemoteHead(url){
   return {
     etag: resp.headers.get('etag') || '',
     last: resp.headers.get('last-modified') || '',
-    len: resp.headers.get('content-length') || ''
+    len:  resp.headers.get('content-length') || ''
   };
 }
 function saveHeadMeta(url, meta){ try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch{} }
@@ -244,18 +250,38 @@ async function isRemoteUnchanged(url){
   return false;
 }
 
-// Thin wrapper: try chosen URL; if it's .gz and fails, retry the plain URL
+/* helpers for proxy handling */
+function isProxied(u){ return CORS_PROXIES.some(p => u.startsWith(p)); }
+function withProxy(u){ return CORS_PROXIES.map(p => p + u); }
+function dedupe(arr){ return [...new Set(arr)]; }
+
+/* Try direct .gz/.ndjson, then proxied versions. Skip HEAD check for proxied URLs. */
 async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
-  try {
-    return await doImport(url, { skipIfUnchanged });
-  } catch (err) {
-    const isGz = /\.gz($|\?)/i.test(url);
-    if (isGz) {
-      console.warn('GZ import failed; retrying with plain NDJSON…', err);
-      return await doImport(NDJSON_URL_PLAIN, { skipIfUnchanged });
+  const gz    = NDJSON_URL_GZ;
+  const plain = NDJSON_URL_PLAIN;
+
+  const preferred = url || pickBestUrl();
+  const alternate = preferred.endsWith('.gz') ? plain : gz;
+
+  const attempts = dedupe([
+    preferred,
+    alternate,
+    ...withProxy(preferred),
+    ...withProxy(alternate),
+  ]);
+
+  let lastErr;
+  for (const u of attempts){
+    try {
+      await doImport(u, { skipIfUnchanged: skipIfUnchanged && !isProxied(u) });
+      if (isProxied(u)) els.importNote.textContent += ' (via CORS proxy)';
+      return;
+    } catch (err) {
+      lastErr = err;
+      console.warn('Import attempt failed:', u, err);
     }
-    throw err;
   }
+  throw lastErr;
 }
 
 async function doImport(url, { skipIfUnchanged = true } = {}){
@@ -344,7 +370,7 @@ async function doImport(url, { skipIfUnchanged = true } = {}){
 
 // Kick off automatically on load (tries .gz, falls back to plain)
 window.addEventListener('DOMContentLoaded', async () => {
-  try { await importNDJSONFromURL(pickBestUrl(), { skipIfUnchanged: true }); }
+  try { await importNDJSONWithFallback({ skipIfUnchanged:true }); }
   catch (e) {
     console.error(e);
     els.status.textContent = 'Remote import failed.';
@@ -367,7 +393,7 @@ els.btnUpdateDB.addEventListener('click', async (e) => {
       await refreshStats();
     }
     els.status.textContent = fullRebuild ? 'Rebuilding database…' : 'Updating database…';
-    await importNDJSONFromURL(pickBestUrl(), { skipIfUnchanged: false });
+    await importNDJSONWithFallback({ skipIfUnchanged:false });
     els.status.textContent = 'Update complete.';
     await refreshStats();
     try { await search(); } catch {}
