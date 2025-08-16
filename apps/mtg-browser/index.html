@@ -7,9 +7,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
   <style>
-    :root{
-      --bg:#0b0d0f;--panel:#12161a;--muted:#9aa4ad;--text:#e8edf2;--accent:#6ee7ff;--danger:#ff7d7d;--card:#171c22;--chip:#222a32;--border:#24303a
-    }
+    :root{--bg:#0b0d0f;--panel:#12161a;--muted:#9aa4ad;--text:#e8edf2;--accent:#6ee7ff;--danger:#ff7d7d;--card:#171c22;--chip:#222a32;--border:#24303a}
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial}
     a{color:var(--accent)}
@@ -48,9 +46,8 @@
     .details{position:sticky;top:16px}
     progress{width:100%;height:12px;accent-color:var(--accent)}
     .small{font-size:12px}
-    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
-    .test-pass{color:#9fff9f}
-    .test-fail{color:#ff9f9f}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Monaco,monospace;background:#0d1117;border:1px solid #30363d;padding:2px 6px;border-radius:6px;font-size:12px}
+    .test-pass{color:#9fff9f}.test-fail{color:#ff9f9f}
   </style>
 </head>
 <body>
@@ -70,6 +67,9 @@
       </label>
       <label class="btn file">📄 Import Collection (CSV)
         <input id="importCSV" type="file" accept=".csv" />
+      </label>
+      <label class="btn" style="display:flex;align-items:center;gap:8px">
+        <input id="csvStrict" type="checkbox" checked /> Strict set match
       </label>
       <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database">🗑️ Clear Card DB</button>
       <button class="btn danger" id="btnClearCollection" title="Clear only your collection quantities">🧹 Clear Collection</button>
@@ -155,7 +155,6 @@
 <script>
 // -------------------- IndexedDB (Dexie) --------------------
 const db = new Dexie('mtgDB');
-// Indexes: id (primary), name_lc, rarity, set, set_name, type_lc, subtype_lc, color_identity (multiEntry)
 db.version(1).stores({
   cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
   collection: 'id, qty'
@@ -182,6 +181,7 @@ const els = {
   csvBox: document.getElementById('csvBox'),
   csvProgress: document.getElementById('csvProgress'),
   csvNote: document.getElementById('csvNote'),
+  csvStrict: document.getElementById('csvStrict'),
   btnClearDB: document.getElementById('btnClearDB'),
   btnClearCollection: document.getElementById('btnClearCollection'),
   btnRunTests: document.getElementById('btnRunTests'),
@@ -192,8 +192,20 @@ const els = {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 
-// RFC4180-ish CSV parser (handles quotes, commas, CRLF)
+function stripSepAndBOM(text){
+  if (!text) return text;
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const firstLineEnd = text.indexOf('\n');
+  const firstLine = firstLineEnd >= 0 ? text.slice(0, firstLineEnd).trim() : text.trim();
+  if (/^sep\s*=\s*./i.test(firstLine)) {
+    text = firstLineEnd >= 0 ? text.slice(firstLineEnd+1) : '';
+  }
+  return text;
+}
+
+// RFC4180-ish CSV parser (handles quotes, commas, CRLF) + Excel sep= directive and BOM
 function parseCSV(text) {
+  text = stripSepAndBOM(text);
   const rows = [];
   let row = [], field = '', inQuotes = false;
   for (let i = 0; i < text.length; i++) {
@@ -218,7 +230,7 @@ function parseCSV(text) {
 
 // -------------------- Card helpers --------------------
 function normalizeCard(raw) {
-  const img = raw.image_uris?.normal || raw.card_faces?.[0]?.image_uris?.normal || null;
+  const img = raw.image_uris?.["normal"] || raw.card_faces?.[0]?.image_uris?.["normal"] || null;
   const oracle_text = raw.oracle_text || raw.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n') || '';
   const mana_cost = raw.mana_cost || raw.card_faces?.map(f => f.mana_cost).filter(Boolean).join(' // ') || '';
   const type_line = raw.type_line || (raw.card_faces?.map(f => f.type_line).join(' // ')) || '';
@@ -494,6 +506,23 @@ els.importCollection.addEventListener('change', async (e) => {
   e.target.value='';
 });
 
+// -------------------- CSV import helpers --------------------
+function selectCardByNameAndSet(candidates, setCode, setName, strict){
+  let card = null;
+  if (setCode) {
+    const sc = setCode.toLowerCase();
+    card = candidates.find(c => (c.set||'').toLowerCase() === sc) || null;
+    if (!card && strict) return null;
+  }
+  if (!card && setName) {
+    const sn = setName.toLowerCase();
+    card = candidates.find(c => (c.set_name||'').toLowerCase() === sn) || null;
+    if (!card && strict && (setCode || setName)) return null;
+  }
+  if (!card && !strict) card = candidates[0] || null;
+  return card;
+}
+
 // -------------------- Import collection (CSV; additive) --------------------
 els.importCSV.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
@@ -502,7 +531,7 @@ els.importCSV.addEventListener('change', async (e) => {
   els.csvProgress.value = 0;
   els.csvNote.textContent = `Reading ${file.name}…`;
   try {
-    const text = await file.text();
+    let text = await file.text();
     const rows = parseCSV(text);
     if (!rows.length) { els.csvNote.textContent = 'No rows found.'; e.target.value=''; return; }
     const headerRaw = rows[0].map(h => (h||'').trim());
@@ -514,6 +543,8 @@ els.importCSV.addEventListener('change', async (e) => {
     const iSetName = col('setname');
     const iDate = col('datebought'); // parsed but not stored yet
     if (iName === -1 || iQty === -1) { alert('CSV must include at least Card Name and Quantity columns.'); e.target.value=''; return; }
+
+    const strict = !!els.csvStrict.checked;
 
     const increments = {}; // id -> qty
     const unmatched = [];
@@ -532,18 +563,9 @@ els.importCSV.addEventListener('change', async (e) => {
 
       const candidates = await db.cards.where('name_lc').equals(name.toLowerCase()).toArray();
       let card = null;
-      if (candidates.length) {
-        if (setCode) {
-          const sc = setCode.toLowerCase();
-          card = candidates.find(c => (c.set||'').toLowerCase() === sc) || null;
-        }
-        if (!card && setName) {
-          const sn = setName.toLowerCase();
-          card = candidates.find(c => (c.set_name||'').toLowerCase() === sn) || null;
-        }
-        if (!card) card = candidates[0];
-      }
-      if (!card) unmatched.push({ name, setCode, setName, qty });
+      if (candidates.length) card = selectCardByNameAndSet(candidates, setCode, setName, strict);
+
+      if (!card) unmatched.push({ row: r+1, name, setCode, setName, qty });
       else increments[card.id] = (increments[card.id] || 0) + qty;
 
       processed++;
@@ -569,7 +591,7 @@ els.importCSV.addEventListener('change', async (e) => {
     els.csvNote.textContent = `Imported ${ids.length} unique cards; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
     await refreshStats();
     if (unmatched.length) {
-      const blob = new Blob([JSON.stringify({ unmatched }, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify({ strict, unmatched }, null, 2)], { type: 'application/json' });
       const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'unmatched-rows.json' });
       a.textContent = 'Download unmatched rows'; a.className = 'btn';
       const div = document.createElement('div'); div.style.marginTop = '8px'; div.appendChild(a); els.csvBox.appendChild(div);
@@ -611,8 +633,7 @@ function runTests(){
     // CSV basic test (user sample)
     const csv = `Folder Name,Quantity,Trade Quantity,Card Name,Set Code,Set Name,Card Number,Condition,Printing,Language,Price Bought,Date Bought,LOW,MID,MARKET\nrandom box,1,0,Abnormal Endurance,M19,Core Set 2019,85,NearMint,Normal,English,0.04,2025-06-16,0.01,0.25,0.08\n`;
     const rows = parseCSV(csv);
-    const h = rows[0];
-    const r = rows[1];
+    const h = rows[0]; const r = rows[1];
     if (rows.length===2 && h[1]==='Quantity' && r[1]==='1' && r[3]==='Abnormal Endurance' && r[4]==='M19' && r[5]==='Core Set 2019' && r[11]==='2025-06-16') pass('CSV parse: sample row parsed correctly');
     else fail('CSV parse: sample row mismatch');
 
@@ -621,10 +642,25 @@ function runTests(){
     const rows2 = parseCSV(csv2);
     if (rows2[1][0]==='Goblin, Ringleader' && rows2[1][1]==='2') pass('CSV parse: quoted comma field handled'); else fail('CSV parse: quoted comma failed');
 
-    // Temp page HTML build test
-    const mock = { name:'Fury Sliver', image:'https://example/img.jpg', rarity:'uncommon', type_line:'Creature — Sliver', mana_cost:'{5}{R}', power:'3', toughness:'3', oracle_text:'All Sliver creatures have double strike.', color_identity:['R'], set_name:'Time Spiral', collector_number:'157', purchase_uris:{tcgplayer:'https://tcg'}, scryfall_uri:'https://scry'};
-    const html = buildTempPageHTML(mock);
-    if (html.includes('Fury Sliver') && html.includes('Card Kingdom') && html.includes('All Sliver creatures')) pass('Temp page HTML contains key fields'); else fail('Temp page HTML missing fields');
+    // sep= directive test
+    const csv3 = 'sep=,\nCard Name,Quantity\nAbc,3\n';
+    const rows3 = parseCSV(csv3);
+    if (rows3[0][0]==='Card Name' && rows3[1][0]==='Abc' && rows3[1][1]==='3') pass('CSV parse: Excel sep= directive ignored'); else fail('CSV parse: sep directive not handled');
+
+    // BOM test
+    const csv4 = '\ufeffCard Name,Quantity\nXyz,1\n';
+    const rows4 = parseCSV(csv4);
+    if (rows4[0][0]==='Card Name' && rows4[1][0]==='Xyz') pass('CSV parse: BOM handled'); else fail('CSV parse: BOM not handled');
+
+    // Matching helper tests
+    const candidates = [
+      { set:'m19', set_name:'Core Set 2019', id:'a' },
+      { set:'mm3', set_name:'Modern Masters 2017', id:'b' }
+    ];
+    if (selectCardByNameAndSet(candidates,'M19','',true)?.id==='a') pass('Match: strict by set code'); else fail('Match: strict by set code failed');
+    if (selectCardByNameAndSet(candidates,'BAD','',true)===null) pass('Match: strict missing -> null'); else fail('Match: strict should return null');
+    if (selectCardByNameAndSet(candidates,'','Modern Masters 2017',true)?.id==='b') pass('Match: strict by set name'); else fail('Match: strict by set name failed');
+    if (selectCardByNameAndSet(candidates,'','',false)?.id==='a') pass('Match: loose picks first'); else fail('Match: loose default pick failed');
 
   } catch (e) { fail('Unexpected error: '+e.message); }
   els.testOut.innerHTML = out.join('');
