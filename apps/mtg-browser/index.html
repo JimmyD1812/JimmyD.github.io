@@ -6,6 +6,7 @@
   <title>MTG Collection Browser</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.min.js"></script>
   <style>
     :root{--bg:#0b0d0f;--panel:#12161a;--muted:#9aa4ad;--text:#e8edf2;--accent:#6ee7ff;--danger:#ff7d7d;--card:#171c22;--chip:#222a32;--border:#24303a}
     *{box-sizing:border-box}
@@ -211,139 +212,122 @@ const els = {
   resolveClear: document.getElementById('resolveClear'),
 };
 
-/* ---------- Remote NDJSON: same-origin paths ---------- */
-const NDJSON_URL_GZ    = '/db/cards.ndjson.gz';
-const NDJSON_URL_PLAIN = '/db/cards.ndjson';
+/* ---------- Remote NDJSON: same-origin gz only, with streaming gunzip fallback ---------- */
+const NDJSON_URL = '/db/cards.ndjson.gz';
 
-function pickBestUrl() {
-  return ('DecompressionStream' in window) ? NDJSON_URL_GZ : NDJSON_URL_PLAIN;
-
-/* HEAD/ETag helpers */
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
-  const resp = await fetch(url, { method:'HEAD', mode:'cors', cache:'no-store', redirect:'follow', referrerPolicy:'no-referrer' });
+  const resp = await fetch(url, { method:'HEAD', cache:'no-store' });
   if (!resp.ok && resp.status !== 304) throw new Error(`HEAD ${resp.status} ${resp.statusText}`);
-  return { etag: resp.headers.get('etag')||'', last: resp.headers.get('last-modified')||'', len: resp.headers.get('content-length')||'' };
+  return {
+    etag: resp.headers.get('etag') || '',
+    last: resp.headers.get('last-modified') || '',
+    len:  resp.headers.get('content-length') || ''
+  };
 }
-function saveHeadMeta(url, meta){ try{ localStorage.setItem(headKey(url), JSON.stringify(meta)); }catch{} }
-function loadHeadMeta(url){ try{ return JSON.parse(localStorage.getItem(headKey(url))||'null'); }catch{ return null; } }
+function saveHeadMeta(url, meta){ try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch{} }
+function loadHeadMeta(url){ try { return JSON.parse(localStorage.getItem(headKey(url)) || 'null'); } catch { return null; } }
 async function isRemoteUnchanged(url){
   const remote = await getRemoteHead(url);
   const prev = loadHeadMeta(url);
   if (!prev) return false;
-  if (remote.etag && prev.etag) return remote.etag===prev.etag;
-  if (remote.last && prev.last) return remote.last===prev.last;
+  if (remote.etag && prev.etag) return remote.etag === prev.etag;
+  if (remote.last && prev.last) return remote.last === prev.last;
   return false;
 }
 
-/* proxy helpers */
-const isProxied = (u)=> CORS_PROXIES.some(p=>u.startsWith(p));
-const withProxy = (u)=> CORS_PROXIES.map(p=>p+u);
-const dedupe = (arr)=> [...new Set(arr)];
-
-/* Build attempt order */
-function buildAttemptList(preferredUrl){
-  const preferGz = preferredUrl?.endsWith('.gz') ?? ('DecompressionStream' in window);
-  const localBest = preferGz? NDJSON_LOCAL_GZ: NDJSON_LOCAL_PLAIN;
-  const localAlt  = preferGz? NDJSON_LOCAL_PLAIN: NDJSON_LOCAL_GZ;
-  const relBest   = preferGz? NDJSON_REL_GZ: NDJSON_REL_PLAIN;
-  const relAlt    = preferGz? NDJSON_REL_PLAIN: NDJSON_REL_GZ;
-  return dedupe([
-    localBest, localAlt,          // same-origin first (fast, no CORS)
-    relBest, relAlt,              // then direct releases
-    ...withProxy(relBest),        // finally proxied releases
-    ...withProxy(relAlt),
-  ]);
-}
-
-/* Orchestrator: try each URL; skip HEAD check on proxied URLs */
-async function importNDJSONFromURL(url, {skipIfUnchanged=true}={}){
-  const tries = buildAttemptList(url || pickBestUrl());
-  let lastErr;
-  for (const u of tries){
-    try{
-      await doImport(u, { skipIfUnchanged: skipIfUnchanged && !isProxied(u) });
-      if (isProxied(u)) els.importNote.textContent += ' (via CORS proxy)';
-      return;
-    }catch(err){
-      lastErr = err;
-      console.warn('Import attempt failed:', u, err);
-    }
+// Stream gunzip: DecompressionStream if present, else fflate.AsyncGunzip
+function gunzipStream(compressedStream){
+  if ('DecompressionStream' in window) {
+    return compressedStream.pipeThrough(new DecompressionStream('gzip'));
   }
-  throw lastErr;
+  if (!window.fflate) throw new Error('No gzip support (fflate missing)');
+  const reader = compressedStream.getReader();
+  const gunzip = new fflate.AsyncGunzip();      // streaming, non-blocking
+  return new ReadableStream({
+    start(controller){
+      gunzip.ondata = (chunk, final) => {
+        controller.enqueue(chunk);
+        if (final) controller.close();
+      };
+      gunzip.onerror = (err) => controller.error(err);
+      (async function pump(){
+        for(;;){
+          const {value, done} = await reader.read();
+          if (done){ gunzip.flush(); break; }
+          gunzip.push(value);
+        }
+      })();
+    },
+    cancel(reason){ try { reader.cancel(reason); } catch{} }
+  });
 }
-/* Back-compat alias used by callers below */
-async function importNDJSONWithFallback(opts){ return importNDJSONFromURL(undefined, opts); }
 
-/* Core importer: stream NDJSON (gz if browser supports DecompressionStream) */
-async function doImport(url, { skipIfUnchanged = true } = {}){
+async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } = {}){
   els.importBox.style.display = '';
   els.importProgress.value = 0;
   els.importNote.textContent = `Fetching ${url} …`;
 
-  if (skipIfUnchanged){
-    try{
+  if (skipIfUnchanged) {
+    try {
       const skip = await isRemoteUnchanged(url);
       const count = await db.cards.count();
-      if (skip && count > 0){
+      if (skip && count > 0) {
         els.importProgress.value = 100;
         els.importNote.textContent = 'Remote file unchanged; skipped re-index.';
         els.status.textContent = 'Remote unchanged; using existing DB';
         return;
       }
-    }catch(e){ console.warn('HEAD check failed; continuing:', e); }
+    } catch (e) {
+      console.warn('HEAD check failed; continuing:', e);
+    }
   }
 
   let headMeta = null;
-  try{ headMeta = await getRemoteHead(url); }catch{}
+  try { headMeta = await getRemoteHead(url); } catch {}
 
-  const resp = await fetch(url, { mode:'cors', cache:'no-store', redirect:'follow', referrerPolicy:'no-referrer' });
+  const resp = await fetch(url, { cache:'no-store' });
   if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
-  let stream = resp.body;
-  if (!stream) throw new Error('Streaming unsupported for this response');
+  if (!resp.body) throw new Error('No response body stream');
 
-  const ct = resp.headers.get('content-type') || '';
-  const looksGzip = /\.gz($|\?)/i.test(url) || /gzip/.test(ct);
-  if (looksGzip){
-    if ('DecompressionStream' in window){
-      stream = stream.pipeThrough(new DecompressionStream('gzip'));
-    }else{
-      throw new Error('Browser lacks DecompressionStream for .gz');
-    }
-  }
+  // stream → gunzip → text → lines → Dexie
+  const inflated = gunzipStream(resp.body);
+  const reader = inflated.pipeThrough(new TextDecoderStream()).getReader();
 
-  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
   const CHUNK = 200;
-  let leftover = ''; let batch = []; let inserted = 0;
+  let leftover = '';
+  let batch = [];
+  let inserted = 0;
   els.status.textContent = 'Indexing remote cards…';
 
   await db.transaction('rw', db.cards, async () => {
-    for(;;){
-      const {value, done} = await reader.read();
+    for (;;) {
+      const { value, done } = await reader.read();
       if (done) break;
       leftover += value;
       let idx;
-      while((idx = leftover.indexOf('\n')) >= 0){
+      while ((idx = leftover.indexOf('\n')) >= 0) {
         const line = leftover.slice(0, idx).trim();
-        leftover = leftover.slice(idx+1);
+        leftover = leftover.slice(idx + 1);
         if (!line) continue;
-        try{
+        try {
           const raw = JSON.parse(line);
           batch.push(normalizeCard(raw));
-          if (batch.length >= CHUNK){
+          if (batch.length >= CHUNK) {
             await db.cards.bulkPut(batch);
-            inserted += batch.length; batch = [];
+            inserted += batch.length;
+            batch = [];
             els.importProgress.value = Math.min(100, Math.round(inserted/5000*100));
             els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
-            await sleep(0);
+            await Promise.resolve(); // yield
           }
-        }catch{}
+        } catch {}
       }
     }
-    if (leftover.trim()){
-      try{ const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); }catch{}
+    if (leftover.trim()) {
+      try { const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); } catch {}
     }
-    if (batch.length){ await db.cards.bulkPut(batch); inserted += batch.length; }
+    if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
   });
 
   els.importProgress.value = 100;
@@ -353,38 +337,31 @@ async function doImport(url, { skipIfUnchanged = true } = {}){
   if (headMeta) saveHeadMeta(url, headMeta);
 }
 
-/* Auto-load on page open */
+// On load: import (skip if unchanged)
 window.addEventListener('DOMContentLoaded', async () => {
-  try{ await importNDJSONWithFallback({ skipIfUnchanged:true }); }
-  catch(e){
+  try { await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged:true }); }
+  catch (e) {
     console.error(e);
     els.status.textContent = 'Remote import failed.';
     els.importNote.textContent = `Error: ${e?.message || e}`;
   }
 });
 
-/* Force reindex button (Alt = clear DB first) */
+// Update button: normal click reindex; Alt-click full rebuild
 els.btnUpdateDB.addEventListener('click', async (e) => {
   const fullRebuild = e.altKey;
   const msg = fullRebuild
     ? 'This will CLEAR the local card database, then re-download and re-index.\nYour collection quantities are kept.\nProceed?'
-    : 'Re-index from the remote NDJSON now? (Skips HEAD check and imports even if unchanged.)';
+    : 'Re-index from the remote NDJSON now? (Skips HEAD check.)';
   if (!confirm(msg)) return;
-  try{
-    if (fullRebuild){
-      els.status.textContent = 'Clearing local card DB…';
-      await db.cards.clear();
-      await refreshStats();
-    }
-    els.status.textContent = fullRebuild ? 'Rebuilding database…' : 'Updating database…';
-    await importNDJSONWithFallback({ skipIfUnchanged:false });
-    els.status.textContent = 'Update complete.';
-    await refreshStats();
-    try{ await search(); }catch{}
-  }catch(err){
+
+  try {
+    if (fullRebuild) { await db.cards.clear(); await refreshStats(); }
+    await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged:false });
+    els.status.textContent = 'Update complete.'; await refreshStats(); try { await search(); } catch {}
+  } catch (err) {
     console.error(err);
-    els.status.textContent = 'Update failed.';
-    els.importNote.textContent = `Error: ${err?.message || err}`;
+    els.status.textContent = 'Update failed.'; els.importNote.textContent = `Error: ${err?.message || err}`;
     alert('Update failed.');
   }
 });
