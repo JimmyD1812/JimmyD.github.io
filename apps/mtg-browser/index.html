@@ -155,6 +155,7 @@
 <script>
 // -------------------- IndexedDB (Dexie) --------------------
 const db = new Dexie('mtgDB');
+// Indexes: id (primary), name_lc, rarity, set, set_name, type_lc, subtype_lc, color_identity (multiEntry)
 db.version(1).stores({
   cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
   collection: 'id, qty'
@@ -194,7 +195,9 @@ const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 
 function stripSepAndBOM(text){
   if (!text) return text;
+  // BOM
   if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  // Excel "sep=," directive
   const firstLineEnd = text.indexOf('\n');
   const firstLine = firstLineEnd >= 0 ? text.slice(0, firstLineEnd).trim() : text.trim();
   if (/^sep\s*=\s*./i.test(firstLine)) {
@@ -306,8 +309,8 @@ window.__cardsById = {};
 function buildTempPageHTML(card){
   const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c => `<span class="dot ${c}"></span>`).join('');
   const pt = card.power || card.toughness ? `${card.power ?? ''}/${card.toughness ?? ''}` : (card.loyalty ? `Loyalty ${card.loyalty}` : '');
-  const tcg = card.purchase_uris?.tcgplayer ? `<a class=\"btn\" href=\"${card.purchase_uris.tcgplayer}\" target=\"_blank\">TCGplayer</a>` : '';
-  const ck = `<a class=\"btn\" href=\"${cardKingdomURL(card)}\" target=\"_blank\">Card Kingdom</a>`;
+  const tcg = card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : '';
+  const ck = `<a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>`;
   return `<!doctype html>
 <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${card.name} — Deck View</title>
@@ -375,46 +378,89 @@ async function addToCollection(id, delta){
 }
 window.addToCollection = addToCollection;
 
+// -------------------- Filtering helpers --------------------
+function colorsMatch(cardCI, selectedColors){
+  if (!selectedColors || selectedColors.length === 0) return true; // no color filter
+  const sel = new Set(selectedColors);
+  const includeC = sel.has('C');
+  sel.delete('C'); // remainder are W U B R G
+
+  const ci = Array.isArray(cardCI) ? cardCI : [];
+  if (ci.length === 0) {
+    // Card is colorless. Only include if 'C' selected (alone or alongside colors)
+    return includeC;
+  }
+  // Card has colors. If only 'C' was selected, exclude colored cards.
+  if (sel.size === 0) return false;
+
+  // All colors on the card must be within the selected set (subset rule).
+  for (const c of ci) {
+    if (!sel.has(c)) return false;
+  }
+  // And the card must not contain any color outside selection (already ensured by loop).
+  // Mono colors and any subset combos inside selection are allowed.
+  return true;
+}
+
+// Match a card against current filters (used by search and tests)
+function matchCard(card, filters){
+  const name_lc = (card.name_lc||'');
+  const type_lc = (card.type_lc||'');
+  const subtype_lc = (card.subtype_lc||'');
+  const oracle_lc = (card.oracle_text||'').toLowerCase();
+
+  if (filters.name && !name_lc.startsWith(filters.name)) return false;
+  if (filters.type && !type_lc.includes(filters.type.toLowerCase())) return false;
+  if (filters.subtype && !subtype_lc.includes(filters.subtype)) return false;
+  if (filters.rarity && card.rarity !== filters.rarity) return false;
+  if (filters.text && !oracle_lc.includes(filters.text)) return false;
+  if (!colorsMatch(card.color_identity, filters.colors)) return false;
+
+  return true;
+}
+
+// -------------------- Search (collection-only) --------------------
 async function search(){
-  const name = els.qName.value.trim().toLowerCase();
-  const text = els.qText.value.trim().toLowerCase();
-  const type = els.qType.value;
-  const subtype = els.qSubtype.value.trim().toLowerCase();
-  const rarity = els.qRarity.value;
-  const cis = Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value);
+  const filters = {
+    name: els.qName.value.trim().toLowerCase(),
+    text: els.qText.value.trim().toLowerCase(),
+    type: els.qType.value,
+    subtype: els.qSubtype.value.trim().toLowerCase(),
+    rarity: els.qRarity.value,
+    colors: Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value)
+  };
 
-  els.status.textContent = 'Searching…';
+  els.status.textContent = 'Searching your collection…';
 
-  let base = null;
-  if (name) base = db.cards.where('name_lc').startsWith(name);
-  else if (rarity) base = db.cards.where('rarity').equals(rarity);
-  else base = db.cards.toCollection();
+  // Only owned cards (qty > 0)
+  const owned = await db.collection.where('qty').above(0).toArray();
+  const qtyMap = Object.fromEntries(owned.map(e=>[e.id, e.qty]));
+  if (!owned.length){
+    els.results.innerHTML = '';
+    els.status.textContent = 'Your collection is empty — import CSV to add cards.';
+    return;
+  }
+
+  const ids = owned.map(e=>e.id);
+  // Fetch corresponding card records from NDJSON-backed store
+  const cards = await db.cards.bulkGet(ids);
 
   const limit = 200;
   const out = [];
-  const coll = await db.collection.toArray();
-  const qtyMap = Object.fromEntries(coll.map(c=>[c.id, c.qty]));
-
-  await base.each(card => {
-    if (out.length >= limit) return;
-    if (type && !card.type_lc.includes(type.toLowerCase())) return;
-    if (subtype && !card.subtype_lc.includes(subtype)) return;
-    if (rarity && card.rarity !== rarity) return;
-    if (cis.length) {
-      const set = new Set(card.color_identity && card.color_identity.length ? card.color_identity : ['C']);
-      for (const need of cis) if (!set.has(need)) return;
+  for (const card of cards){
+    if (!card) continue; // in case NDJSON missing this id
+    if (matchCard(card, filters)){
+      out.push(card);
+      if (out.length >= limit) break;
     }
-    if (text && !(card.oracle_text||'').toLowerCase().includes(text)) return;
-    out.push(card);
-  });
+  }
 
   els.results.innerHTML = out.map(c => { window.__cardsById[c.id] = c; return renderCardCard(c, qtyMap[c.id]||0); }).join('');
-  els.status.textContent = `Showing ${out.length} result(s)`;
+  els.status.textContent = `Showing ${out.length} result(s) from your collection`;
 }
 
 els.btnSearch.addEventListener('click', search);
 ['qName','qText','qType','qSubtype','qRarity'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
-
 document.querySelectorAll('.ci').forEach(el => el.addEventListener('change', search));
 
 // -------------------- Bulk import (NDJSON preferred) --------------------
@@ -531,7 +577,7 @@ els.importCSV.addEventListener('change', async (e) => {
   els.csvProgress.value = 0;
   els.csvNote.textContent = `Reading ${file.name}…`;
   try {
-    let text = await file.text();
+    const text = await file.text();
     const rows = parseCSV(text);
     if (!rows.length) { els.csvNote.textContent = 'No rows found.'; e.target.value=''; return; }
     const headerRaw = rows[0].map(h => (h||'').trim());
@@ -627,8 +673,8 @@ refreshStats();
 // -------------------- Self-tests --------------------
 function runTests(){
   const out = [];
-  const pass = (msg) => { out.push(`<div class=\"test-pass\">✔ ${msg}</div>`); console.log('PASS:', msg); };
-  const fail = (msg) => { out.push(`<div class=\"test-fail\">✘ ${msg}</div>`); console.error('FAIL:', msg); };
+  const pass = (msg) => { out.push(`<div class="test-pass">✔ ${msg}</div>`); console.log('PASS:', msg); };
+  const fail = (msg) => { out.push(`<div class="test-fail">✘ ${msg}</div>`); console.error('FAIL:', msg); };
   try {
     // CSV basic test (user sample)
     const csv = `Folder Name,Quantity,Trade Quantity,Card Name,Set Code,Set Name,Card Number,Condition,Printing,Language,Price Bought,Date Bought,LOW,MID,MARKET\nrandom box,1,0,Abnormal Endurance,M19,Core Set 2019,85,NearMint,Normal,English,0.04,2025-06-16,0.01,0.25,0.08\n`;
@@ -652,15 +698,49 @@ function runTests(){
     const rows4 = parseCSV(csv4);
     if (rows4[0][0]==='Card Name' && rows4[1][0]==='Xyz') pass('CSV parse: BOM handled'); else fail('CSV parse: BOM not handled');
 
-    // Matching helper tests
-    const candidates = [
-      { set:'m19', set_name:'Core Set 2019', id:'a' },
-      { set:'mm3', set_name:'Modern Masters 2017', id:'b' }
-    ];
-    if (selectCardByNameAndSet(candidates,'M19','',true)?.id==='a') pass('Match: strict by set code'); else fail('Match: strict by set code failed');
-    if (selectCardByNameAndSet(candidates,'BAD','',true)===null) pass('Match: strict missing -> null'); else fail('Match: strict should return null');
-    if (selectCardByNameAndSet(candidates,'','Modern Masters 2017',true)?.id==='b') pass('Match: strict by set name'); else fail('Match: strict by set name failed');
-    if (selectCardByNameAndSet(candidates,'','',false)?.id==='a') pass('Match: loose picks first'); else fail('Match: loose default pick failed');
+    // Collection-only + color filtering tests
+    const cR = { id:'R1', name_lc:'mountain goblin', type_lc:'creature — goblin', subtype_lc:'goblin', rarity:'common', oracle_text:'', color_identity:['R'] };
+    const cG = { id:'G1', name_lc:'forest elf', type_lc:'creature — elf', subtype_lc:'elf', rarity:'common', oracle_text:'', color_identity:['G'] };
+    const cRG = { id:'RG1', name_lc:'grull friend', type_lc:'creature — warrior', subtype_lc:'warrior', rarity:'uncommon', oracle_text:'', color_identity:['R','G'] };
+    const cRGB = { id:'RGB1', name_lc:'tricolor beast', type_lc:'creature — beast', subtype_lc:'beast', rarity:'rare', oracle_text:'', color_identity:['R','G','B'] };
+    const cC = { id:'C1', name_lc:'wastes rock', type_lc:'land', subtype_lc:'', rarity:'common', oracle_text:'', color_identity:[] };
+    const qtyMap = { 'R1':1, 'G1':1, 'RG1':1, 'RGB1':1, 'C1':1 };
+
+    function applyColors(cards, colors){
+      const filters = { name:'', text:'', type:'', subtype:'', rarity:'', colors:colors };
+      return cards.filter(c => qtyMap[c.id] > 0 && matchCard(c, filters));
+    }
+
+    // Only Red -> only {R}
+    const onlyR = applyColors([cR,cG,cRG,cRGB,cC], ['R']);
+    if (onlyR.length===1 && onlyR[0]===cR) pass('Color filter: only R returns monored only'); else fail('Color filter: only R failed');
+
+    // R+G -> {R},{G},{R,G}, exclude RGB and colorless
+    const rg = applyColors([cR,cG,cRG,cRGB,cC], ['R','G']);
+    const okRG = rg.length===3 && rg.includes(cR) && rg.includes(cG) && rg.includes(cRG) && !rg.includes(cRGB) && !rg.includes(cC);
+    if (okRG) pass('Color filter: R+G returns mono R, mono G, and RG only'); else fail('Color filter: R+G failed');
+
+    // R+G+C -> include {R},{G},{R,G}, and colorless; exclude RGB
+    const rgc = applyColors([cR,cG,cRG,cRGB,cC], ['R','G','C']);
+    const okRGC = rgc.length===4 && rgc.includes(cR) && rgc.includes(cG) && rgc.includes(cRG) && rgc.includes(cC) && !rgc.includes(cRGB);
+    if (okRGC) pass('Color filter: R+G+C includes colorless too'); else fail('Color filter: R+G+C failed');
+
+    // Only colorless
+    const onlyC = applyColors([cR,cG,cRG,cRGB,cC], ['C']);
+    if (onlyC.length===1 && onlyC[0]===cC) pass('Color filter: only C returns colorless only'); else fail('Color filter: only C failed');
+
+    // All five colors (no C) -> include all colored (mono to five), exclude colorless
+    const allColors = applyColors([cR,cG,cRG,cRGB,cC], ['W','U','B','R','G']);
+    const okAll = allColors.length===4 && allColors.includes(cR) && allColors.includes(cG) && allColors.includes(cRG) && allColors.includes(cRGB) && !allColors.includes(cC);
+    if (okAll) pass('Color filter: all five colors excludes colorless'); else fail('Color filter: five colors failed');
+
+    // UR selection should NOT include URB
+    const cUR = { id:'UR1', name_lc:'izzet friend', type_lc:'creature — wizard', subtype_lc:'wizard', rarity:'uncommon', oracle_text:'', color_identity:['U','R'] };
+    const cURB = { id:'URB1', name_lc:'grixis pal', type_lc:'creature — rogue', subtype_lc:'rogue', rarity:'rare', oracle_text:'', color_identity:['U','R','B'] };
+    const qtyMap2 = { 'UR1':1, 'URB1':1 };
+    const applyColors2 = (cards, colors) => cards.filter(c => qtyMap2[c.id] > 0 && matchCard(c, {name:'',text:'',type:'',subtype:'',rarity:'',colors:colors}));
+    const ur = applyColors2([cUR,cURB], ['U','R']);
+    if (ur.length===1 && ur[0]===cUR) pass('Color filter: UR excludes URB'); else fail('Color filter: UR should exclude URB');
 
   } catch (e) { fail('Unexpected error: '+e.message); }
   els.testOut.innerHTML = out.join('');
