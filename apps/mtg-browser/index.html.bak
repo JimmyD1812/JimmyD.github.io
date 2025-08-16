@@ -63,7 +63,6 @@
     </header>
 
 	<div class="bar" style="margin-bottom:12px">
-	<button class="btn" id="btnUpdateDB" title="Force reindex from remote NDJSON now">Update database</button>
 	  <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
 	  <label class="btn file">⬆️ Import Collection (JSON)
 		<input id="importCollection" type="file" accept=".json" />
@@ -189,7 +188,6 @@ db.version(1).stores({
 
 // -------------------- Element refs --------------------
 const els = {
-  btnUpdateDB: document.getElementById('btnUpdateDB'),
   importBox: document.getElementById('importBox'),
   importProgress: document.getElementById('importProgress'),
   importNote: document.getElementById('importNote'),
@@ -347,35 +345,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     els.status.textContent = 'Remote import failed (see console).';
   }
 });
-
-// Force reindex button (normal click = reindex; Alt-click = full rebuild)
-els.btnUpdateDB.addEventListener('click', async (e) => {
-  const fullRebuild = e.altKey; // hold Alt to clear DB first
-  const msg = fullRebuild
-    ? 'This will CLEAR the local card database, then re-download and re-index.\nYour collection quantities are kept.\nProceed?'
-    : 'Re-index from the remote NDJSON now? (Skips HEAD check and imports even if unchanged.)';
-
-  if (!confirm(msg)) return;
-
-  try {
-    if (fullRebuild) {
-      els.status.textContent = 'Clearing local card DB…';
-      await db.cards.clear();
-      await refreshStats();
-    }
-    els.status.textContent = fullRebuild ? 'Rebuilding database…' : 'Updating database…';
-    await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged: false });
-    els.status.textContent = 'Update complete.';
-    await refreshStats();
-    // Optionally re-run the current search so results refresh right away
-    try { await search(); } catch {}
-  } catch (err) {
-    console.error(err);
-    els.status.textContent = 'Update failed — see console.';
-    alert('Update failed. Check the console for details.');
-  }
-});
-
 
 // Auto-load on visit (only if remote changed OR DB is empty)
 window.addEventListener('DOMContentLoaded', async () => {
