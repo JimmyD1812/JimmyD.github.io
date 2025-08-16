@@ -66,6 +66,10 @@
       <label class="btn file">📥 Import Scryfall file (.ndjson or .json)
         <input id="fileInput" type="file" accept=".json,.ndjson,.txt" />
       </label>
+	  <button class="btn" id="btnLoadURL" title="Fetch NDJSON/NDJSON.GZ from a URL and index it">📡 Load from URL</button>
+	  <label class="btn" title="Remember URL and auto-load on visit" style="display:flex;align-items:center;gap:8px">
+		<input id="autoLoadToggle" type="checkbox"> Auto-load on visit
+	  </label>
       <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
       <label class="btn file">⬆️ Import Collection (JSON)
         <input id="importCollection" type="file" accept=".json" />
@@ -223,6 +227,55 @@ const els = {
   tipDismiss: document.getElementById('tipDismiss'),
 };
 
+const DEFAULT_NDJSON_URL = localStorage.getItem('ndjson_url') || '';
+const AUTOLOAD = localStorage.getItem('ndjson_autoload') === '1';
+document.getElementById('autoLoadToggle').checked = AUTOLOAD;
+
+document.getElementById('btnLoadURL').addEventListener('click', async () => {
+  const url = prompt(
+    'NDJSON or NDJSON.GZ URL to load:',
+    localStorage.getItem('ndjson_url') || 'https://github.com/<OWNER>/<REPO>/releases/download/cards/cards.ndjson.gz'
+  );
+  if (!url) return;
+  localStorage.setItem('ndjson_url', url);
+
+  // HEAD check; if unchanged, ask to force
+  try {
+    const skip = await isRemoteUnchanged(url);
+    if (skip) {
+      const force = confirm('Remote file is unchanged since your last import. Re-index anyway?');
+      if (!force) return;
+    }
+  } catch (e) {
+    // If HEAD fails (rare), fall back to importing
+    console.warn('HEAD check failed, importing anyway:', e);
+  }
+  await importNDJSONFromURL(url, { skipIfUnchanged: false }); // we already asked
+});
+
+document.getElementById('autoLoadToggle').addEventListener('change', (e) => {
+  localStorage.setItem('ndjson_autoload', e.target.checked ? '1' : '0');
+});
+
+// Auto-load on visit (only if remote changed OR DB is empty)
+window.addEventListener('DOMContentLoaded', async () => {
+  const url = localStorage.getItem('ndjson_url');
+  const autoload = localStorage.getItem('ndjson_autoload') === '1';
+  if (!autoload || !url) return;
+  try {
+    const count = await db.cards.count();
+    const skip = await isRemoteUnchanged(url);
+    if (skip && count > 0) {
+      els.status.textContent = 'Remote file unchanged; using existing index.';
+      return;
+    }
+  } catch (e) {
+    console.warn('HEAD check failed, importing anyway:', e);
+  }
+  await importNDJSONFromURL(url, { skipIfUnchanged: false });
+});
+
+
 // -------------------- First-load tip --------------------
 (function setupTip(){
   const key = 'mtg_scanner_tip_dismissed';
@@ -250,6 +303,128 @@ function stripSepAndBOM(text){
   }
   return text;
 }
+
+function headKey(url){ return `ndjson_head::${url}`; }
+
+async function getRemoteHead(url){
+  const resp = await fetch(url, {
+    method: 'HEAD',
+    mode: 'cors',
+    cache: 'no-store',  // ask CDN/origin for fresh headers
+    redirect: 'follow'
+  });
+  if (!resp.ok && resp.status !== 304) {
+    throw new Error(`HEAD ${resp.status} ${resp.statusText}`);
+  }
+  return {
+    etag: resp.headers.get('etag') || '',
+    last: resp.headers.get('last-modified') || '',
+    len: resp.headers.get('content-length') || ''
+  };
+}
+
+function saveHeadMeta(url, meta){
+  try { localStorage.setItem(headKey(url), JSON.stringify(meta)); } catch {}
+}
+
+function loadHeadMeta(url){
+  try { return JSON.parse(localStorage.getItem(headKey(url)) || 'null'); } catch { return null; }
+}
+
+async function isRemoteUnchanged(url){
+  const remote = await getRemoteHead(url);
+  const prev = loadHeadMeta(url);
+  if (!prev) return false; // never imported before
+  // Prefer ETag; fall back to Last-Modified
+  if (remote.etag && prev.etag) return remote.etag === prev.etag;
+  if (remote.last && prev.last) return remote.last === prev.last;
+  // No comparable signal -> assume changed to be safe
+  return false;
+}
+
+async function importNDJSONFromURL(url, { skipIfUnchanged = true } = {}){
+  els.importBox.style.display = '';
+  els.importProgress.value = 0;
+  els.importNote.textContent = `Fetching ${url} …`;
+
+  // Optional early exit
+  if (skipIfUnchanged) {
+    try {
+      const skip = await isRemoteUnchanged(url);
+      const count = await db.cards.count();
+      if (skip && count > 0) {
+        els.importProgress.value = 100;
+        els.importNote.textContent = 'Remote file unchanged; skipped re-index.';
+        els.status.textContent = 'Remote unchanged; using existing DB';
+        return;
+      }
+    } catch (e) {
+      console.warn('HEAD check failed; continuing with import:', e);
+    }
+  }
+
+  // Pull headers up front (to save for later)
+  let headMeta = null;
+  try { headMeta = await getRemoteHead(url); } catch {}
+
+  const resp = await fetch(url, { mode: 'cors', cache: 'no-store', redirect: 'follow' });
+  if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
+
+  let stream = resp.body;
+  const ct = resp.headers.get('content-type') || '';
+  const looksGzip = /\.gz($|\?)/i.test(url) || /gzip/.test(ct);
+
+  if (looksGzip && 'DecompressionStream' in window) {
+    stream = stream.pipeThrough(new DecompressionStream('gzip'));
+  }
+
+  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
+
+  const CHUNK = 200;
+  let leftover = '';
+  let batch = [];
+  let inserted = 0;
+  els.status.textContent = 'Indexing (remote)…';
+
+  await db.transaction('rw', db.cards, async () => {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      leftover += value;
+      let idx;
+      while ((idx = leftover.indexOf('\n')) >= 0) {
+        const line = leftover.slice(0, idx).trim();
+        leftover = leftover.slice(idx + 1);
+        if (!line) continue;
+        try {
+          const raw = JSON.parse(line);
+          batch.push(normalizeCard(raw));
+          if (batch.length >= CHUNK) {
+            await db.cards.bulkPut(batch);
+            inserted += batch.length;
+            batch = [];
+            els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100)); // visual estimate
+            els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
+            await sleep(0);
+          }
+        } catch {}
+      }
+    }
+    if (leftover.trim()) {
+      try { const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); } catch {}
+    }
+    if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
+  });
+
+  els.importProgress.value = 100;
+  els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
+  els.status.textContent = 'Remote import complete';
+  await refreshStats();
+
+  // Persist the head meta so next time we can skip
+  if (headMeta) saveHeadMeta(url, headMeta);
+}
+
 
 // RFC4180-ish CSV parser (handles quotes, BOM, and 'sep=,' directive)
 function parseCSV(text) {
