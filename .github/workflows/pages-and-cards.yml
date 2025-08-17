@@ -61,6 +61,11 @@ jobs:
           cp -a !(public|.git|.github) public/
           shopt -u dotglob extglob
 
+          # If your working copy lives under apps/mtg-browser/, publish that index at the site root.
+          if [ -f apps/mtg-browser/index.html ]; then
+            cp -f apps/mtg-browser/index.html public/index.html
+          fi
+
           # Ensure Jekyll doesn't try to process the site (serve raw files)
           touch public/.nojekyll
 
@@ -72,6 +77,7 @@ jobs:
           echo "Public tree (/db):"
           ls -la public/db
           du -h public/db/cards.ndjson.gz
+          test -s public/index.html
           test -s public/db/cards.ndjson.gz
 
       - name: Upload Pages artifact
