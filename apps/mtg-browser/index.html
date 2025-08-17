@@ -293,7 +293,7 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
   // stream → gunzip → text → lines → Dexie
   const inflated = gunzipStream(resp.body);
   const reader = inflated.pipeThrough(new TextDecoderStream()).getReader();
-
+  const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
   const CHUNK = 200;
   let leftover = '';
   let batch = [];
