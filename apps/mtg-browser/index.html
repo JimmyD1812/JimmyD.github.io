@@ -301,47 +301,54 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
   if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
   if (!resp.body) throw new Error('No response body stream');
 
-  // stream → gunzip → text → lines → Dexie
-  const inflated = gunzipStream(resp.body);
-  const reader = inflated.pipeThrough(new TextDecoderStream()).getReader();
-  const CHUNK = 200;
-  let leftover = '';
-  let batch = [];
-  let inserted = 0;
-  els.status.textContent = 'Indexing remote cards…';
+// stream -> text -> lines -> batch -> bulkPut
+const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
 
-  await db.transaction('rw', db.cards, async () => {
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      leftover += value;
-      let idx;
-      while ((idx = leftover.indexOf('\n')) >= 0) {
-        const line = leftover.slice(0, idx).trim();
-        leftover = leftover.slice(idx + 1);
-        if (!line) continue;
-        try {
-          const raw = JSON.parse(line);
-          batch.push(normalizeCard(raw));
-          if (batch.length >= CHUNK) {
-            await db.cards.bulkPut(batch);
-            inserted += batch.length;
-            batch = [];
-            els.importProgress.value = Math.min(100, Math.round(inserted/5000*100));
-            els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
-            await Promise.resolve(); // yield
-          }
-        } catch {}
-      }
-    }
-    if (leftover.trim()) {
-      try { const raw = JSON.parse(leftover.trim()); batch.push(normalizeCard(raw)); } catch {}
-    }
-    if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
-  });
+const CHUNK = 200;
+let leftover = '';
+let batch = [];
+let inserted = 0;
 
-  els.importProgress.value = 100;
-  els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
+els.status.textContent = 'Indexing remote cards…';
+
+for (;;) {
+  const { value, done } = await reader.read();     // safe: no transaction open
+  if (done) break;
+  leftover += value;
+
+  let nl;
+  while ((nl = leftover.indexOf('\n')) >= 0) {
+    const line = leftover.slice(0, nl).trim();
+    leftover = leftover.slice(nl + 1);
+    if (!line) continue;
+    try {
+      const raw = JSON.parse(line);
+      batch.push(normalizeCard(raw));
+    } catch { /* ignore parse errors */ }
+
+    if (batch.length >= CHUNK) {
+      await db.cards.bulkPut(batch);               // short implicit tx
+      inserted += batch.length;
+      batch.length = 0;
+
+      // UI updates happen *outside* tx; fine
+      els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100));
+      els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
+      await new Promise(requestAnimationFrame);    // yield a tick without touching tx
+    }
+  }
+}
+
+if (leftover.trim()) {
+  try { batch.push(normalizeCard(JSON.parse(leftover.trim()))); } catch {}
+}
+if (batch.length) {
+  await db.cards.bulkPut(batch);                   // final flush
+  inserted += batch.length;
+}
+
+els.importProgress.value = 100;
+els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
   els.status.textContent = 'Remote import complete';
   await refreshStats();
   if (headMeta) saveHeadMeta(url, headMeta);
