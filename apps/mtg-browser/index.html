@@ -455,9 +455,12 @@ function cardKingdomURL(card){
   const set  = encodeURIComponent(card.set_name || '');
   return `https://www.cardkingdom.com/catalog/search?search=mtg_advanced&name=${name}&filter%5Bedition%5D=${set}`;
 }
-function renderCardCard(card, qty=0){
-  const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c=>`<span class="dot ${c}" title="${c}"></span>`).join('');
-  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>` : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
+  
+function renderCardCard(card, qty=0) {
+  const colors = (card.color_identity?.length ? card.color_identity : ['C'])
+    .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
+  const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>`
+            : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
   const mc = card.mana_cost ? `<span class="stat" title="Mana Cost">${card.mana_cost}</span>` : '';
   const rare = card.rarity ? `<span class="chip">${card.rarity}</span>` : '';
   const type = `<span class="chip">${card.type_line}</span>`;
@@ -466,11 +469,18 @@ function renderCardCard(card, qty=0){
       <img loading="lazy" alt="${card.name}" src="${card.image || ''}" onerror="this.src=''; this.style.background='#0b0d0f'">
       <div class="meta">
         <div class="line"><strong>${card.name}</strong> <span class="colors">${colors}</span></div>
-        <div class="line"><span class="muted small">${card.set_name || ''} ${card.collector_number ? \`• #\${card.collector_number}\` : ''}</span> ${rare}</div>
+        <div class="line">
+          <span class="muted small">
+            ${card.set_name || ''} ${card.collector_number ? ('• #' + card.collector_number) : ''}
+          </span> ${rare}
+        </div>
         <div class="line small">${type}</div>
         <div class="small" style="white-space:pre-wrap">${(card.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>')}</div>
         <div class="line">
-          <div class="row">${pt}${mc}</div>
+          <div class="row">
+            ${pt}
+            ${mc}
+          </div>
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
