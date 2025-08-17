@@ -213,19 +213,20 @@ const els = {
   resolveClear: document.getElementById('resolveClear'),
 };
 
-// put near the top of your <script>
-const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);  // you were missing this
+/* ---------- utils ---------- */
+const fmt   = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+/* ---------- repo base + data URL ---------- */
 // For GitHub Project Pages: repo root is the first path segment.
-// e.g. /JimmyD.github.io/anything -> "/JimmyD.github.io/"
 function repoBase() {
   const parts = location.pathname.split('/').filter(Boolean);
   return parts.length ? `/${parts[0]}/` : '/';
 }
-
-// Always fetch the data from the repo root /db/
+// Always fetch from /db/ at the repo root
 const NDJSON_URL = `${repoBase()}db/cards.ndjson.gz`;
 
+/* ---------- HEAD/ETag helpers ---------- */
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
   const resp = await fetch(url, { method:'HEAD', cache:'no-store' });
@@ -247,14 +248,14 @@ async function isRemoteUnchanged(url){
   return false;
 }
 
-// Stream gunzip: DecompressionStream if present, else fflate.AsyncGunzip
+/* ---------- streaming gunzip ---------- */
 function gunzipStream(compressedStream){
   if ('DecompressionStream' in window) {
     return compressedStream.pipeThrough(new DecompressionStream('gzip'));
   }
   if (!window.fflate) throw new Error('No gzip support (fflate missing)');
   const reader = compressedStream.getReader();
-  const gunzip = new fflate.AsyncGunzip();      // streaming, non-blocking
+  const gunzip = new fflate.AsyncGunzip();
   return new ReadableStream({
     start(controller){
       gunzip.ondata = (chunk, final) => {
@@ -274,11 +275,13 @@ function gunzipStream(compressedStream){
   });
 }
 
-async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } = {}){
+/* ---------- importer (fixed stream + no long tx) ---------- */
+async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } = {}) {
   els.importBox.style.display = '';
   els.importProgress.value = 0;
   els.importNote.textContent = `Fetching ${url} …`;
 
+  // HEAD/ETag early-out
   if (skipIfUnchanged) {
     try {
       const skip = await isRemoteUnchanged(url);
@@ -289,72 +292,76 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
         els.status.textContent = 'Remote unchanged; using existing DB';
         return;
       }
-    } catch (e) {
-      console.warn('HEAD check failed; continuing:', e);
-    }
+    } catch (e) { console.warn('HEAD check failed; continuing:', e); }
   }
 
+  // Save HEAD metadata for next time (best effort)
   let headMeta = null;
   try { headMeta = await getRemoteHead(url); } catch {}
 
+  // Fetch
   const resp = await fetch(url, { cache:'no-store' });
   if (!resp.ok) throw new Error(`Fetch failed: ${resp.status} ${resp.statusText}`);
   if (!resp.body) throw new Error('No response body stream');
 
-// stream -> text -> lines -> batch -> bulkPut
-const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
+  // Decide if gzipped
+  const ct  = resp.headers.get('content-type') || '';
+  const enc = resp.headers.get('content-encoding') || '';
+  const looksGzip = /\.gz($|\?)/i.test(url) || /gzip/i.test(ct) || /gzip/i.test(enc);
 
-const CHUNK = 200;
-let leftover = '';
-let batch = [];
-let inserted = 0;
+  // BYTES stream -> (optional) gunzip -> TEXT stream
+  let stream = resp.body;                         // <— define stream
+  if (looksGzip) stream = gunzipStream(stream);
+  const reader = stream.pipeThrough(new TextDecoderStream()).getReader();
 
-els.status.textContent = 'Indexing remote cards…';
+  // Parse NDJSON lines, flush in small batches (no long transaction)
+  const CHUNK = 200;
+  let leftover = '';
+  let batch = [];
+  let inserted = 0;
 
-for (;;) {
-  const { value, done } = await reader.read();     // safe: no transaction open
-  if (done) break;
-  leftover += value;
+  els.status.textContent = 'Indexing remote cards…';
 
-  let nl;
-  while ((nl = leftover.indexOf('\n')) >= 0) {
-    const line = leftover.slice(0, nl).trim();
-    leftover = leftover.slice(nl + 1);
-    if (!line) continue;
-    try {
-      const raw = JSON.parse(line);
-      batch.push(normalizeCard(raw));
-    } catch { /* ignore parse errors */ }
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    leftover += value;
 
-    if (batch.length >= CHUNK) {
-      await db.cards.bulkPut(batch);               // short implicit tx
-      inserted += batch.length;
-      batch.length = 0;
+    let nl;
+    while ((nl = leftover.indexOf('\n')) >= 0) {
+      const line = leftover.slice(0, nl).trim();
+      leftover = leftover.slice(nl + 1);
+      if (!line) continue;
+      try {
+        const raw = JSON.parse(line);
+        batch.push(normalizeCard(raw));
+      } catch { /* ignore malformed line */ }
 
-      // UI updates happen *outside* tx; fine
-      els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100));
-      els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
-      await new Promise(requestAnimationFrame);    // yield a tick without touching tx
+      if (batch.length >= CHUNK) {
+        await db.cards.bulkPut(batch);           // short implicit tx
+        inserted += batch.length;
+        batch.length = 0;
+
+        els.importProgress.value = Math.min(100, Math.round(inserted / 5000 * 100));
+        els.importNote.textContent = `Indexed ${inserted.toLocaleString()} cards…`;
+        await new Promise(requestAnimationFrame);
+      }
     }
   }
-}
 
-if (leftover.trim()) {
-  try { batch.push(normalizeCard(JSON.parse(leftover.trim()))); } catch {}
-}
-if (batch.length) {
-  await db.cards.bulkPut(batch);                   // final flush
-  inserted += batch.length;
-}
+  if (leftover.trim()) {
+    try { batch.push(normalizeCard(JSON.parse(leftover.trim()))); } catch {}
+  }
+  if (batch.length) { await db.cards.bulkPut(batch); inserted += batch.length; }
 
-els.importProgress.value = 100;
-els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
+  els.importProgress.value = 100;
+  els.importNote.textContent = `Done. Indexed ${inserted.toLocaleString()} cards from URL.`;
   els.status.textContent = 'Remote import complete';
   await refreshStats();
   if (headMeta) saveHeadMeta(url, headMeta);
 }
 
-// On load: import (skip if unchanged)
+/* ---------- auto import on load ---------- */
 window.addEventListener('DOMContentLoaded', async () => {
   try { await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged:true }); }
   catch (e) {
@@ -364,21 +371,23 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Update button: normal click reindex; Alt-click full rebuild
+/* ---------- update button ---------- */
 els.btnUpdateDB.addEventListener('click', async (e) => {
   const fullRebuild = e.altKey;
   const msg = fullRebuild
     ? 'This will CLEAR the local card database, then re-download and re-index.\nYour collection quantities are kept.\nProceed?'
     : 'Re-index from the remote NDJSON now? (Skips HEAD check.)';
   if (!confirm(msg)) return;
-
   try {
     if (fullRebuild) { await db.cards.clear(); await refreshStats(); }
     await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged:false });
-    els.status.textContent = 'Update complete.'; await refreshStats(); try { await search(); } catch {}
+    els.status.textContent = 'Update complete.';
+    await refreshStats();
+    try { await search(); } catch {}
   } catch (err) {
     console.error(err);
-    els.status.textContent = 'Update failed.'; els.importNote.textContent = `Error: ${err?.message || err}`;
+    els.status.textContent = 'Update failed.';
+    els.importNote.textContent = `Error: ${err?.message || err}`;
     alert('Update failed.');
   }
 });
@@ -441,13 +450,11 @@ function normalizeCard(raw){
     scryfall_uri: raw.scryfall_uri || '',
   };
 }
-
 function cardKingdomURL(card){
   const name = encodeURIComponent(card.name);
   const set  = encodeURIComponent(card.set_name || '');
   return `https://www.cardkingdom.com/catalog/search?search=mtg_advanced&name=${name}&filter%5Bedition%5D=${set}`;
 }
-
 function renderCardCard(card, qty=0){
   const colors = (card.color_identity?.length ? card.color_identity : ['C']).map(c=>`<span class="dot ${c}" title="${c}"></span>`).join('');
   const pt = card.power || card.toughness ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>` : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
@@ -459,7 +466,7 @@ function renderCardCard(card, qty=0){
       <img loading="lazy" alt="${card.name}" src="${card.image || ''}" onerror="this.src=''; this.style.background='#0b0d0f'">
       <div class="meta">
         <div class="line"><strong>${card.name}</strong> <span class="colors">${colors}</span></div>
-        <div class="line"><span class="muted small">${card.set_name || ''} ${card.collector_number ? `• #${card.collector_number}` : ''}</span> ${rare}</div>
+        <div class="line"><span class="muted small">${card.set_name || ''} ${card.collector_number ? \`• #\${card.collector_number}\` : ''}</span> ${rare}</div>
         <div class="line small">${type}</div>
         <div class="small" style="white-space:pre-wrap">${(card.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>')}</div>
         <div class="line">
