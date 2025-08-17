@@ -216,9 +216,15 @@ const els = {
 // put near the top of your <script>
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);  // you were missing this
 
-// robust base for project pages
-const BASE_PATH  = location.pathname.replace(/\/[^/]*$/, '/'); // keeps trailing slash
-const NDJSON_URL = BASE_PATH + 'db/cards.ndjson.gz';
+// For GitHub Project Pages: repo root is the first path segment.
+// e.g. /JimmyD.github.io/anything -> "/JimmyD.github.io/"
+function repoBase() {
+  const parts = location.pathname.split('/').filter(Boolean);
+  return parts.length ? `/${parts[0]}/` : '/';
+}
+
+// Always fetch the data from the repo root /db/
+const NDJSON_URL = `${repoBase()}db/cards.ndjson.gz`;
 
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
