@@ -213,8 +213,12 @@ const els = {
   resolveClear: document.getElementById('resolveClear'),
 };
 
-/* ---------- Remote NDJSON: same-origin gz only, with streaming gunzip fallback ---------- */
-const NDJSON_URL = 'JimmyD.github.io/db/cards.ndjson.gz';
+// put near the top of your <script>
+const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);  // you were missing this
+
+// robust base for project pages
+const BASE_PATH  = location.pathname.replace(/\/[^/]*$/, '/'); // keeps trailing slash
+const NDJSON_URL = BASE_PATH + 'db/cards.ndjson.gz';
 
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
@@ -294,7 +298,6 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
   // stream → gunzip → text → lines → Dexie
   const inflated = gunzipStream(resp.body);
   const reader = inflated.pipeThrough(new TextDecoderStream()).getReader();
-  const fmt = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
   const CHUNK = 200;
   let leftover = '';
   let batch = [];
