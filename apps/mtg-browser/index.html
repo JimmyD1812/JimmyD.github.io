@@ -214,8 +214,7 @@ const els = {
 };
 
 /* ---------- Remote NDJSON: same-origin gz only, with streaming gunzip fallback ---------- */
-const BASE_PATH  = location.pathname.replace(/\/[^/]*$/, '/'); // keep trailing slash
-const NDJSON_URL = BASE_PATH + 'db/cards.ndjson.gz';
+const NDJSON_URL = 'JimmyD.github.io/db/cards.ndjson.gz';
 
 function headKey(url){ return `ndjson_head::${url}`; }
 async function getRemoteHead(url){
