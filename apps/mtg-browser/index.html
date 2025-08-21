@@ -605,7 +605,6 @@ function matchCard(card, f){
       }
     }
   }
-  if (f.name && !name_lc.startsWith(f.name)) return false;
   if (f.type && !type_lc.includes(f.type.toLowerCase())) return false;
   if (f.subtype && !subtype_lc.includes(f.subtype)) return false;
   if (f.rarity && card.rarity !== f.rarity) return false;
