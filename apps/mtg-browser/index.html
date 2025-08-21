@@ -222,8 +222,12 @@
       <label class="btn file">⬆️ Import Collection (JSON)
         <input id="importCollection" type="file" accept=".json" />
       </label>
-      <label class="btn file">📄 Import Collection (CSV)
+      <label class="btn file">📄 Add Cards (CSV)
         <input id="importCSV" type="file" accept=".csv" />
+      </label>
+
+      <label class="btn file">📝 Add Cards (TXT)
+        <input id="importTXT" type="file" accept=".txt" />
       </label>
       <label class="btn" style="display:flex;align-items:center;gap:8px">
         <input id="csvStrict" type="checkbox" checked /> Strict set match
@@ -352,6 +356,7 @@ const els = {
   btnExport: document.getElementById('btnExport'),
   importCollection: document.getElementById('importCollection'),
   importCSV: document.getElementById('importCSV'),
+  importTXT: document.getElementById('importTXT'),
   csvBox: document.getElementById('csvBox'),
   csvProgress: document.getElementById('csvProgress'),
   csvNote: document.getElementById('csvNote'),
@@ -554,6 +559,44 @@ function stripSepAndBOM(text){
   if (/^sep\s*=\s*./i.test(firstLine)) text = e >= 0 ? text.slice(e+1) : '';
   return text;
 }
+
+function parseScannerTXT(text){
+  // Returns [{ row, name, qty, setCode:'', setName:'' }, ...]
+  const out = [];
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (/^total:/i.test(line)) continue;                 // header
+    if (/^prices from/i.test(line)) continue;            // footer
+
+    // e.g. "2 Scour for Scrap [Edge] (Normal, Near Mint, English) - $0.42 ($0.21 ea)"
+    // e.g. "1 Eldrazi Temple (0014) (Borderless) [Edge] (Normal...) - $2.53"
+    const m = line.match(/^\s*(\d+)\s+(.+?)(?:\s*\[(.*?)\])?(?:\s*\(.*?\))?\s*-\s*\$/);
+    if (!m) continue;
+
+    const qty = parseInt(m[1], 10);
+    let name  = (m[2] || '').trim();
+    const bracket = (m[3] || '').trim();  // often "Edge", "Commander", etc.
+
+    // Skip obvious tokens (the file has "Doubled-Sided Token", etc.)
+    if (/token/i.test(name)) continue;
+
+    // Normalize weird spacing
+    name = name.replace(/\s+/g,' ').trim();
+
+    out.push({
+      row: i + 1,
+      name,
+      qty: isFinite(qty) ? qty : 0,
+      setCode: '',             // this format rarely has actual codes
+      setName: bracket || ''   // try to use bracket as set name when present
+    });
+  }
+  return out;
+}
+
+  
 function parseCSV(text){
   text = stripSepAndBOM(text);
   const rows=[]; let row=[], field='', inQ=false;
@@ -608,6 +651,17 @@ function cardKingdomURL(card){
   const set  = encodeURIComponent(card.set_name || '');
   return `https://www.cardkingdom.com/catalog/search?search=mtg_advanced&name=${name}&filter%5Bedition%5D=${set}`;
 }
+
+
+function slugifyForEdhrec(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // strip accents
+    .replace(/[^a-z0-9]+/g,'-')                     // spaces & punctuation → -
+    .replace(/^-+|-+$/g,'');                        // trim dashes
+}
+function edhrecURL(card){
+  return `https://edhrec.com/cards/${slugifyForEdhrec(card.name)}`;
+}
   
 function renderCardCard(card, qty=0) {
   const colors = (card.color_identity?.length ? card.color_identity : ['C'])
@@ -643,6 +697,12 @@ function renderCardCard(card, qty=0) {
         <div class="row" style="justify-content:space-between">
           <div class="row">
             <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
+            ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
+            <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
+          </div>
+          <div class="row">
+            <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
+            <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
             ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
             <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
           </div>
@@ -1022,6 +1082,95 @@ els.importCSV.addEventListener('change', async (e) => {
   }catch(err){ console.error(err); alert('Failed to import CSV.'); }
   e.target.value='';
 });
+
+els.importTXT.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  els.csvBox.style.display = '';          // reuse the little progress UI
+  els.csvProgress.value = 0;
+  els.csvNote.textContent = `Reading ${file.name}…`;
+
+  try{
+    const text = await file.text();
+    const rows = parseScannerTXT(text);
+
+    if (!rows.length){
+      els.csvNote.textContent = 'No recognizable rows found in TXT.';
+      e.target.value=''; return;
+    }
+
+    // Build increments & unmatched, mirroring the CSV logic
+    const increments = {};
+    const unmatched  = [];
+    const totalRows  = rows.length;
+    let processed = 0;
+
+    for (const item of rows){
+      const name = item.name;
+      const qty  = item.qty || 0;
+      const setName = item.setName || '';
+      if (!name || qty <= 0){ processed++; continue; }
+
+      const nameLC = name.toLowerCase();
+
+      // Try exact by name, then prefix
+      let candidates = await db.cards.where('name_lc').equals(nameLC).toArray();
+      if (!candidates.length){
+        candidates = await db.cards.where('name_lc').startsWith(nameLC).toArray();
+      }
+
+      // Try pick by setName if possible, else just first
+      let card = null;
+      if (candidates.length){
+        if (setName){
+          const sn = setName.toLowerCase();
+          card = candidates.find(c => (c.set_name||'').toLowerCase() === sn) || null;
+        }
+        if (!card) card = candidates[0] || null;
+      }
+
+      if (!card){
+        unmatched.push({ row:item.row, name, setCode:'', setName, qty });
+      } else {
+        increments[card.id] = (increments[card.id] || 0) + qty;
+      }
+
+      processed++;
+      if (processed % 50 === 0 || processed === totalRows){
+        els.csvProgress.value = Math.round((processed/Math.max(1,totalRows))*100);
+        els.csvNote.textContent = `Matched ${Object.keys(increments).length} unique; ${unmatched.length} unmatched…`;
+        await sleep(0);
+      }
+    }
+
+    // Write to collection
+    const ids = Object.keys(increments);
+    await db.transaction('rw', db.collection, async () => {
+      for (const id of ids){
+        const cur = await db.collection.get(id) || { id, qty: 0 };
+        cur.qty += increments[id];
+        await db.collection.put(cur);
+      }
+    });
+
+    els.csvProgress.value = 100;
+    const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
+    els.csvNote.textContent = `TXT add: ${ids.length} unique; +${totalAdded} total. Unmatched: ${unmatched.length}.`;
+    await refreshStats();
+    els.status.textContent = 'TXT import complete.';
+    search();
+
+    if (unmatched.length){ renderResolveUnmatched(unmatched); }
+    else { els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }
+  }catch(err){
+    console.error(err);
+    alert('Failed to import TXT.');
+  }
+
+  e.target.value='';
+});
+
 
 /* -------------------- Clear actions -------------------- */
 els.btnClearDB.addEventListener('click', async () => {
