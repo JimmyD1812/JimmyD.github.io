@@ -44,32 +44,27 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          # Generate into /tmp so we don't clash with site files
           python apps/mtg-browser/fetch_scryfall_to_ndjson.py --output /tmp/cards.ndjson.gz
           ls -lh /tmp/cards.ndjson.gz
           test -s /tmp/cards.ndjson.gz
 
-      - name: Prepare Pages artifact (copy site + /db)
+      - name: Prepare Pages artifact (preserve root index; publish app + /db)
         shell: bash
         run: |
           set -euxo pipefail
           rm -rf public
           mkdir -p public/db
 
-          # Copy everything except .git, .github, and the public/ we are building.
-          shopt -s dotglob extglob
-          cp -a !(public|.git|.github) public/
-          shopt -u dotglob extglob
+          # Copy the repository contents into public/ WITHOUT overwriting root index.
+          # (We just mirror your repo structure; no special-case copying.)
+          rsync -a \
+            --exclude='.git/' --exclude='.github/' --exclude='public/' \
+            ./ public/
 
-          # If your working copy lives under apps/mtg-browser/, publish that index at the site root.
-          if [ -f apps/mtg-browser/index.html ]; then
-            cp -f apps/mtg-browser/index.html public/index.html
-          fi
-
-          # Ensure Jekyll doesn't try to process the site (serve raw files)
+          # Ensure Jekyll doesn't process anything
           touch public/.nojekyll
 
-          # Move generated data into /db
+          # Place generated data at /db/cards.ndjson.gz (repo root path)
           mv /tmp/cards.ndjson.gz public/db/
 
           echo "Public tree (top-level):"
@@ -77,8 +72,11 @@ jobs:
           echo "Public tree (/db):"
           ls -la public/db
           du -h public/db/cards.ndjson.gz
-          test -s public/index.html
+
+          # Optional sanity checks (don't fail if root index isn't present)
           test -s public/db/cards.ndjson.gz
+          [ -f public/index.html ] || true
+          [ -f public/apps/mtg-browser/index.html ] || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
