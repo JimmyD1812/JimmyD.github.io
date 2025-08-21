@@ -1,23 +1,23 @@
 name: Nightly cards.ndjson(.gz)
 
-on:
-  schedule:
-    - cron: '0 9 * * *'
-    - cron: '0 10 * * *'
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 'Skip upload (dry run)?'
-        required: false
-        default: 'false'
-      tag:
-        description: 'Release tag to upload (cards or cards-test)'
-        required: false
-        default: 'cards'
-      limit:
-        description: 'For testing: only fetch first N cards (blank = full)'
-        required: false
-        default: ''
+#on:
+#  schedule:
+#    - cron: '0 9 * * *'
+#    - cron: '0 10 * * *'
+#  workflow_dispatch:
+#    inputs:
+#      dry_run:
+#        description: 'Skip upload (dry run)?'
+#        required: false
+#        default: 'false'
+#      tag:
+#        description: 'Release tag to upload (cards or cards-test)'
+#        required: false
+#        default: 'cards'
+#      limit:
+#        description: 'For testing: only fetch first N cards (blank = full)'
+#        required: false
+#        default: ''
 
 permissions:
   contents: write
