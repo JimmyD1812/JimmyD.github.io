@@ -191,6 +191,21 @@
                linear-gradient(90deg,#2e3b47,#24303a) border-box;
     border:1px solid transparent; border-radius:999px; padding:4px 10px;
   }
+  /* Split the six color chips into 2 lines (3 × 2) and keep Search below */
+.colors{
+  display: grid;
+  grid-template-columns: repeat(3, max-content); /* 3 per row */
+  gap: 8px 10px;
+  flex: 1 1 100%; /* take full line so the Search button wraps to next line */
+}
+
+/* Smaller screens: 2 per row */
+@media (max-width: 520px){
+  .colors{ grid-template-columns: repeat(2, max-content); }
+}
+
+/* Align the row so multi-line chips don’t collide with neighbors */
+.row{ align-items: flex-start; }
 </style>
 
 </head>
