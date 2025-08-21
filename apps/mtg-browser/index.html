@@ -85,7 +85,7 @@
         <div class="head"><strong>Search</strong></div>
         <div class="body">
           <div class="row" style="margin-bottom:8px">
-            <input id="qName" type="text" placeholder="Name starts with… (e.g., Fury Sliver)" />
+            <input id="qName" type="text" placeholder="Name contains… (supports ^prefix and suffix$)" />
           </div>
           <div class="row" style="margin-bottom:8px">
             <input id="qText" type="text" placeholder="Oracle text contains… (e.g., double strike)" />
@@ -589,6 +589,22 @@ function matchCard(card, f){
   const type_lc = (card.type_lc||'');
   const subtype_lc = (card.subtype_lc||'');
   const oracle_lc = (card.oracle_text||'').toLowerCase();
+  if (f.name) {
+    const q = f.name;
+
+    // Allow ^prefix or suffix$ power users
+    if (q.startsWith('^')) {
+      if (!name_lc.startsWith(q.slice(1))) return false;
+    } else if (q.endsWith('$')) {
+      if (!name_lc.endsWith(q.slice(0, -1))) return false;
+    } else {
+      // Default: every term must appear somewhere in the name
+      const terms = q.split(/\s+/).filter(Boolean);
+      for (const t of terms) {
+        if (!name_lc.includes(t)) return false;
+      }
+    }
+  }
   if (f.name && !name_lc.startsWith(f.name)) return false;
   if (f.type && !type_lc.includes(f.type.toLowerCase())) return false;
   if (f.subtype && !subtype_lc.includes(f.subtype)) return false;
