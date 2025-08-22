@@ -22,7 +22,7 @@
     --card:#171c22;
     --chip:#1b222a;
     --border:#24303a;
-    --btn-fs: 16px;      /* tweak here if you want smaller/larger */
+    --btn-fs: 14px;      /* tweak here if you want smaller/larger */
     --btn-lh: 1.15;
     --btn-fw: 600;
   }
@@ -101,19 +101,37 @@ body{
 
   /* ===== Layout ===== */
   .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
-  @media (max-width: 900px){
-  /* keep the 1-column layout from your old rule */
-  .grid{ grid-template-columns: 1fr; }
-
+/* Mobile: collapse the Search panel into a single header line */
+@media (max-width: 900px){
   .details { position: sticky; top: 12px; z-index: 30; }
   .details .head{ cursor: pointer; }
 
-  .details.collapsed .body{ display: none; }                 /* hide fields */
+  /* animate the body open/closed */
+  .details .body{
+    overflow: hidden;
+    max-height: 1000px;                     /* expanded state (big enough) */
+    opacity: 1;
+    transform: translateY(0);
+    transform-origin: top;
+    transition:
+      max-height 220ms ease,
+      opacity 180ms ease,
+      transform 220ms ease;
+  }
+  .details.collapsed .body{
+    max-height: 0;                          /* collapsed */
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;                    /* avoid accidental taps */
+  }
+
+  /* rounded “chip” look when collapsed */
   .details.collapsed .head{
-    border-bottom: none;                                      /* no divider */
-    border-radius: 14px;                                      /* rounded pill */
-    box-shadow: 0 8px 24px #0008;                             /* float */
+    border-bottom: none;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px #0008;
     background: var(--panel);
+    transition: border-radius 220ms ease, box-shadow 220ms ease, background 220ms ease;
   }
 
   /* hint text on mobile */
@@ -123,6 +141,12 @@ body{
   }
   .details:not(.collapsed) .head strong::after{ content: ''; }
 }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .details .body{ transition: none !important; }
+}
+
 
   /* ===== Panels with gradient borders (subtle) ===== */
   .panel{
