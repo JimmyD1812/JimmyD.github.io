@@ -210,44 +210,8 @@ body{
 
 /* Align the row so multi-line chips don’t collide with neighbors */
 .row{ align-items: flex-start; }
-
-/* Kill the square UA outline on mouse focus */
-.btn:focus { outline: none; }
-
-/* Keep a rounded custom ring for keyboard focus */
-.btn:focus-visible{
-  outline: none;
-  box-shadow: 0 0 0 3px #6ee7ff55, 0 0 0 6px #6ee7ff22;
-  border-radius: 12px; /* ensure rounded ring */
-}
-
-/* File labels / anchor buttons */
-label.btn:focus-within{
-  outline: none;
-  box-shadow: 0 0 0 3px #6ee7ff55, 0 0 0 6px #6ee7ff22;
-  border-radius: 12px;
-}
-a.btn:focus{ outline:none; }
-
-/* Optional: remove mobile tap highlight */
-.btn, .file { -webkit-tap-highlight-color: transparent; }
-
-/* Remove the square native focus ring from the inner controls */
-.file input[type=file]:focus,
-.file input[type=file]:focus-visible,
-#csvStrict:focus,
-#csvStrict:focus-visible {
-  outline: none !important;
-}
-
-/* Keep a rounded focus ring on the parent label when its child is focused */
-label.btn:focus-within{
-  outline: none;
-  box-shadow: 0 0 0 3px #6ee7ff55, 0 0 0 6px #6ee7ff22;
-  border-radius: 12px;
-}
   
-/* (Optional) make sure hover also respects rounding */
+/* Make sure hover also respects rounding */
 .btn:hover { border-radius: 12px; }
 </style>
 
