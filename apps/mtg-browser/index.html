@@ -1160,24 +1160,21 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
           ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
         </div>
 
-        <div class="line">
+        <div class="line" style="justify-content:center">
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
             <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
           </div>
+            ${comboMarkup}
         </div>
 
-        <div class="line" style="justify-content:center">
-          ${comboMarkup}
-        </div>
 
-        <div class="row" style="justify-content:space-between; flex-wrap:wrap">
-          <div class="row">
-            <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
-            ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
-            <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
-          </div>
+      <div class="row" style="justify-content:center; align-items:center; gap:10px; flex-wrap:wrap">
+        <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
+        ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
+        <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
+      </div>
 
           <div class="row" style="gap:10px; align-items:center">
             <div class="row" style="gap:6px; align-items:center">
