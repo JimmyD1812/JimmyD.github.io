@@ -475,22 +475,12 @@ window.addEventListener('resize', onScrollCollapse);
 onScrollCollapse();
 
 
-// Touch-first: toggle on pointerdown (touch) and suppress the following click
-els.searchHead.addEventListener('pointerdown', (e) => {
-  if (!isMobile()) return;
-  if (e.pointerType === 'touch') {
-    lastTouchToggleAt = Date.now();
-    userToggleSearch();
-    e.preventDefault();           // avoid generating a follow-up click in most cases
-  }
-});
-
 // Desktop / fallback click
-els.searchHead.addEventListener('click', (e) => {
-  if (!isMobile()) return;
-  // If a touch just handled it, ignore this click
-  if (Date.now() - lastTouchToggleAt < 500) return;
-  userToggleSearch();
+els.searchHead.addEventListener('click', () => {
+  if (window.innerWidth > 900) return;
+  const isCollapsed = els.searchPanel.classList.contains('collapsed');
+  els.searchPanel.classList.toggle('collapsed', !isCollapsed);
+  suppressAutoUntil = Date.now() + 800; // so the scroll listener won't immediately re-collapse
 });
 
 // focusing any input expands it
