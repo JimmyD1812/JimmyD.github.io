@@ -1053,6 +1053,46 @@ els.importCollection.addEventListener('change', async (e) => {
 });
 
 /* -------------------- CSV helpers + unmatched resolver -------------------- */
+// Known TCGplayer export header (order matters)
+const DEFAULT_TCGPLAYER_HEADER = [
+  "Folder Name","Quantity","Trade Quantity","Card Name","Set Code","Set Name",
+  "Card Number","Condition","Printing","Language","Price Bought","Date Bought",
+  "LOW","MID","MARKET"
+];
+
+/**
+ * If the file starts with:
+ *  - "sep=,"  → skip 2 lines (the sep line + the header line) and provide a known header
+ *  - "Folder Name" → skip 1 line (the header) and provide a known header
+ * Otherwise, keep content as-is and let the first parsed row be the header.
+ */
+function peelCsvHeader(rawText){
+  // strip BOM if present
+  if (rawText && rawText.charCodeAt(0) === 0xFEFF) rawText = rawText.slice(1);
+
+  const nl1 = rawText.indexOf('\n');
+  const firstLine = (nl1 >= 0 ? rawText.slice(0, nl1) : rawText).trim();
+
+  // Case 1: starts with sep=
+  if (/^\s*"?\s*sep\s*=\s*,\s*"?\s*$/i.test(firstLine)) {
+    // skip sep line and the next line (header line)
+    const start2 = nl1 >= 0 ? nl1 + 1 : rawText.length;
+    const nl2 = rawText.indexOf('\n', start2);
+    const csvText = (nl2 >= 0 ? rawText.slice(nl2 + 1) : '');
+    return { csvText, header: DEFAULT_TCGPLAYER_HEADER };
+  }
+
+  // Case 2: first line is the header (starts with “Folder Name”)
+  if (/^Folder Name\b/i.test(firstLine)) {
+    const csvText = (nl1 >= 0 ? rawText.slice(nl1 + 1) : '');
+    return { csvText, header: DEFAULT_TCGPLAYER_HEADER };
+  }
+
+  // Otherwise: keep as-is; first parsed row will be the header
+  return { csvText: rawText, header: null };
+}
+
+  
 function selectCardByNameAndSet(candidates, setCode, setName, strict){
   // If your DB guarantees 1 print per card, just return it.
   if (candidates.length === 1) return candidates[0];
@@ -1201,7 +1241,8 @@ els.importCSV.addEventListener('change', async (e) => {
   els.csvBox.style.display = ''; els.csvProgress.value = 0; els.csvNote.textContent = `Reading ${file.name}…`;
   try{
     const text = await file.text();
-    const rows = parseCSV(text);
+    const { csvText, header: externalHeader } = peelCsvHeader(raw);
+    const rows = parseCSV(csvText);
     if (!rows.length){ els.csvNote.textContent='No rows found.'; e.target.value=''; return; }
     const headerRaw = rows[0].map(h=>(h||'').trim());
     const header = headerRaw.map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
