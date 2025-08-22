@@ -469,6 +469,48 @@ let lastTouchToggleAt = 0;
 const MOBILE_BP = 900;
 const COLLAPSE_THRESHOLD = 250; // tweak feel here
 
+const faceIndex = {};  // id -> 0/1/...
+
+function flipCard(id){
+  const card = window.__cardsById[id];
+  if (!card || !card.is_dfc || !card.faces) return;
+  const i = (faceIndex[id] || 0);
+  const next = (i + 1) % card.faces.length;
+  faceIndex[id] = next;
+
+  // swap image
+  const img = document.getElementById(`img-${id}`);
+  if (img) img.src = card.faces[next].image || card.image || '';
+
+  // swap title & little line bits (name, type, mana, PT/loyalty)
+  const nameEl = document.getElementById(`title-${id}`);
+  if (nameEl) nameEl.textContent = card.faces[next].name || card.name;
+
+  const typeEl = document.getElementById(`type-${id}`);
+  if (typeEl) typeEl.textContent = card.faces[next].type_line || card.type_line;
+
+  const manaEl = document.getElementById(`mc-${id}`);
+  if (manaEl){
+    const mc = card.faces[next].mana_cost || '';
+    manaEl.style.display = mc ? '' : 'none';
+    manaEl.textContent = mc;
+  }
+
+  const ptEl = document.getElementById(`pt-${id}`);
+  if (ptEl){
+    const f = card.faces[next];
+    const text = (f.power || f.toughness) ? `${f.power ?? ''}/${f.toughness ?? ''}` : (f.loyalty ? `Loyalty ${f.loyalty}` : '');
+    ptEl.style.display = text ? '' : 'none';
+    ptEl.textContent = text;
+  }
+
+  const rulesEl = document.getElementById(`rules-${id}`);
+  if (rulesEl){
+    rulesEl.innerHTML = (card.faces[next].oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>');
+  }
+}
+
+
 function isMobile(){ return window.innerWidth <= MOBILE_BP; }
 function setSearchExpanded(expanded){
   if (!els.searchPanel || !els.searchHead) return;
@@ -773,15 +815,28 @@ function parseCSV(text){
 
 /* -------------------- Card helpers -------------------- */
 function normalizeCard(raw){
-  const img = raw.image_uris?.normal || raw.card_faces?.[0]?.image_uris?.normal || null;
-  const oracle_text = raw.oracle_text || (raw.card_faces?.map(f=>f.oracle_text).filter(Boolean).join('\n')) || '';
-  const mana_cost = raw.mana_cost || (raw.card_faces?.map(f=>f.mana_cost).filter(Boolean).join(' // ')) || '';
-  const type_line = raw.type_line || (raw.card_faces?.map(f=>f.type_line).join(' // ')) || '';
-  const power = raw.power ?? raw.card_faces?.[0]?.power ?? null;
-  const toughness = raw.toughness ?? raw.card_faces?.[0]?.toughness ?? null;
-  const loyalty = raw.loyalty ?? raw.card_faces?.[0]?.loyalty ?? null;
+  const faces = Array.isArray(raw.card_faces) ? raw.card_faces.map(f => ({
+    name: f.name || '',
+    mana_cost: f.mana_cost || '',
+    type_line: f.type_line || '',
+    oracle_text: f.oracle_text || '',
+    colors: f.colors || [],
+    power: f.power ?? null,
+    toughness: f.toughness ?? null,
+    loyalty: f.loyalty ?? null,
+    image: f.image_uris?.normal || null
+  })) : null;
+
+  const img = raw.image_uris?.normal || faces?.[0]?.image || null;
+  const oracle_text = raw.oracle_text || (faces?.map(f=>f.oracle_text).filter(Boolean).join('\n')) || '';
+  const mana_cost = raw.mana_cost || (faces?.map(f=>f.mana_cost).filter(Boolean).join(' // ')) || '';
+  const type_line = raw.type_line || (faces?.map(f=>f.type_line).join(' // ')) || '';
+
+  const is_dfc = !!(faces && faces.length >= 2);
+
   const { name, id, set, set_name, rarity, color_identity = [] } = raw;
   const subtype = (type_line.split('—')[1] || '').trim();
+
   return {
     id, name, name_lc: name.toLowerCase(),
     set, set_name: set_name || '',
@@ -793,13 +848,19 @@ function normalizeCard(raw){
     subtype_lc: subtype.toLowerCase(),
     colors: raw.colors || [],
     color_identity,
-    power, toughness, loyalty,
+    power: raw.power ?? faces?.[0]?.power ?? null,
+    toughness: raw.toughness ?? faces?.[0]?.toughness ?? null,
+    loyalty: raw.loyalty ?? faces?.[0]?.loyalty ?? null,
     collector_number: raw.collector_number || '',
     purchase_uris: raw.purchase_uris || {},
     scryfall_uri: raw.scryfall_uri || '',
-    prices: raw.prices || {}          // <— add this
+    prices: raw.prices || {},
+    faces,                     // <— new
+    is_dfc,                    // <— new
+    layout: raw.layout || ''   // <— handy if you want to style by layout
   };
 }
+
 function cardKingdomURL(card){
   const name = encodeURIComponent(card.name);
   const set  = encodeURIComponent(card.set_name || '');
@@ -828,32 +889,35 @@ function edhrecURL(card){
 function renderCardCard(card, qty=0) {
   const colors = (card.color_identity?.length ? card.color_identity : ['C'])
     .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
-  const pt = card.power || card.toughness
-    ? `<span class="stat">${card.power ?? ''}/${card.toughness ?? ''}</span>`
-    : (card.loyalty ? `<span class="stat">Loyalty ${card.loyalty}</span>` : '');
-  const mc = card.mana_cost ? `<span class="stat" title="Mana Cost">${card.mana_cost}</span>` : '';
-  const rare = card.rarity ? `<span class="chip">${card.rarity}</span>` : '';
-  const type = `<span class="chip">${card.type_line}</span>`;
-  const price = usdPrice(card); // "$0.25" or ""
+
+  const firstFace = card.faces?.[0];
+  const ptText = (firstFace?.power || firstFace?.toughness)
+      ? `${firstFace.power ?? ''}/${firstFace.toughness ?? ''}`
+      : (firstFace?.loyalty ? `Loyalty ${firstFace.loyalty}` : '');
+  const mcText = firstFace?.mana_cost || card.mana_cost || '';
 
   return `
     <div class="card">
-      <img loading="lazy" alt="${card.name}" src="${card.image || ''}" onerror="this.src=''; this.style.background='#0b0d0f'">
+      <img id="img-${card.id}" loading="lazy" alt="${card.name}"
+           src="${(firstFace?.image || card.image) || ''}"
+           onerror="this.src=''; this.style.background='#0b0d0f'">
       <div class="meta">
-        <div class="line"><strong>${card.name}</strong> <span class="colors">${colors}</span></div>
         <div class="line">
-          <span class="muted small">
-            ${card.set_name || ''} ${card.collector_number ? ('• #' + card.collector_number) : ''}
-          </span> ${rare}
+          <strong id="title-${card.id}">${firstFace?.name || card.name}</strong>
+          <span class="colors">${colors}</span>
         </div>
-        <div class="line small">${type}</div>
-        <div class="small" style="white-space:pre-wrap">
-          ${(card.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>')}
+        <div class="line">
+          <span class="muted small">${card.set_name || ''} ${card.collector_number ? ('• #' + card.collector_number) : ''}</span>
+          ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
+        </div>
+        <div class="line small"><span class="chip" id="type-${card.id}">${firstFace?.type_line || card.type_line}</span></div>
+        <div class="small" id="rules-${card.id}" style="white-space:pre-wrap">
+          ${(firstFace?.oracle_text || card.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>')}
         </div>
         <div class="line">
           <div class="row">
-            ${pt}
-            ${mc}
+            ${ptText ? `<span class="stat" id="pt-${card.id}">${ptText}</span>` : `<span class="stat" id="pt-${card.id}" style="display:none"></span>`}
+            ${mcText ? `<span class="stat" id="mc-${card.id}">${mcText}</span>` : `<span class="stat" id="mc-${card.id}" style="display:none"></span>`}
           </div>
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
@@ -862,21 +926,19 @@ function renderCardCard(card, qty=0) {
           </div>
         </div>
 
-        <!-- single, deduped links row -->
         <div class="row" style="justify-content:space-between; flex-wrap:wrap">
           <div class="row">
             <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
-            ${card.purchase_uris?.tcgplayer
-              ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer${price ? ` — ${price}` : ''}</a>`
-              : ''
-            }
+            ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
             <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
             <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
           </div>
+          ${card.is_dfc ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
         </div>
       </div>
     </div>`;
 }
+
 
 /* Temp page helpers */
 window.__cardsById = {};
