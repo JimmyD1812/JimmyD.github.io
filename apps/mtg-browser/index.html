@@ -118,14 +118,16 @@ body{
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px; padding: 10px;
-    min-width: 240px; max-width: 320px;
+    min-width: 240px; max-width: 520px;
     box-shadow: 0 16px 40px #000a;
+    z-index: 1000;
     display: none;
   }
 
   .combo-wrap.open .combo-pop{ display:block; }
   .combo-wrap:hover .combo-pop,
   .combo-wrap:focus-within .combo-pop { display:block; }
+  .combo-wrap { position: relative; z-index: 10; }
   
   /* small tile grid */
   .combo-grid{
@@ -304,6 +306,7 @@ body{
     border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
     transition:transform .18s ease, box-shadow .25s ease, border-image .2s ease;
   }
+  .card { isolation: isolate; }
   .card:has(.combo-wrap.open),
   .card:has(.combo-wrap:hover),
   .card:has(.combo-wrap:focus-within){
@@ -1123,17 +1126,17 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
       <div class="meta">
         <div class="line">
           <strong id="title-${card.id}">${firstFace?.name || card.name}</strong>
-          <span class="colors">${colors}</span>
-          ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
-        </div>
-
-        <div class="line">
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
             <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
-            ${comboMarkup}
+            
           </div>
+          ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
+        </div>
+
+        <div class="line">
+          ${comboMarkup}
         </div>
 
         <div class="row" style="justify-content:space-between; flex-wrap:wrap">
