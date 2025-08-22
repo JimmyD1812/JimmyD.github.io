@@ -1032,18 +1032,7 @@ function renderCardCard(card, qty=0) {
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
             <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
-          </div>
-        </div>
-
-        <div class="row" style="justify-content:space-between; flex-wrap:wrap">
-          <div class="row">
-            <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
-            ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
-            <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
-            <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
-          </div>
-          ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
-          ${(card.combo_refs && card.combo_refs.length)
+                      ${(card.combo_refs && card.combo_refs.length)
             ? `
             <div class="combo-wrap">
               <button class="btn combo-chip"
@@ -1057,6 +1046,18 @@ function renderCardCard(card, qty=0) {
             </div>`
             : ''
           }
+          </div>
+        </div>
+
+        <div class="row" style="justify-content:space-between; flex-wrap:wrap">
+          <div class="row">
+            <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
+            ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
+            <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
+            <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
+          </div>
+          ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
+
         </div>
       </div>
     </div>`;
