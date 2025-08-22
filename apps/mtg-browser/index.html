@@ -473,42 +473,38 @@ const faceIndex = {};  // id -> 0/1/...
 
 function flipCard(id){
   const card = window.__cardsById[id];
-  if (!card || !card.is_dfc || !card.faces) return;
+  if (!card || !Array.isArray(card.faces) || card.faces.length < 2) return;
   const i = (faceIndex[id] || 0);
   const next = (i + 1) % card.faces.length;
   faceIndex[id] = next;
 
-  // swap image
-  const img = document.getElementById(`img-${id}`);
-  if (img) img.src = card.faces[next].image || card.image || '';
+  const f = card.faces[next];
+  const img = document.getElementById(`img-${card.id}`);
+  if (img) img.src = f.image || card.image || '';
 
-  // swap title & little line bits (name, type, mana, PT/loyalty)
-  const nameEl = document.getElementById(`title-${id}`);
-  if (nameEl) nameEl.textContent = card.faces[next].name || card.name;
+  const nameEl = document.getElementById(`title-${card.id}`);
+  if (nameEl) nameEl.textContent = f.name || card.name;
 
-  const typeEl = document.getElementById(`type-${id}`);
-  if (typeEl) typeEl.textContent = card.faces[next].type_line || card.type_line;
+  const typeEl = document.getElementById(`type-${card.id}`);
+  if (typeEl) typeEl.textContent = f.type_line || card.type_line;
 
-  const manaEl = document.getElementById(`mc-${id}`);
-  if (manaEl){
-    const mc = card.faces[next].mana_cost || '';
-    manaEl.style.display = mc ? '' : 'none';
-    manaEl.textContent = mc;
-  }
+  const manaEl = document.getElementById(`mc-${card.id}`);
+  if (manaEl){ const mc = f.mana_cost || ''; manaEl.style.display = mc ? '' : 'none'; manaEl.textContent = mc; }
 
-  const ptEl = document.getElementById(`pt-${id}`);
+  const ptEl = document.getElementById(`pt-${card.id}`);
   if (ptEl){
-    const f = card.faces[next];
-    const text = (f.power || f.toughness) ? `${f.power ?? ''}/${f.toughness ?? ''}` : (f.loyalty ? `Loyalty ${f.loyalty}` : '');
+    const text = (f.power || f.toughness) ? `${f.power ?? ''}/${f.toughness ?? ''}` :
+                 (f.loyalty ? `Loyalty ${f.loyalty}` : '');
     ptEl.style.display = text ? '' : 'none';
     ptEl.textContent = text;
   }
 
-  const rulesEl = document.getElementById(`rules-${id}`);
+  const rulesEl = document.getElementById(`rules-${card.id}`);
   if (rulesEl){
-    rulesEl.innerHTML = (card.faces[next].oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>');
+    rulesEl.innerHTML = (f.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>');
   }
 }
+
 
 
 function isMobile(){ return window.innerWidth <= MOBILE_BP; }
@@ -885,11 +881,16 @@ function slugifyForEdhrec(s){
 function edhrecURL(card){
   return `https://edhrec.com/cards/${slugifyForEdhrec(card.name)}`;
 }
+
+function isDoubleFaced(card){
+  return (Array.isArray(card.faces) && card.faces.length >= 2) ||
+         ['transform','modal_dfc','meld','flip','double_faced_token'].includes(card.layout);
+}
   
 function renderCardCard(card, qty=0) {
   const colors = (card.color_identity?.length ? card.color_identity : ['C'])
     .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
-
+  const isDFC = isDoubleFaced(card);
   const firstFace = card.faces?.[0];
   const ptText = (firstFace?.power || firstFace?.toughness)
       ? `${firstFace.power ?? ''}/${firstFace.toughness ?? ''}`
@@ -933,7 +934,7 @@ function renderCardCard(card, qty=0) {
             <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
             <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
           </div>
-          ${card.is_dfc ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
+          ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
         </div>
       </div>
     </div>`;
