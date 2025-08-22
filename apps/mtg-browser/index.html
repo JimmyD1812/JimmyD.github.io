@@ -1091,10 +1091,19 @@ function money(v){
   return Number.isFinite(n) ? `$${n.toFixed(2)}` : '';
 }
 // prefer non-foil USD, fall back to foil/etched if needed
-function usdPrice(card){
+function getUsdPrice(card, holo=false){
   const p = card?.prices || {};
-  return money(p.usd || p.usd_foil || p.usd_etched || '');
+  const v = holo ? (p.usd_foil ?? p.usd_etched) : p.usd;
+  return money(v);
 }
+
+window.updateCardPrice = function(id){
+  const card = window.__cardsById[id];
+  if (!card) return;
+  const holo = !!document.getElementById(`holo-${id}`)?.checked;
+  const el = document.getElementById(`price-${id}`);
+  if (el) el.textContent = getUsdPrice(card, holo) || '—';
+};
 function slugifyForEdhrec(s){
   return s.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // strip accents
@@ -1123,15 +1132,14 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
 
   const mcText = firstFace?.mana_cost || card.mana_cost || '';
 
-  // Render the combo popover UI only when caller says we have local matches
   const comboMarkup = showComboBtn
     ? `
       <div class="combo-wrap">
         <button class="btn combo-chip"
+                title="Show related cards"
                 onclick="showComboPopover('${card.id}', this)"
                 onmouseenter="loadComboPieces('${card.id}')"
                 ontouchstart="loadComboPieces('${card.id}')">
-                title="Show related cards">
           ✨ Related Cards
         </button>
         <div class="combo-pop" id="combo-pop-${card.id}" data-loaded="0">
@@ -1148,16 +1156,19 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
       <div class="meta">
         <div class="line">
           <strong id="title-${card.id}">${firstFace?.name || card.name}</strong>
-          <div class="qty">
-            <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
-            <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
-            <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
-            
-          </div>
+          <span class="colors">${colors}</span>
           ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
         </div>
 
         <div class="line">
+          <div class="qty">
+            <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
+            <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
+            <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
+          </div>
+        </div>
+
+        <div class="line" style="justify-content:center">
           ${comboMarkup}
         </div>
 
@@ -1165,14 +1176,33 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
           <div class="row">
             <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
             ${card.purchase_uris?.tcgplayer ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer</a>` : ''}
-            <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
             <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
           </div>
-          ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
+
+          <div class="row" style="gap:10px; align-items:center">
+            <div class="row" style="gap:6px; align-items:center">
+              <span class="muted small">Price</span>
+              <span class="stat" id="price-${card.id}">${getUsdPrice(card,false) || '—'}</span>
+              <label class="chip" style="cursor:pointer">
+                <input type="checkbox" id="holo-${card.id}" onchange="updateCardPrice('${card.id}')">
+                Holo
+              </label>
+            </div>
+            ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
+          </div>
         </div>
       </div>
     </div>`;
 }
+
+// tiny toggler used by the button
+window.showComboPopover = function(cardId, btn){
+  const wrap = btn.closest('.combo-wrap');
+  if (!wrap) return;
+  wrap.classList.toggle('open');
+  if (wrap.classList.contains('open')) loadComboPieces(cardId);
+};
+
 
 
 
