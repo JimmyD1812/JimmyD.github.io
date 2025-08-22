@@ -99,6 +99,65 @@ body{
   .file{position:relative;overflow:hidden}
   .file input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 
+  /* ==== Combo bubble & popover ==== */
+  .combo-wrap{ position: relative; display:inline-block; }
+  .combo-chip.btn{
+    background: linear-gradient(90deg,var(--accent),var(--accent-2)) padding-box,
+                linear-gradient(120deg,var(--border),#2d3a46) border-box;
+    border:1px solid transparent;
+    color:#0b0d0f; font-weight:800;
+    text-shadow: 0 1px 0 #ffffff60;
+  }
+  .combo-chip.btn:hover{
+    box-shadow: 0 0 0 4px #6ee7ff2a, 0 10px 24px #0008;
+    transform: translateY(-1px);
+  }
+  
+  .combo-pop{
+    position:absolute; top: calc(100% + 8px); right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px;
+    min-width: 240px; max-width: 320px;
+    box-shadow: 0 16px 40px #000a;
+    display: none;
+  }
+  .combo-wrap:hover .combo-pop,
+  .combo-wrap:focus-within .combo-pop { display:block; }
+  
+  /* small tile grid */
+  .combo-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .combo-item{
+    position:relative;
+    border-radius:10px; overflow:hidden;
+    border:1px solid var(--border);
+    background:#0f1114;
+    aspect-ratio: 3/4;
+  }
+  .combo-item img{
+    width:100%; height:100%; object-fit:cover; display:block;
+    transform: translateZ(0);
+  }
+  .combo-owned{
+    position:absolute; left:6px; top:6px;
+    background:linear-gradient(#1e2a22,#1b2420) padding-box,
+               linear-gradient(90deg,#2d3a46,#24303a) border-box;
+    border:1px solid transparent; border-radius:999px;
+    padding:2px 6px; font-size:11px; color:#c6f6d5;
+  }
+  .combo-miss{
+    position:absolute; left:6px; top:6px;
+    background:#2a1a1a; border:1px solid #3a2525; color:#ffb3b3;
+    border-radius:999px; padding:2px 6px; font-size:11px;
+  }
+  .combo-title{
+    margin:0 0 6px 0; font-size:12px; color:var(--muted);
+  }
+  
   /* ===== Layout ===== */
   .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
 /* Mobile: collapse the Search panel into a single header line */
@@ -471,6 +530,57 @@ const COLLAPSE_THRESHOLD = 250; // tweak feel here
 
 const faceIndex = {};  // id -> 0/1/...
 
+window.loadComboPieces = async function(cardId){
+  const card = window.__cardsById[cardId];
+  const pop = document.getElementById(`combo-pop-${cardId}`);
+  if (!card || !pop || pop.dataset.loaded === '1') return;
+
+  const refs = (card.combo_refs || []);
+  if (!refs.length){
+    pop.innerHTML = `<div class="combo-title">No additional pieces listed.</div>`;
+    pop.dataset.loaded = '1';
+    return;
+  }
+
+  // Try exact by id; if missing, fall back by name (oracle dataset can differ)
+  const ids = refs.map(r => r.id).filter(Boolean);
+  let cards = ids.length ? await db.cards.bulkGet(ids) : [];
+  const results = [];
+
+  for (let i = 0; i < refs.length; i++){
+    let c = cards[i];
+    const ref = refs[i];
+    if (!c && ref.name){
+      c = await db.cards.where('name_lc').equals(ref.name.toLowerCase()).first();
+    }
+    if (c) results.push({ ref, card: c });
+  }
+
+  // Collection ownership tags
+  const owned = {};
+  const collRows = await db.collection.toArray();
+  for (const r of collRows) owned[r.id] = r.qty || 0;
+
+  const tiles = results.map(({card: rc}) => {
+    const have = owned[rc.id] > 0;
+    const tag  = have
+      ? `<div class="combo-owned">Owned ×${owned[rc.id]}</div>`
+      : `<div class="combo-miss">Not owned</div>`;
+    const img  = rc.image || rc.card_faces?.[0]?.image || '';
+    return `
+      <a class="combo-item" href="${rc.scryfall_uri || '#'}" target="_blank" title="${rc.name}">
+        ${tag}
+        <img loading="lazy" src="${img}" alt="${rc.name}">
+      </a>`;
+  }).join('');
+
+  pop.innerHTML = `
+    <div class="combo-title">Combo Pieces</div>
+    <div class="combo-grid">${tiles || '<div class="muted small">No matching pieces found locally.</div>'}</div>
+  `;
+  pop.dataset.loaded = '1';
+};
+  
 function flipCard(id){
   const card = window.__cardsById[id];
   if (!card || !Array.isArray(card.faces) || card.faces.length < 2) return;
@@ -832,7 +942,14 @@ function normalizeCard(raw){
 
   const { name, id, set, set_name, rarity, color_identity = [] } = raw;
   const subtype = (type_line.split('—')[1] || '').trim();
-
+  const combo_refs = (raw.all_parts || [])
+    .filter(p =>
+      p.component === 'combo_piece' &&
+      !/token|emblem/i.test(p.type_line || '') &&
+      p.id !== raw.id
+    )
+    .map(p => ({ id: p.id, name: p.name || '' }));
+  
   return {
     id, name, name_lc: name.toLowerCase(),
     set, set_name: set_name || '',
@@ -853,6 +970,8 @@ function normalizeCard(raw){
     prices: raw.prices || {},
     faces,                     // <— new
     is_dfc,                    // <— new
+    all_parts: raw.all_parts || [],
+    combo_refs,   
     layout: raw.layout || ''   // <— handy if you want to style by layout
   };
 }
@@ -935,6 +1054,20 @@ function renderCardCard(card, qty=0) {
             <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
           </div>
           ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
+          ${(card.combo_refs && card.combo_refs.length)
+            ? `
+            <div class="combo-wrap">
+              <button class="btn combo-chip"
+                      onmouseenter="loadComboPieces('${card.id}')"
+                      ontouchstart="loadComboPieces('${card.id}')">
+                ✨ Combo Pieces
+              </button>
+              <div class="combo-pop" id="combo-pop-${card.id}" data-loaded="0">
+                <div class="muted small">Loading…</div>
+              </div>
+            </div>`
+            : ''
+          }
         </div>
       </div>
     </div>`;
