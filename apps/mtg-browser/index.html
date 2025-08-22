@@ -570,12 +570,10 @@ window.loadComboPieces = async function(cardId){
     }
     if (!rc) continue;
 
-    // 2) Skip self (same id or same oracle), and token/emblem-ish things
-    const tline = rc.type_line || '';
-    const isTokenish = /\b(token|emblem)\b/i.test(tline) || rc.layout === 'token';
+    // 2) Skip self (same id or same oracle)
     if (rc.id === base.id) continue;
-    if (rc.oracle_id && base.oracle_id && rc.oracle_id === base.oracle_id) continue;
-    if (isTokenish) continue;
+    if ((rc.oracle_id && base.oracle_id && rc.oracle_id === base.oracle_id) ||
+        isSelfishName(base.name, rc.name)) continue;
 
     // 3) Dedupe by oracle (fallback to id)
     const key = rc.oracle_id || rc.id;
@@ -598,6 +596,15 @@ window.loadComboPieces = async function(cardId){
   `;
   pop.dataset.loaded = '1';
 };
+
+function sameBaseCardName(a, b){
+  const norm = (s) => (s||'')
+    .toLowerCase()
+    .replace(/^\s*a-\s*/, '')   // strip A- prefix
+    .replace(/\s+/g,' ')
+    .trim();
+  return norm(a) === norm(b);
+}
   
 function flipCard(id){
   const card = window.__cardsById[id];
@@ -863,13 +870,14 @@ async function buildLocalComboPresenceMap(cards){
 
   const result = new Map();
   for (const card of cards){
-    const hasAny = (card.combo_refs || []).some(r => {
-      const hit = idToHit.get(r.id);
-      if (!hit) return false;                                       // not in local DB
-      if (hit.oracle_id && card.oracle_id && hit.oracle_id === card.oracle_id) return false; // same card across printings
-      if (/\b(token|emblem)\b/i.test(((hit.type_line||'') + ' ' + (hit.name||'')))) return false;
-      return true;
-    });
+  const hasAny = (card.combo_refs || []).some(r => {
+    const hit = idToHit.get(r.id);
+    if (!hit) return false; // not in local DB
+    // exclude “self” (same oracle) and A-/B- variants of self
+    if ((hit.oracle_id && card.oracle_id && hit.oracle_id === card.oracle_id) ||
+        isSelfishName(card.name, hit.name)) return false;
+    return true; // include tokens/emblems/etc.
+  });
     result.set(card.id, hasAny);
   }
   return result;
@@ -982,6 +990,19 @@ function parseCSV(text){
 }
 
 /* -------------------- Card helpers -------------------- */
+
+function normalizeSelfName(s){
+  return (s || '')
+    .toLowerCase()
+    .replace(/^\s*[ab]-\s*/i, '')      // drop A-/B- variant prefix
+    .replace(/\s*\/\/\s*.*$/, '')      // drop back face of DFC names
+    .replace(/\s*\(.*?\)\s*$/, '')     // drop trailing parens
+    .trim();
+}
+function isSelfishName(a, b){
+  return normalizeSelfName(a) === normalizeSelfName(b);
+}
+  
 function normalizeCard(raw){
   // --- DFC-friendly face extraction (kept from your version) ---
   const faces = Array.isArray(raw.card_faces) ? raw.card_faces.map(f => ({
@@ -1006,8 +1027,8 @@ function normalizeCard(raw){
   // --- Stronger combo-piece prefilter (skip tokens/emblems, leave self-across-prints to runtime via oracle_id) ---
   const combo_refs = (raw.all_parts || [])
     .filter(p => p.component === 'combo_piece')
-    .filter(p => !/\b(token|emblem)\b/i.test(((p.type_line||'') + ' ' + (p.name||''))))
     .filter(p => p.id !== raw.id) // skip exact self id
+    .filter(p => !sameBaseCardName(p.name, raw.name))     // A-self (and self by name)
     .map(p => ({ id: p.id, name: p.name || '', type_line: p.type_line || '' }));
 
   const { name, id, set, set_name, rarity, color_identity = [] } = raw;
