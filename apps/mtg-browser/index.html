@@ -733,14 +733,13 @@ function renderCardCard(card, qty=0) {
         <div class="row" style="justify-content:space-between; flex-wrap:wrap">
           <div class="row">
             <a class="btn" href="${card.scryfall_uri}" target="_blank">Scryfall</a>
-            <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
             ${card.purchase_uris?.tcgplayer
               ? `<a class="btn" href="${card.purchase_uris.tcgplayer}" target="_blank">TCGplayer${price ? ` — ${price}` : ''}</a>`
               : ''
             }
             <a class="btn" href="${cardKingdomURL(card)}" target="_blank">Card Kingdom</a>
+            <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
           </div>
-          <button class="btn" onclick="openTempPageById('${card.id}')">Temp Page</button>
         </div>
       </div>
     </div>`;
