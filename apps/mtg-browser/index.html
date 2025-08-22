@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -22,6 +22,11 @@
     --card:#171c22;
     --chip:#1b222a;
     --border:#24303a;
+  }
+  html { min-height: 100%; }          /* let the page be at least as tall as the viewport */
+  body { 
+    min-height: 100vh;                /* fallback */
+    min-height: 100dvh;               /* modern browsers */
   }
 
   *{box-sizing:border-box}
@@ -205,6 +210,27 @@ body{
 
 /* Align the row so multi-line chips don’t collide with neighbors */
 .row{ align-items: flex-start; }
+
+/* Kill the square UA outline on mouse focus */
+.btn:focus { outline: none; }
+
+/* Keep a rounded custom ring for keyboard focus */
+.btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px #6ee7ff55, 0 0 0 6px #6ee7ff22;
+  border-radius: 12px; /* ensure rounded ring */
+}
+
+/* File labels / anchor buttons */
+label.btn:focus-within{
+  outline: none;
+  box-shadow: 0 0 0 3px #6ee7ff55, 0 0 0 6px #6ee7ff22;
+  border-radius: 12px;
+}
+a.btn:focus{ outline:none; }
+
+/* Optional: remove mobile tap highlight */
+.btn, .file { -webkit-tap-highlight-color: transparent; }
 </style>
 
 </head>
