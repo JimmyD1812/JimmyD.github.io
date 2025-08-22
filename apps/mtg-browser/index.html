@@ -531,52 +531,60 @@ const COLLAPSE_THRESHOLD = 250; // tweak feel here
 const faceIndex = {};  // id -> 0/1/...
 
 window.loadComboPieces = async function(cardId){
-  const card = window.__cardsById[cardId];
-  const pop = document.getElementById(`combo-pop-${cardId}`);
-  if (!card || !pop || pop.dataset.loaded === '1') return;
+  const base = window.__cardsById[cardId];
+  const pop  = document.getElementById(`combo-pop-${cardId}`);
+  if (!base || !pop || pop.dataset.loaded === '1') return;
 
-  const refs = (card.combo_refs || []);
+  const refs = base.combo_refs || [];
   if (!refs.length){
     pop.innerHTML = `<div class="combo-title">No additional pieces listed.</div>`;
     pop.dataset.loaded = '1';
     return;
   }
 
-  // Try exact by id; if missing, fall back by name (oracle dataset can differ)
-  const ids = refs.map(r => r.id).filter(Boolean);
-  let cards = ids.length ? await db.cards.bulkGet(ids) : [];
-  const results = [];
-
-  for (let i = 0; i < refs.length; i++){
-    let c = cards[i];
-    const ref = refs[i];
-    if (!c && ref.name){
-      c = await db.cards.where('name_lc').equals(ref.name.toLowerCase()).first();
-    }
-    if (c) results.push({ ref, card: c });
-  }
-
-  // Collection ownership tags
+  // Ownership map
   const owned = {};
-  const collRows = await db.collection.toArray();
-  for (const r of collRows) owned[r.id] = r.qty || 0;
+  (await db.collection.toArray()).forEach(r => owned[r.id] = r.qty || 0);
 
-  const tiles = results.map(({card: rc}) => {
+  const seen = new Set();          // dedupe by oracle_id (fallback id)
+  const tiles = [];
+
+  for (const ref of refs){
+    // 1) Try by exact id, then by name (Oracle dataset often has single print)
+    let rc = null;
+    if (ref.id) rc = await db.cards.get(ref.id);
+    if (!rc && ref.name){
+      const list = await db.cards.where('name_lc').equals(ref.name.toLowerCase()).toArray();
+      // Prefer a different oracle_id than the current card (avoid “self”)
+      rc = list.find(c => c.oracle_id && c.oracle_id !== base.oracle_id) || list[0] || null;
+    }
+    if (!rc) continue;
+
+    // 2) Skip self (same id or same oracle), and token/emblem-ish things
+    const tline = rc.type_line || '';
+    const isTokenish = /\b(token|emblem)\b/i.test(tline) || rc.layout === 'token';
+    if (rc.id === base.id) continue;
+    if (rc.oracle_id && base.oracle_id && rc.oracle_id === base.oracle_id) continue;
+    if (isTokenish) continue;
+
+    // 3) Dedupe by oracle (fallback to id)
+    const key = rc.oracle_id || rc.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
     const have = owned[rc.id] > 0;
-    const tag  = have
-      ? `<div class="combo-owned">Owned ×${owned[rc.id]}</div>`
-      : `<div class="combo-miss">Not owned</div>`;
     const img  = rc.image || rc.card_faces?.[0]?.image || '';
-    return `
+    tiles.push(`
       <a class="combo-item" href="${rc.scryfall_uri || '#'}" target="_blank" title="${rc.name}">
-        ${tag}
+        ${have ? `<div class="combo-owned">Owned ×${owned[rc.id]}</div>` : `<div class="combo-miss">Not owned</div>`}
         <img loading="lazy" src="${img}" alt="${rc.name}">
-      </a>`;
-  }).join('');
+      </a>
+    `);
+  }
 
   pop.innerHTML = `
     <div class="combo-title">Combo Pieces</div>
-    <div class="combo-grid">${tiles || '<div class="muted small">No matching pieces found locally.</div>'}</div>
+    <div class="combo-grid">${tiles.join('') || '<div class="muted small">No matching pieces found locally.</div>'}</div>
   `;
   pop.dataset.loaded = '1';
 };
@@ -921,6 +929,7 @@ function parseCSV(text){
 
 /* -------------------- Card helpers -------------------- */
 function normalizeCard(raw){
+  // --- DFC-friendly face extraction (kept from your version) ---
   const faces = Array.isArray(raw.card_faces) ? raw.card_faces.map(f => ({
     name: f.name || '',
     mana_cost: f.mana_cost || '',
@@ -940,41 +949,61 @@ function normalizeCard(raw){
 
   const is_dfc = !!(faces && faces.length >= 2);
 
+  // --- Stronger combo-piece prefilter (skip tokens/emblems, leave self-across-prints to runtime via oracle_id) ---
+  const combo_refs = (raw.all_parts || [])
+    .filter(p => p.component === 'combo_piece')
+    .filter(p => !/\b(token|emblem)\b/i.test(((p.type_line||'') + ' ' + (p.name||''))))
+    .filter(p => p.id !== raw.id) // skip exact self id
+    .map(p => ({ id: p.id, name: p.name || '', type_line: p.type_line || '' }));
+
   const { name, id, set, set_name, rarity, color_identity = [] } = raw;
   const subtype = (type_line.split('—')[1] || '').trim();
-  const combo_refs = (raw.all_parts || [])
-    .filter(p =>
-      p.component === 'combo_piece' &&
-      !/token|emblem/i.test(p.type_line || '') &&
-      p.id !== raw.id
-    )
-    .map(p => ({ id: p.id, name: p.name || '' }));
-  
+
   return {
-    id, name, name_lc: name.toLowerCase(),
-    set, set_name: set_name || '',
+    // core ids
+    id,
+    oracle_id: raw.oracle_id || '',   // ← store so you can exclude “self across printings” later
+    layout: raw.layout || '',         // ← handy for styling / token detection
+
+    // names & sets
+    name,
+    name_lc: name.toLowerCase(),
+    set,
+    set_name: set_name || '',
     rarity: rarity || '',
-    image: img, oracle_text, mana_cost,
+
+    // text & visuals
+    image: img,
+    oracle_text,
+    mana_cost,
     cmc: raw.cmc ?? null,
     type_line,
     type_lc: type_line.toLowerCase(),
     subtype_lc: subtype.toLowerCase(),
     colors: raw.colors || [],
     color_identity,
+
+    // P/T/L (DFC-aware fallbacks)
     power: raw.power ?? faces?.[0]?.power ?? null,
     toughness: raw.toughness ?? faces?.[0]?.toughness ?? null,
     loyalty: raw.loyalty ?? faces?.[0]?.loyalty ?? null,
+
+    // misc
     collector_number: raw.collector_number || '',
     purchase_uris: raw.purchase_uris || {},
     scryfall_uri: raw.scryfall_uri || '',
     prices: raw.prices || {},
-    faces,                     // <— new
-    is_dfc,                    // <— new
+
+    // DFC data
+    faces,          // ← front/back data for flipping
+    is_dfc,         // ← quick check for UI
+
+    // combo data
     all_parts: raw.all_parts || [],
-    combo_refs,   
-    layout: raw.layout || ''   // <— handy if you want to style by layout
+    combo_refs,     // ← prefiltered refs (final filtering happens after lookup using oracle_id)
   };
 }
+
 
 function cardKingdomURL(card){
   const name = encodeURIComponent(card.name);
