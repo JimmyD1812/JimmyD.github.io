@@ -22,8 +22,27 @@
     --card:#171c22;
     --chip:#1b222a;
     --border:#24303a;
+    --btn-fs: 16px;      /* tweak here if you want smaller/larger */
+    --btn-lh: 1.15;
+    --btn-fw: 600;
   }
-  html { min-height: 100%; }          /* let the page be at least as tall as the viewport */
+  .btn,
+  a.btn,
+  label.btn{
+    font-size: var(--btn-fs);
+    line-height: var(--btn-lh);
+    font-weight: var(--btn-fw);
+    display: inline-flex;            /* consistent layout */
+    align-items: center;
+    gap: 10px;
+  }
+  label.btn input[type="file"],
+  label.btn input[type="checkbox"]{
+    font-size: inherit;
+    line-height: inherit;
+  }
+  
+  html { min-height: 100%; -webkit-text-size-adjust: 100%; text-size-adjust: 100%;  }          /* let the page be at least as tall as the viewport */
   body { 
     min-height: 100vh;                /* fallback */
     min-height: 100dvh;               /* modern browsers */
