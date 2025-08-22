@@ -1025,20 +1025,9 @@ function renderCardCard(card, qty=0) {
         <div class="line">
           <strong id="title-${card.id}">${firstFace?.name || card.name}</strong>
           <span class="colors">${colors}</span>
-        </div>
-        <div class="line">
-          <span class="muted small">${card.set_name || ''} ${card.collector_number ? ('• #' + card.collector_number) : ''}</span>
           ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
         </div>
-        <div class="line small"><span class="chip" id="type-${card.id}">${firstFace?.type_line || card.type_line}</span></div>
-        <div class="small" id="rules-${card.id}" style="white-space:pre-wrap">
-          ${(firstFace?.oracle_text || card.oracle_text || '').replaceAll('{','<span class=chip>{').replaceAll('}','}</span>')}
-        </div>
         <div class="line">
-          <div class="row">
-            ${ptText ? `<span class="stat" id="pt-${card.id}">${ptText}</span>` : `<span class="stat" id="pt-${card.id}" style="display:none"></span>`}
-            ${mcText ? `<span class="stat" id="mc-${card.id}">${mcText}</span>` : `<span class="stat" id="mc-${card.id}" style="display:none"></span>`}
-          </div>
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
