@@ -393,33 +393,37 @@ const els = {
 const fmt   = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const MOBILE_BP = 900;
-const COLLAPSE_THRESHOLD = 160; // px scrolled before collapsing
+const COLLAPSE_THRESHOLD = 120; // tweak feel here
 
 function isMobile(){ return window.innerWidth <= MOBILE_BP; }
 function setSearchExpanded(expanded){
+  if (!els.searchPanel || !els.searchHead) return;
   els.searchPanel.classList.toggle('collapsed', !expanded);
   els.searchHead.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 }
 function expandSearch(){ setSearchExpanded(true); }
-function collapseSearch(){ if (isMobile()) setSearchExpanded(false); }
+function collapseSearch(){ setSearchExpanded(false); }
 
-// collapse on scroll (mobile only)
 function onScrollCollapse(){
   if (!isMobile()){ expandSearch(); return; }
-  // Don’t collapse while a field inside the panel is focused
-  const focusingFilters = document.activeElement && els.searchPanel.contains(document.activeElement);
-  if (focusingFilters) return;
-  if (window.scrollY > COLLAPSE_THRESHOLD) collapseSearch(); else expandSearch();
+  const y = window.scrollY || document.documentElement.scrollTop || 0;
+  const shouldCollapse = y > COLLAPSE_THRESHOLD;
+  setSearchExpanded(!shouldCollapse);
 }
 
+// listeners
 window.addEventListener('scroll', onScrollCollapse, { passive:true });
 window.addEventListener('resize', onScrollCollapse);
+
+// initialize state right away on load (no need to click first)
+onScrollCollapse();
+
 
 // tap header to toggle
 els.searchHead.addEventListener('click', () => {
   if (!isMobile()) return;
   const isCollapsed = els.searchPanel.classList.contains('collapsed');
-  setSearchExpanded(isCollapsed); // toggle
+  setSearchExpanded(!isCollapsed); // toggle correctly
 });
 
 // focusing any input expands it
