@@ -330,7 +330,7 @@ body{
         <input id="importTXT" type="file" accept=".txt" />
       </label>
       <label class="btn" style="display:flex;align-items:center;gap:8px">
-        <input id="csvStrict" type="checkbox" checked /> Strict set match
+        <input id="csvStrict" type="checkbox" /> Strict set match
       </label>
       <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database">🗑️ Clear Card DB</button>
       <button class="btn danger" id="btnClearCollection" title="Clear only your collection quantities">🧹 Clear Collection</button>
@@ -1054,6 +1054,9 @@ els.importCollection.addEventListener('change', async (e) => {
 
 /* -------------------- CSV helpers + unmatched resolver -------------------- */
 function selectCardByNameAndSet(candidates, setCode, setName, strict){
+  // If your DB guarantees 1 print per card, just return it.
+  if (candidates.length === 1) return candidates[0];
+
   let card = null;
   if (setCode){
     const sc = setCode.toLowerCase();
@@ -1065,7 +1068,7 @@ function selectCardByNameAndSet(candidates, setCode, setName, strict){
     card = candidates.find(c => (c.set_name||'').toLowerCase() === sn) || null;
     if (!card && strict && (setCode || setName)) return null;
   }
-  if (!card && !strict) card = candidates[0] || null;
+  if (!card) card = candidates[0] || null;   // fall back to first
   return card;
 }
 let __unmatchedRows = [];
