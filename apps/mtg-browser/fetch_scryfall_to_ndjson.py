@@ -15,18 +15,22 @@ BULK_INDEX_URL = "https://api.scryfall.com/bulk-data"
 UA = "mtg-collection-updater/1.0 (+https://github.com)"
 
 
-def get_default_cards_meta(timeout: float = 60.0) -> Dict[str, Any]:
+def get_bulk_meta(dataset_type: str, timeout: float = 60.0) -> Dict[str, Any]:
+    """
+    Fetch bulk-data index and return the entry for the requested dataset_type,
+    e.g. "oracle_cards" or "default_cards".
+    """
     r = requests.get(BULK_INDEX_URL, headers={"User-Agent": UA}, timeout=timeout)
     r.raise_for_status()
     payload = r.json()
     if payload.get("object") != "list" or "data" not in payload:
         raise RuntimeError("Unexpected bulk-data payload shape")
     for entry in payload["data"]:
-        if isinstance(entry, dict) and entry.get("type") == "default_cards":
+        if isinstance(entry, dict) and entry.get("type") == dataset_type:
             if not entry.get("download_uri"):
-                raise RuntimeError("default_cards entry missing download_uri")
+                raise RuntimeError(f"{dataset_type} entry missing download_uri")
             return entry
-    raise RuntimeError("No 'default_cards' entry found in bulk-data index")
+    raise RuntimeError(f"No '{dataset_type}' entry found in bulk-data index")
 
 
 def _json_default(o):
@@ -41,7 +45,7 @@ def _open_writer(path: str) -> TextIO:
     return open(path, "w", encoding="utf-8")
 
 
-def stream_default_cards_to_ndjson(
+def stream_bulk_json_array_to_ndjson(
     download_uri: str,
     out_paths: List[str],
     timeout: float = 600.0,
@@ -81,16 +85,17 @@ def stream_default_cards_to_ndjson(
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    p = argparse.ArgumentParser(description="Fetch Scryfall default_cards and output NDJSON/NDJSON.GZ.")
+    p = argparse.ArgumentParser(description="Fetch Scryfall oracle_cards and output NDJSON/NDJSON.GZ.")
     p.add_argument("-o", "--output", default="cards.ndjson.gz", help="Primary output path (default: cards.ndjson.gz)")
     p.add_argument("--also-plain", default=None, help="Optional: also write a plain NDJSON to this path (e.g., cards.ndjson)")
     p.add_argument("--timeout", type=float, default=600.0, help="HTTP timeout seconds (default: 600)")
     p.add_argument("--limit", type=int, default=None, help="TESTING: only write first N cards")
     args = p.parse_args(argv)
 
-    meta = get_default_cards_meta(timeout=min(60.0, args.timeout))
+    # Switch to Oracle Cards dataset
+    meta = get_bulk_meta("oracle_cards", timeout=min(60.0, args.timeout))
     print(
-        f"[info] default_cards: updated_at={meta.get('updated_at')} size={meta.get('size')} enc={meta.get('content_encoding')}",
+        f"[info] oracle_cards: updated_at={meta.get('updated_at')} size={meta.get('size')} enc={meta.get('content_encoding')}",
         file=sys.stderr,
     )
     print(f"[info] downloading: {meta['download_uri']}", file=sys.stderr)
@@ -99,7 +104,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.also_plain:
         out_paths.append(args.also_plain)
 
-    written = stream_default_cards_to_ndjson(
+    written = stream_bulk_json_array_to_ndjson(
         meta["download_uri"],
         out_paths,
         timeout=args.timeout,
