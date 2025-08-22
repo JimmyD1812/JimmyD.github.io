@@ -318,11 +318,17 @@ body{
     box-shadow:0 14px 30px #000a, 0 0 0 4px #6ee7ff14 inset;
   }
   .card img{
-    width:100%; aspect-ratio:3/4; object-fit:cover; display:block; background:#0f1114;
-    transform:translateZ(0); transition:transform .25s ease, filter .25s ease;
+    width:100%; 
+    aspect-ratio:3/4; 
+    object-fit:cover; 
+    display:block; 
+    background:#0f1114;
+    transform: scale(.95) translateZ(0);   /* start smaller */
+    transform-origin: 50% 50%;
+    transition: transform .25s ease, filter .25s ease;
     filter:saturate(1.02) contrast(1.02);
   }
-  .card:hover img{ transform:scale(1.03) }
+  .card:hover img{ transform:scale(1.00) }
   .card .meta{padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px}
   .card .line{display:flex;align-items:center;justify-content:space-between;gap:8px}
 
