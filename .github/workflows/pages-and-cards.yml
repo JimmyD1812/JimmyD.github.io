@@ -2,8 +2,8 @@ name: Build site + nightly cards.ndjson.gz
 
 on:
   schedule:
-    - cron: '0 10 * * *'   # after Scryfall updates
-    - cron: '0 9 * * *'
+    - cron: '0 10 * * 1'   # after Scryfall updates
+    - cron: '0 9 * * 1'
   workflow_dispatch:
 
 permissions:
