@@ -547,7 +547,7 @@ window.loadComboPieces = async function(cardId){
 
   const refs = base.combo_refs || [];
   if (!refs.length){
-    pop.innerHTML = `<div class="combo-title">No additional pieces listed.</div>`;
+    pop.innerHTML = `<div class="combo-title">No related cards listed.</div>`;
     pop.dataset.loaded = '1';
     return;
   }
@@ -591,8 +591,8 @@ window.loadComboPieces = async function(cardId){
   }
 
   pop.innerHTML = `
-    <div class="combo-title">Combo Pieces</div>
-    <div class="combo-grid">${tiles.join('') || '<div class="muted small">No matching pieces found locally.</div>'}</div>
+    <div class="combo-title">Related Cards</div>
+    <div class="combo-grid">${tiles.join('') || '<div class="muted small">No related cards found locally.</div>'}</div>
   `;
   pop.dataset.loaded = '1';
 };
@@ -1131,7 +1131,8 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
                 onclick="showComboPopover('${card.id}', this)"
                 onmouseenter="loadComboPieces('${card.id}')"
                 ontouchstart="loadComboPieces('${card.id}')">
-          ✨ Combo Pieces
+                title="Show related cards">
+          ✨ Related Cards
         </button>
         <div class="combo-pop" id="combo-pop-${card.id}" data-loaded="0">
           <div class="muted small">Loading…</div>
