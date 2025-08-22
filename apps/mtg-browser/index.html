@@ -1238,24 +1238,61 @@ function updateResolveStats(){ const remaining = __unmatchedRows.filter(x=>!x.re
 els.importCSV.addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
-  els.csvBox.style.display = ''; els.csvProgress.value = 0; els.csvNote.textContent = `Reading ${file.name}…`;
+
+  els.csvBox.style.display = '';
+  els.csvProgress.value = 0;
+  els.csvNote.textContent = `Reading ${file.name}…`;
+
   try{
-    const text = await file.text();
+    const raw = await file.text();
+
+    // NEW: peel first 1–2 lines if needed and (optionally) provide a known header
     const { csvText, header: externalHeader } = peelCsvHeader(raw);
+
     const rows = parseCSV(csvText);
     if (!rows.length){ els.csvNote.textContent='No rows found.'; e.target.value=''; return; }
-    const headerRaw = rows[0].map(h=>(h||'').trim());
-    const header = headerRaw.map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,''));
+
+    // Determine header + data rows
+    let headerRaw, dataRows;
+    if (externalHeader) {
+      headerRaw = externalHeader;      // we skipped the header line physically
+      dataRows = rows;                 // all rows are data
+    } else {
+      headerRaw = rows[0];             // first parsed row is the header
+      dataRows = rows.slice(1);        // the rest are data
+    }
+
+    // Normalize header and build index helper
+    const header = headerRaw.map(h => (h||'').toString().trim().toLowerCase().replace(/[^a-z0-9]/g,''));
     const col = (name)=> header.indexOf(name.toLowerCase().replace(/[^a-z0-9]/g,''));
-    const iName = col('cardname'); const iQty = col('quantity'); const iSetCode = col('setcode'); const iSetName = col('setname'); const iDate = col('datebought');
-    if (iName===-1 || iQty===-1){ alert('CSV must include at least Card Name and Quantity columns.'); e.target.value=''; return; }
+
+    const iName    = col('cardname');
+    const iQty     = col('quantity');
+    const iSetCode = col('setcode');
+    const iSetName = col('setname');
+    // optional: const iDate = col('datebought');
+
+    if (iName===-1 || iQty===-1){
+      alert('CSV must include at least Card Name and Quantity columns.');
+      e.target.value=''; return;
+    }
+
     const strict = !!els.csvStrict.checked;
 
-    const increments = {}; const unmatched = []; const totalRows = rows.length-1; let processed=0;
-    for (let r=1; r<rows.length; r++){
-      const row = rows[r]; if (!row || !row.length) continue;
-      const name = (row[iName]||'').trim(); const qty = parseInt((row[iQty]||'0').trim(), 10) || 0;
-      const setCode = iSetCode>=0 ? (row[iSetCode]||'').trim() : ''; const setName = iSetName>=0 ? (row[iSetName]||'').trim() : '';
+    // ——— proceed exactly as before, but iterate dataRows ———
+    const increments = {};
+    const unmatched = [];
+    const totalRows = dataRows.length;
+    let processed = 0;
+
+    for (const row of dataRows){
+      if (!row || !row.length){ processed++; continue; }
+
+      const name    = (row[iName]||'').trim();
+      const qty     = parseInt((row[iQty]||'0').trim(), 10) || 0;
+      const setCode = iSetCode>=0 ? (row[iSetCode]||'').trim() : '';
+      const setName = iSetName>=0 ? (row[iSetName]||'').trim() : '';
+
       if (!name || qty<=0){ processed++; continue; }
 
       const nameLC = name.toLowerCase();
@@ -1264,7 +1301,7 @@ els.importCSV.addEventListener('change', async (e) => {
 
       let card = null;
       if (candidates.length) card = selectCardByNameAndSet(candidates, setCode, setName, strict);
-      if (!card) unmatched.push({ row:r+1, name, setCode, setName, qty });
+      if (!card) unmatched.push({ row: processed+2, name, setCode, setName, qty }); // +2 to reflect original file line numbers roughly
       else increments[card.id] = (increments[card.id]||0) + qty;
 
       processed++;
@@ -1275,6 +1312,7 @@ els.importCSV.addEventListener('change', async (e) => {
       }
     }
 
+    // commit + wrap-up (unchanged)
     const ids = Object.keys(increments);
     await db.transaction('rw', db.collection, async () => {
       for (const id of ids){
@@ -1284,13 +1322,22 @@ els.importCSV.addEventListener('change', async (e) => {
       }
     });
 
-    els.csvProgress.value=100;
+    els.csvProgress.value = 100;
     const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
     els.csvNote.textContent = `Imported ${ids.length} unique; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
-    await refreshStats(); els.status.textContent = 'Added cards to collection.'; search();
-    if (unmatched.length){ renderResolveUnmatched(unmatched); } else { els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }
+    await refreshStats();
+    els.status.textContent = 'Added cards to collection.';
+    search();
+
+    if (unmatched.length){ renderResolveUnmatched(unmatched); }
+    else { els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }
+
     hideStatusBars();
-  }catch(err){ console.error(err); alert('Failed to import CSV.'); }
+  }catch(err){
+    console.error(err);
+    alert('Failed to import CSV.');
+  }
+
   e.target.value='';
 });
 
