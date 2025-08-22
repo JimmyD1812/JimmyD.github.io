@@ -315,17 +315,6 @@ body{
           <div id="results" class="results"></div>
         </div>
       </section>
-
-      <section class="panel">
-        <div class="head"><strong>Tests</strong></div>
-        <div class="body">
-          <div class="row">
-            <button class="btn" id="btnRunTests">Run Self-Tests</button>
-            <div class="muted small">(Console also logs details)</div>
-          </div>
-          <div id="testOut" class="small" style="margin-top:8px"></div>
-        </div>
-      </section>
     </div>
   </div>
 
@@ -362,8 +351,6 @@ const els = {
   csvStrict: document.getElementById('csvStrict'),
   btnClearDB: document.getElementById('btnClearDB'),
   btnClearCollection: document.getElementById('btnClearCollection'),
-  btnRunTests: document.getElementById('btnRunTests'),
-  testOut: document.getElementById('testOut'),
   resolveBox: document.getElementById('resolveBox'),
   resolveList: document.getElementById('resolveList'),
   resolveStats: document.getElementById('resolveStats'),
@@ -447,6 +434,7 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
         els.importProgress.value = 100;
         els.importNote.textContent = 'Remote file unchanged; skipped re-index.';
         els.status.textContent = 'Remote unchanged; using existing DB';
+        hideStatusBars();
         return;
       }
     } catch (e) { console.warn('HEAD check failed; continuing:', e); }
@@ -516,6 +504,7 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
   els.status.textContent = 'Remote import complete';
   await refreshStats();
   if (headMeta) saveHeadMeta(url, headMeta);
+  hideStatusBars();
 }
 
 /* ---------- auto import on load ---------- */
@@ -595,6 +584,12 @@ function parseScannerTXT(text){
   return out;
 }
 
+function hideStatusBars(delay=800){
+  setTimeout(() => {
+    els.importBox.style.display = 'none';
+    els.csvBox.style.display = 'none';
+  }, delay);
+}
   
 function parseCSV(text){
   text = stripSepAndBOM(text);
@@ -1090,8 +1085,9 @@ els.importCSV.addEventListener('change', async (e) => {
     els.csvProgress.value=100;
     const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
     els.csvNote.textContent = `Imported ${ids.length} unique; added ${totalAdded} total. Unmatched: ${unmatched.length}.`;
-    await refreshStats(); els.status.textContent = 'CSV import complete.'; search();
+    await refreshStats(); els.status.textContent = 'Added cards to collection.'; search();
     if (unmatched.length){ renderResolveUnmatched(unmatched); } else { els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }
+    hideStatusBars();
   }catch(err){ console.error(err); alert('Failed to import CSV.'); }
   e.target.value='';
 });
@@ -1111,6 +1107,7 @@ els.importTXT.addEventListener('change', async (e) => {
     if (!rows.length){
       els.csvNote.textContent = 'No recognizable rows found in TXT.';
       e.target.value=''; return;
+      hideStatusBars();
     }
 
     // Build increments & unmatched, mirroring the CSV logic
@@ -1171,11 +1168,12 @@ els.importTXT.addEventListener('change', async (e) => {
     const totalAdded = Object.values(increments).reduce((a,b)=>a+b,0);
     els.csvNote.textContent = `TXT add: ${ids.length} unique; +${totalAdded} total. Unmatched: ${unmatched.length}.`;
     await refreshStats();
-    els.status.textContent = 'TXT import complete.';
+    els.status.textContent = 'Added cards to collection.';
     search();
 
     if (unmatched.length){ renderResolveUnmatched(unmatched); }
     else { els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }
+    hideStatusBars();
   }catch(err){
     console.error(err);
     alert('Failed to import TXT.');
@@ -1195,37 +1193,6 @@ els.btnClearCollection.addEventListener('click', async () => {
   await db.collection.clear(); await refreshStats(); document.querySelectorAll('.qty-in').forEach(el=>el.value=0); els.status.textContent='Cleared collection.';
 });
 refreshStats();
-
-/* -------------------- Self-tests -------------------- */
-function runTests(){
-  const out=[]; const pass=(m)=>{ out.push(`<div class="test-pass">✔ ${m}</div>`); }; const fail=(m)=>{ out.push(`<div class="test-fail">✘ ${m}</div>`); };
-  try{
-    const csv = `sep=,\nFolder Name,Quantity,Trade Quantity,Card Name,Set Code,Set Name,Card Number,Condition,Printing,Language,Price Bought,Date Bought,LOW,MID,MARKET\nrandom box,1,0,Abnormal Endurance,M19,Core Set 2019,85,NearMint,Normal,English,0.04,2025-06-16,0.01,0.25,0.08\n`;
-    const rows = parseCSV(csv); const h=rows[0], r=rows[1];
-    if (rows.length===2 && h[1]==='Quantity' && r[3]==='Abnormal Endurance' && r[4]==='M19') pass('CSV parse: BOM/sep=, handled'); else fail('CSV parse: header/sep=, not handled');
-
-    const ratio1 = tokenMatchRatio('Coral Trickster','Coral Trickster');
-    const ratio2 = tokenMatchRatio('Mystic Elf Sage','Mystic Sage');
-    if (ratio1 === 1) pass('Fuzzy: exact = 1'); else fail('Fuzzy: exact ratio bad');
-    if (ratio2 >= 2/3) pass('Fuzzy: partial overlap ≥ 0.66'); else fail('Fuzzy: partial overlap bad');
-
-    const cR={id:'R1',name_lc:'mountain goblin',type_lc:'creature — goblin',subtype_lc:'goblin',rarity:'common',oracle_text:'',color_identity:['R']};
-    const cG={id:'G1',name_lc:'forest elf',type_lc:'creature — elf',subtype_lc:'elf',rarity:'common',oracle_text:'',color_identity:['G']};
-    const cRG={id:'RG1',name_lc:'grull friend',type_lc:'creature — warrior',subtype_lc:'warrior',rarity:'uncommon',oracle_text:'',color_identity:['R','G']};
-    const cRGB={id:'RGB1',name_lc:'tricolor beast',type_lc:'creature — beast',subtype_lc:'beast',rarity:'rare',oracle_text:'',color_identity:['R','G','B']};
-    const cC={id:'C1',name_lc:'wastes rock',type_lc:'land',subtype_lc:'',rarity:'common',oracle_text:'',color_identity:[]};
-    const qtyMap={'R1':1,'G1':1,'RG1':1,'RGB1':1,'C1':1};
-    function applyColors(cards,colors){ const f={name:'',text:'',type:'',subtype:'',rarity:'',colors}; return cards.filter(c=>qtyMap[c.id]>0 && matchCard(c,f)); }
-    const onlyR=applyColors([cR,cG,cRG,cRGB,cC],['R']); if (onlyR.length===1 && onlyR[0]===cR) pass('Color: only R'); else fail('Color: only R');
-    const rg=applyColors([cR,cG,cRG,cRGB,cC],['R','G']); if (rg.length===3 && rg.includes(cR)&&rg.includes(cG)&&rg.includes(cRG)&&!rg.includes(cRGB)&&!rg.includes(cC)) pass('Color: R+G'); else fail('Color: R+G');
-    const rgc=applyColors([cR,cG,cRG,cRGB,cC],['R','G','C']); if (rgc.length===4 && rgc.includes(cR)&&rgc.includes(cG)&&rgc.includes(cRG)&&rgc.includes(cC)&&!rgc.includes(cRGB)) pass('Color: R+G+C'); else fail('Color: R+G+C');
-    const onlyC=applyColors([cR,cG,cRG,cRGB,cC],['C']); if (onlyC.length===1 && onlyC[0]===cC) pass('Color: only C'); else fail('Color: only C');
-    const all=applyColors([cR,cG,cRG,cRGB,cC],['W','U','B','R','G']); if (all.length===4 && all.includes(cR)&&all.includes(cG)&&all.includes(cRG)&&all.includes(cRGB)&&!all.includes(cC)) pass('Color: five colors exclude colorless'); else fail('Color: five color fail');
-    pass('Self-tests completed.');
-  }catch(e){ out.push(`<div class="test-fail">✘ Unexpected error: ${e.message}</div>`); }
-  els.testOut.innerHTML = out.join('');
-}
-els.btnRunTests.addEventListener('click', runTests);
 </script>
 </body>
 </html>
