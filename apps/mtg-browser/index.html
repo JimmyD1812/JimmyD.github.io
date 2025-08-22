@@ -105,12 +105,16 @@ body{
 @media (max-width: 900px){
   .grid{ grid-template-columns: 1fr; }
   .details { position: sticky; top: 12px; z-index: 30; }
-  .details .head{ cursor: pointer; }
-
-  /* animate the body open/closed */
+  
+  .details .head{
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+  }
   .details .body{
+    position: relative; z-index: 1;
     overflow: hidden;
-    max-height: 1000px;                     /* expanded state (big enough) */
+    max-height: 1000px;            /* expanded */
     opacity: 1;
     transform: translateY(0);
     transform-origin: top;
@@ -439,7 +443,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 let suppressAutoUntil = 0; // ms timestamp: ignore auto-collapse until this time
 let lastTouchToggleAt = 0; 
 const MOBILE_BP = 900;
-const COLLAPSE_THRESHOLD = 220; // tweak feel here
+const COLLAPSE_THRESHOLD = 250; // tweak feel here
 
 function isMobile(){ return window.innerWidth <= MOBILE_BP; }
 function setSearchExpanded(expanded){
