@@ -1188,49 +1188,38 @@ async function renderResolveUnmatched(list){
   }
 }
 function addManualCorrectionRow(wrap, item){
-  const fix = document.createElement('div'); fix.className='row'; fix.style.marginTop='8px';
-  const label = document.createElement('div'); label.className='muted small'; label.textContent='Try a set code:'; fix.appendChild(label);
-  const input = document.createElement('input'); input.type='text'; input.placeholder='e.g., TSR, TSP, MB1…'; input.style.maxWidth='140px'; fix.appendChild(input);
-  const tryBtn = document.createElement('button'); tryBtn.className='btn'; tryBtn.textContent='Try'; fix.appendChild(tryBtn);
-  const message = document.createElement('div'); message.className='inline-msg'; message.style.minHeight='18px'; fix.appendChild(message);
-  const spacer = document.createElement('div'); spacer.className='grow'; fix.appendChild(spacer);
-  const clearBtn = document.createElement('button'); clearBtn.className='btn ghost'; clearBtn.textContent='Clear';
-  clearBtn.addEventListener('click', () => { item.resolved=true; updateResolveStats(); wrap.remove(); }); fix.appendChild(clearBtn);
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.style.marginTop = '8px';
 
-  tryBtn.addEventListener('click', async () => {
-    const codeRaw = (input.value || '').trim();
-    message.textContent = '';
-    if (!codeRaw){ message.innerHTML = `<span class="err">Enter a set code.</span>`; return; }
-    const sc = codeRaw.toLowerCase();
-    const existsAny = await db.cards.where('set').equals(sc).limit(1).count();
-    if (!existsAny){ message.innerHTML = `<span class="err">Invalid set code.</span>`; return; }
-    const exactNameCandidates = await db.cards.where('name_lc').equals(item.name.toLowerCase()).toArray();
-    let exact = exactNameCandidates.find(c => (c.set||'').toLowerCase() === sc) || null;
-    if (!exact){
-      const prefixInSet = await db.cards.where('name_lc').startsWith(item.name.toLowerCase()).and(c => (c.set||'').toLowerCase() === sc).toArray();
-      exact = prefixInSet[0] || null;
-    }
-    if (exact){ await resolveOneUnmatched(item, exact.id, exact.set, exact.set_name); wrap.remove(); return; }
+  // keep a small notification, no input / try button
+  const message = document.createElement('div');
+  message.className = 'inline-msg';
+  message.innerHTML =
+    `<span class="err">Unmatched.</span>
+     <span class="muted small">We couldn’t find this card in your local DB.
+     If set options appear above, select one; otherwise update your database or
+     verify the name, then re-import.</span>`;
+  row.appendChild(message);
 
-    const inSet = await db.cards.where('set').equals(sc).toArray();
-    let best=null, bestScore=0;
-    for (const c of inSet){
-      const score = tokenMatchRatio(item.name, c.name);
-      if (score > bestScore){ bestScore=score; best=c; }
-    }
-    if (best && bestScore >= 0.6){
-      message.innerHTML = `<span class="suggest">Did you mean <strong>${best.name}</strong>?</span> `;
-      const yes = document.createElement('button'); yes.className='btn'; yes.textContent='Yes';
-      const no  = document.createElement('button');  no.className='btn ghost'; no.textContent='No';
-      yes.addEventListener('click', async () => { await resolveOneUnmatched(item, best.id, best.set, best.set_name); wrap.remove(); });
-      no.addEventListener('click', () => { message.textContent=''; });
-      message.appendChild(yes); message.appendChild(no);
-    }else{
-      message.innerHTML = `<span class="err">Card not found in ${codeRaw.toUpperCase()}.</span>`;
-    }
+  const spacer = document.createElement('div');
+  spacer.className = 'grow';
+  row.appendChild(spacer);
+
+  // keep the Clear button
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'btn ghost';
+  clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', () => {
+    item.resolved = true;
+    updateResolveStats();
+    wrap.remove();
   });
-  wrap.appendChild(fix);
+  row.appendChild(clearBtn);
+
+  wrap.appendChild(row);
 }
+
 async function resolveOneUnmatched(item, chosenId){ const cur = await db.collection.get(chosenId) || { id:chosenId, qty:0 }; cur.qty += (item.qty||0); await db.collection.put(cur); item.resolved=true; updateResolveStats(); await refreshStats(); search(); }
 function updateResolveStats(){ const remaining = __unmatchedRows.filter(x=>!x.resolved).length; els.resolveStats.textContent = `${remaining} unresolved`; if (!remaining){ setTimeout(()=>{ els.resolveBox.style.display='none'; els.resolveList.innerHTML=''; }, 200); } }
 
