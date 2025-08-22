@@ -437,6 +437,7 @@ const els = {
 const fmt   = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 let suppressAutoUntil = 0; // ms timestamp: ignore auto-collapse until this time
+let lastTouchToggleAt = 0; 
 const MOBILE_BP = 900;
 const COLLAPSE_THRESHOLD = 220; // tweak feel here
 
@@ -448,7 +449,12 @@ function setSearchExpanded(expanded){
 }
 function expandSearch(){ setSearchExpanded(true); }
 function collapseSearch(){ setSearchExpanded(false); }
-
+function userToggleSearch(){
+  if (!isMobile()) return;
+  const isCollapsed = els.searchPanel.classList.contains('collapsed');
+  setSearchExpanded(!isCollapsed);
+  suppressAutoUntil = Date.now() + 800; // grace so scroll handler won't fight it
+}
 function onScrollCollapse(){
   if (!isMobile()){ expandSearch(); return; }
   if (Date.now() < suppressAutoUntil) return;  // don't fight user tap
@@ -465,22 +471,22 @@ window.addEventListener('resize', onScrollCollapse);
 onScrollCollapse();
 
 
-// tap header to toggle
-els.searchHead.addEventListener('click', () => {
-  if (!isMobile()) return;
-  const isCollapsed = els.searchPanel.classList.contains('collapsed');
-  setSearchExpanded(!isCollapsed);
-  suppressAutoUntil = Date.now() + 600; // ~0.6s grace to avoid immediate re-collapse
-});
-
-// (optional) snappier on mobile
+// Touch-first: toggle on pointerdown (touch) and suppress the following click
 els.searchHead.addEventListener('pointerdown', (e) => {
   if (!isMobile()) return;
   if (e.pointerType === 'touch') {
-    const isCollapsed = els.searchPanel.classList.contains('collapsed');
-    setSearchExpanded(!isCollapsed);
-    suppressAutoUntil = Date.now() + 600;
+    lastTouchToggleAt = Date.now();
+    userToggleSearch();
+    e.preventDefault();           // avoid generating a follow-up click in most cases
   }
+});
+
+// Desktop / fallback click
+els.searchHead.addEventListener('click', (e) => {
+  if (!isMobile()) return;
+  // If a touch just handled it, ignore this click
+  if (Date.now() - lastTouchToggleAt < 500) return;
+  userToggleSearch();
 });
 
 // focusing any input expands it
