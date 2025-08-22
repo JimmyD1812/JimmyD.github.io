@@ -822,6 +822,33 @@ async function importNDJSONFromURL(url = NDJSON_URL, { skipIfUnchanged = true } 
   hideStatusBars();
 }
 
+async function buildLocalComboPresenceMap(cards){
+  // Collect all referenced IDs once
+  const refIdSet = new Set();
+  for (const card of cards){
+    for (const r of (card.combo_refs || [])) refIdSet.add(r.id);
+  }
+  if (!refIdSet.size) return new Map();
+
+  const ids = [...refIdSet];
+  const rows = await db.cards.bulkGet(ids); // returns normalized cards or null
+  const idToHit = new Map(ids.map((id, i) => [id, rows[i] || null]));
+
+  const result = new Map();
+  for (const card of cards){
+    const hasAny = (card.combo_refs || []).some(r => {
+      const hit = idToHit.get(r.id);
+      if (!hit) return false;                                       // not in local DB
+      if (hit.oracle_id && card.oracle_id && hit.oracle_id === card.oracle_id) return false; // same card across printings
+      if (/\b(token|emblem)\b/i.test(((hit.type_line||'') + ' ' + (hit.name||'')))) return false;
+      return true;
+    });
+    result.set(card.id, hasAny);
+  }
+  return result;
+}
+
+  
 /* ---------- auto import on load ---------- */
 window.addEventListener('DOMContentLoaded', async () => {
   try { await importNDJSONFromURL(NDJSON_URL, { skipIfUnchanged:true }); }
@@ -1035,15 +1062,34 @@ function isDoubleFaced(card){
          ['transform','modal_dfc','meld','flip','double_faced_token'].includes(card.layout);
 }
   
-function renderCardCard(card, qty=0) {
+function renderCardCard(card, qty = 0, showComboBtn = false) {
   const colors = (card.color_identity?.length ? card.color_identity : ['C'])
     .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
+
   const isDFC = isDoubleFaced(card);
   const firstFace = card.faces?.[0];
+
   const ptText = (firstFace?.power || firstFace?.toughness)
-      ? `${firstFace.power ?? ''}/${firstFace.toughness ?? ''}`
-      : (firstFace?.loyalty ? `Loyalty ${firstFace.loyalty}` : '');
+    ? `${firstFace.power ?? ''}/${firstFace.toughness ?? ''}`
+    : (firstFace?.loyalty ? `Loyalty ${firstFace.loyalty}` : '');
+
   const mcText = firstFace?.mana_cost || card.mana_cost || '';
+
+  // Render the combo popover UI only when caller says we have local matches
+  const comboMarkup = showComboBtn
+    ? `
+      <div class="combo-wrap">
+        <button class="btn combo-chip"
+                onclick="showComboPopover('${card.id}', this)"
+                onmouseenter="loadComboPieces('${card.id}')"
+                ontouchstart="loadComboPieces('${card.id}')">
+          ✨ Combo Pieces
+        </button>
+        <div class="combo-pop" id="combo-pop-${card.id}" data-loaded="0">
+          <div class="muted small">Loading…</div>
+        </div>
+      </div>`
+    : '';
 
   return `
     <div class="card">
@@ -1056,25 +1102,13 @@ function renderCardCard(card, qty=0) {
           <span class="colors">${colors}</span>
           ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
         </div>
+
         <div class="line">
           <div class="qty">
             <button class="btn ghost" onclick="addToCollection('${card.id}', -1)">−</button>
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
             <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
-                      ${(card.combo_refs && card.combo_refs.length)
-            ? `
-            <div class="combo-wrap">
-              <button class="btn combo-chip"
-                      onmouseenter="loadComboPieces('${card.id}')"
-                      ontouchstart="loadComboPieces('${card.id}')">
-                ✨ Combo Pieces
-              </button>
-              <div class="combo-pop" id="combo-pop-${card.id}" data-loaded="0">
-                <div class="muted small">Loading…</div>
-              </div>
-            </div>`
-            : ''
-          }
+            ${comboMarkup}
           </div>
         </div>
 
@@ -1086,11 +1120,11 @@ function renderCardCard(card, qty=0) {
             <a class="btn" href="${edhrecURL(card)}" target="_blank">EDHREC</a>
           </div>
           ${isDFC ? `<button class="btn" onclick="flipCard('${card.id}')">Flip</button>` : ''}
-
         </div>
       </div>
     </div>`;
 }
+
 
 
 /* Temp page helpers */
@@ -1230,16 +1264,25 @@ async function search(){
   const cards = await db.cards.bulkGet(ids);
 
   const limit = 200;
-  const out = [];
-  for (const card of cards){
-    if (!card) continue;
-    if (matchCard(card, filters)){
-      out.push(card);
-      if (out.length >= limit) break;
-    }
+// Build the result list
+const out = [];
+for (const card of cards){
+  if (!card) continue;
+  if (matchCard(card, filters)){
+    out.push(card);
+    if (out.length >= limit) break;
   }
-  els.results.innerHTML = out.map(c => { window.__cardsById[c.id] = c; return renderCardCard(c, qtyMap[c.id]||0); }).join('');
-  els.status.textContent = `Showing ${out.length} result(s) from your collection`;
+}
+
+// NEW: figure out which results actually have local combo pieces
+const comboPresence = await buildLocalComboPresenceMap(out);
+
+// Render
+els.results.innerHTML = out.map(c => {
+  window.__cardsById[c.id] = c;
+  const showCombo = !!comboPresence.get(c.id);
+  return renderCardCard(c, qtyMap[c.id]||0, showCombo);
+}).join('');
 }
 els.btnSearch.addEventListener('click', search);
 ['qName','qText','qType','qSubtype','qRarity'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
