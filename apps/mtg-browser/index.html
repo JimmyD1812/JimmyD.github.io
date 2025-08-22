@@ -82,7 +82,28 @@ body{
 
   /* ===== Layout ===== */
   .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  @media (max-width: 900px){
+  /* keep the 1-column layout from your old rule */
+  .grid{ grid-template-columns: 1fr; }
+
+  .details { position: sticky; top: 12px; z-index: 30; }
+  .details .head{ cursor: pointer; }
+
+  .details.collapsed .body{ display: none; }                 /* hide fields */
+  .details.collapsed .head{
+    border-bottom: none;                                      /* no divider */
+    border-radius: 14px;                                      /* rounded pill */
+    box-shadow: 0 8px 24px #0008;                             /* float */
+    background: var(--panel);
+  }
+
+  /* hint text on mobile */
+  .details .head strong::after{
+    content: ' — tap to expand';
+    font-weight: 500; color: var(--muted); margin-left: 6px; font-size: 12px;
+  }
+  .details:not(.collapsed) .head strong::after{ content: ''; }
+}
 
   /* ===== Panels with gradient borders (subtle) ===== */
   .panel{
@@ -363,11 +384,56 @@ const els = {
   resolveList: document.getElementById('resolveList'),
   resolveStats: document.getElementById('resolveStats'),
   resolveClear: document.getElementById('resolveClear'),
+    // NEW: for the mobile collapse/expand behavior
+  searchPanel: document.querySelector('section.panel.details'),
+  searchHead:  document.querySelector('section.panel.details .head'),
 };
 
 /* ---------- utils ---------- */
 const fmt   = (n) => (typeof n === 'number' ? n.toLocaleString() : n);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const MOBILE_BP = 900;
+const COLLAPSE_THRESHOLD = 160; // px scrolled before collapsing
+
+function isMobile(){ return window.innerWidth <= MOBILE_BP; }
+function setSearchExpanded(expanded){
+  els.searchPanel.classList.toggle('collapsed', !expanded);
+  els.searchHead.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+}
+function expandSearch(){ setSearchExpanded(true); }
+function collapseSearch(){ if (isMobile()) setSearchExpanded(false); }
+
+// collapse on scroll (mobile only)
+function onScrollCollapse(){
+  if (!isMobile()){ expandSearch(); return; }
+  // Don’t collapse while a field inside the panel is focused
+  const focusingFilters = document.activeElement && els.searchPanel.contains(document.activeElement);
+  if (focusingFilters) return;
+  if (window.scrollY > COLLAPSE_THRESHOLD) collapseSearch(); else expandSearch();
+}
+
+window.addEventListener('scroll', onScrollCollapse, { passive:true });
+window.addEventListener('resize', onScrollCollapse);
+
+// tap header to toggle
+els.searchHead.addEventListener('click', () => {
+  if (!isMobile()) return;
+  const isCollapsed = els.searchPanel.classList.contains('collapsed');
+  setSearchExpanded(isCollapsed); // toggle
+});
+
+// focusing any input expands it
+els.searchPanel.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('focus', expandSearch);
+});
+
+// after pressing Search on mobile, collapse back
+els.btnSearch.addEventListener('click', () => { if (isMobile()) collapseSearch(); });
+
+// initialize correct state on load
+window.addEventListener('DOMContentLoaded', onScrollCollapse);
+
+  
 
 /* ---------- repo base + data URL ---------- */
 // For GitHub Project Pages: repo root is the first path segment.
