@@ -187,6 +187,30 @@ body{
     box-shadow:0 0 0 3px #6ee7ff2a;
   }
 
+  /* Dark dropdowns */
+  :root { color-scheme: dark; }  /* hint to form controls & scrollbars */
+  
+  select {
+    background: linear-gradient(var(--card), var(--card)) padding-box,
+                linear-gradient(120deg,#2b3946,#1d252d) border-box;
+    color: var(--text);
+    border: 1px solid transparent;
+  }
+  
+  /* The popup list */
+  select option,
+  select optgroup {
+    background-color: var(--panel);
+    color: var(--text);
+  }
+  
+  /* Highlight states inside the popup (when supported) */
+  select option:hover,
+  select option:checked {
+    background-color: #1a232b;
+    color: var(--text);
+  }
+
   /* ===== Chips / color identity ===== */
   .chips{display:flex;gap:8px;flex-wrap:wrap}
   .chip{
