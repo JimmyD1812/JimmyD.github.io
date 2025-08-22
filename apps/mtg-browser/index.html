@@ -122,6 +122,8 @@ body{
     box-shadow: 0 16px 40px #000a;
     display: none;
   }
+
+  .combo-wrap.open .combo-pop{ display:block; }
   .combo-wrap:hover .combo-pop,
   .combo-wrap:focus-within .combo-pop { display:block; }
   
@@ -301,6 +303,11 @@ body{
     border:1px solid transparent;
     border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
     transition:transform .18s ease, box-shadow .25s ease, border-image .2s ease;
+  }
+  .card:has(.combo-wrap.open),
+  .card:has(.combo-wrap:hover),
+  .card:has(.combo-wrap:focus-within){
+  overflow: visible;
   }
   .card:hover{
     transform:translateY(-3px);
@@ -573,7 +580,7 @@ window.loadComboPieces = async function(cardId){
     seen.add(key);
 
     const have = owned[rc.id] > 0;
-    const img  = rc.image || rc.card_faces?.[0]?.image || '';
+    const img  = rc.image || rc.faces?.[0]?.image || '';
     tiles.push(`
       <a class="combo-item" href="${rc.scryfall_uri || '#'}" target="_blank" title="${rc.name}">
         ${have ? `<div class="combo-owned">Owned ×${owned[rc.id]}</div>` : `<div class="combo-miss">Not owned</div>`}
@@ -623,7 +630,24 @@ function flipCard(id){
   }
 }
 
-
+// place with your other globals
+window.showComboPopover = (cardId, btn) => {
+  const wrap = btn.closest('.combo-wrap');
+  if (!wrap) return;
+  const wasOpen = wrap.classList.contains('open');
+  // close others
+  document.querySelectorAll('.combo-wrap.open').forEach(w => w.classList.remove('open'));
+  if (!wasOpen) {
+    wrap.classList.add('open');
+    loadComboPieces(cardId); // ensures content is loaded
+  }
+};
+// click outside to close
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.combo-wrap')) {
+    document.querySelectorAll('.combo-wrap.open').forEach(w => w.classList.remove('open'));
+  }
+});
 
 function isMobile(){ return window.innerWidth <= MOBILE_BP; }
 function setSearchExpanded(expanded){
@@ -1602,8 +1626,9 @@ els.importTXT.addEventListener('change', async (e) => {
 
     if (!rows.length){
       els.csvNote.textContent = 'No recognizable rows found in TXT.';
-      e.target.value=''; return;
+      e.target.value='';
       hideStatusBars();
+      return;
     }
 
     // Build increments & unmatched, mirroring the CSV logic
