@@ -168,7 +168,37 @@
   .pill{ display:inline-flex; align-items:center; gap:6px; background:#1a2027; border:1px solid #27333f; padding:4px 10px; border-radius:999px; font-size:12px }
   .sec{ margin:10px 0 14px }
   .sec h4{ margin:6px 0 8px; font-size:13px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em }
-  .deck-row{ display:flex; align-items:center; gap:8px; justify-content:space-between; padding:6px 0; border-bottom:1px dashed #2b3742 }
+  /* Two-line layout for deck rows */
+.deck-row{
+  display:flex;
+  flex-direction:column;          /* stack title then controls */
+  align-items:flex-start;         /* left align */
+  gap:6px;
+  padding:10px 0;
+  border-bottom:1px dashed #2b3742;
+}
+
+/* First line: qty + name */
+.deck-title{
+  display:flex; align-items:center; gap:10px;
+  font-weight:600;
+}
+
+/* Second line: availability + buttons (wrap nicely on mobile) */
+.deck-controls{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  font-size:12px;
+}
+
+.deck-qtypill{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:28px; padding:2px 6px; border-radius:999px;
+  background:#1b222a; border:1px solid var(--border);
+}
+
+/* make the tiny availability label subtle */
+.deck-avail{ color:var(--muted); margin-right:4px; }
+
   .deck-row:last-child{ border-bottom:none }
   .slot{ display:flex; align-items:center; gap:8px; min-width:0 }
   .slot strong{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px }
@@ -484,6 +514,25 @@ function isPotentialCommanderFront(card){
   return isLegendaryCreature || isLegendaryVehicle || saysCommander;
 }
 
+function deckRowHTML(item){
+  // item: { id, name, qty, avail } — adapt to your object shape
+  return `
+    <div class="deck-row" data-id="${item.id}">
+      <div class="deck-title">
+        <span class="deck-qtypill">${item.qty}×</span>
+        <span class="deck-name">${item.name}</span>
+      </div>
+
+      <div class="deck-controls">
+        <span class="deck-avail">avail ${item.avail ?? 0}</span>
+        <button class="btn ghost" onclick="deckAdjust('${item.id}', -1)">−</button>
+        <button class="btn ghost" onclick="deckAdjust('${item.id}', 1)">＋</button>
+        <button class="btn" onclick="deckRemove('${item.id}')">Remove</button>
+      </div>
+    </div>
+  `;
+}
+  
 /* =================== Color labels =================== */
 function getColorLabel(ci){
   const set = new Set(ci||[]);
