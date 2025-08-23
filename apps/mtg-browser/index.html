@@ -417,20 +417,20 @@ body{
   <div class="wrap">
     <header>
       <div class="title">🧰 MTG Collection Browser</div>
-      <div class="muted">Local-first • Works offline • Zero backend</div>
+      <div class="muted">Browse your collection • Cards match to most recognizable set • DB updated every monday</div>
     </header>
 
     <div class="bar" style="margin-bottom:12px">
-      <button class="btn" id="btnUpdateDB" title="Force reindex now (Alt-click for full rebuild)">Update database</button>
+      <button class="btn" id="btnUpdateDB" title="Force reindex now (Alt-click for full rebuild)">🔄 Update database</button>
       <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
       <label class="btn file">⬆️ Import Collection (JSON)
         <input id="importCollection" type="file" accept=".json" />
       </label>
-      <label class="btn file">📄 Add Cards (CSV)
+      <label class="btn file" title="Dragon Shield Export">📄 Add Cards (CSV)
         <input id="importCSV" type="file" accept=".csv" />
       </label>
 
-      <label class="btn file">📝 Add Cards (TXT)
+      <label class="btn file" title="TCGplayer Export">📝 Add Cards (TXT)
         <input id="importTXT" type="file" accept=".txt" />
       </label>
 
@@ -438,7 +438,7 @@ body{
       
       <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database">🗑️ Clear Card DB</button>
       <button class="btn danger" id="btnClearCollection" title="Clear only your collection quantities">🧹 Clear Collection</button>
-      <div class="muted small">Tip: Best results from <span class="kbd">MTG Scanner — Dragon Shield</span> CSV export or <span class="kbd">TCGplayer Scanner</span> TXT share file.</div>
+      <div class="muted small">Tip: Best results from <span class="kbd">MTG Scanner — Dragon Shield</span> CSV export or <span class="kbd">TCGplayer Scanner</span> TXT "share" file.</div>
     </div>
 
     <div class="grid">
