@@ -1339,43 +1339,32 @@ function colorsMatch(cardCI, selectedColors){
   return true;
 }
 function matchCard(card, f){
-  const name_lc = (card.name_lc||'');
-  const type_lc = (card.type_lc||'');
+  const name_lc    = (card.name_lc||'');
+  const type_lc    = (card.type_lc||'');
   const subtype_lc = (card.subtype_lc||'');
-  const oracle_lc = (card.oracle_text||'').toLowerCase();
+  const oracle_lc  = (card.oracle_text||'').toLowerCase();
+
   if (f.name) {
     const q = f.name;
-
-    // Allow ^prefix or suffix$ power users
     if (q.startsWith('^')) {
       if (!name_lc.startsWith(q.slice(1))) return false;
     } else if (q.endsWith('$')) {
       if (!name_lc.endsWith(q.slice(0, -1))) return false;
     } else {
-      // Default: every term must appear somewhere in the name
       const terms = q.split(/\s+/).filter(Boolean);
-      for (const t of terms) {
-        if (!name_lc.includes(t)) return false;
-      }
+      for (const t of terms) if (!name_lc.includes(t)) return false;
     }
   }
-  if (f.type && !type_lc.includes(f.type.toLowerCase())) return false;
-  if (f.subtype && !subtype_lc.includes(f.subtype)) return false;
-  if (f.rarity && card.rarity !== f.rarity) return false;
-  if (f.text && !oracle_lc.includes(f.text)) return false;
-  if (!colorsMatch(card.color_identity, f.colors)) return false;
-  if (f.commanderOnly) {
-    if (!isPotentialCommanderFront(card)) return false;
-  }
-  const tl = card.type_line || '';
-  const ot = (card.oracle_text || '').toLowerCase();
 
-  const isLegendaryCreature = /\blegendary\b.*\bcreature\b/i.test(tl);
-  const isLegendaryVehicle  = /\blegendary\b.*\bvehicle\b/i.test(tl);
-  const saysCommander       = /can be your commander/i.test(ot);
+  if (f.type     && !type_lc.includes(f.type.toLowerCase())) return false;
+  if (f.subtype  && !subtype_lc.includes(f.subtype))          return false;
+  if (f.rarity   && card.rarity !== f.rarity)                  return false;
+  if (f.text     && !oracle_lc.includes(f.text))              return false;
+  if (!colorsMatch(card.color_identity, f.colors))            return false;
 
-  if (!(isLegendaryCreature || isLegendaryVehicle || saysCommander)) return false;
-  }
+  // Commander filter: front face only
+  if (f.commanderOnly && !isPotentialCommanderFront(card))    return false;
+
   return true;
 }
 
