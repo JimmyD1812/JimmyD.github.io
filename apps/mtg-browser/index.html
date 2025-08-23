@@ -1382,7 +1382,7 @@ function matchCard(card, f){
   if (f.subtype  && !subtype_lc.includes(f.subtype))          return false;
   if (f.rarity   && card.rarity !== f.rarity)                  return false;
   if (f.text     && !oracle_lc.includes(f.text))              return false;
-  if (!colorsMatch(card.color_identity, f.colors))            return false;
+  if (!colorsMatch(card.color_identity, f.colors, f.colorMode || 'include')) return false;
 
   // Commander filter: front face only
   if (f.commanderOnly && !isPotentialCommanderFront(card))    return false;
