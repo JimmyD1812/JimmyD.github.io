@@ -587,6 +587,66 @@ const COLLAPSE_THRESHOLD = 250; // tweak feel here
 
 const faceIndex = {};  // id -> 0/1/...
 
+function getColorLabel(ciRaw){
+  const order = ['W','U','B','R','G'];
+  const ci = (Array.isArray(ciRaw) ? ciRaw : []).slice()
+    .sort((a,b)=> order.indexOf(a) - order.indexOf(b));
+
+  if (ci.length === 0) return 'Colorless';
+  const key = ci.join('');
+
+  if (ci.length === 1){
+    return ({ W:'White', U:'Blue', B:'Black', R:'Red', G:'Green' })[key] || key;
+  }
+
+  if (ci.length === 2){
+    const pairs = {
+      WU:'Azorius: Blue/White',
+      WB:'Orzhov: Black/White',
+      WG:'Selesnya: Green/White',
+      UR:'Izzet: Blue/Red',
+      UB:'Dimir: Black/Blue',
+      UG:'Simic: Blue/Green',
+      BR:'Rakdos: Black/Red',
+      BG:'Golgari: Black/Green',
+      RG:'Gruul: Green/Red',
+      WR:'Boros: Red/White',
+    };
+    return pairs[key] || key;
+  }
+
+  if (ci.length === 3){
+    const triples = {
+      WUG:'Bant: Blue/Green/White',
+      WUB:'Esper: White/Black/Blue',
+      UBR:'Grixis: Black/Blue/Red',
+      BRG:'Jund: Black/Green/Red',
+      WRG:'Naya: Green/Red/White',
+      WBG:'Abzan: Black/Green/White',
+      WUR:'Jeskai: Blue/Red/White',
+      WBR:'Mardu: Black/Red/White',
+      UBG:'Sultai: Black/Blue/Green',
+      URG:'Temur: Blue/Green/Red',
+    };
+    return triples[key] || key;
+  }
+
+  if (ci.length === 4){
+    const quads = {
+      WBRG:'Dune: WBRG (No Blue)',
+      UBRG:'Glint: UBRG (No White)',
+      WURG:'Ink: WURG (No Black)',
+      WUBG:'Witch: WUBG (No Red)',
+      WUBR:'Yore: WUBR (No Green)',
+    };
+    return quads[key] || key;
+  }
+
+  // 5 colors
+  return 'WUBRG';
+}
+
+  
 function isPotentialCommanderFront(card){
   const front = (Array.isArray(card.faces) && card.faces.length) ? card.faces[0] : null;
 
@@ -1180,8 +1240,7 @@ function isDoubleFaced(card){
 }
   
 function renderCardCard(card, qty = 0, showComboBtn = false) {
-  const colors = (card.color_identity?.length ? card.color_identity : ['C'])
-    .map(c => `<span class="dot ${c}" title="${c}"></span>`).join('');
+  const colorLabel = getColorLabel(card.color_identity || []);
 
   const isDFC = isDoubleFaced(card);
   const firstFace = card.faces?.[0];
@@ -1216,7 +1275,7 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
       <div class="meta">
         <div class="line">
           <strong id="title-${card.id}">${firstFace?.name || card.name}</strong>
-          <span class="colors">${colors}</span>
+          <span class="chip">${colorLabel}</span>
           ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
         </div>
 
