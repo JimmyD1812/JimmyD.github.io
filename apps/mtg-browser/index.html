@@ -601,43 +601,43 @@ function getColorLabel(ciRaw){
 
   if (ci.length === 2){
     const pairs = {
-      WU:'Azorius: Blue/White',
-      WB:'Orzhov: Black/White',
-      WG:'Selesnya: Green/White',
-      UR:'Izzet: Blue/Red',
-      UB:'Dimir: Black/Blue',
-      UG:'Simic: Blue/Green',
-      BR:'Rakdos: Black/Red',
-      BG:'Golgari: Black/Green',
-      RG:'Gruul: Green/Red',
-      WR:'Boros: Red/White',
+      WU:'Azorius',
+      WB:'Orzhov',
+      WG:'Selesnya',
+      UR:'Izzet',
+      UB:'Dimir',
+      UG:'Simic',
+      BR:'Rakdos',
+      BG:'Golgari',
+      RG:'Gruul',
+      WR:'Boros',
     };
     return pairs[key] || key;
   }
 
   if (ci.length === 3){
     const triples = {
-      WUG:'Bant: Blue/Green/White',
-      WUB:'Esper: White/Black/Blue',
-      UBR:'Grixis: Black/Blue/Red',
-      BRG:'Jund: Black/Green/Red',
-      WRG:'Naya: Green/Red/White',
-      WBG:'Abzan: Black/Green/White',
-      WUR:'Jeskai: Blue/Red/White',
-      WBR:'Mardu: Black/Red/White',
-      UBG:'Sultai: Black/Blue/Green',
-      URG:'Temur: Blue/Green/Red',
+      WUG:'Bant',
+      WUB:'Esper',
+      UBR:'Grixis',
+      BRG:'Jund',
+      WRG:'Naya',
+      WBG:'Abzan',
+      WUR:'Jeskai',
+      WBR:'Mardu',
+      UBG:'Sultai',
+      URG:'Temur',
     };
     return triples[key] || key;
   }
 
   if (ci.length === 4){
     const quads = {
-      WBRG:'Dune: WBRG (No Blue)',
-      UBRG:'Glint: UBRG (No White)',
-      WURG:'Ink: WURG (No Black)',
-      WUBG:'Witch: WUBG (No Red)',
-      WUBR:'Yore: WUBR (No Green)',
+      WBRG:'Dune',
+      UBRG:'Glint',
+      WURG:'Ink',
+      WUBG:'Witch',
+      WUBR:'Yore',
     };
     return quads[key] || key;
   }
@@ -1276,6 +1276,8 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
         <div class="line">
           <strong id="title-${card.id}">${firstFace?.name || card.name}</strong>
           <span class="chip">${colorLabel}</span>
+        </div>
+        <div class="line">
           ${card.rarity ? `<span class="chip">${card.rarity}</span>` : ''}
         </div>
 
