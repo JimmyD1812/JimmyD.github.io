@@ -193,11 +193,24 @@ body.deck-open #deckScrim{ opacity:1; pointer-events:auto; }
 
   /* Deck sidebar */
   .deck-toggle{ margin-left:auto }
-  #deckPanel{
-    position:fixed; top:0; right:-420px; width:420px; height:100dvh; z-index:3000;
-    background:var(--panel); border-left:1px solid var(--border); box-shadow:-10px 0 30px #000a;
-    transition:right .25s ease; display:flex; flex-direction:column;
-  }
+#deckPanel{
+  position: fixed;
+  top: 0; right: -420px;            /* hidden by default */
+  width: var(--deck-w);
+  max-width: 90vw;
+  height: 100dvh;
+  z-index: 60;
+  transition: right .25s ease;
+}
+
+/* slide it in when body has the marker class */
+body.deck-open #deckPanel { right: 0; }
+
+/* push main content when open (desktop) */
+@media (min-width: 1000px){
+  .wrap{ transition: margin-right .25s ease; }
+  body.deck-open .wrap{ margin-right: var(--deck-w); }
+}
   #deckPanel.open{ right:0 }
   #deckHead{ padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px }
   #deckBody{ padding:12px 14px; overflow:auto }
@@ -491,7 +504,7 @@ body.deck-open #deckScrim{ opacity:1; pointer-events:auto; }
       </div>
     </div>
   </aside>
-
+<div id="deckScrim"></div>
 <script>
 /* =================== Dexie (DB) =================== */
 const db = new Dexie('mtgDB');
@@ -529,21 +542,26 @@ const els = {
   pkgRow: $('#pkgRow'), pkgNote: $('#pkgNote'),
   suggestions: $('#suggestions'), cuts: $('#cuts'),
   expText: $('#expText'), expMtgo: $('#expMtgo'), expMox: $('#expMox'), expOut: $('#expOut'),
-  els.deckSidebar = document.getElementById('deckSidebar');
-  els.deckScrim   = document.getElementById('deckScrim');
-  els.btnOpenDeck = document.getElementById('btnOpenDeck');   // your “Deck” button
-  els.btnCloseDeck = document.getElementById('btnCloseDeck'); // the X/close button in the drawer
+
+  // Deck UI
+  btnDeck: $('#btnDeck'),
+  deckPanel: $('#deckPanel'),
+  btnCloseDeck: $('#btnCloseDeck'),
+  deckScrim: $('#deckScrim'),      
 };
 
 // --- Deck drawer open/close (global) ---
-function openDeck(){ document.body.classList.add('deck-open'); }
-function closeDeck(){ document.body.classList.remove('deck-open'); }
+function openDeck(){
+  document.body.classList.add('deck-open');
+}
+function closeDeck(){
+  document.body.classList.remove('deck-open');
+}
 
-// listeners
-els.btnOpenDeck?.addEventListener('click', openDeck);
-els.btnCloseDeck?.addEventListener('click', closeDeck);
-els.deckScrim?.addEventListener('click', closeDeck);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDeck(); });
+els.btnDeck.addEventListener('click', openDeck);
+els.btnCloseDeck.addEventListener('click', closeDeck);
+els.deckScrim.addEventListener('click', closeDeck);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeck(); });
 
   
 // tiny $ helper
@@ -1400,7 +1418,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   await refreshStats(); await refreshSavedDecks(); updateDeckUI(); search();
 });
 
-<div id="deckScrim"></div>
+
 </script>
 </body>
 </html>
