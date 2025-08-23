@@ -475,6 +475,14 @@ body{
               <label class="chip"><input type="checkbox" class="ci" value="G"> <span class="dot G"></span> G</label>
               <label class="chip"><input type="checkbox" class="ci" value="C"> <span class="dot C"></span> C</label>
             </div>
+            <!-- NEW: color mode dropdown -->
+            <label class="chip" style="align-items:center;gap:8px">
+              <span class="muted small">Color match</span>
+              <select id="colorMode">
+                <option value="include">Include selected colors</option>
+                <option value="exact">Exactly selected colors</option>
+              </select>
+            </label>
               <div class="row" style="gap:10px; align-items:center">
                 <label class="switch">
                   <input type="checkbox" id="filterCommander" />
@@ -565,6 +573,7 @@ const els = {
   filterCommander: document.getElementById('filterCommander'),
   searchPanel: document.querySelector('section.panel.details'),
   searchHead:  document.querySelector('section.panel.details .head'),
+  colorMode: document.getElementById('colorMode'),
 };
 
 /* ---------- utils ---------- */
@@ -1327,17 +1336,30 @@ async function addToCollection(id, delta){
 window.addToCollection = addToCollection;
 
 /* -------------------- Filtering helpers -------------------- */
-function colorsMatch(cardCI, selectedColors){
+function colorsMatch(cardCI, selectedColors, mode = 'include'){
   if (!selectedColors || selectedColors.length === 0) return true;
+
   const sel = new Set(selectedColors);
-  const includeC = sel.has('C');
-  sel.delete('C');
+  const includeC = sel.has('C');   // “colorless” flag
+  sel.delete('C');                 // actual colored set
   const ci = Array.isArray(cardCI) ? cardCI : [];
-  if (ci.length === 0) return includeC;
-  if (sel.size === 0) return false;
-  for (const c of ci) if (!sel.has(c)) return false;
-  return true;
+
+  if (mode === 'include') {
+    // Current behavior: card colors must be a subset of selected colors
+    if (ci.length === 0) return includeC; // only match colorless if C picked
+    if (sel.size === 0)   return false;   // user only picked C but card isn't colorless
+    for (const c of ci) if (!sel.has(c)) return false;
+    return true;
+  } else { // 'exact'
+    // Exact equality of color identity (with special handling for colorless)
+    if (includeC && sel.size > 0) return false; // can't be colorless AND colored
+    if (includeC) return ci.length === 0;       // exactly colorless
+    if (ci.length !== sel.size) return false;
+    for (const c of ci) if (!sel.has(c)) return false;
+    return true;
+  }
 }
+  
 function matchCard(card, f){
   const name_lc    = (card.name_lc||'');
   const type_lc    = (card.type_lc||'');
@@ -1377,6 +1399,7 @@ async function search(){
     subtype: els.qSubtype.value.trim().toLowerCase(),
     rarity: els.qRarity.value,
     colors: Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value),
+    colorMode: (els.colorMode && els.colorMode.value) || 'include',
     commanderOnly: !!(els.filterCommander && els.filterCommander.checked)
   };
   els.status.textContent = 'Searching your collection…';
@@ -1415,6 +1438,7 @@ els.results.innerHTML = out.map(c => {
 els.btnSearch.addEventListener('click', search);
 ['qName','qText','qType','qSubtype','qRarity'].forEach(id => document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
 document.querySelectorAll('.ci').forEach(el => el.addEventListener('change', search));
+if (els.colorMode) els.colorMode.addEventListener('change', search);
 
 /* -------------------- Export/Import collection (JSON) -------------------- */
 els.btnExport.addEventListener('click', async () => {
