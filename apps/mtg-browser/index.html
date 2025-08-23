@@ -1036,42 +1036,63 @@ function updateDeckUI(){
   els.cmdrPrimary.textContent = deck.commander? deck.commander.name : 'None';
   show(els.commanderSec);
 
-  // Build deck list groups
-  const grouped = { Creatures:[], Noncreatures:[], Lands:[] };
-  for(const [id,qty] of deck.entries.entries()){
-    const c = window.__cardsById[id] || null;
-    if(!c){ continue; }
-    const tl = (c.type_lc||'');
-    const g = /land/.test(tl) ? 'Lands' : (/creature/.test(tl) ? 'Creatures' : 'Noncreatures');
-    grouped[g].push({card:c,qty});
-  }
-  let html='';
-  for(const sec of ['Creatures','Noncreatures','Lands']){
-    const arr=grouped[sec];
-    if(!arr.length) continue;
-    html+=`<div class="tiny" style="margin-top:8px;margin-bottom:6px;color:#9aa4ad">${sec}</div>`;
-    for(const {card,qty} of arr){
-      const avail=(latestOwnedMap[card.id]||0) - (deck.entries.get(card.id)||0);
-      html+=`<div class="deck-row" data-id="${card.id}">
-              <div class="deck-top">
-                <span class="qty-pill">${qty}×</span>
-                <div class="deck-title">${card.name}</div>
-              </div>
-            
-              <div class="deck-bottom">
-                <span class="muted small">avail ${availableQty}</span>
-                <div class="spacer"></div>
-                <div class="deck-actions">
-                  <button class="btn ghost" onclick="deckAdd('${card.id}', -1)">−</button>
-                  <button class="btn ghost" onclick="deckAdd('${card.id}', +1)">＋</button>
-                  <button class="btn"        onclick="deckRemove('${card.id}')">Remove</button>
-                </div>
-              </div>
-            </div>`;
-    }
-  }
-  els.deckList.innerHTML = html || `<div class="tiny">No cards yet. Drag from results here or use “Add to Deck”.</div>`;
+// Build deck list groups (front-face based, safe regex)
+const grouped = { Creatures: [], Noncreatures: [], Lands: [] };
 
+for (const [id, qty] of deck.entries.entries()) {
+  const c = window.__cardsById[id];
+  if (!c) continue;
+
+  const frontTL = (Array.isArray(c.faces) && c.faces[0]?.type_line) ? c.faces[0].type_line : (c.type_line || '');
+  const tl = frontTL.toLowerCase();
+
+  // Check Land first so Dryad Arbor / “Land Creature” landfall into Lands
+  const group =
+    /\bland\b/.test(tl)      ? 'Lands' :
+    /\bcreature\b/.test(tl)  ? 'Creatures' :
+                               'Noncreatures';
+
+  grouped[group].push({ card: c, qty });
+}
+
+// Optional: stable sort by name inside each section
+for (const sec of Object.keys(grouped)) {
+  grouped[sec].sort((a, b) => a.card.name.localeCompare(b.card.name));
+}
+
+let html = '';
+for (const sec of ['Creatures', 'Noncreatures', 'Lands']) {
+  const arr = grouped[sec];
+  if (!arr.length) continue;
+
+  html += `<div class="tiny" style="margin-top:8px;margin-bottom:6px;color:#9aa4ad">${sec}</div>`;
+
+  for (const { card, qty } of arr) {
+    const owned = latestOwnedMap[card.id] || 0;
+    const used  = deck.entries.get(card.id) || 0;
+    const avail = Math.max(0, owned - used);   // clamp to 0
+
+    html += `
+      <div class="deck-row" data-id="${card.id}">
+        <div class="deck-top">
+          <span class="qty-pill">${qty}×</span>
+          <div class="deck-title">${card.name}</div>
+        </div>
+
+        <div class="deck-bottom">
+          <span class="muted small">avail ${avail}</span>
+          <div class="spacer"></div>
+          <div class="deck-actions">
+            <button class="btn ghost" onclick="deckAdd('${card.id}', -1)">−</button>
+            <button class="btn ghost" onclick="deckAdd('${card.id}', +1)">＋</button>
+            <button class="btn" onclick="deckRemove('${card.id}')">Remove</button>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+els.deckList.innerHTML = html || `<div class="tiny">No cards yet. Drag from results here or use “Add to Deck”.</div>`;
   // Stats
   const stats = computeStats();
   els.kCreatures.textContent = stats.creatures;
