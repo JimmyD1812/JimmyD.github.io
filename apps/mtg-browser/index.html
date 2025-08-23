@@ -577,6 +577,19 @@ const COLLAPSE_THRESHOLD = 250; // tweak feel here
 
 const faceIndex = {};  // id -> 0/1/...
 
+function isPotentialCommanderFront(card){
+  const front = (Array.isArray(card.faces) && card.faces.length) ? card.faces[0] : null;
+
+  const frontTL = (front?.type_line || card.type_line || '');      // type_line of FRONT only
+  const frontOT = (front?.oracle_text || '').toLowerCase();        // oracle text of FRONT only
+
+  const isLegendaryCreature = /\blegendary\b.*\bcreature\b/i.test(frontTL);
+  const isLegendaryVehicle  = /\blegendary\b.*\bvehicle\b/i.test(frontTL);
+  const saysCommander       = /can be your commander/i.test(frontOT);
+
+  return isLegendaryCreature || isLegendaryVehicle || saysCommander;
+}
+  
 window.loadComboPieces = async function(cardId){
   const base = window.__cardsById[cardId];
   const pop  = document.getElementById(`combo-pop-${cardId}`);
@@ -1352,6 +1365,8 @@ function matchCard(card, f){
   if (f.text && !oracle_lc.includes(f.text)) return false;
   if (!colorsMatch(card.color_identity, f.colors)) return false;
   if (f.commanderOnly) {
+    if (!isPotentialCommanderFront(card)) return false;
+  }
   const tl = card.type_line || '';
   const ot = (card.oracle_text || '').toLowerCase();
 
