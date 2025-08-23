@@ -114,7 +114,10 @@ body{
   }
   
   .combo-pop{
-    position:absolute; top: calc(100% + 8px); right: 0;
+    position:absolute;
+    top: auto;                         /* remove downward anchoring */
+    bottom: calc(100% + 8px);          /* anchor above the button */
+    right: 0;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px; padding: 10px;
@@ -1285,7 +1288,9 @@ function renderCardCard(card, qty = 0, showComboBtn = false) {
             <input class="qty-in" id="qty-${card.id}" value="${qty}" readonly>
             <button class="btn ghost" onclick="addToCollection('${card.id}', 1)">＋</button>
           </div>
+          <div class="line">
             ${comboMarkup}
+          </div>
         </div>
 
 
