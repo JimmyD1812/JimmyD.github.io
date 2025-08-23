@@ -371,6 +371,12 @@ body{
   flex: 1 1 100%; /* take full line so the Search button wraps to next line */
 }
 
+#colorMode {
+  width: auto;
+  min-width: 220px;   /* tweak if you like */
+  flex: 0 0 auto;     /* don't stretch in the flex row */
+}
+  
 /* Smaller screens: 2 per row */
 @media (max-width: 520px){
   .colors{ grid-template-columns: repeat(2, max-content); }
@@ -476,13 +482,10 @@ body{
               <label class="chip"><input type="checkbox" class="ci" value="C"> <span class="dot C"></span> C</label>
             </div>
             <!-- NEW: color mode dropdown -->
-            <label class="chip" style="align-items:center;gap:8px">
-              <span class="muted small">Color match</span>
-              <select id="colorMode">
+              <select id="colorMode" title="Color match">
                 <option value="include">Include selected colors</option>
                 <option value="exact">Exactly selected colors</option>
               </select>
-            </label>
               <div class="row" style="gap:10px; align-items:center">
                 <label class="switch">
                   <input type="checkbox" id="filterCommander" />
