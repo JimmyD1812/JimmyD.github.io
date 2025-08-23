@@ -62,6 +62,42 @@
     .details{position:sticky;top:12px;z-index:30}
   }
 
+  /* ===== Deck drawer push layout ===== */
+:root{
+  --deck-w: 420px;         /* match your sidebar width */
+}
+
+/* Your deck sidebar already slides in/out; keep its own styles, just ensure it's fixed */
+#deckSidebar{
+  position: fixed;
+  top: 0; right: 0;
+  width: var(--deck-w);
+  max-width: 90vw;
+  height: 100dvh;
+  z-index: 60;
+  transform: translateX(100%);              /* hidden by default */
+  transition: transform .25s ease;
+}
+body.deck-open #deckSidebar{ transform: translateX(0); }
+
+/* Push the main content when deck is open (desktop only) */
+@media (min-width: 1000px){
+  .wrap{ transition: margin-right .25s ease; }
+  body.deck-open .wrap{ margin-right: var(--deck-w); }
+}
+
+/* Optional: scrim for small screens; disabled on desktop push */
+#deckScrim{
+  position: fixed; inset: 0; z-index: 55;
+  background:#0008; opacity:0; pointer-events:none;
+  transition: opacity .2s ease;
+}
+body.deck-open #deckScrim{ opacity:1; pointer-events:auto; }
+@media (min-width: 1000px){
+  body.deck-open #deckScrim{ opacity:0; pointer-events:none; } /* no scrim when pushing */
+}
+
+
   /* Panels */
   .panel{ position:relative;
     background:linear-gradient(var(--panel),var(--panel)) padding-box,
@@ -493,8 +529,23 @@ const els = {
   pkgRow: $('#pkgRow'), pkgNote: $('#pkgNote'),
   suggestions: $('#suggestions'), cuts: $('#cuts'),
   expText: $('#expText'), expMtgo: $('#expMtgo'), expMox: $('#expMox'), expOut: $('#expOut'),
+  els.deckSidebar = document.getElementById('deckSidebar');
+  els.deckScrim   = document.getElementById('deckScrim');
+  els.btnOpenDeck = document.getElementById('btnOpenDeck');   // your “Deck” button
+  els.btnCloseDeck = document.getElementById('btnCloseDeck'); // the X/close button in the drawer
 };
 
+// --- Deck drawer open/close (global) ---
+function openDeck(){ document.body.classList.add('deck-open'); }
+function closeDeck(){ document.body.classList.remove('deck-open'); }
+
+// listeners
+els.btnOpenDeck?.addEventListener('click', openDeck);
+els.btnCloseDeck?.addEventListener('click', closeDeck);
+els.deckScrim?.addEventListener('click', closeDeck);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDeck(); });
+
+  
 // tiny $ helper
 function $(sel){ return document.querySelector(sel); }
 function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
@@ -1348,6 +1399,8 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   try{ await importNDJSONFromURL(NDJSON_URL, {skipIfUnchanged:true}); } catch(e){ console.error(e); els.status.textContent='Remote import failed.'; els.importNote.textContent=`Error: ${e?.message||e}`; }
   await refreshStats(); await refreshSavedDecks(); updateDeckUI(); search();
 });
+
+<div id="deckScrim"></div>
 </script>
 </body>
 </html>
