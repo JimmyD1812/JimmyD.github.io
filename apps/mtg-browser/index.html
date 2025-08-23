@@ -1372,7 +1372,7 @@ async function search(){
     type: els.qType.value,
     subtype: els.qSubtype.value.trim().toLowerCase(),
     rarity: els.qRarity.value,
-    colors: Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value)
+    colors: Array.from(document.querySelectorAll('.ci:checked')).map(c=>c.value),
     commanderOnly: !!(els.filterCommander && els.filterCommander.checked)
   };
   els.status.textContent = 'Searching your collection…';
