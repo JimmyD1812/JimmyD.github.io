@@ -14,6 +14,9 @@
     --bg:#0b0d0f; --bg-2:#0f1317; --panel:#12161a; --muted:#9aa4ad; --text:#e8edf2;
     --accent:#6ee7ff; --accent-2:#a78bfa; --danger:#ff7d7d; --card:#171c22; --chip:#1b222a; --border:#24303a;
     --btn-fs:14px; --btn-lh:1.15; --btn-fw:600;
+
+    /* grid tuning: pick a comfortable minimum card width */
+    --results-col-min: 560px; /* ~2-up at 1200px wrap, 3-up at 1800px, 4-up at 2400px */
   }
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
     font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial}
@@ -57,10 +60,29 @@
 
   /* Layout */
   .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+
+  /* results grid: auto-scale columns based on available width */
+  .results{
+    display:grid;
+    gap:12px;
+    grid-template-columns: repeat(auto-fit, minmax(var(--results-col-min), 1fr));
+  }
+
+  /* keep 2-up at 1080p by default via 1200px wrap; widen wrap on larger viewports */
+  @media (min-width: 1400px){ .wrap{ max-width: 1800px; } } /* enables 3-up on 2560-wide (1440p) */
+  @media (min-width: 2200px){ .wrap{ max-width: 2400px; } } /* enables 4-up on ultrawide */
+  @media (min-width: 3000px){ .wrap{ max-width: 3000px; } } /* 5-up on mega-wide */
+
+  /* mobile nicety: force single column to avoid overflow on tiny screens */
+  @media (max-width:700px){
+    .results{ grid-template-columns:1fr; }
+  }
+
   @media (max-width:900px){
     .grid{grid-template-columns:1fr}
     .details{position:sticky;top:12px;z-index:30}
   }
+
 
   /* ===== Deck drawer push layout ===== */
 :root{
