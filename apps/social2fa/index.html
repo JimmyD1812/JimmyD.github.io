@@ -77,9 +77,14 @@
             <!-- Secret Passphrase Input -->
             <div>
                 <label for="passphrase" class="block text-xs font-bold uppercase text-gray-400 mb-2 tracking-wider">Secret Passphrase</label>
-                <input type="password" id="passphrase" placeholder="Enter shared secret..." 
-                       class="w-full p-4 rounded-lg input-field font-semibold text-lg">
-                <p class="mt-2 text-[11px] text-gray-500 italic">Enter the secret known only to you and your friend.</p>
+                <div class="relative">
+                    <input type="password" id="passphrase" placeholder="Enter shared secret..." 
+                           class="w-full p-4 pr-12 rounded-lg input-field font-semibold text-lg">
+                    <button id="toggleVisible" type="button" class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white focus:outline-none transition-colors select-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <p class="mt-2 text-[11px] text-gray-500 italic">Caps and spaces are ignored. Enter the secret known only to you and your friend.</p>
             </div>
 
             <!-- Verification Display -->
@@ -143,6 +148,7 @@
         ];
 
         const passphraseInput = document.getElementById('passphrase');
+        const toggleBtn = document.getElementById('toggleVisible');
         const authPanel = document.getElementById('authPanel');
         const emptyState = document.getElementById('emptyState');
         const challengeDisplay = document.getElementById('challengeWord');
@@ -160,9 +166,9 @@
         }
 
         function updateLogic() {
-            const secret = passphraseInput.value.trim();
+            const rawSecret = passphraseInput.value;
             
-            if (!secret) {
+            if (!rawSecret.trim()) {
                 authPanel.classList.add('hidden');
                 emptyState.classList.remove('hidden');
                 return;
@@ -176,8 +182,11 @@
             const msIntoBucket = now % INTERVAL_MS;
             const msRemaining = INTERVAL_MS - msIntoBucket;
 
-            // Generate words using secret + bucketIndex as seed
-            const baseSeed = getSeed(secret + bucketIndex);
+            // NORMALIZE: Convert to lowercase and remove all spaces for the seed
+            const normalizedSecret = rawSecret.toLowerCase().replace(/\s+/g, '');
+
+            // Generate words using normalized secret + bucketIndex as seed
+            const baseSeed = getSeed(normalizedSecret + bucketIndex);
             
             const challengeIndex = baseSeed % words.length;
             const responseIndex = (baseSeed * 31 + 7) % words.length;
@@ -193,6 +202,25 @@
             const percent = (msRemaining / INTERVAL_MS) * 100;
             progressBar.style.width = `${percent}%`;
         }
+
+        // Visibility toggle logic
+        const setVisibility = (visible) => {
+            passphraseInput.type = visible ? 'text' : 'password';
+        };
+
+        toggleBtn.addEventListener('mousedown', () => setVisibility(true));
+        toggleBtn.addEventListener('mouseup', () => setVisibility(false));
+        toggleBtn.addEventListener('mouseleave', () => setVisibility(false));
+        
+        // Touch events for mobile
+        toggleBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            setVisibility(true);
+        });
+        toggleBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            setVisibility(false);
+        });
 
         passphraseInput.addEventListener('input', updateLogic);
         setInterval(updateLogic, 1000);
