@@ -17,9 +17,11 @@
     .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    /* UPDATED: Modified CSS to style the image logo */
     .brand .logo {
-      width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--ring));
-      box-shadow: 0 6px 18px rgba(255,59,59,0.25), inset 0 0 18px rgba(255,174,0,0.25);
+      width: 44px; height: 44px; border-radius: 12px;
+      /* Removed CSS-generated background and box-shadow for a real image */
+      object-fit: contain; /* Good for icons with transparency */
     }
     h1 { font-size: 1.25rem; margin: 0; letter-spacing: .3px; }
     .muted { color: var(--muted); font-size: .95rem; }
@@ -50,7 +52,7 @@
   <div class="wrap">
     <header>
       <a class="brand" href="/JimmyD.github.io">
-        <div class="logo" aria-hidden="true"></div>
+        <img class="logo" src="/JimmyD.github.io/JimmyD.png" alt="JimmyD Logo" />
         <div>
           <h1>JimmyD’s Projects</h1>
           <div class="muted">Little tools and experiments</div>
