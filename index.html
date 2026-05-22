@@ -24,6 +24,26 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; color: var(--text); background: #0b0d11; background: radial-gradient(circle at 50% -20%, #1c2336, var(--bg)); }
 
+    /* The Wall Disclaimer Banner */
+    .wall-disclaimer {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #93c5fd;
+    }
+
+    .disclaimer-icon {
+      font-size: 1rem;
+      line-height: 1;
+      margin-top: 1px;
+    }
+    
     /* Layout Structure */
     .app-container {
       max-width: 1400px;
@@ -337,7 +357,12 @@
       </section>
 
       <section class="main-space">
-        <h2 class="section-title">Community Wall</h2>
+        <h2 class="section-title">The Wall</h2>
+
+        <div class="wall-disclaimer">
+          <span class="disclaimer-icon">ℹ️</span>
+          <p><strong>Identity Persistence Notice:</strong> User aliases are secured via local browser data. Clearing your browser cache or device cookies will reset these temporary credentials, which may result in losing authorization to post under your established alias.</p>
+        </div>
         
         <div class="wall-feed" id="wallFeed">
           <div class="post">
