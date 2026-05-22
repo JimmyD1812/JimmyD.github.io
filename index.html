@@ -403,7 +403,7 @@
 
   <footer>
       <div>© <span id="y"></span> JimmyD</div>
-      <div class="muted">Hosted via Custom Domain on GitHub Pages</div>
+      
     </footer>
   </div>
 
@@ -439,6 +439,18 @@
       localStorage.setItem('chat_tokens', JSON.stringify(tokens));
     }
 
+   // Helper: Generate a unique, consistent HSL color based on an alias string
+    function getUniqueColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      // Use HSL to ensure colors are bright enough for a dark theme
+      // Hue: 0-360, Saturation: 65%, Lightness: 65%
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue}, 65%, 65%)`;
+    }
+
     // 3. Render Posts to the Screen
     function renderPosts(posts) {
       feed.innerHTML = ''; // Clear skeleton mock data
@@ -456,6 +468,9 @@
         // Check if the current browser owns this post's alias matching the token
         const normalizedAlias = post.alias.toLowerCase().trim();
         const isOwner = localTokens[normalizedAlias] === post.cookie_token;
+        
+        // Define inline style color if it's a rando, otherwise let CSS make it green
+        const authorStyle = isOwner ? '' : `style="color: ${getUniqueColor(post.alias)};"`;
         const authorClass = isOwner ? 'post-author owner' : 'post-author';
 
         // Format timestamp cleanly
@@ -463,7 +478,7 @@
 
         postElement.innerHTML = `
           <div class="post-meta">
-            <span class="${authorClass}">${escapeHTML(post.alias)} ${isOwner ? '(You)' : ''}</span>
+            <span class="${authorClass}" ${authorStyle}>${escapeHTML(post.alias)} ${isOwner ? '(You)' : ''}</span>
             <span class="post-time">${postDate}</span>
           </div>
           <div class="post-content">${escapeHTML(post.message)}</div>
