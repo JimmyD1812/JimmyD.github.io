@@ -391,7 +391,7 @@
     // 2. Initialize Supabase Connection
     const SUPABASE_URL = "https://skapduzomcywyjksefai.supabase.co";
     const SUPABASE_KEY = "sb_publishable_xGOO8eV1GC8BamLS61VzIg_Yb_YVH3E";
-    const supabase = libSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const form = document.getElementById('wallForm');
     const feed = document.getElementById('wallFeed');
