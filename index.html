@@ -4,58 +4,170 @@
   <meta charset="utf-8" />
   <link rel="icon" type="image/svg+xml" href="/JimmyD.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JimmyD | Projects</title>
-  <meta name="description" content="Personal projects and mini-apps by JimmyD." />
+  <title>JimmyD | Workspace</title>
+  <meta name="description" content="Personal projects, mini-apps, and community space by JimmyD." />
   <style>
-    :root { --bg: #0f1115; --panel: #141820; --text: #e6e7ea; --muted: #9aa3b2; --accent: #ff3b3b; --ring: #ffae00; }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0; font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text); background: radial-gradient(1200px 800px at 100% -10%, #1a1f2b, var(--bg));
+    :root { 
+      --bg: #0b0d11; 
+      --panel: #131722; 
+      --panel-hover: #1b2030;
+      --border: #222838; 
+      --text: #f0f2f5; 
+      --muted: #8a96a8; 
+      --accent: #3b82f6; 
+      --chat-placeholder: #10121a;
     }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 60px; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
-    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
-    /* UPDATED: Modified CSS to style the image logo */
-    .brand .logo {
-      width: 44px; height: 44px; border-radius: 12px;
-      /* Removed CSS-generated background and box-shadow for a real image */
-      object-fit: contain; /* Good for icons with transparency */
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; color: var(--text); background: #0b0d11; background: radial-gradient(circle at 50% -20%, #1c2336, var(--bg)); }
+
+    /* Layout Structure */
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    h1 { font-size: 1.25rem; margin: 0; letter-spacing: .3px; }
-    .muted { color: var(--muted); font-size: .95rem; }
-    .panel {
-      background: color-mix(in oklab, var(--panel) 92%, black 8%);
-      border: 1px solid #232837; border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+
+    /* Modern Glassmorphic Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: rgba(19, 23, 34, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
     }
-    .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
-      margin-top: 14px;
+    
+    .brand { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; }
+    .brand .logo { width: 48px; height: 48px; border-radius: 12px; object-fit: contain; }
+    h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    
+    nav a.inline { color: var(--text); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    nav a.inline:hover { color: var(--accent); }
+
+    /* Main Content Dashboard Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      flex: 1;
     }
+
+    /* Left Sidebar: Projects */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      padding-left: 4px;
+    }
+
+    .project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .card {
-      display: grid; gap: 10px; padding: 16px; background: #121621; border: 1px solid #232837; border-radius: 14px;
-      text-decoration: none; color: inherit; transition: transform .12s ease, border-color .12s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
     }
-    .card:hover { transform: translateY(-2px); border-color: #2f374b; }
-    .card h3 { margin: 0; font-size: 1.05rem; }
-    .tag { display: inline-block; font-size: .75rem; padding: 2px 8px; border: 1px solid #2b3244; border-radius: 999px; color: var(--muted); }
+    
+    .card:hover { 
+      transform: translateX(4px); 
+      background: var(--panel-hover);
+      border-color: #2e374f; 
+    }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .card h3 { font-size: 1rem; font-weight: 600; }
+    .tag { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 999px; color: #60a5fa; }
+    .card p { font-size: 0.85rem; line-height: 1.4; }
+
+    /* Right Section: Large Open Chat Space */
+    .main-space {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+
+    /* Placeholder design for the future Chat feature */
+    .chat-placeholder {
+      flex: 1;
+      border: 2px dashed #242b3d;
+      border-radius: 12px;
+      background: var(--chat-placeholder);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .chat-placeholder-icon {
+      font-size: 2.5rem;
+      opacity: 0.4;
+    }
+
+    /* Footer */
     footer {
-      margin-top: 32px; color: #7e8797; font-size: .9rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-      border-top: 1px solid #232837; padding-top: 16px;
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
     }
-    a.inline { color: #c7d2fe; text-decoration: none; border-bottom: 1px dashed #3b82f6; }
-    a.inline:hover { border-bottom-style: solid; }
+
+    /* Responsive Adjustments for Mobile */
+    @media (max-width: 850px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .main-space { min-height: 400px; }
+      .card:hover { transform: translateY(-2px); }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="app-container">
     <header>
       <a class="brand" href="/">
         <img class="logo" src="/JimmyD.png" alt="JimmyD Logo" />
         <div>
-          <h1>JimmyD’s Projects</h1>
-          <div class="muted">Little tools and experiments</div>
+          <h1>JimmyD’s Space</h1>
+          <div class="muted">Little tools, experiments, and open canvas</div>
         </div>
       </a>
       <nav class="muted">
@@ -63,35 +175,58 @@
       </nav>
     </header>
 
-    <section class="panel">
-      <div class="muted">Featured</div>
-      <div class="grid">
-        <a class="card" href="/apps/card-maker/">
-          <span class="tag">Proxy</span>
-          <h3>Crucible Card Maker</h3>
-          <p class="muted">Generate custom card images right in your browser.</p>
-        </a>
-        <a class="card" href="/apps/encounter-builder/">
-          <span class="tag">D&D</span>
-          <h3>Encounter Builder</h3>
-          <p class="muted">A tiny browser prototype D&D 5e encounter builder updated to 2024 monster manual.</p>
-        </a>
-        <a class="card" href="/apps/mtg-browser/">
-          <span class="tag">MTG</span>
-          <h3>MTG Collection Browser</h3>
-          <p class="muted">Upload a CSV of your collection from Dragonshield scanner app to browse and search.</p>
-        </a>
-        <a class="card" href="/apps/social2fa/">
-          <span class="tag">Security</span>
-          <h3>Social 2FA</h3>
-          <p class="muted">Verify friends aren't hacked before downloading shared links.</p>
-        </a>
-      </div>
-    </section>
+    <main class="dashboard-grid">
+      <section class="sidebar">
+        <h2 class="section-title">Experiments & Tools</h2>
+        <div class="project-list">
+          <a class="card" href="/apps/card-maker/">
+            <div class="card-header">
+              <h3>Crucible Card Maker</h3>
+              <span class="tag">Proxy</span>
+            </div>
+            <p class="muted">Generate custom card images right in your browser.</p>
+          </a>
+          
+          <a class="card" href="/apps/encounter-builder/">
+            <div class="card-header">
+              <h3>Encounter Builder</h3>
+              <span class="tag">D&D</span>
+            </div>
+            <p class="muted">A browser prototype D&D 5e encounter builder updated to 2024 monster manual.</p>
+          </a>
+          
+          <a class="card" href="/apps/mtg-browser/">
+            <div class="card-header">
+              <h3>MTG Collection</h3>
+              <span class="tag">MTG</span>
+            </div>
+            <p class="muted">Upload a CSV of your collection from Dragonshield scanner app to browse.</p>
+          </a>
+          
+          <a class="card" href="/apps/social2fa/">
+            <div class="card-header">
+              <h3>Social 2FA</h3>
+              <span class="tag">Security</span>
+            </div>
+            <p class="muted">Verify friends aren't hacked before downloading shared links.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="main-space">
+        <div class="chat-placeholder">
+          <div class="chat-placeholder-icon">💬</div>
+          <div>
+            <h3 style="color: #636f8a; margin-bottom: 4px;">Future Community Wall</h3>
+            <p style="font-size: 0.9rem; max-width: 400px; margin: 0 auto;">An open staging ground for quick anonymous thoughts. No registration required. Coming soon.</p>
+          </div>
+        </div>
+      </section>
+    </main>
 
     <footer>
       <div>© <span id="y"></span> JimmyD</div>
-      <div class="muted">Hosted on GitHub Pages</div>
+      <div class="muted">Hosted via Custom Domain on GitHub Pages</div>
     </footer>
   </div>
   <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
