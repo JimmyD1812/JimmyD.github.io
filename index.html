@@ -391,7 +391,7 @@
     // 2. Initialize Supabase Connection
     const SUPABASE_URL = "https://skapduzomcywyjksefai.supabase.co";
     const SUPABASE_KEY = "sb_publishable_xGOO8eV1GC8BamLS61VzIg_Yb_YVH3E";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const Supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const form = document.getElementById('wallForm');
     const feed = document.getElementById('wallFeed');
@@ -459,7 +459,7 @@
 
     // 4. Fetch Live Posts from Supabase
     async function fetchPosts() {
-      const { data, error } = await supabase
+      const { data, error } = await Supabase
         .from('posts')
         .select('*')
         .order('created_at', { ascending: true });
@@ -486,7 +486,7 @@
       statusMsg.textContent = 'Publishing note...';
 
       // Step A: Check if this alias already exists anywhere in the DB
-      const { data: existingPosts, error: checkError } = await supabase
+      const { data: existingPosts, error: checkError } = await Supabase
         .from('posts')
         .select('cookie_token')
         .ilike('alias', aliasInput)
@@ -519,7 +519,7 @@
       }
 
       // Step E: Push post payload safely to Supabase
-      const { error: insertError } = await supabase
+      const { error: insertError } = await Supabase
         .from('posts')
         .insert([{ alias: aliasInput, message: messageInput, cookie_token: currentToken }]);
 
