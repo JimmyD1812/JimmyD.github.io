@@ -27,7 +27,7 @@
     /* The Wall Disclaimer Banner */
     .wall-disclaimer {
       display: flex;
-      gap: 12px;
+      gap: 5px;
       align-items: flex-start;
       background: rgba(59, 130, 246, 0.05);
       border: 1px solid rgba(59, 130, 246, 0.15);
@@ -358,9 +358,11 @@
 
       <section class="main-space">
         <h2 class="section-title">The Wall</h2>
- 
-        <span class="disclaimer-icon">ℹ️</span>
-        <p><strong>Identity Persistence Notice:</strong> User aliases are secured via local browser data. Clearing your browser cache or device cookies will reset credentials.</p>
+
+        <div class="wall-disclaimer">
+          <span class="disclaimer-icon">ℹ️</span>
+          <p><strong>Identity Persistence Notice:</strong> User aliases are secured via local browser data. Clearing your browser cache or device cookies will reset credentials.</p>
+        </div>
         
         <div class="wall-feed" id="wallFeed">
           <div class="post">
