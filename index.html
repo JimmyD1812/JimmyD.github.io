@@ -376,11 +376,175 @@
       </section>
     </main>
 
-    <footer>
+  <footer>
       <div>© <span id="y"></span> JimmyD</div>
       <div class="muted">Hosted via Custom Domain on GitHub Pages</div>
     </footer>
   </div>
-  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // Set the current year in footer
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // 2. Initialize Supabase Connection
+    const SUPABASE_URL = "https://skapduzomcywyjksefai.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_xGOO8eV1GC8BamLS61VzIg_Yb_YVH3E";
+    const supabase = libSupabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const form = document.getElementById('wallForm');
+    const feed = document.getElementById('wallFeed');
+    const statusMsg = document.getElementById('formStatus');
+
+    // Helper: Safely generate a unique security token for new aliases
+    function generateToken() {
+      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
+    // Helper: Get or create alias token maps from localStorage
+    function getStoredTokens() {
+      const tokens = localStorage.getItem('chat_tokens');
+      return tokens ? JSON.parse(tokens) : {};
+    }
+
+    function saveStoredToken(alias, token) {
+      const tokens = getStoredTokens();
+      tokens[alias.toLowerCase().trim()] = token;
+      localStorage.setItem('chat_tokens', JSON.stringify(tokens));
+    }
+
+    // 3. Render Posts to the Screen
+    function renderPosts(posts) {
+      feed.innerHTML = ''; // Clear skeleton mock data
+      const localTokens = getStoredTokens();
+
+      if (posts.length === 0) {
+        feed.innerHTML = '<div class="muted" style="text-align:center; padding:20px;">The wall is empty. Be the first to leave a mark!</div>';
+        return;
+      }
+
+      posts.forEach(post => {
+        const postElement = document.createElement('div');
+        postElement.className = 'post';
+
+        // Check if the current browser owns this post's alias matching the token
+        const normalizedAlias = post.alias.toLowerCase().trim();
+        const isOwner = localTokens[normalizedAlias] === post.cookie_token;
+        const authorClass = isOwner ? 'post-author owner' : 'post-author';
+
+        // Format timestamp cleanly
+        const postDate = new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        postElement.innerHTML = `
+          <div class="post-meta">
+            <span class="${authorClass}">${escapeHTML(post.alias)} ${isOwner ? '(You)' : ''}</span>
+            <span class="post-time">${postDate}</span>
+          </div>
+          <div class="post-content">${escapeHTML(post.message)}</div>
+        `;
+        feed.appendChild(postElement);
+      });
+      
+      // Auto-scroll to the latest message
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    // HTML Escape helper to prevent cross-site scripting vulnerabilities
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // 4. Fetch Live Posts from Supabase
+    async function fetchPosts() {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching wall posts:', error);
+      } else {
+        renderPosts(data || []);
+      }
+    }
+
+    // 5. Form Submission Logic with Alias Validation
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const aliasInput = document.getElementById('aliasInput').value.trim();
+      const messageInput = document.getElementById('messageInput').value.trim();
+      const normalizedAlias = aliasInput.toLowerCase();
+
+      if (!aliasInput || !messageInput) return;
+
+      // Update status to working
+      statusMsg.className = 'status-msg';
+      statusMsg.textContent = 'Publishing note...';
+
+      // Step A: Check if this alias already exists anywhere in the DB
+      const { data: existingPosts, error: checkError } = await supabase
+        .from('posts')
+        .select('cookie_token')
+        .ilike('alias', aliasInput)
+        .limit(1);
+
+      if (checkError) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.textContent = 'Database error. Try again.';
+        return;
+      }
+
+      let currentToken = '';
+      const localTokens = getStoredTokens();
+
+      if (existingPosts && existingPosts.length > 0) {
+        // Step B: Name exists! Verify if our browser has the matching authorization token
+        const correctToken = existingPosts[0].cookie_token;
+        if (localTokens[normalizedAlias] === correctToken) {
+          currentToken = correctToken; // Token matched, original author verified
+        } else {
+          // Step C: Imposter detected (Alias taken)
+          statusMsg.className = 'status-msg error';
+          statusMsg.textContent = `❌ The alias "${aliasInput}" is claimed by someone else!`;
+          return;
+        }
+      } else {
+        // Step D: Alias is pristine! Claim it by creating a brand new token
+        currentToken = generateToken();
+        saveStoredToken(aliasInput, currentToken);
+      }
+
+      // Step E: Push post payload safely to Supabase
+      const { error: insertError } = await supabase
+        .from('posts')
+        .insert([{ alias: aliasInput, message: messageInput, cookie_token: currentToken }]);
+
+      if (insertError) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.textContent = 'Failed to broadcast post.';
+        console.error(insertError);
+      } else {
+        statusMsg.className = 'status-msg success';
+        statusMsg.textContent = '🚀 Posted successfully!';
+        document.getElementById('messageInput').value = ''; // Reset message field only
+        
+        // Refresh feed instantly
+        fetchPosts();
+        
+        // Clear success notification after 3 seconds
+        setTimeout(() => { if(statusMsg.textContent.includes('🚀')) statusMsg.textContent = ''; }, 3000);
+      }
+    });
+
+    // Run initial feed pull on mount
+    fetchPosts();
+
+    // Poll for new messages automatically every 10 seconds to keep it lively
+    setInterval(fetchPosts, 10000);
+  </script>
 </body>
 </html>
