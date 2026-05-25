@@ -24,6 +24,35 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* 1. Register your custom web font */
+    @font-face {
+      font-family: 'MTGManaFont';
+      /* Points to your uploaded file. Adjust the path if you save it elsewhere */
+      src: url('fonts/mana.woff2') format('woff2'),
+           url('fonts/mana.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    /* 2. Update the symbol styling to use it */
+    .mana-icon {
+      width: 26px; 
+      height: 26px; 
+      border-radius: 50%; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center;
+      border: 1px solid rgba(0,0,0,0.5); 
+      margin-left: 2px; 
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      
+      /* Font adjustments */
+      font-family: 'MTGManaFont', system-ui, sans-serif; /* Uses custom font first, falls back to text */
+      font-weight: normal; /* Turn off bolding if the symbols look too thick */
+      font-size: 16px; /* Adjust this value up or down depending on how the font icons size up */
+      line-height: 1;
+    }
     
     html, body { 
       min-height: 100vh; 
