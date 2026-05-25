@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>5e Combat Encounter Builder</title>
+  <title>5e Combat Encounter Builder (2024 Rules)</title>
   <link rel="icon" type="image/svg+xml" href="/JimmyD.png" />
   <style>
     /* ===== Unified Refactored Theme Palette ===== */
@@ -19,7 +19,6 @@
       --accent-2: #8b5cf6;
       --input-bg: #1c2030;
       --danger: #ef4444;
-      --danger-hover: #dc2626;
       --success: #10b981;
       --chip: #161b26;
     }
@@ -35,7 +34,7 @@
       font-family: system-ui, -apple-system, sans-serif;
     }
 
-    .wrap { max-width: 1500px; margin: 0 auto; padding: 24px; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
     /* Modern Glassmorphic Dashboard Header */
     header {
@@ -138,36 +137,28 @@
     .btn:hover { background: var(--panel-hover); border-color: #2e374f; transform: translateY(-1px); }
     .btn.accent { background: var(--accent); border-color: var(--accent-hover); color: white; }
     .btn.accent:hover { background: var(--accent-hover); }
-    .btn.danger-ghost { border-color: transparent; background: transparent; color: var(--muted); }
-    .btn.danger-ghost:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 
     .btn-sm { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; }
-
-    /* Uploader Button Setup */
-    .file-btn { position: relative; overflow: hidden; }
-    .file-btn input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
     /* Roster rows layout */
     .roster-row { display: grid; grid-template-columns: 70px 1fr 40px; gap: 8px; align-items: center; }
     .roster-header { display: grid; grid-template-columns: 70px 1fr 40px; gap: 8px; font-size: 0.75rem; color: var(--muted); font-weight: 600; text-transform: uppercase; margin-bottom: -6px; }
 
     /* KPI Target Grid elements */
-    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .kpi-box { background: var(--chip); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
     .kpi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
-    .kpi-val { font-size: 1.1rem; font-weight: 700; }
-    .kpi-box.easy { border-left: 3px solid #10b981; }
-    .kpi-box.medium { border-left: 3px solid #3b82f6; }
-    .kpi-box.hard { border-left: 3px solid #f59e0b; }
-    .kpi-box.deadly { border-left: 3px solid #ef4444; }
+    .kpi-val { font-size: 1.05rem; font-weight: 700; }
+    .kpi-box.low { border-left: 3px solid #10b981; }
+    .kpi-box.moderate { border-left: 3px solid #3b82f6; }
+    .kpi-box.high { border-left: 3px solid #ef4444; }
 
     /* Encounter Tracker Layout */
     .difficulty-banner { padding: 16px; border-radius: 12px; font-weight: 700; text-align: center; font-size: 1.3rem; letter-spacing: 0.02em; text-transform: uppercase; box-shadow: inset 0 0 20px rgba(0,0,0,0.2); }
     .diff-trivial { background: rgba(156, 163, 175, 0.1); border: 1px solid rgba(156, 163, 175, 0.3); color: #9ca3af; }
-    .diff-easy { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; }
-    .diff-medium { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6; }
-    .diff-hard { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; }
-    .diff-deadly { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
+    .diff-low { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; }
+    .diff-moderate { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6; }
+    .diff-high { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
 
     .encounter-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
     .encounter-item { background: #161b26; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -182,7 +173,7 @@
 
     /* Monster Compendium Catalogue View Styles */
     .catalog-filters { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-    .catalog-stream { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--border) #0d1017; }
+    .catalog-stream { display: flex; flex-direction: column; gap: 8px; max-height: 560px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--border) #0d1017; }
     .catalog-stream::-webkit-scrollbar { width: 6px; }
     .catalog-stream::-webkit-scrollbar-track { background: #0d1017; }
     .catalog-stream::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 10px; }
@@ -209,7 +200,7 @@
     <header>
       <div>
         <h1 class="title">⚔️ Encounter Builder Matrix</h1>
-        <div class="muted small" style="margin-top: 2px;">D&D 5e Standard Challenge Rating & Multiplier Evaluator</div>
+        <div class="muted small" style="margin-top: 2px;">D&D 5e 2024 Remaster Ruleset Engine</div>
       </div>
       <div id="dbStatus">Compendium Indexed: 0</div>
     </header>
@@ -230,23 +221,11 @@
           
           <div style="border-top: 1px solid var(--border); margin: 6px 0;"></div>
           
-          <div class="muted small" style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: -4px;">Collective Milestone Targets</div>
+          <div class="muted small" style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: -4px;">Collective Milestone Budgets</div>
           <div class="kpi-grid">
-            <div class="kpi-box easy"><span class="kpi-label">Easy Threshold</span><div class="kpi-val" id="tEasy">0 XP</div></div>
-            <div class="kpi-box medium"><span class="kpi-label">Medium Threshold</span><div class="kpi-val" id="tMedium">0 XP</div></div>
-            <div class="kpi-box hard"><span class="kpi-label">Hard Threshold</span><div class="kpi-val" id="tHard">0 XP</div></div>
-            <div class="kpi-box deadly"><span class="kpi-label">Deadly Threshold</span><div class="kpi-val" id="tDeadly">0 XP</div></div>
-          </div>
-
-          <div style="border-top: 1px solid var(--border); margin: 6px 0;"></div>
-          
-          <div class="muted small" style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: -4px;">Database Administration</div>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <label class="btn file-btn">
-              📥 Import Manual Sheet (CSV)
-              <input type="file" id="csvUploader" accept=".csv" />
-            </label>
-            <button class="btn danger-ghost btn-sm" id="btnClearCache" style="padding: 8px 12px; border-radius: 8px;">Clear Custom Cache</button>
+            <div class="kpi-box low"><span class="kpi-label">Low Target</span><div class="kpi-val" id="tLow">0 XP</div></div>
+            <div class="kpi-box moderate"><span class="kpi-label">Moderate Target</span><div class="kpi-val" id="tModerate">0 XP</div></div>
+            <div class="kpi-box high"><span class="kpi-label">High Target</span><div class="kpi-val" id="tHigh">0 XP</div></div>
           </div>
         </div>
       </aside>
@@ -256,15 +235,13 @@
         <div class="body">
           <div class="difficulty-banner diff-trivial" id="difficultyGauge">Empty Encounter</div>
           
-          <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 4px;">
+          <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; margin-top: 4px;">
             <div class="kpi-box"><span class="kpi-label">Total Monster Qty</span><div class="kpi-val" id="eCount">0</div></div>
-            <div class="kpi-box"><span class="kpi-label">Raw Base Value</span><div class="kpi-val" id="eBaseXp">0 XP</div></div>
-            <div class="kpi-box"><span class="kpi-label">Scaled Adjusted Metric</span><div class="kpi-val" id="eAdjustedXp" style="color: var(--accent);">0 XP</div></div>
+            <div class="kpi-box"><span class="kpi-label">Total Raw Combat XP</span><div class="kpi-val" id="eBaseXp" style="color: var(--accent);">0 XP</div></div>
           </div>
           
           <div class="monster-line" style="margin-top: 8px;">
             <span class="muted small" style="font-weight: 700; text-transform: uppercase;">Active Monsters Queued</span>
-            <span class="muted small" id="multiplierLabel">Multiplier Applied: x1.0</span>
           </div>
 
           <div id="encounterStream" class="encounter-list">
@@ -296,28 +273,28 @@
   </div>
 
   <script>
-    // ---------- 5E RULESET DATA REFERENCE TABLES ----------
+    // ---------- 2024 REMASTER XP BUDGET REFERENCE TABLES ----------
     const XP_THRESHOLD_TABLE = {
-      1:  { easy: 25,   medium: 50,   hard: 75,   deadly: 100 },
-      2:  { easy: 50,   medium: 100,  hard: 150,  deadly: 200 },
-      3:  { easy: 75,   medium: 150,  hard: 225,  deadly: 400 },
-      4:  { easy: 125,  medium: 250,  hard: 375,  deadly: 500 },
-      5:  { easy: 250,  medium: 500,  hard: 750,  deadly: 1100 },
-      6:  { easy: 300,  medium: 600,  hard: 900,  deadly: 1400 },
-      7:  { easy: 350,  medium: 700,  hard: 1050, deadly: 1700 },
-      8:  { easy: 450,  medium: 900,  hard: 1350, deadly: 2100 },
-      9:  { easy: 550,  medium: 1100, hard: 1650, deadly: 2400 },
-      10: { easy: 600,  medium: 1200, hard: 1800, deadly: 2800 },
-      11: { easy: 800,  medium: 1600, hard: 2400, deadly: 3600 },
-      12: { easy: 1000, medium: 2000, hard: 3000, deadly: 4500 },
-      13: { easy: 1100, medium: 2200, hard: 3300, deadly: 5100 },
-      14: { easy: 1250, medium: 2500, hard: 3750, deadly: 5700 },
-      15: { easy: 1400, medium: 2800, hard: 4200, deadly: 6400 },
-      16: { easy: 1600, medium: 3200, hard: 4800, deadly: 7200 },
-      17: { easy: 2000, medium: 4000, hard: 6000, deadly: 8800 },
-      18: { easy: 2100, medium: 4200, hard: 6300, deadly: 9500 },
-      19: { easy: 2400, medium: 4800, hard: 7200, deadly: 10900 },
-      20: { easy: 2800, medium: 5600, hard: 8400, deadly: 12700 }
+      1:  { low: 50,   moderate: 75,   high: 100 },
+      2:  { low: 100,  moderate: 150,  high: 200 },
+      3:  { low: 150,  moderate: 225,  high: 400 },
+      4:  { low: 250,  moderate: 375,  high: 500 },
+      5:  { low: 500,  moderate: 750,  high: 1100 },
+      6:  { low: 600,  moderate: 1000, high: 1400 },
+      7:  { low: 750,  moderate: 1300, high: 1700 },
+      8:  { low: 1000, moderate: 1700, high: 2100 },
+      9:  { low: 1300, moderate: 2000, high: 2600 },
+      10: { low: 1600, moderate: 2300, high: 3100 },
+      11: { low: 1900, moderate: 2900, high: 4100 },
+      12: { low: 2200, moderate: 3700, high: 4700 },
+      13: { low: 2600, moderate: 4200, high: 5400 },
+      14: { low: 2900, moderate: 4900, high: 6200 },
+      15: { low: 3300, moderate: 5400, high: 7800 },
+      16: { low: 3800, moderate: 6100, high: 9800 },
+      17: { low: 4500, moderate: 7200, high: 11700 },
+      18: { low: 5000, moderate: 8700, high: 14200 },
+      19: { low: 5500, moderate: 10700, high: 17200 },
+      20: { low: 6400, moderate: 13200, high: 22000 }
     };
 
     const CR_XP_MAP = {
@@ -328,8 +305,9 @@
       '29': 135000, '30': 155000
     };
 
-    // Pre-seeded Initial Monster Data Block from your uploaded Sample Sheet
-    const SEED_MONSTERS = [
+    // ---------- HARDCODED BESTIARY ARRAY ----------
+    // Expand this array cleanly with your upcoming letters!
+    const monsterDatabase = [
       {"Name": "Aarakocra Aeromancer", "CR Level": "4", "Habitat": "Mountain, Planar (Elemental Plane of Air)", "Treasure": "Implements, Individual", "AC": 16, "HP": 66},
       {"Name": "Aarakocra Skirmisher", "CR Level": "1/4", "Habitat": "Mountain, Planar (Elemental Plane of Air)", "Treasure": "Implements, Individual", "AC": 12, "HP": 11},
       {"Name": "Aboleth", "CR Level": "10", "Habitat": "Underdark, Underwater", "Treasure": "Relics", "AC": 17, "HP": 150},
@@ -351,41 +329,22 @@
       {"Name": "Azer Sentinel", "CR Level": "2", "Habitat": "Mountain, Planar (Elemental Plane of Fire)", "Treasure": "Armaments, Individual", "AC": 17, "HP": 39}
     ];
 
-    // ---------- APP STATE STORES ----------
-    let monsterDatabase = [];
-    let currentEncounter = new Map(); // Map tracking Name -> Quantity integer
+    let currentEncounter = new Map(); // Tracks Name -> Quantity
 
-    // ---------- INITIALIZATION BOOT STRAP ----------
+    // ---------- BOOT INITIALIZATION ----------
     window.addEventListener('DOMContentLoaded', () => {
-      loadDatabase();
+      document.getElementById('dbStatus').textContent = `Compendium Indexed: ${monsterDatabase.length}`;
       initializeDefaultParty();
+      renderCatalog();
       calculateEncounter();
     });
-
-    // Handle LocalStorage synchronization to carry forward multiple uploads
-    function loadDatabase() {
-      const cached = localStorage.getItem('encounter_builder_bestiary');
-      if (cached) {
-        try {
-          monsterDatabase = JSON.parse(cached);
-        } catch(e) {
-          monsterDatabase = [...SEED_MONSTERS];
-        }
-      } else {
-        monsterDatabase = [...SEED_MONSTERS];
-      }
-      document.getElementById('dbStatus').textContent = `Compendium Indexed: ${monsterDatabase.length}`;
-      renderCatalog();
-    }
 
     function initializeDefaultParty() {
       const roster = document.getElementById('partyRoster');
       roster.innerHTML = '';
-      // Inject standard starter setup (4 Level 5 players)
-      addPartyRow(4, 5);
+      addPartyRow(4, 5); // Seed with standard 4 level 5 characters
     }
 
-    // ---------- PARTY MANAGEMENT LAYOUT CALCULATORS ----------
     function addPartyRow(qty = 1, lvl = 1) {
       const container = document.getElementById('partyRoster');
       const row = document.createElement('div');
@@ -403,104 +362,73 @@
     }
     document.getElementById('btnAddPartyRow').addEventListener('click', () => addPartyRow(1, 1));
 
-    // ---------- ENCOUNTER EVALUATION SCALING LOGIC ----------
+    // ---------- 2024 RULES: ENCOUNTER MATH LOGIC ----------
     function calculateEncounter() {
-      // 1. Accumulate Party Size & Milestone Thresholds
       let totalPartySize = 0;
-      let partyThresholds = { easy: 0, medium: 0, hard: 0, deadly: 0 };
+      let partyThresholds = { low: 0, moderate: 0, high: 0 };
 
       const qtyInputs = document.querySelectorAll('.p-qty');
       const lvlSelects = document.querySelectorAll('.p-lvl');
 
+      // 1. Sum up flat party thresholds
       qtyInputs.forEach((input, index) => {
         const count = parseInt(input.value) || 0;
         const level = parseInt(lvlSelects[index].value) || 1;
         
         totalPartySize += count;
         if (XP_THRESHOLD_TABLE[level]) {
-          partyThresholds.easy += XP_THRESHOLD_TABLE[level].easy * count;
-          partyThresholds.medium += XP_THRESHOLD_TABLE[level].medium * count;
-          partyThresholds.hard += XP_THRESHOLD_TABLE[level].hard * count;
-          partyThresholds.deadly += XP_THRESHOLD_TABLE[level].deadly * count;
+          partyThresholds.low += XP_THRESHOLD_TABLE[level].low * count;
+          partyThresholds.moderate += XP_THRESHOLD_TABLE[level].moderate * count;
+          partyThresholds.high += XP_THRESHOLD_TABLE[level].high * count;
         }
       });
 
-      // Update UI Target Blocks
-      document.getElementById('tEasy').textContent = `${partyThresholds.easy.toLocaleString()} XP`;
-      document.getElementById('tMedium').textContent = `${partyThresholds.medium.toLocaleString()} XP`;
-      document.getElementById('tHard').textContent = `${partyThresholds.hard.toLocaleString()} XP`;
-      document.getElementById('tDeadly').textContent = `${partyThresholds.deadly.toLocaleString()} XP`;
+      document.getElementById('tLow').textContent = `${partyThresholds.low.toLocaleString()} XP`;
+      document.getElementById('tModerate').textContent = `${partyThresholds.moderate.toLocaleString()} XP`;
+      document.getElementById('tHigh').textContent = `${partyThresholds.high.toLocaleString()} XP`;
 
-      // 2. Accumulate Monster Raw Counts & Base Values
+      // 2. Sum up flat monster XP (Strictly 2024 Rules: NO MULTIPLIERS!)
       let totalMonsterCount = 0;
-      let baseXPValue = 0;
+      let totalEncounterXP = 0;
 
       currentEncounter.forEach((qty, name) => {
         if (qty <= 0) return;
         const monster = monsterDatabase.find(m => m.Name === name);
         if (monster) {
           totalMonsterCount += qty;
-          const crString = monster['CR Level'] ? String(monster['CR Level']).trim() : '0';
-          baseXPValue += (CR_XP_MAP[crString] || 0) * qty;
+          const crString = String(monster['CR Level']).trim();
+          totalEncounterXP += (CR_XP_MAP[crString] || 0) * qty;
         }
       });
 
-      // 3. Compute Scaling Multiplier Bracket Index Steps
-      // Multiplier brackets: 1, 2, 3-6, 7-10, 11-14, 15+
-      let bracketIdx = 1; 
-      if (totalMonsterCount === 2) bracketIdx = 2;
-      else if (totalMonsterCount >= 3 && totalMonsterCount <= 6) bracketIdx = 3;
-      else if (totalMonsterCount >= 7 && totalMonsterCount <= 10) bracketIdx = 4;
-      else if (totalMonsterCount >= 11 && totalMonsterCount <= 14) bracketIdx = 5;
-      else if (totalMonsterCount >= 15) bracketIdx = 6;
-
-      // Adjust for scaling variables based on anomalies in Party Sizes (Party < 3 or Party > 5)
-      if (totalMonsterCount > 0) {
-        if (totalPartySize < 3) {
-          bracketIdx = Math.min(7, bracketIdx + 1);
-        } else if (totalPartySize > 5) {
-          bracketIdx = Math.max(0, bracketIdx - 1);
-        }
-      }
-
-      const multiplierMatrix = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0];
-      const activeMultiplier = totalMonsterCount === 0 ? 0 : multiplierMatrix[bracketIdx];
-      const adjustedXPValue = baseXPValue * activeMultiplier;
-
-      // Update Encounter Summaries text rows
       document.getElementById('eCount').textContent = totalMonsterCount;
-      document.getElementById('eBaseXp').textContent = `${baseXPValue.toLocaleString()} XP`;
-      document.getElementById('eAdjustedXp').textContent = `${adjustedXPValue.toLocaleString()} XP`;
-      document.getElementById('multiplierLabel').textContent = `Multiplier Applied: x${activeMultiplier.toFixed(1)}`;
+      document.getElementById('eBaseXp').textContent = `${totalEncounterXP.toLocaleString()} XP`;
 
-      // 4. Update Gauge Classification
+      // 3. Evaluate Combat Threat Gauge Category
       const gauge = document.getElementById('difficultyGauge');
       gauge.className = 'difficulty-banner';
 
       if (totalMonsterCount === 0) {
         gauge.textContent = "Empty Encounter";
         gauge.classList.add('diff-trivial');
-      } else if (adjustedXPValue < partyThresholds.easy) {
+      } else if (totalEncounterXP < partyThresholds.low) {
         gauge.textContent = "Trivial Challenge";
         gauge.classList.add('diff-trivial');
-      } else if (adjustedXPValue < partyThresholds.medium) {
-        gauge.textContent = "Easy Encounter";
-        gauge.classList.add('diff-easy');
-      } else if (adjustedXPValue < partyThresholds.hard) {
-        gauge.textContent = "Medium Encounter";
-        gauge.classList.add('diff-medium');
-      } else if (adjustedXPValue < partyThresholds.deadly) {
-        gauge.textContent = "Hard Encounter";
-        gauge.classList.add('diff-hard');
+      } else if (totalEncounterXP < partyThresholds.moderate) {
+        gauge.textContent = "Low Difficulty";
+        gauge.classList.add('diff-low');
+      } else if (totalEncounterXP < partyThresholds.high) {
+        gauge.textContent = "Moderate Difficulty";
+        gauge.classList.add('diff-moderate');
       } else {
-        gauge.textContent = "💀 Deadly Encounter 💀";
-        gauge.classList.add('diff-deadly');
+        gauge.textContent = "💀 High Difficulty 💀";
+        gauge.classList.add('diff-high');
       }
 
       renderActiveQueue();
     }
 
-    // ---------- COMPENDIUM RENDERING & FILTER CORES ----------
+    // ---------- COMPENDIUM VIEW GENERATION ----------
     function renderCatalog() {
       const stream = document.getElementById('catalogStream');
       const searchVal = document.getElementById('searchName').value.toLowerCase().trim();
@@ -515,7 +443,7 @@
       });
 
       if (filtered.length === 0) {
-        stream.innerHTML = '<div class="empty-state">No monsters match your catalog filters. Import more pages via CSV sheet strings.</div>';
+        stream.innerHTML = '<div class="empty-state">No monsters match your catalog filters.</div>';
         return;
       }
 
@@ -542,20 +470,16 @@
       }).join('');
     }
 
-    // Dynamic Filter Trigger Hooks
     document.getElementById('searchName').addEventListener('input', renderCatalog);
     document.getElementById('filterCR').addEventListener('change', renderCatalog);
     document.getElementById('searchHabitat').addEventListener('input', renderCatalog);
 
-    // ---------- COMBAT QUEUE MODIFIER ENGINES ----------
+    // ---------- QUEUE OPERATIONS ----------
     function modifyEncounterQuantity(name, delta) {
       const cur = currentEncounter.get(name) || 0;
       const next = cur + delta;
-      if (next <= 0) {
-        currentEncounter.delete(name);
-      } else {
-        currentEncounter.set(name, next);
-      }
+      if (next <= 0) currentEncounter.delete(name);
+      else currentEncounter.set(name, next);
       calculateEncounter();
     }
 
@@ -590,97 +514,6 @@
         container.appendChild(row);
       });
     }
-
-    // ---------- FILE INGESTION CSV PARSING ENGINES ----------
-    function parseCSVText(text) {
-      const lines = text.split(/\r?\n/);
-      if (lines.length < 2) return [];
-
-      // Detect Header matching variables
-      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-      const parsedResults = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        // Custom split to properly handle quotes bounding spaces inside CSV items
-        let fields = [];
-        let curField = '';
-        let inQuotes = false;
-        
-        for (let j = 0; j < line.length; j++) {
-          const char = line[j];
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            fields.push(curField.trim());
-            curField = '';
-          } else {
-            curField += char;
-          }
-        }
-        fields.push(curField.trim());
-
-        if (fields.length >= headers.length) {
-          const entry = {};
-          headers.forEach((h, idx) => {
-            let val = fields[idx] ? fields[idx].replace(/^"|"$/g, '') : '';
-            if (h === 'AC' || h === 'HP') {
-              val = parseInt(val) || 0;
-            }
-            entry[h] = val;
-          });
-          if (entry.Name) parsedResults.push(entry);
-        }
-      }
-      return parsedResults;
-    }
-
-    document.getElementById('csvUploader').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const rawText = evt.target.result;
-        const loadedMonsters = parseCSVText(rawText);
-        
-        if (loadedMonsters.length > 0) {
-          // Merge items into current list array ensuring uniqueness by Name
-          loadedMonsters.forEach(newM => {
-            const idx = monsterDatabase.findIndex(existing => existing.Name.toLowerCase() === newM.Name.toLowerCase());
-            if (idx > -1) {
-              monsterDatabase[idx] = newM; // Overwrite duplicates
-            } else {
-              monsterDatabase.push(newM); // Append new
-            }
-          });
-
-          localStorage.setItem('encounter_builder_bestiary', JSON.stringify(monsterDatabase));
-          document.getElementById('dbStatus').textContent = `Compendium Indexed: ${monsterDatabase.length}`;
-          renderCatalog();
-          calculateEncounter();
-          alert(`Successfully imported and processed ${loadedMonsters.length} entries!`);
-        } else {
-          alert("Could not extract rows. Verify header layouts match 'Name,CR Level,Habitat,Treasure,AC,HP'.");
-        }
-      };
-      reader.readAsText(file);
-      e.target.value = '';
-    });
-
-    document.getElementById('btnClearCache').addEventListener('click', () => {
-      if(confirm("Reset entire bestiary catalog tracking files back to default seed arrays?")) {
-        localStorage.removeItem('encounter_builder_bestiary');
-        monsterDatabase = [...SEED_MONSTERS];
-        currentEncounter.clear();
-        document.getElementById('dbStatus').textContent = `Compendium Indexed: ${monsterDatabase.length}`;
-        renderCatalog();
-        calculateEncounter();
-      }
-    });
   </script>
-
 </body>
 </html>
