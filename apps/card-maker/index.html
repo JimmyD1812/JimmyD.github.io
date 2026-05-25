@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Crucible Card Maker</title>
+  <link rel="icon" type="image/svg+xml" href="/JimmyD.png" />
+  <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+  <style>
+    /* ===== Unified Refactored Theme Palette ===== */
+    :root {
+      --bg: #0b0d11; 
+      --panel: #131722; 
+      --panel-hover: #1b2030;
+      --border: #222838; 
+      --text: #f0f2f5; 
+      --muted: #8a96a8; 
+      --accent: #3b82f6; 
+      --accent-hover: #2563eb;
+      --accent-2: #8b5cf6;
+      --input-bg: #1c2030;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body { 
+      min-height: 100vh; 
+      color: var(--text); 
+      background: var(--bg); 
+      background: radial-gradient(circle at 50% -20%, #1c2336, var(--bg));
+      background-attachment: fixed;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    /* Glassmorphic Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: rgba(19, 23, 34, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    
+    header .title { 
+      font-weight: 800; 
+      font-size: 1.4rem; 
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2)); 
+      -webkit-background-clip: text; 
+      background-clip: text; 
+      color: transparent; 
+    }
+
+    /* Layout Structure Grid */
+    .grid { display: grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    /* Panels */
+    .panel { 
+      background: var(--panel); 
+      border: 1px solid var(--border); 
+      border-radius: 16px; 
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    
+    .panel .head { 
+      padding: 14px 16px; 
+      border-bottom: 1px solid var(--border); 
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    
+    .panel .body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+    label { font-size: 0.85rem; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+    label.inline { flex-direction: row; align-items: center; gap: 8px; cursor: pointer; user-select: none; margin-top: 18px;}
+
+    input[type=text], textarea {
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: 100%;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type=text]:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    /* Custom Buttons */
+    .btn {
+      background: var(--accent);
+      border: 1px solid var(--accent-hover);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+    .file-input-wrapper { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .file-label { background: var(--input-bg); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text); }
+    .file-label:hover { background: var(--panel-hover); }
+    input[type=file] { display: none; }
+
+    /* =================== MTG CARD RENDERING STYLES =================== */
+    .card-preview-container { display: flex; justify-content: center; position: sticky; top: 24px; }
+    
+    #mtgCard {
+      width: 372px;
+      height: 520px;
+      border-radius: 18px;
+      border: 1px solid #111;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      color: #111; /* MTG Card defaults to dark text for frames */
+    }
+
+    /* Inner frame border */
+    .card-frame { position: absolute; inset: 8px; rounded: 14px; border: 1px solid rgba(0,0,0,0.25); pointer-events: none; border-radius: 12px; }
+
+    /* Header Bar */
+    .card-header-bar { position: absolute; left: 16px; right: 16px; top: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-weight: 700; font-size: 17px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+    .card-mana { display: flex; align-items: center; }
+
+    /* Mana Symbols */
+    .mana-icon {
+      width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(0,0,0,0.5); margin-left: 2px; font-weight: 800; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* Art Box */
+    .card-art-box { position: absolute; left: 16px; right: 16px; top: 42px; h: 250px; height: 246px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.4); background: rgba(0,0,0,0.05); overflow: hidden; }
+    .card-art-box img { width: 100%; height: 100%; object-fit: cover; }
+    .card-art-placeholder { width: 100%; height: 100%; display: grid; place-items: center; color: rgba(0,0,0,0.4); font-size: 0.85rem; }
+
+    /* Type Line Bar */
+    .card-type-bar { position: absolute; left: 16px; right: 16px; top: 294px; height: 32px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.35); background: rgba(239, 233, 215, 0.9); display: flex; align-items: center; px: 10px; padding: 0 10px; font-size: 13px; font-weight: 600; }
+
+    /* Text/Rules Box */
+    .card-text-box { position: absolute; left: 16px; right: 16px; top: 332px; bottom: 54px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.35); background: rgba(239, 233, 215, 0.9); padding: 10px; font-size: 12.5px; line-height: 1.4; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .card-oracle { white-space: pre-wrap; }
+    .card-flavor { italic: true; font-style: italic; opacity: 0.85; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 4px; white-space: pre-wrap; }
+
+    /* Power/Toughness Bubble */
+    .card-pt-box { position: absolute; right: 12px; bottom: 44px; height: 28px; min-width: 44px; padding: 0 8px; border-radius: 6px; background: #e0dbcc; border: 1px solid rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; shadow: 0 2px 4px rgba(0,0,0,0.15); }
+
+    /* Footer Credits Bar */
+    .card-footer { position: absolute; left: 0; right: 0; bottom: 0; height: 36px; background: #1f2937; color: #9ca3af; border-top: 1px solid rgba(0,0,0,0.3); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; font-size: 9px; }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header>
+      <div class="title">⚔️ Crucible Card Maker</div>
+      <div class="muted small">V2 • Client-Side HTML Workspace</div>
+    </header>
+
+    <div class="grid">
+      <main class="panel">
+        <div class="head">Card Properties</div>
+        <div class="body">
+          
+          <div class="form-row">
+            <label>Card Title
+              <input type="text" id="inputTitle" value="Custom Card" />
+            </label>
+            <label>Mana Cost (e.g., 2WWU)
+              <input type="text" id="inputMana" value="2WW" />
+            </label>
+          </div>
+
+          <div class="form-row">
+            <label>Type Line
+              <input type="text" id="inputDocType" value="Legendary Creature - Human Soldier" />
+            </label>
+            <label class="inline">
+              <input type="checkbox" id="inputIsCreature" checked />
+              <span>Is Creature?</span>
+            </label>
+          </div>
+
+          <div class="form-row" id="ptRow">
+            <label>Power
+              <input type="text" id="inputPower" value="3" />
+            </label>
+            <label>Toughness
+              <input type="text" id="inputToughness" value="2" />
+            </label>
+          </div>
+
+          <label>Oracle Rules Text
+            <textarea id="inputOracle" rows="4">First strike&#10;Creatures and nonbasic lands your opponents control enter tapped.</textarea>
+          </label>
+
+          <label>Flavor Text (Italics)
+            <textarea id="inputFlavor" rows="2">"Salvation is a sharpened choice."</textarea>
+          </label>
+
+          <div class="file-input-wrapper">
+            <label class="file-label" for="inputArt">🖼️ Upload Card Artwork</label>
+            <input type="file" id="inputArt" accept="image/*" />
+            <button class="btn" id="btnExport">Export PNG</button>
+          </div>
+
+        </div>
+      </main>
+
+      <section class="card-preview-container">
+        <div id="mtgCard">
+          <div class="card-frame"></div>
+          
+          <div class="card-header-bar">
+            <div class="card-title" id="cardTitle">Custom Card</div>
+            <div class="card-mana" id="cardMana"></div>
+          </div>
+
+          <div class="card-art-box" id="cardArtBox">
+            <div class="card-art-placeholder" id="artPlaceholder">Upload artwork</div>
+          </div>
+
+          <div class="card-type-bar" id="cardTypeLine">Legendary Creature — Human Soldier</div>
+
+          <div class="card-text-box">
+            <div class="card-oracle" id="cardOracle"></div>
+            <div class="card-flavor" id="cardFlavor"></div>
+          </div>
+
+          <div class="card-pt-box" id="cardPt">3/2</div>
+
+          <div class="card-footer">
+            <div>© 2026 Custom Proxy • Non-commercial</div>
+            <div style="opacity: 0.6;">Canvas Export</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ---------- DOM Element Mappings ----------
+    const els = {
+      inputTitle: document.getElementById('inputTitle'),
+      inputMana: document.getElementById('inputMana'),
+      inputDocType: document.getElementById('inputDocType'),
+      inputIsCreature: document.getElementById('inputIsCreature'),
+      inputPower: document.getElementById('inputPower'),
+      inputToughness: document.getElementById('inputToughness'),
+      inputOracle: document.getElementById('inputOracle'),
+      inputFlavor: document.getElementById('inputFlavor'),
+      inputArt: document.getElementById('inputArt'),
+      btnExport: document.getElementById('btnExport'),
+      ptRow: document.getElementById('ptRow'),
+      
+      // Card Frame Fields
+      mtgCard: document.getElementById('mtgCard'),
+      cardTitle: document.getElementById('cardTitle'),
+      cardMana: document.getElementById('cardMana'),
+      cardArtBox: document.getElementById('cardArtBox'),
+      artPlaceholder: document.getElementById('artPlaceholder'),
+      cardTypeLine: document.getElementById('cardTypeLine'),
+      cardOracle: document.getElementById('cardOracle'),
+      cardFlavor: document.getElementById('cardFlavor'),
+      cardPt: document.getElementById('cardPt')
+    };
+
+    // Constant Paper Texture Mesh Base configuration
+    const PAPER_TEXTURE = "repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0 2px, rgba(255,255,255,0.02) 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,0.02) 0 2px, rgba(255,255,255,0.02) 2px 4px)";
+
+    const MANA_MAP = {
+      W: { bg: "#f8f4e6", fg: "#000", label: "W" },
+      U: { bg: "#c5e0ff", fg: "#000", label: "U" },
+      B: { bg: "#333", fg: "#fff", label: "B" },
+      R: { bg: "#ffb3a8", fg: "#000", label: "R" },
+      G: { bg: "#bde2bd", fg: "#000", label: "G" },
+      C: { bg: "#d9d9d9", fg: "#000", label: "C" }
+    };
+
+    const FRAME_MAP = {
+      W: "#f8f4e6", U: "#c5e0ff", B: "#8c8c8c", R: "#ffb3a8", G: "#bde2bd", C: "#e7e2cf"
+    };
+
+    // ---------- Parsing Helpers ----------
+    function parseMana(cost) {
+      const out = [];
+      const s = (cost || "").toUpperCase().replace(/\s+/g, "");
+      for (let i = 0; i < s.length; ) {
+        if (/\d/.test(s[i])) {
+          let j = i;
+          while (j < s.length && /\d/.test(s[j])) j++;
+          out.push(s.slice(i, j));
+          i = j;
+        } else {
+          out.push(s[i]);
+          i++;
+        }
+      }
+      return out;
+    }
+
+    function getColorsFromMana(cost) {
+      const s = (cost || "").toUpperCase();
+      return ["W", "U", "B", "R", "G"].filter(c => s.includes(c));
+    }
+
+    // ---------- Live Render Updates Engine ----------
+    function updateCardLayout() {
+      // 1. Set Title & Formats
+      els.cardTitle.textContent = els.inputTitle.value || "Untitled Card";
+      els.cardTypeLine.textContent = els.inputDocType.value.replace(/-/g, "—") || "—";
+      els.cardOracle.textContent = els.inputOracle.value;
+      
+      if (els.inputFlavor.value.trim()) {
+        els.cardFlavor.textContent = els.inputFlavor.value;
+        els.cardFlavor.style.display = "block";
+      } else {
+        els.cardFlavor.style.display = "none";
+      }
+
+      // 2. Creature Metrics validation toggles
+      if (els.inputIsCreature.checked) {
+        els.ptRow.style.display = "grid";
+        els.cardPt.textContent = `${els.inputPower.value || "0"}/${els.inputToughness.value || "0"}`;
+        els.cardPt.style.display = "flex";
+      } else {
+        els.ptRow.style.display = "none";
+        els.cardPt.style.display = "none";
+      }
+
+      // 3. Process Mana Tokens
+      const tokens = parseMana(els.inputMana.value);
+      els.cardMana.innerHTML = "";
+      tokens.forEach(t => {
+        const isNum = /^\d+$/.test(t);
+        const cfg = isNum ? { bg: "#d9d9d9", fg: "#000", label: t } : (MANA_MAP[t] || MANA_MAP.C);
+        
+        const iconElement = document.createElement('div');
+        iconElement.className = "mana-icon";
+        iconElement.style.backgroundColor = cfg.bg;
+        iconElement.style.color = cfg.fg;
+        iconElement.textContent = cfg.label;
+        els.cardMana.appendChild(iconElement);
+      });
+
+      // 4. Evaluate Dynamic Frame Background feathered gradients
+      const activeColors = getColorsFromMana(els.inputMana.value);
+      let backgroundString = "";
+
+      if (activeColors.length === 1) {
+        const colorHex = FRAME_MAP[activeColors[0]] || FRAME_MAP.C;
+        backgroundString = `${PAPER_TEXTURE}, linear-gradient(180deg, ${colorHex} 0%, ${colorHex} 100%)`;
+      } else if (activeColors.length === 2) {
+        const c1 = FRAME_MAP[activeColors[0]];
+        const c2 = FRAME_MAP[activeColors[1]];
+        backgroundString = `${PAPER_TEXTURE}, linear-gradient(180deg, ${c1} 0%, ${c1} 40%, ${c2} 60%, ${c2} 100%)`;
+      } else if (activeColors.length > 2) {
+        backgroundString = `${PAPER_TEXTURE}, linear-gradient(180deg, #e7d7a8 0%, #d7b96a 100%)`; // Classic Gold Frame
+      } else {
+        backgroundString = `${PAPER_TEXTURE}, linear-gradient(180deg, ${FRAME_MAP.C} 0%, ${FRAME_MAP.C} 100%)`; // Artifact C
+      }
+      els.mtgCard.style.backgroundImage = backgroundString;
+    }
+
+    // ---------- Event Bindings & Listeners ----------
+    const liveInputs = [els.inputTitle, els.inputMana, els.inputDocType, els.inputPower, els.inputToughness, els.inputOracle, els.inputFlavor];
+    liveInputs.forEach(input => input.addEventListener('input', updateCardLayout));
+    els.inputIsCreature.addEventListener('change', updateCardLayout);
+
+    // Dynamic FileReader Image Input Processing
+    els.inputArt.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        els.cardArtBox.innerHTML = `<img src="${reader.result}" alt="Card Artwork" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // High Resolution Canvas PNG Export Pipeline Trigger
+    els.btnExport.addEventListener('click', () => {
+      els.btnExport.textContent = "Processing...";
+      els.btnExport.style.opacity = "0.6";
+
+      htmlToImage.toPng(document.getElementById('mtgCard'), {
+        cacheBust: true,
+        pixelRatio: 2 // Enforces high density sharpness resolution outputs
+      })
+      .then((dataUrl) => {
+        const downloadLink = document.createElement('a');
+        const filenameClean = (els.inputTitle.value || "custom_card").replace(/[^a-z0-9-_ ]/gi, "_");
+        downloadLink.href = dataUrl;
+        downloadLink.download = `${filenameClean}.png`;
+        downloadLink.click();
+        
+        els.btnExport.textContent = "Export PNG";
+        els.btnExport.style.opacity = "1";
+      })
+      .catch((error) => {
+        console.error("Canvas export failed:", error);
+        els.btnExport.textContent = "Export Failed";
+        els.btnExport.style.opacity = "1";
+      });
+    });
+
+    // Run baseline compilation setup on load
+    updateCardLayout();
+  </script>
+
+</body>
+</html>
