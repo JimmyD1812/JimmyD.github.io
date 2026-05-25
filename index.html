@@ -568,7 +568,21 @@
         const authorClass = isOwner ? 'post-author owner' : 'post-author';
 
         // Format timestamp cleanly
-        const postDate = new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // Smart timestamp helper (Today, Yesterday, or older Date)
+        const messageDate = new Date(post.created_at);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        let dateString = messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        if (messageDate.toDateString() === today.toDateString()) {
+          dateString = 'Today';
+        } else if (messageDate.toDateString() === yesterday.toDateString()) {
+          dateString = 'Yesterday';
+        }
+
+        const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const postDate = `${dateString} at ${timeString}`;
 
         postElement.innerHTML = `
           <div class="post-meta">
