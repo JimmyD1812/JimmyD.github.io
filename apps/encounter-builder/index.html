@@ -274,28 +274,39 @@
 
   <script>
     // ---------- 2024 REMASTER XP BUDGET REFERENCE TABLES ----------
-    const XP_THRESHOLD_TABLE = {
-      1:  { low: 50,   moderate: 75,   high: 100 },
-      2:  { low: 100,  moderate: 150,  high: 200 },
-      3:  { low: 150,  moderate: 225,  high: 400 },
-      4:  { low: 250,  moderate: 375,  high: 500 },
-      5:  { low: 500,  moderate: 750,  high: 1100 },
-      6:  { low: 600,  moderate: 1000, high: 1400 },
-      7:  { low: 750,  moderate: 1300, high: 1700 },
-      8:  { low: 1000, moderate: 1700, high: 2100 },
-      9:  { low: 1300, moderate: 2000, high: 2600 },
-      10: { low: 1600, moderate: 2300, high: 3100 },
-      11: { low: 1900, moderate: 2900, high: 4100 },
-      12: { low: 2200, moderate: 3700, high: 4700 },
-      13: { low: 2600, moderate: 4200, high: 5400 },
-      14: { low: 2900, moderate: 4900, high: 6200 },
-      15: { low: 3300, moderate: 5400, high: 7800 },
-      16: { low: 3800, moderate: 6100, high: 9800 },
-      17: { low: 4500, moderate: 7200, high: 11700 },
-      18: { low: 5000, moderate: 8700, high: 14200 },
-      19: { low: 5500, moderate: 10700, high: 17200 },
-      20: { low: 6400, moderate: 13200, high: 22000 }
-    };
+const monsterDatabase = [
+      // --- LETTER A ---
+      {"Name": "Aarakocra Aeromancer", "CR Level": "4", "Habitat": "Mountain, Planar (Elemental Plane of Air)", "Treasure": "Implements, Individual", "AC": 16, "HP": 66},
+      {"Name": "Aarakocra Skirmisher", "CR Level": "1/4", "Habitat": "Mountain, Planar (Elemental Plane of Air)", "Treasure": "Implements, Individual", "AC": 12, "HP": 11},
+      {"Name": "Aboleth", "CR Level": "10", "Habitat": "Underdark, Underwater", "Treasure": "Relics", "AC": 17, "HP": 150},
+      {"Name": "Air Elemental", "CR Level": "5", "Habitat": "Desert, Mountain, Planar (Elemental Plane of Air)", "Treasure": "—", "AC": 15, "HP": 90},
+      {"Name": "Animal Lord", "CR Level": "20", "Habitat": "Planar (Beastlands)", "Treasure": "Relics", "AC": 19, "HP": 323},
+      {"Name": "Animated Armor", "CR Level": "1", "Habitat": "Urban", "Treasure": "—", "AC": 18, "HP": 33},
+      {"Name": "Animated Broom", "CR Level": "1/4", "Habitat": "Urban", "Treasure": "—", "AC": 15, "HP": 14},
+      {"Name": "Animated Flying Sword", "CR Level": "1/4", "Habitat": "Urban", "Treasure": "—", "AC": 17, "HP": 14},
+      {"Name": "Animated Rug of Smothering", "CR Level": "2", "Habitat": "Urban", "Treasure": "—", "AC": 12, "HP": 27},
+      {"Name": "Ankheg", "CR Level": "2", "Habitat": "Forest, Grassland", "Treasure": "—", "AC": 14, "HP": 45},
+      {"Name": "Arcanaloth", "CR Level": "12", "Habitat": "Planar (Lower Planes)", "Treasure": "Arcana", "AC": 18, "HP": 175},
+      {"Name": "Arch-hag", "CR Level": "21", "Habitat": "Any", "Treasure": "Arcana", "AC": 20, "HP": 333},
+      {"Name": "Assassin", "CR Level": "8", "Habitat": "Any", "Treasure": "Implements, Individual", "AC": 16, "HP": 97},
+      {"Name": "Awakened Shrub", "CR Level": "0", "Habitat": "Forest", "Treasure": "—", "AC": 9, "HP": 10},
+      {"Name": "Awakened Tree", "CR Level": "2", "Habitat": "Forest", "Treasure": "—", "AC": 13, "HP": 59},
+      {"Name": "Axe Beak", "CR Level": "1/4", "Habitat": "Arctic, Grassland, Hill", "Treasure": "—", "AC": 11, "HP": 19},
+      {"Name": "Giant Axe Beak", "CR Level": "5", "Habitat": "Arctic, Grassland, Hill", "Treasure": "—", "AC": 15, "HP": 84},
+      {"Name": "Azer Pyromancer", "CR Level": "6", "Habitat": "Mountain, Planar (Elemental Plane of Fire)", "Armaments, Individual": "—", "AC": 18, "HP": 97},
+      {"Name": "Azer Sentinel", "CR Level": "2", "Habitat": "Mountain, Planar (Elemental Plane of Fire)", "Armaments, Individual": "—", "AC": 17, "HP": 39},
+
+      // --- LETTER B ---
+      {"Name": "Banshee", "CR Level": "4", "Habitat": "Coastal, Forest, Swamp, Underdark", "Treasure": "Individual", "AC": 12, "HP": 58},
+      {"Name": "Barlgura", "CR Level": "5", "Habitat": "Forest, Planar (Abyss), Swamp", "Treasure": "—", "AC": 15, "HP": 68},
+      {"Name": "Basilisk", "CR Level": "3", "Habitat": "Coastal, Desert, Forest, Grassland, Mountain, Swamp, Underdark", "Treasure": "—", "AC": 15, "HP": 52},
+      {"Name": "Behir", "CR Level": "11", "Habitat": "Cavern, Hill, Mountain, Underdark", "Treasure": "Hoard", "AC": 17, "HP": 168},
+      {"Name": "Beholder", "CR Level": "13", "Habitat": "Underdark", "Treasure": "Hoard", "AC": 18, "HP": 180},
+      {"Name": "Black Pudding", "CR Level": "4", "Habitat": "Underdark", "Treasure": "—", "AC": 7, "HP": 85},
+      {"Name": "Blink Dog", "CR Level": "1/4", "Habitat": "Forest, Grassland", "Treasure": "—", "AC": 13, "HP": 22},
+      {"Name": "Bugbear Warrior", "CR Level": "1", "Habitat": "Forest, Grassland, Mountain, Underdark", "Treasure": "Individual", "AC": 16, "HP": 27},
+      {"Name": "Bulette", "CR Level": "5", "Habitat": "Desert, Grassland, Mountain", "Treasure": "—", "AC": 17, "HP": 94}
+    ];
 
     const CR_XP_MAP = {
       '0': 10, '1/8': 25, '1/4': 50, '1/2': 100, '1': 200, '2': 450, '3': 700, '4': 1100,
