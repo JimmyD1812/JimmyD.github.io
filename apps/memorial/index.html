@@ -384,8 +384,8 @@
 
         <!-- RECONSTRUCTION FOOTER -->
         <footer class="text-center text-xs text-slate-600 border-t border-charcoal-900 pt-8 space-y-1">
-            <p>Designed with meticulous respect for past tabletop stories. Built entirely with single-file responsive layout framework.</p>
-            <p>D&D Beyond Data Reference Core Rules 2024 &bull; Player: JimmyD3605 &bull; Code & Layout 2026</p>
+            <p>Designed with meticulous respect for past tabletop stories.</p>
+            <p>D&D Beyond Data Reference Core Rules 2024; Player: JimmyD3605; Code & Layout 2026</p>
         </footer>
     </div>
 
@@ -1286,7 +1286,7 @@
                             <h3 class="text-lg font-serif font-semibold text-white ${hero.groupHoverText} transition">${hero.name}</h3>
                             <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${hero.statusClass}">${hero.status}</span>
                         </div>
-                        <p class="text-xs text-slate-400 mt-0.5">Level ${hero.classLevel} &bull; ${hero.subClass}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Level ${hero.classLevel}; ${hero.subClass}</p>
                     </div>
                     <i class="fa-solid fa-chevron-right text-slate-600 ${hero.groupHoverText} transition pl-2"></i>
                 `;
@@ -1353,7 +1353,7 @@
 
             // Basic text injection
             document.getElementById('panel-name').textContent = data.name;
-            document.getElementById('panel-sub').textContent = `${data.classLevel} &bull; ${data.subClass}`;
+            document.getElementById('panel-sub').textContent = `${data.classLevel}; ${data.subClass}`;
             document.getElementById('sub-badge').textContent = data.background;
             document.getElementById('biography-text').textContent = data.biography;
             document.getElementById('campaign-end-text').textContent = data.conclusion;
@@ -1570,7 +1570,7 @@
                     </div>
                     <div class="text-right">
                         <span class="block text-slate-500 text-[9px] uppercase tracking-wider">Hit / Damage</span>
-                        <span class="text-amber-400 font-bold">${act.hit}</span> &bull; <span class="text-amber-500 font-mono font-bold">${act.formula}</span>
+                        <span class="text-amber-400 font-bold">${act.hit}</span>; <span class="text-amber-500 font-mono font-bold">${act.formula}</span>
                     </div>
                 `;
                 actionsList.appendChild(box);
@@ -1584,7 +1584,7 @@
                 box.className = "p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs";
                 box.innerHTML = `
                     <span class="text-slate-300 font-medium">${spell.name}</span>
-                    <span class="text-slate-500 italic">${spell.level} &bull; ${spell.school}</span>
+                    <span class="text-slate-500 italic">${spell.level}; ${spell.school}</span>
                 `;
                 spellbookGrid.appendChild(box);
             });
