@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantheon of Lost Heroes // TTRPG Memorial Archive</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Classy Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        charcoal: {
+                            950: '#060709',
+                            900: '#0c0e12',
+                            800: '#151921',
+                            700: '#1f2633',
+                            600: '#2f394d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar matching dark layout */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0e12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2633;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+
+        /* Ambient glow styling based on character thematic colors */
+        .theme-glow-fey {
+            box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        .theme-glow-brass {
+            box-shadow: 0 0 40px -10px rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+        .theme-glow-rose {
+            box-shadow: 0 0 40px -10px rgba(244, 63, 94, 0.15);
+            border-color: rgba(244, 63, 94, 0.2);
+        }
+        .theme-glow-gold {
+            box-shadow: 0 0 40px -10px rgba(234, 179, 8, 0.18);
+            border-color: rgba(234, 179, 8, 0.2);
+        }
+        .theme-glow-orange {
+            box-shadow: 0 0 40px -10px rgba(249, 115, 22, 0.18);
+            border-color: rgba(249, 115, 22, 0.2);
+        }
+        .theme-glow-violet {
+            box-shadow: 0 0 40px -10px rgba(139, 92, 246, 0.18);
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+        .theme-glow-teal {
+            box-shadow: 0 0 40px -10px rgba(20, 184, 166, 0.18);
+            border-color: rgba(20, 184, 166, 0.2);
+        }
+        .theme-glow-indigo {
+            box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.18);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        /* Subtle pulsing for paused/concluded campaigns */
+        @keyframes subtle-glow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.03); }
+        }
+        .pulse-badge {
+            animation: subtle-glow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-charcoal-950 text-slate-100 font-sans selection:bg-amber-600 selection:text-white min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Artistic Border -->
+    <div id="top-accent-bar" class="h-1.5 w-full bg-gradient-to-r from-emerald-800 via-amber-500 to-emerald-800 transition-all duration-700"></div>
+
+    <div class="max-w-6xl w-full mx-auto px-4 py-8 lg:py-12 flex-grow space-y-12">
+        
+        <!-- HEADER AND INTRO (Updated to celebrate their life/triumphs clearly) -->
+        <header class="text-center relative max-w-2xl mx-auto space-y-3">
+            <span class="text-xs tracking-[0.4em] uppercase text-amber-500 font-bold">The Archives of Lost Tales</span>
+            <h1 class="text-3xl md:text-5xl font-serif font-semibold tracking-wide text-white">The Character Pantheon</h1>
+            <p class="text-sm text-slate-400 leading-relaxed">
+                An interactive memorial celebrating the lives, legendary triumphs, and tragic ends of my past heroes. Reconstructed from archived <strong>D&D Beyond</strong> sheets, this collection honors characters who finished their epic quests, retired to hold fastnesses, paused mid-story, or fell gloriously in battle.
+            </p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <div class="h-[1px] w-16 bg-gradient-to-r from-transparent to-amber-500/50"></div>
+                <i class="fa-solid fa-feather-pointed text-amber-500/70 text-xs"></i>
+                <div class="h-[1px] w-16 bg-gradient-to-l from-transparent to-amber-500/50"></div>
+            </div>
+        </header>
+
+        <!-- PORTFOLIO HERO CARDS: SELECTION PANEL -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs uppercase tracking-widest font-bold text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-amber-500/80"></i> Choose a Hero to Inspect
+                </h2>
+                <span class="text-xs text-slate-500 italic" id="pantheon-count">0 Heroes Archived</span>
+            </div>
+            
+            <!-- Dynamic selector container (Organized as up to 5 columns per row, wraps naturally into rows) -->
+            <div id="selector-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Dynamically generated selector buttons go here -->
+            </div>
+        </section>
+
+        <!-- ACTIVE MEMORIAL PANEL DISPLAY -->
+        <div id="memorial-display" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start transition-opacity duration-300">
+            
+            <!-- LEFT COLUMN: PORTRAIT FRAME & CHRONICLES STORY -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- PORTRAIT ACCENT FRAME -->
+                <div id="portrait-wrapper" class="bg-charcoal-900 rounded-2xl border p-4 transition-all duration-500 relative group overflow-hidden">
+                    <div class="relative bg-charcoal-950 rounded-xl overflow-hidden aspect-[4/5] flex flex-col justify-between p-4 border border-charcoal-800">
+                        
+                        <!-- Default Custom Silhouette Illustration / Icon -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center" id="portrait-placeholder">
+                            <div class="w-20 h-20 rounded-full border border-slate-800 flex items-center justify-center bg-charcoal-900 mb-4 shadow-inner text-slate-500 relative" id="portrait-center-icon">
+                                <i class="fa-solid fa-user-shield text-2xl"></i>
+                            </div>
+                            <p class="font-serif italic text-sm text-slate-400" id="portrait-quote">"Loading..."</p>
+                            
+                            <div class="mt-6 opacity-0 group-hover:opacity-100 transition duration-300">
+                                <label for="image-url-field" onclick="toggleUrlField()" class="cursor-pointer text-xs bg-charcoal-800 hover:bg-amber-600 hover:text-white transition px-3 py-1.5 rounded border border-charcoal-700 block text-slate-400">
+                                    <i class="fa-solid fa-image mr-1"></i> Custom Artwork URL
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Main Image Element with fallback check -->
+                        <img id="char-image" class="absolute inset-0 w-full h-full object-cover hidden" alt="Hero Portrait" onerror="handleImageError()">
+                        
+                        <!-- Cover gradient overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-transparent to-transparent pointer-events-none"></div>
+
+                        <!-- Badges -->
+                        <div class="relative flex justify-between items-start w-full">
+                            <span id="status-badge" class="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md shadow-lg pulse-badge">
+                                <!-- Populated dynamically -->
+                            </span>
+                            <span id="sub-badge" class="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-charcoal-900/80 text-slate-300 border border-charcoal-700 rounded-md shadow-lg">
+                                Wayfarer
+                            </span>
+                        </div>
+
+                        <!-- Name Overlay at Bottom -->
+                        <div class="relative z-10 mt-auto">
+                            <h3 id="panel-name" class="text-2xl font-serif font-bold text-white tracking-wide">Loading...</h3>
+                            <p id="panel-sub" class="text-xs text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Loading...</p>
+                        </div>
+                    </div>
+
+                    <!-- Portrait Input Controller -->
+                    <div id="image-url-panel" class="hidden mt-3 p-3 bg-charcoal-950 rounded-xl border border-charcoal-800">
+                        <p class="text-xs text-slate-400 mb-2">Configure custom character art URL below:</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="image-url-field" placeholder="https://image-url-here..." class="bg-charcoal-900 border border-charcoal-700 rounded px-2.5 py-1 text-xs text-slate-200 flex-grow focus:outline-none focus:border-amber-500">
+                            <button onclick="updatePortrait()" class="bg-amber-600 text-charcoal-950 font-bold px-3 py-1 rounded text-xs hover:bg-amber-500 transition">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHRONICLE STORIES -->
+                <div class="bg-charcoal-900 rounded-2xl border border-charcoal-800 p-6 space-y-4 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-[0.02] pointer-events-none text-9xl text-amber-500" id="chronicle-bg-icon">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+
+                    <!-- Dynamic Chronicle Header showcasing Campaign Name and DM -->
+                    <h3 id="chronicle-header" class="text-xs font-bold uppercase tracking-widest border-b border-charcoal-800 pb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-scroll text-xs"></i>
+                            <span id="chronicle-campaign-name">Whispers of the Feywild</span>
+                        </span>
+                        <span id="chronicle-dm-name" class="text-[10px] text-slate-400 font-sans tracking-wider font-semibold">DM: Unknown</span>
+                    </h3>
+                    
+                    <p id="biography-text" class="text-sm text-slate-300 leading-relaxed">
+                        Biography text loading...
+                    </p>
+
+                    <div class="bg-charcoal-950/50 border-l-2 border-amber-500 p-4 rounded-r-lg space-y-2">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-hourglass-end text-[10px]"></i> Campaign Conclusion:
+                        </h4>
+                        <p id="campaign-end-text" class="text-xs text-slate-400 leading-relaxed">
+                            Campaign conclusion details loading...
+                        </p>
+                    </div>
+
+                    <div class="text-[11px] text-slate-500 flex justify-between items-center pt-2">
+                        <span id="retired-date">Halted: 2025</span>
+                        <span id="campaign-title">Campaign: Lost Tales</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: STATS, DETAILS, FEATS & GEAR -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- CHARACTER SHEET CONTAINER -->
+                <div class="bg-charcoal-900 rounded-2xl border border-charcoal-800 overflow-hidden shadow-2xl flex flex-col">
+                    
+                    <!-- TAB NAVIGATION -->
+                    <div class="flex border-b border-charcoal-800 bg-charcoal-950/30">
+                        <button onclick="switchTab('vitals')" id="btn-vitals" class="tab-btn active flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-heart-pulse mr-1 text-[11px]"></i> Vitals
+                        </button>
+                        <button onclick="switchTab('stats')" id="btn-stats" class="tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-dna mr-1 text-[11px]"></i> Stats
+                        </button>
+                        <button onclick="switchTab('magic')" id="btn-magic" class="tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-wand-sparkles mr-1 text-[11px]"></i> Spells
+                        </button>
+                        <button onclick="switchTab('features')" id="btn-features" class="tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-book mr-1 text-[11px]"></i> Traits
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT VIEWPORT -->
+                    <div class="p-6 min-h-[460px]">
+
+                        <!-- TAB: VITALS -->
+                        <div id="tab-content-vitals" class="space-y-6">
+                            <!-- High Level Stats Row -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="vitals-matrix">
+                                <!-- Populated dynamically by javascript -->
+                            </div>
+
+                            <!-- Resource & Tracking Pools -->
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-sliders text-[10px]"></i> Current States & Pools
+                                </h4>
+                                
+                                <div id="resources-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Populated dynamically by javascript -->
+                                </div>
+                            </div>
+
+                            <!-- Additional Background Details -->
+                            <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 space-y-2">
+                                <h4 class="text-xs font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <i class="fa-solid fa-landmark text-[10px]"></i> Training & Proficiencies
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400">
+                                    <div>
+                                        <span class="block font-semibold text-slate-300 mb-0.5">Armors & Weapons:</span>
+                                        <p id="info-prof-weapons">Armor, weapon training details...</p>
+                                    </div>
+                                    <div>
+                                        <span class="block font-semibold text-slate-300 mb-0.5">Tools & Kits:</span>
+                                        <p id="info-prof-tools">Tools and artisan proficiencies...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: STATS / ATTRIBUTES -->
+                        <div id="tab-content-stats" class="space-y-6 hidden">
+                            <!-- Standard Six D&D Stats Grid -->
+                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="stats-grid">
+                                <!-- Populated dynamically -->
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Saves -->
+                                <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Saving Throws</h4>
+                                    <div class="space-y-1.5 text-xs text-slate-400" id="saves-list">
+                                        <!-- Populated dynamically -->
+                                    </div>
+                                </div>
+
+                                <!-- Key Skills trained -->
+                                <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Trained Skills & Tools</h4>
+                                    <div class="space-y-1.5 text-xs text-slate-400" id="skills-list">
+                                        <!-- Populated dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: MAGIC / SPELLBOOK -->
+                        <div id="tab-content-magic" class="space-y-6 hidden">
+                            <!-- Core Spell Metrics -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-charcoal-950 p-3 rounded-xl border border-charcoal-800 text-center">
+                                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Spell Save DC</span>
+                                    <div id="magic-dc" class="text-2xl font-serif text-amber-500 font-bold mt-0.5">15</div>
+                                </div>
+                                <div class="bg-charcoal-950 p-3 rounded-xl border border-charcoal-800 text-center">
+                                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Spell Attack Bonus</span>
+                                    <div id="magic-attack" class="text-2xl font-serif text-amber-500 font-bold mt-0.5">+7</div>
+                                </div>
+                            </div>
+
+                            <!-- Combat Damage Section -->
+                            <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800/80">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1 mb-3">Signature Combat Moves</h4>
+                                <div class="space-y-2.5" id="combat-actions-list">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Spell Lists -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1">Prepared Spell Inventory</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs" id="spellbook-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: FEATURES & EQUIP -->
+                        <div id="tab-content-features" class="space-y-6 hidden">
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1">Key Class & Species Features</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="features-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1">Equipment & Magic Inventory</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="equipment-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ALLIES & ORGANIZATIONS METADATA PANEL -->
+                <div class="bg-charcoal-900 rounded-2xl border border-charcoal-800 p-6 shadow-2xl relative overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-400">
+                        <div>
+                            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-handshake"></i> Known Allies & Associates
+                            </h4>
+                            <p id="allies-list" class="leading-relaxed">Allies list loading...</p>
+                        </div>
+                        <div>
+                            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-users-rectangle"></i> Affiliations & Organizations
+                            </h4>
+                            <p id="orgs-list" class="leading-relaxed">Organizations list loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RECONSTRUCTION FOOTER -->
+        <footer class="text-center text-xs text-slate-600 border-t border-charcoal-900 pt-8 space-y-1">
+            <p>Designed with meticulous respect for past tabletop stories. Built entirely with single-file responsive layout framework.</p>
+            <p>D&D Beyond Data Reference Core Rules 2024 &bull; Player: JimmyD3605 &bull; Code & Layout 2026</p>
+        </footer>
+    </div>
+
+    <!-- AUDIO AMBIENCE TOGGLER -->
+    <div class="fixed bottom-4 right-4 z-50">
+        <button onclick="toggleAmbiance()" id="ambient-toggle" class="w-10 h-10 rounded-full bg-charcoal-900 border border-charcoal-800 hover:border-amber-500/50 text-slate-500 hover:text-slate-300 flex items-center justify-center shadow-2xl transition duration-300">
+            <i class="fa-solid fa-volume-xmark" id="audio-icon"></i>
+        </button>
+    </div>
+
+    <!-- MAIN DATA CONTROLLER SCRIPT -->
+    <script>
+        // Centralized Dataset: Extensible chronological List of Archived Characters
+        // To add a new character, simply insert a new object in this list.
+        // It will be dynamically sorted by "statusDate" (Numerical Year) on startup.
+        const characterList = [
+            {
+                id: "reddyl",
+                name: "Reddyl",
+                nickname: "Reddyl",
+                species: "Gold Dragonborn",
+                background: "Knight",
+                subClass: "Oath of Vengeance",
+                classLevel: "Paladin 5",
+                quote: "\"Despite my noble birth, I do not place myself above other folk... though between you and me, they are clearly all beneath me.\"",
+                icon: "fa-shield-halved",
+                campaign: "Lost Mine of Phandelver",
+                dm: "Sean",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Earliest entry point in 2021) ---
+                status: "Champion",               // Text shown on status badges (e.g. "Halted", "Retired", "Completed", "Champion")
+                statusDate: 2021,                 // Numerical Year only for auto-sorting!
+                statusIcon: "fa-award",           // Knightly award icon
+                statusClass: "bg-yellow-950/80 text-yellow-400 border-yellow-900/50", // Golden Knight frame
+                
+                defaultImg: "/apps/memorial/chars/4.png", // Path to standard portfolio asset location
+                hp: "54 / 54",
+                ac: "19 (Plate Armor)",
+                initiative: "+1",
+                speed: "30 ft (Walking)",
+                armorTraining: "Heavy, Medium, Light Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Dice Set",
+                languages: "Common, Draconic, Goblin",
+                stats: {
+                    STR: { score: 20, mod: "+5" },
+                    DEX: { score: 13, mod: "+1" },
+                    CON: { score: 15, mod: "+2" },
+                    INT: { score: 8, mod: "-1" },
+                    WIS: { score: 11, mod: "+0" },
+                    CHA: { score: 18, mod: "+4" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+6", trained: false },
+                    { name: "Dexterity Save", value: "+2", trained: false },
+                    { name: "Constitution Save", value: "+3", trained: false },
+                    { name: "Intelligence Save", value: "+0", trained: false },
+                    { name: "Wisdom Save *", value: "+4", trained: true },
+                    { name: "Charisma Save *", value: "+8", trained: true }
+                ],
+                skills: [
+                    { name: "Athletics (STR) *", value: "+8" },
+                    { name: "Intimidation (CHA) *", value: "+7" },
+                    { name: "Persuasion (CHA) *", value: "+7" },
+                    { name: "History (INT) *", value: "+2" },
+                    { name: "Insight (WIS)", value: "+0" },
+                    { name: "Perception (WIS)", value: "+0" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "Hellwrecker (Greataxe of Warning)", hit: "+9", formula: "2d6+6 Slashing + 1d6 Fire", note: "Attuned magic item, heavy, two-handed, graze weapon. reroll 1s and 2s on damage dice (Great Weapon Fighting Style)." },
+                    { name: "Hew (Battleaxe)", hit: "+9", formula: "1d8+6 Slashing", note: "Versatile (1d10), topple property." },
+                    { name: "Breath Weapon (Gold Dragonborn)", hit: "DC 13 DEX", formula: "2d6 Fire", note: "15 ft cone, half damage on successful save. 1/Short Rest." }
+                ],
+                preparedSpells: [
+                    { name: "Divine Smite", level: "1st", school: "Evocation" },
+                    { name: "Bless", level: "1st", school: "Enchantment" },
+                    { name: "Shield of Faith", level: "1st", school: "Abjuration" },
+                    { name: "Bane", level: "1st", school: "Enchantment (Oath Spell)" },
+                    { name: "Hunter's Mark", level: "1st", school: "Divination (Oath Spell)" },
+                    { name: "Cure Wounds", level: "1st", school: "Evocation" },
+                    { name: "Find Steed", level: "2nd", school: "Conjuration" },
+                    { name: "Hold Person", level: "2nd", school: "Enchantment (Oath Spell)" },
+                    { name: "Misty Step", level: "2nd", school: "Conjuration (Oath Spell)" },
+                    { name: "Lesser Restoration", level: "2nd", school: "Abjuration" }
+                ],
+                features: [
+                    { name: "Lay on Hands Pool", text: "Restore up to 25 Hit Points per long rest, or spend 5 points to cure disease/neutralize poison." },
+                    { name: "Channel Divinity", text: "Vow of Enmity (Bonus Action: gain advantage on attacks against target within 10 ft for 1 minute) or Abjure Enemy." },
+                    { name: "Great Weapon Fighting", text: "When you roll a 1 or 2 on a damage die for an attack with a two-handed weapon, you can reroll that die." },
+                    { name: "Divine Health", text: "You are entirely immune to contracting diseases due to divine protection." },
+                    { name: "Harness Divine Power", text: "Regain 1 expended level 1 spell slot as a bonus action (1/Long Rest)." }
+                ],
+                equipment: [
+                    { name: "Hellwrecker", desc: "Glorious attuned greataxe, dealing an extra 1d6 fire damage on hit." },
+                    { name: "Plate Armor", desc: "Dull golden scales set over thick, heavy plates (18 AC base)." },
+                    { name: "Ring of Protection", desc: "Attuned. Grants +1 bonus to Armor Class and all Saving Throws (applied)." },
+                    { name: "Wand of Magic Missiles", desc: "7 charges. Spend charges to shoot force bolts without requiring slot spellcasting." }
+                ],
+                allies: "Aelin Whitethorn (Wizard Companion), Horace Smith & Daniel Baird Wesson (Alchemist/Tinkerer collaborators).",
+                organizations: "Order of Vengeance Knights.",
+                biography: "Despite his noble dragonborn birth and golden scales, Reddyl suffered from a fascinating double nature: publicly declaring that all commoners have the same blood and dedicating his steel to protect those 'beneath' him, while privately holding a firm, quiet belief that absolutely everyone else was beneath him. Guided by this strict sense of noble obligation, he set out to find fame and protect the frontier from chaotic forces.",
+                conclusion: "Reddyl's adventure came to a glorious and complete end exactly as written in the annals of Phandalin. Alongside his steadfast companions, including the wizard Aelin Whitethorn, they braved the dark depths of Wave Echo Cave, vanquished the Black Spider's forces, and successfully cleared the lost mine. Having restored the legendary Forge of Spells, Reddyl secured his place as a hero of the common people, finally retiring in absolute triumph.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-gold",
+                themeAccent: "yellow",
+                borderClass: "border-yellow-500/20",
+                bgGradient: "from-yellow-950/40 via-charcoal-900 to-yellow-950/40",
+                accentColor: "yellow-500",
+                accentText: "text-yellow-400",
+                accentBorder: "border-yellow-500",
+                accentRing: "ring-yellow-500",
+                accentHover: "hover:border-yellow-500/40",
+                accentIconBg: "bg-yellow-950/40 text-yellow-400 border-yellow-900/50",
+                groupHoverText: "group-hover:text-yellow-400",
+                topBarGradient: "from-yellow-800 via-yellow-400 to-yellow-800",
+                resources: [
+                    { label: "Lay on Hands Pool", detail: "25 HP Pool per Long Rest", type: "counter", count: 25, max: 25, id: "layonhands" },
+                    { label: "Divine Sense", detail: "5 Uses per Long Rest", type: "counter", count: 5, max: 5, id: "divinesense" },
+                    { label: "Channel Divinity", detail: "1 Use per Short Rest", type: "checkbox", count: 1, id: "channeldivinity" },
+                    { label: "Harness Divine Power", detail: "1 Use per Long Rest", type: "checkbox", count: 1, id: "harnessdivine" }
+                ]
+            },
+            {
+                id: "artie",
+                name: "Arthur Pendelton",
+                nickname: "Artie",
+                species: "Human",
+                background: "Wayfarer",
+                subClass: "Archfey Patron (Shimmerscale)",
+                classLevel: "Warlock 3",
+                quote: "\"Avada Kadabra!\" *points drizzle-proof clipboard frantically with eyes squeezed shut*",
+                icon: "fa-wand-magic-sparkles",
+                campaign: "The Slime Tower",
+                dm: "Sean",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Chronological survival baseline) ---
+                status: "Survivor",               // Customized from 'Completed' to show survival outcome
+                statusDate: 2026,                 // Numerical Year only for auto-sorting!
+                statusIcon: "fa-shield-halved",   // Shield showing his "Plot Armor" delusion
+                statusClass: "bg-emerald-950/80 text-emerald-400 border-emerald-900/50", // Emerald Survivor frame
+                
+                defaultImg: "/apps/memorial/chars/1.png", // Path to standard portfolio asset location
+                hp: "29 / 29",
+                ac: "13 (Leather Armor)",
+                initiative: "+4",
+                speed: "30 ft (Walking)",
+                armorTraining: "Light Armor",
+                weaponTraining: "Simple Weapons",
+                toolsTraining: "Thieves' Tools",
+                languages: "Common, Common Sign Language, Draconic",
+                stats: {
+                    STR: { score: 8, mod: "-1" },
+                    DEX: { score: 14, mod: "+2" },
+                    CON: { score: 15, mod: "+2" },
+                    INT: { score: 12, mod: "+1" },
+                    WIS: { score: 10, mod: "+0" },
+                    CHA: { score: 20, mod: "+5" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "-1", trained: false },
+                    { name: "Dexterity Save", value: "+4", trained: true },
+                    { name: "Constitution Save", value: "+2", trained: false },
+                    { name: "Intelligence Save", value: "+1", trained: false },
+                    { name: "Wisdom Save", value: "+2", trained: false },
+                    { name: "Charisma Save", value: "+7", trained: true }
+                ],
+                skills: [
+                    { name: "Deception (CHA)", value: "+7" },
+                    { name: "Intimidation (CHA)", value: "+7" },
+                    { name: "Performance (CHA)", value: "+5" },
+                    { name: "Persuasion (CHA)", value: "+5" },
+                    { name: "Stealth (DEX)", value: "+4" },
+                    { name: "Arcana (INT)", value: "+3" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "Eldritch Blast (\"Avada Kadabra!\")", hit: "+7 Straight Roll", formula: "1d10+5 Force", note: "Artie points his focus and squeezes his eyes shut (Disadvantage). Shimmerscale Jr. (Sprite familiar) attacks/pinches him to flinch him in the right direction (Help action/Advantage), resulting in a Straight Roll! Augmented with Agonizing Blast (+5 Cha)." }
+                ],
+                preparedSpells: [
+                    { name: "Eldritch Blast", level: "Cantrip", school: "Evocation" },
+                    { name: "Prestidigitation", level: "Cantrip", school: "Transmutation" },
+                    { name: "Witch Bolt", level: "1st", school: "Evocation" },
+                    { name: "Detect Magic [R]", level: "1st", school: "Divination" },
+                    { name: "Faerie Fire", level: "1st", school: "Evocation (Archfey always prepared)" },
+                    { name: "Sleep", level: "1st", school: "Enchantment (Archfey always prepared)" },
+                    { name: "Silent Image", level: "1st", school: "Illusion (At-Will, Misty Visions)" },
+                    { name: "Suggestion", level: "2nd", school: "Enchantment" },
+                    { name: "Earthbind", level: "2nd", school: "Transmutation" },
+                    { name: "Calm Emotions", level: "2nd", school: "Enchantment (Archfey always prepared)" },
+                    { name: "Misty Step", level: "2nd", school: "Conjuration (Archfey always prepared)" },
+                    { name: "Phantasmal Force", level: "2nd", school: "Illusion (Archfey always prepared)" }
+                ],
+                features: [
+                    { name: "Fey Contract Fine Print", text: "Signed a petition leaving a downtown Target to ban electric scooters from Seattle bike lanes. Unbeknownst to Artie, this was a legally binding fey pact with the Archfey Shimmerscale." },
+                    { name: "Eldritch Invocations", text: "Agonizing Blast (+5 CHA damage applied to Eldritch Blast) & Misty Visions (cast Silent Image at-will to replicate cinematic effects)." },
+                    { name: "Pact of the Chain (Shimmerscale Jr.)", text: "His chaperone is a tiny, invisible Sprite who nudges him around. Nudging arm cancels out eye-closed shooting penalty." },
+                    { name: "Steps of the Fey (Misty Step)", text: "Cast Misty Step 5 times per long rest without expending spell slots. Immediately gains 1d10 Temp HP (Refreshing Step) or imposes Disadvantage on foes (Taunting Step)." }
+                ],
+                equipment: [
+                    { name: "\"SAVE OUR SIDEWALKS\" Clipboard", desc: "The aluminum clipboard Artie hurriedly signed. It now serves as his Arcane Focus in this strange moss-covered world." },
+                    { name: "Seattle Windbreaker", desc: "A drizzle-appropriate, dark grey North Face windbreaker. Excellent for keeping dry in damp extraplanar bogs, though terribly lacking in AC." }
+                ],
+                allies: "Shimmerscale Jr. (Sprite Companion / Personal Chaperone), Shimmerscale (Ancient Fey Patron).",
+                organizations: "Seattle Pedestrian Safety Union (unwittingly converted into an Archfey Vassalage).",
+                biography: "Until recently, Artie’s biggest concern was the proliferation of electric scooters in Seattle's streets. While leaving a downtown Target, he hurriedly signed a petition to keep them out of the bike lanes, barely skimming the fine print. But that was no mere civic request—it was a magical contract drafted by an ancient Fey entity known as Shimmerscale. Suddenly, Artie was ripped from Washington and stranded in a fantastical, moss-covered realm wearing his drizzle-appropriate windbreaker and holding the aluminum clipboard. He materialized 5 miles outside of Erckido a few weeks ago. He is slowly coming to terms with his magical powers, guided by a tiny invisible Sprite (Shimmerscale Jr.), and has almost accepted his new reality.",
+                conclusion: "During the final stand inside the deep copper pipes of the Slime Tower, Sean the DM threw everything at the party. Endless waves of summoned slime creatures systematically executed all of Artie's companions. Artie miraculously survived, but the psychological strain shattered his sanity. Convinced he is merely a fictional 'main character' of a high-fantasy novel, Artie rationalized his survival as simple, undeniable 'plot armor.' He is currently lying low inside Erckido, trying to keep a low profile and blend in with locals while casting panic-induced blasts of energy.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-fey",
+                themeAccent: "emerald",
+                borderClass: "border-emerald-500/20",
+                bgGradient: "from-emerald-950 via-charcoal-900 to-emerald-950",
+                accentColor: "emerald-500",
+                accentText: "text-emerald-400",
+                accentBorder: "border-emerald-500",
+                accentRing: "ring-emerald-500",
+                accentHover: "hover:border-emerald-500/40",
+                accentIconBg: "bg-emerald-950/40 text-emerald-400 border-emerald-900/50",
+                groupHoverText: "group-hover:text-emerald-400",
+                topBarGradient: "from-emerald-800 via-emerald-400 to-emerald-800",
+                resources: [
+                    { label: "Pact Spell Slots (Lv 2)", detail: "2 slots, regenerates on short rest", type: "checkbox", count: 2, id: "slots" },
+                    { label: "Steps of the Fey", detail: "5 Misty Steps per Long Rest", type: "counter", count: 5, max: 5, id: "steps" },
+                    { label: "Luck Points", detail: "2 points per Long Rest (Adv/Disadv)", type: "counter", count: 2, max: 2, id: "luck" }
+                ]
+            },
+            {
+                id: "edwin",
+                name: "Edwin Wright",
+                nickname: "Edwin",
+                species: "Mark of Making Human",
+                background: "Lorehold Student",
+                subClass: "Armorer Specialty",
+                classLevel: "Artificer 5",
+                quote: "In the end, it's all just entropy. Everything falls apart someday.",
+                fontClass: "font-sans",
+                icon: "fa-screwdriver-wrench",
+                campaign: "Icewind Dale: Rime of the Frost Maiden",
+                dm: "Jeremy",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Numerically sorted chronological baseline) ---
+                status: "Halted",               // Text shown on status badges (e.g. "Halted", "Retired", "Completed")
+                statusDate: 2022,               // Numerical Year only for auto-sorting!
+                statusIcon: "fa-circle-pause",  // FontAwesome icon class
+                statusClass: "bg-red-950/80 text-red-400 border-red-900/50", // Custom badge design themes
+                
+                defaultImg: "/apps/memorial/chars/2.png", // Path to standard portfolio asset location
+                hp: "46 / 46",
+                ac: "20 (Mithral Plate + Shield)",
+                initiative: "+3",
+                speed: "35 ft (Walking)",
+                armorTraining: "Heavy Armor, Light, Medium, Shields",
+                weaponTraining: "Firearms, Simple Weapons",
+                toolsTraining: "Carpenter's, Glassblower's, Leatherworker's, Smith's, Thieves', Tinker's, Woodcarver's Tools",
+                languages: "Common, Draconic, Dwarvish, Giant, Telepathy",
+                stats: {
+                    STR: { score: 11, mod: "+0" },
+                    DEX: { score: 16, mod: "+3" },
+                    CON: { score: 17, mod: "+3" }, // Base: 17, Amulet of Health raises base to 19 (+4) if attuned (con save +6)
+                    INT: { score: 20, mod: "+5" },
+                    WIS: { score: 13, mod: "+1" },
+                    CHARISMA: { score: 8, mod: "-1" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "+0", trained: false },
+                    { name: "Dexterity Save", value: "+3", trained: false },
+                    { name: "Constitution Save", value: "+6", trained: true },
+                    { name: "Intelligence Save", value: "+8", trained: true },
+                    { name: "Wisdom Save", value: "+1", trained: false },
+                    { name: "Charisma Save", value: "-1", trained: false }
+                ],
+                skills: [
+                    { name: "Arcana (INT)", value: "+8" },
+                    { name: "History (INT)", value: "+8" },
+                    { name: "Investigation (INT)", value: "+8" },
+                    { name: "Religion (INT)", value: "+8" },
+                    { name: "Nature (INT)", value: "+5" },
+                    { name: "Sleight of Hand (DEX)", value: "+3" }
+                ],
+                spellDC: "16",
+                spellAttack: "+8",
+                combatActions: [
+                    { name: "Lightning Launcher (Infiltrator)", hit: "+8", formula: "1d6+5 Lightning", note: "Once per turn, first hit deals 2d6+5 Lightning instead. Part of your custom Arcane Armor." },
+                    { name: "Fire Bolt", hit: "+8", formula: "2d10 Fire", note: "Cantrip (Level 5 Scaling applied)" }
+                ],
+                preparedSpells: [
+                    { name: "Shocking Grasp", level: "Cantrip", school: "Evocation" },
+                    { name: "Fire Bolt", level: "Cantrip", school: "Evocation" },
+                    { name: "Sacred Flame", level: "Cantrip", school: "Evocation" },
+                    { name: "Thaumaturgy", level: "Cantrip", school: "Transmutation" },
+                    { name: "Mending", level: "Cantrip", school: "Transmutation" },
+                    { name: "Cure Wounds", level: "1st", school: "Evocation" },
+                    { name: "Magic Missile", level: "1st", school: "Evocation (Armorer Spells)" },
+                    { name: "Thunderwave", level: "1st", school: "Evocation (Armorer Spells)" },
+                    { name: "Tasha's Caustic Brew", level: "1st", school: "Conjuration" },
+                    { name: "Vortex Warp", level: "2nd", school: "Conjuration" },
+                    { name: "Shatter", level: "2nd", school: "Evocation (Armorer Spells)" },
+                    { name: "Mirror Image", level: "2nd", school: "Illusion (Armorer Spells)" },
+                    { name: "Heat Metal", level: "2nd", school: "Transmutation" }
+                ],
+                features: [
+                    { name: "Infiltrator Armor model", text: "Mithral Plate integrates lightning launcher, grants +5 Speed (35 ft total), and Advantage on Stealth checks." },
+                    { name: "Infuse Item (2 Items)", text: "Imbue up to 2 items with infusions after long rest (e.g. attuning Amulet of Health and Psi Crystal)." },
+                    { name: "Magical Tinkering (5 objects)", text: "Imbue tiny nonmagical objects with sensory properties: light, recorded message, odor, or static text." }
+                ],
+                equipment: [
+                    { name: "Amulet of Health", desc: "Attuned magic item. Sets Constitution score to 19 (granting superior hit points)." },
+                    { name: "Bag of Holding", desc: "Sacks extra-dimensional space containing Pitons, Rations, Waterskin, Woodcarver and Smith tools." },
+                    { name: "Psi Crystal", desc: "Attuned psychic amplifier, unlocks mental acuity." }
+                ],
+                allies: "Horace Smith & Daniel Baird Wesson (collaborators on experimental combat weapon designs), Professor Plargg.",
+                organizations: "Strixhaven Lorehold College (PhD candidate studying future-past archeology).",
+                biography: "Edwin spent his youth preparing to enter the Lorehold college. Lacking in social graces, he dedicated his isolation to engineering. After receiving an ominous mental vision from an ancient Archaic detailing strange crystals in the frozen north, Edwin focused his thesis on discovering the secret of the Ten Towers of Icewind Dale, hoping to add to the college's understanding of predicted futures.",
+                conclusion: "While researching historical patterns in Strixhaven, a fellow student's dismissive 'Bazinga' reply to his Archaic vision drove Edwin to declare him a mortal enemy. Edwin set off with his party to test the 'future of combat' but the campaign halted, leaving his PhD thesis uncompleted and his findings frozen in the glaciers.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-brass",
+                themeAccent: "amber",
+                borderClass: "border-amber-500/20",
+                bgGradient: "from-amber-950/40 via-charcoal-900 to-amber-950/40",
+                accentColor: "amber-500",
+                accentText: "text-amber-500",
+                accentBorder: "border-amber-500",
+                accentRing: "ring-amber-500",
+                accentHover: "hover:border-amber-500/40",
+                accentIconBg: "bg-amber-950/40 text-amber-500 border-amber-900/50",
+                groupHoverText: "group-hover:text-amber-500",
+                topBarGradient: "from-amber-800 via-amber-400 to-amber-800",
+                resources: [
+                    { label: "1st Level Spell Slots", detail: "4 slots total", type: "counter", count: 4, max: 4, id: "slots1" },
+                    { label: "2nd Level Spell Slots", detail: "2 slots total", type: "counter", count: 2, max: 2, id: "slots2" },
+                    { label: "Magical Tinkering", detail: "5 items active max", type: "counter", count: 5, max: 5, id: "tinkering" }
+                ]
+            },
+            {
+                id: "garfield",
+                name: "Garfield",
+                nickname: "Garfield",
+                species: "Tabaxi",
+                background: "Outlander",
+                subClass: "Gloom Stalker / Champion",
+                classLevel: "Ranger 4 / Fighter 5",
+                quote: "Attack from the dark, double speed, strike twice and disappear.",
+                icon: "fa-paw",
+                campaign: "Ihla Perdida",
+                dm: "Tyler",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Terrible Ending: Defeated in 2022) ---
+                status: "Defeated",               // Character was defeated at the end
+                statusDate: 2022,                 // Sorted chronologically next to Edwin
+                statusIcon: "fa-skull-crossbones", // Thematic grim icon
+                statusClass: "bg-rose-950/90 text-rose-400 border-rose-900/60", // Defeated crimson badge theme
+                
+                defaultImg: "/apps/memorial/chars/3.png", // Path to standard portfolio asset location
+                hp: "87 / 87",
+                ac: "17 (Studded Leather + Shield)",
+                initiative: "+8",
+                speed: "30 ft (Climb 20 ft)",
+                armorTraining: "Light & Medium Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Bagpipes",
+                languages: "Common, Goblin, Primordial",
+                stats: {
+                    STR: { score: 13, mod: "+1" },
+                    DEX: { score: 20, mod: "+5" },
+                    CON: { score: 17, mod: "+3" },
+                    INT: { score: 11, mod: "+0" },
+                    WIS: { score: 17, mod: "+3" },
+                    CHA: { score: 9, mod: "-1" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "+5", trained: true },
+                    { name: "Dexterity Save", value: "+9", trained: true },
+                    { name: "Constitution Save", value: "+4", trained: false },
+                    { name: "Intelligence Save", value: "+0", trained: false },
+                    { name: "Wisdom Save", value: "+3", trained: false },
+                    { name: "Charisma Save", value: "-1", trained: false }
+                ],
+                skills: [
+                    { name: "Acrobatics (DEX)", value: "+9" },
+                    { name: "Animal Handling (WIS)", value: "+7" },
+                    { name: "Athletics (STR)", value: "+5" },
+                    { name: "Perception (WIS) *", value: "+7" },
+                    { name: "Stealth (DEX) *", value: "+9" },
+                    { name: "Survival (WIS)", value: "+7" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "Longbow", hit: "+11", formula: "1d8+5 Piercing", note: "Ranged 150/600. Includes +2 Archery fighting style. Sharpshooter option: -5 to hit for +10 damage." },
+                    { name: "Rapier of Warning", hit: "+9", formula: "1d8+5 Piercing", note: "Vex weapon. You and allies within 30 ft can't be surprised. (Attuned)" },
+                    { name: "Claws", hit: "+5", formula: "1d4+1 Slashing", note: "Tabaxi natural weapon." }
+                ],
+                preparedSpells: [
+                    { name: "Disguise Self", level: "1st", school: "Illusion (Gloom Stalker Magic)" },
+                    { name: "Speak with Animals [R]", level: "1st", school: "Divination (Primal Awareness)" },
+                    { name: "Goodberry", level: "1st", school: "Transmutation" },
+                    { name: "Hunter's Mark", level: "1st", school: "Divination" },
+                    { name: "Fog Cloud", level: "1st", school: "Conjuration" }
+                ],
+                features: [
+                    { name: "Sharpshooter Feat", text: "Long-range attacks don't impose disadvantage. Ignored half/three-quarters cover. Can choose to take -5 to hit for +10 damage." },
+                    { name: "Dread Ambusher", text: "Add WIS (+3) to initiative. First combat turn walking speed +10 ft, and take one additional weapon attack dealing +1d8 extra damage." },
+                    { name: "Feline Agility", text: "Double speed for one turn during combat. Must spend a turn at 0 movement to refresh." },
+                    { name: "Improved Critical", text: "Weapon attacks score critical hits on 19 or 20 (Champion Archetype)." },
+                    { name: "Favored Foe", text: "Mark a target upon hitting (4/Long Rest). First hit of turn deals +1d4 extra damage. (Concentration up to 1 minute)" }
+                ],
+                equipment: [
+                    { name: "Rapier of Warning", desc: "Attuned weapon. Keeps the entire party alert, negating surprise rounds." },
+                    { name: "Survival Gear Pack", desc: "Backpack, 10 Rations, Waterskin, Tinderboxes, Climber's Kit, Rain Catcher, Spyglass, Crampons, Willowshade Oils, Crowbar, 10 Torches." }
+                ],
+                allies: "The party.",
+                organizations: "Uncharted Wilderness Outlanders.",
+                biography: "Garfield, a cunning Tabaxi Gloom Stalker, set off for the newly risen jungle island of Ihla Perdida. He brought high stealth, sharpshooting archery, and a survival-ready instinct to brave the uncharted wilderness in pursuit of a rumored artifact.",
+                conclusion: "The exploration of Ihla Perdida ended in disaster. The hostile, survival-heavy landscape drained the party's resources. Ultimately, the survival hunt failed; the dark forces claimed the powerful hidden artifact, defeating the heroes and leaving the island's jungle shrouded in silence.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-rose",
+                themeAccent: "rose",
+                borderClass: "border-rose-500/20",
+                bgGradient: "from-rose-950 via-charcoal-900 to-rose-950",
+                accentColor: "rose-500",
+                accentText: "text-rose-400",
+                accentBorder: "border-rose-500",
+                accentRing: "ring-rose-500",
+                accentHover: "hover:border-rose-500/40",
+                accentIconBg: "bg-rose-950/40 text-rose-400 border-rose-900/50",
+                groupHoverText: "group-hover:text-rose-400",
+                topBarGradient: "from-rose-800 via-rose-400 to-rose-800",
+                resources: [
+                    { label: "1st Level Spell Slots", detail: "3 slots total", type: "counter", count: 3, max: 3, id: "slots1" },
+                    { label: "Second Wind", detail: "1 Use per Short Rest (1d10+5)", type: "checkbox", count: 1, id: "secondwind" },
+                    { label: "Action Surge", detail: "1 Use per Short Rest", type: "checkbox", count: 1, id: "actionsurge" },
+                    { label: "Feline Agility", detail: "Active (Refreshes on 0 movement)", type: "checkbox", count: 1, id: "felineagility" }
+                ]
+            },
+            {
+                id: "kusso",
+                name: "Kusso",
+                nickname: "Kusso",
+                species: "Custom Parshendi",
+                background: "Wildspacer",
+                subClass: "Totem Warrior (Bear / Eagle)",
+                classLevel: "Barbarian 6",
+                quote: "Observe life from a different point of view, especially when your years are so few.",
+                icon: "fa-shrimp",
+                campaign: "Into the Darkness",
+                dm: "Sean",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Escaped triumphantly in 2023) ---
+                status: "Escaped",               // Left the plague zone alive
+                statusDate: 2023,                 // Chronologically placed in 2023
+                statusIcon: "fa-biohazard",       // Pandemic biohazard icon
+                statusClass: "bg-orange-950/80 text-orange-400 border-orange-900/50", // Chitin orange frame
+                
+                defaultImg: "/apps/memorial/chars/5.png", // Path to standard portfolio asset location
+                hp: "86 / 86",
+                ac: "16 (Scale Mail)",
+                initiative: "+2",
+                speed: "40 ft (Walking)",
+                armorTraining: "Light & Medium Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Navigator's Tools, Vehicles (Space)",
+                languages: "Common, Hadozee",
+                stats: {
+                    STR: { score: 18, mod: "+4" },
+                    DEX: { score: 15, mod: "+2" },
+                    CON: { score: 17, mod: "+3" },
+                    INT: { score: 8, mod: "-1" },
+                    WIS: { score: 13, mod: "+1" },
+                    CHA: { score: 11, mod: "+0" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+7", trained: true },
+                    { name: "Dexterity Save", value: "+2", trained: false },
+                    { name: "Constitution Save *", value: "+6", trained: true },
+                    { name: "Intelligence Save", value: "-1", trained: false },
+                    { name: "Wisdom Save", value: "+1", trained: false },
+                    { name: "Charisma Save", value: "+0", trained: false }
+                ],
+                skills: [
+                    { name: "Athletics (STR) *", value: "+7" },
+                    { name: "Intimidation (CHA) *", value: "+3" },
+                    { name: "Survival (WIS) *", value: "+4" },
+                    { name: "Perception (WIS) *", value: "+4" },
+                    { name: "Acrobatics (DEX)", value: "+2" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "StormShatter (Efleel Pike)", hit: "+8", formula: "1d10+5 Piercing", note: "Attuned magical reach weapon. Polearm Master: other creatures provoke opportunity attacks on entering reach. Sentinel: hitting with opportunity attacks sets speed to 0." },
+                    { name: "Polearm Master Haft Strike", hit: "+7", formula: "1d4+4 Bludgeoning", note: "Bonus action attack with the opposite end of StormShatter." },
+                    { name: "Unarmed Strike (Carapace Claws)", hit: "+7", formula: "5 Bludgeoning", note: "Natural weapon attack." }
+                ],
+                preparedSpells: [
+                    { name: "Speak with Animals [R]", level: "1st", school: "Divination (Spirit Seeker)" },
+                    { name: "Beast Sense [R]", level: "2nd", school: "Divination (Spirit Seeker)" }
+                ],
+                features: [
+                    { name: "Bear Totem Spirit", text: "While raging, you gain Resistance to all damage types except psychic damage (unbelievable survival durability)." },
+                    { name: "Sentinel Feat", text: "Opportunity attacks reduce speed to 0. Provoke opportunity attacks even on Disengage. Take reaction melee attacks when a creature attacks an ally." },
+                    { name: "Polearm Master Feat", text: "Take d4 bonus haft attack. Provoke opportunity attacks when enemies enter reach." },
+                    { name: "Reckless Attack", text: "Choose to gain Advantage on Strength melee attacks this turn, but attacks against you have Advantage until your next turn." },
+                    { name: "Aspect of the Beast (Eagle)", text: "See up to 1 mile without difficulty. Dim light does not impose Disadvantage on your Perception checks." }
+                ],
+                equipment: [
+                    { name: "StormShatter (Efleel Pike)", desc: "A magnificent heavy attuned pike crackling with blue magical lightning (18 lb)." },
+                    { name: "Scale Mail & Carapace", desc: "Thick chitinous red-and-black protective carapace reinforced with scale plates (16 AC total)." },
+                    { name: "Wildspacer Survival Kit", desc: "Backpack, 10 Rations, Bedroll, Two-Person Tent, Bucket, Waterskin, Climber's Kit." }
+                ],
+                allies: "The Star Jammer crew (formerly), Verasees (School of Magic Inspector).",
+                organizations: "Roshar Parshendi War Camps, Star Jammer Spelljamming Crew.",
+                biography: "Kusso belongs to the Parshendi, a short-lived crustacean-humanoid species native to Roshar. Growing up in a massive war camp of 10,000 under a cruel noble faction, he was raised on the 'Song of Remembering,' a ancient melody recounting a peaceful time before his people were enslaved. Driven by a deep desire for freedom, Kusso escaped into the cognitive realm (the Astral Sea), working for six months on a spelljamming ship called the Star Jammer. After the crew unexpectedly left him at port, Kusso found himself on the continent of Kyragas in the plague-ridden town of Thermesmos, joining Verasees' efforts to fight the spread of the undead.",
+                conclusion: "The campaign of Into the Darkness reached a desperate and terrifying fever pitch as the Obasci (plague-bearer zombies) launched an unstoppable assault on Kyragas. Utilizing the unyielding endurance of his Bear Totem rage and swinging his lightning-charged pike StormShatter, Kusso held back the ravenous hordes. Smashed, bruised, but ultimately victorious, Kusso and his companions broke through a literal wave of zombies, successfully bringing the vital Plague Seed back to Verasees and the Maesters of the Ebonhold so that a cure might be found.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-orange",
+                themeAccent: "orange",
+                borderClass: "border-orange-500/20",
+                bgGradient: "from-orange-950/40 via-charcoal-900 to-orange-950/40",
+                accentColor: "orange-500",
+                accentText: "text-orange-400",
+                accentBorder: "border-orange-500",
+                accentRing: "ring-orange-500",
+                accentHover: "hover:border-orange-500/40",
+                accentIconBg: "bg-orange-950/40 text-orange-400 border-orange-900/50",
+                groupHoverText: "group-hover:text-orange-400",
+                topBarGradient: "from-orange-800 via-orange-400 to-orange-800",
+                resources: [
+                    { label: "Rage Uses", detail: "4 rages per Long Rest", type: "checkbox", count: 4, id: "rages" },
+                    { label: "Sentinel Strike", detail: "Opportunity reaction attack used", type: "checkbox", count: 1, id: "sentinel" }
+                ]
+            },
+            {
+                id: "jambloom",
+                name: "Jam Bloom",
+                nickname: "Jam",
+                species: "Plasmoid",
+                background: "Astral Drifter",
+                subClass: "Circle of the Moon",
+                classLevel: "Druid 11",
+                quote: "\"I'm just a pile of sapient space-goo that can turn into a Tyrannosaurus Rex. Don't overthink it.\"",
+                icon: "fa-meteor",
+                campaign: "The Nebula's Edge",
+                dm: "Jeremy",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Completed in early 2025) ---
+                status: "Completed",
+                statusDate: 2025.2,               // Decimal to position right after Sir Vey (early 2025)
+                statusIcon: "fa-circle-check",
+                statusClass: "bg-violet-950/80 text-violet-400 border-violet-900/50", // Cosmic violet frame
+                
+                defaultImg: "/apps/memorial/chars/6.png", // Path to standard portfolio asset location
+                hp: "142 / 142",
+                ac: "19 (Shield of the Mors-Rel)",
+                initiative: "+3",
+                speed: "30 ft (Walking)",
+                armorTraining: "Light Armor, Shields",
+                weaponTraining: "Simple Weapons",
+                toolsTraining: "Herbalism Kit",
+                languages: "Celestial, Common, Druidic, Hadozee, Thri-kreen",
+                stats: {
+                    STR: { score: 21, mod: "+5" }, // Exceptional STR (from magical items / custom features)
+                    DEX: { score: 16, mod: "+3" },
+                    CON: { score: 18, mod: "+4" },
+                    INT: { score: 11, mod: "+0" },
+                    WIS: { score: 20, mod: "+5" },
+                    CHA: { score: 13, mod: "+1" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+9", trained: true },
+                    { name: "Dexterity Save", value: "+3", trained: false },
+                    { name: "Constitution Save *", value: "+11", trained: true }, // Boosted via Resilient & Wis mod in shape
+                    { name: "Intelligence Save", value: "+0", trained: false },
+                    { name: "Wisdom Save *", value: "+12", trained: true },
+                    { name: "Charisma Save", value: "+4", trained: false }
+                ],
+                skills: [
+                    { name: "Perception (WIS) *", value: "+10" },
+                    { name: "Insight (WIS) *", value: "+10" },
+                    { name: "Survival (WIS) *", value: "+10" },
+                    { name: "Arcana (INT) *", value: "+6" },
+                    { name: "Nature (INT) *", value: "+6" },
+                    { name: "Athletics (STR) *", value: "+6" }
+                ],
+                spellDC: "17",
+                spellAttack: "+9",
+                combatActions: [
+                    { name: "Starry Wisp (Cantrip)", hit: "+9", formula: "3d8 Radiant", note: "On a hit, the target emits dim light and cannot benefit from being invisible until start of next turn." },
+                    { name: "Primal Strike (Wild Shape Dino Bite)", hit: "+9", formula: "4d12+9 Piercing", note: "Bite attack in dinosaur form. Attacks can deal Radiant damage. Once per turn, add +1d8 Cold, Fire, Lightning, or Thunder." },
+                    { name: "Primal Strike (Wild Shape Dino Tail)", hit: "+9", formula: "4d8+9 Bludgeoning", note: "Tail slam, reach 10 ft." }
+                ],
+                preparedSpells: [
+                    { name: "Starry Wisp", level: "Cantrip", school: "Evocation" },
+                    { name: "Druidcraft", level: "Cantrip", school: "Transmutation" },
+                    { name: "Mending", level: "Cantrip", school: "Transmutation" },
+                    { name: "Faerie Fire", level: "1st", school: "Evocation" },
+                    { name: "Cure Wounds", level: "1st", school: "Evocation" },
+                    { name: "Healing Word", level: "1st", school: "Evocation" },
+                    { name: "Moonbeam", level: "2nd", school: "Evocation" },
+                    { name: "Vortex Warp", level: "2nd", school: "Conjuration" },
+                    { name: "Hold Person", level: "2nd", school: "Enchantment" },
+                    { name: "Dispel Magic", level: "3rd", school: "Abjuration" },
+                    { name: "Revivify", level: "3rd", school: "Conjuration" },
+                    { name: "Call Lightning", level: "3rd", school: "Conjuration" },
+                    { name: "Freedom of Movement", level: "4th", school: "Abjuration" },
+                    { name: "Polymorph", level: "4th", school: "Transmutation" },
+                    { name: "Fount of Moonlight", level: "4th", school: "Evocation" },
+                    { name: "Mass Cure Wounds", level: "5th", school: "Conjuration" },
+                    { name: "Conjure Elemental", level: "5th", school: "Conjuration" },
+                    { name: "Wind Walk", level: "6th", school: "Transmutation" },
+                    { name: "Heal", level: "6th", school: "Evocation" }
+                ],
+                features: [
+                    { name: "Circle Forms (Moon Druid)", text: "Shape-shift into dinosaur or beast forms up to CR 3 (such as towering prehistoric beasts). Your AC is 18 in shape if not higher, you gain +33 Temp HP, and you can cast Moon circle spells." },
+                    { name: "Amorphous & Shape Self", text: "As a Plasmoid ooze, squeeze through spaces as narrow as 1 inch. Extrude a 10 ft pseudopod as a bonus action. Gained Resistance to Acid and Poison." },
+                    { name: "Moonlight Step (5/LR)", text: "As a Bonus Action, teleport up to 30 ft. Gained Advantage on the next attack roll before the end of this turn." },
+                    { name: "Elemental Fury & Primal Strike", text: "Once per turn, attacks with weapons or Dino wild shapes deal an extra 1d8 elemental damage. Wild Shape attacks can deal Radiant damage." }
+                ],
+                equipment: [
+                    { name: "Dimensional Loop", desc: "Attuned magical ring of reality-folding space travel (0 lb)." },
+                    { name: "Sweatband of Protection", desc: "Attuned item granting +1 bonus to AC and all Saving Throws (applied)." },
+                    { name: "Shield of the Mors-Rel", desc: "A spectacular shield granting +2 bonus to AC (19 AC total)." },
+                    { name: "Sweat Bands of the Sea Turtle", desc: "Special cosmic accessory boosting swimming and aquatic flexibility." }
+                ],
+                allies: "Horace Smith, Tyler, the crew of the Nebula's Edge.",
+                organizations: "The Nebula's Edge Spelljammer crew, Circle of the Moon Conclave.",
+                biography: "Jam Bloom is an amorphous, highly adaptable Plasmoid (Ooze) native to the deep and dangerous reaches of Wildspace. Living as an Astral Drifter, Jam joined the crew aboard the Nebula's Edge, a Spelljammer ship navigating the vast starry seas. Combining space-faring ingenuity with ancient cosmic druidic secrets, Jam learned to reshape his moldable body into legendary, heavy prehistoric dinosaur forms crackling with cold, fire, or thunderous force.",
+                conclusion: "The campaign of Shadows in the Stars ended in glorious victory at the beginning of 2025. Confronting the oppressive forces of the Celestial Union who threatened to throw the cosmos into eternal darkness, Jam Bloom and the crew of the Nebula's Edge launched a daring assault on their planar seat of power. Shapeshifting into a colossal, radiant dinosaur, Jam broke through the defensive lines, allowing the crew to shatter the Union's control and successfully free the universe from their tyrannical grip forever.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-violet",
+                themeAccent: "violet",
+                borderClass: "border-violet-500/20",
+                bgGradient: "from-violet-950/40 via-charcoal-900 to-violet-950/40",
+                accentColor: "violet-500",
+                accentText: "text-violet-400",
+                accentBorder: "border-violet-500",
+                accentRing: "ring-violet-500",
+                accentHover: "hover:border-violet-500/40",
+                accentIconBg: "bg-violet-950/40 text-violet-400 border-violet-900/50",
+                groupHoverText: "group-hover:text-violet-400",
+                topBarGradient: "from-violet-800 via-violet-400 to-violet-800",
+                resources: [
+                    { label: "Moonlight Step Uses", detail: "5 teleports per Long Rest", type: "counter", count: 5, max: 5, id: "moonlightstep" },
+                    { label: "Wild Shape", detail: "3 shape-shifts (1 regained on short rest)", type: "counter", count: 3, max: 3, id: "wildshapes" },
+                    { label: "Plasmoid Hold Breath", detail: "Active (Holds breath for 1 hour)", type: "checkbox", count: 1, id: "holdbreath" }
+                ]
+            },
+            {
+                id: "logos",
+                name: "Logos Virtua",
+                nickname: "Logos",
+                species: "Autognome",
+                background: "Sage",
+                subClass: "Genie Patron (Efreeti)",
+                classLevel: "Warlock 9",
+                quote: "FATAL ERROR: Campaign file 'Festival_of_Cause' is corrupted. Rebooting core subroutines...",
+                icon: "fa-robot",
+                campaign: "The Festival of Cause",
+                dm: "Xavier",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Complete memory loss / system reboot) ---
+                status: "Corrupted",
+                statusDate: 2024,
+                statusIcon: "fa-triangle-exclamation",
+                statusClass: "bg-teal-950/80 text-teal-400 border-teal-900/50", // Cyber neon teal frame
+                
+                defaultImg: "/apps/memorial/chars/7.png", // Path to standard portfolio asset location
+                hp: "80 / 80",
+                ac: "18 (Armored Casing)",
+                initiative: "+5",
+                speed: "30 ft (Walking)",
+                armorTraining: "Light Armor",
+                weaponTraining: "Simple Weapons",
+                toolsTraining: "Dice Set, Three-Dragon Ante Set",
+                languages: "Abyssal, Common, Gnomish, Infernal",
+                stats: {
+                    STR: { score: 8, mod: "-1" },
+                    DEX: { score: 20, mod: "+5" },
+                    CON: { score: 16, mod: "+3" },
+                    INT: { score: 13, mod: "+1" },
+                    WIS: { score: 11, mod: "+0" },
+                    CHA: { score: 22, mod: "+6" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "-1", trained: false },
+                    { name: "Dexterity Save", value: "+5", trained: false },
+                    { name: "Constitution Save *", value: "+7", trained: true }, // Resilient CON
+                    { name: "Intelligence Save", value: "+1", trained: false },
+                    { name: "Wisdom Save *", value: "+4", trained: true },
+                    { name: "Charisma Save *", value: "+10", trained: true }
+                ],
+                skills: [
+                    { name: "Arcana (INT) *", value: "+5" },
+                    { name: "Deception (CHA) *", value: "+10" },
+                    { name: "History (INT) *", value: "+5" },
+                    { name: "Intimidation (CHA) *", value: "+10" },
+                    { name: "Investigation (INT) *", value: "+1" },
+                    { name: "Persuasion (CHA) *", value: "+6" }
+                ],
+                spellDC: "18", // Warlock Spell DC 18
+                spellAttack: "+12", // Includes Rod of Pact Keeper +2 (+10 base + 2)
+                combatActions: [
+                    { name: "Eldritch Blast", hit: "+12", formula: "2 Beams (1d10+6 Force each)", note: "Includes +2 from Rod of the Pact Keeper and +6 Agonizing Blast damage bonus. Push targets up to 10 ft on hit." },
+                    { name: "Shocking Grasp", hit: "+12", formula: "2d8 Lightning", note: "Pact Boon cantrip. Prevents target from taking reactions." },
+                    { name: "Vicious Mockery", hit: "DC 18 WIS", formula: "2d4 Psychic", note: "Pact Boon cantrip. Target has Disadvantage on its next attack roll." }
+                ],
+                preparedSpells: [
+                    { name: "Eldritch Blast", level: "Cantrip", school: "Evocation" },
+                    { name: "Mage Hand", level: "Cantrip", school: "Conjuration" },
+                    { name: "Mind Sliver", level: "Cantrip", school: "Enchantment" },
+                    { name: "Shocking Grasp", level: "Cantrip", school: "Evocation" },
+                    { name: "Vicious Mockery", level: "Cantrip", school: "Enchantment" },
+                    { name: "Mending", level: "Cantrip", school: "Transmutation" },
+                    { name: "Hex", level: "1st", school: "Enchantment" },
+                    { name: "Armor of Agathys", level: "1st", school: "Abjuration" },
+                    { name: "Detect Magic", level: "1st", school: "Divination" },
+                    { name: "Suggestion", level: "2nd", school: "Enchantment" },
+                    { name: "Tongues", level: "3rd", school: "Divination" },
+                    { name: "ThunderStep", level: "3rd", school: "Conjuration" },
+                    { name: "Vampiric Touch", level: "3rd", school: "Necromancy" },
+                    { name: "Shadow of Moil", level: "4th", school: "Necromancy" },
+                    { name: "Banishment", level: "4th", school: "Abjuration" }
+                ],
+                features: [
+                    { name: "Genie's Vessel (Efreeti Focus)", text: "Once per Long Rest, magically slip inside your metallic dragon-touched focus for up to 8 hours (Bottled Respite). Deal +4 extra Fire damage on your first hit of each turn." },
+                    { name: "Elemental Flight", text: "As a bonus action (4/Long Rest), gain a flying speed of 30 ft with hover for 10 minutes." },
+                    { name: "Healing Machine", text: "When Mending is cast on you, you can spend a Hit Die to regain HP. You can also be healed by standard healing spells (Cure Wounds, Healing Word) despite your Construct type." },
+                    { name: "Maddening Hex", text: "As a bonus action, deal +6 psychic damage to a target cursed by your Hex spell and any chosen creatures within 5 ft." }
+                ],
+                equipment: [
+                    { name: "Rod of the Pact Keeper, +2", desc: "Attuned rod. Grants +2 bonus to spell attack rolls and your saving throw DCs (applied), and regain 1 warlock spell slot once per long rest." },
+                    { name: "Metallic Focus (Genie Vessel)", desc: "Your attuned Efreeti focus—a complex dragon-touched brass and glass vessel where your patron AI dwells." },
+                    { name: "Tome of Leadership & Influence", desc: "An ancient book studied to permanently raise your core Charisma score to a legendary 22 (+6)." }
+                ],
+                allies: "Unknown due to sector storage failure.",
+                organizations: "None found. Core database corrupted.",
+                biography: "Logos Virtua is an Autognome—a mechanical being of brass, copper, and spellcasting circuits. Built by a long-forgotten sect of artificer-warlocks, Logos escaped his preordained deactivation by striking a pact with a sentient mechanical AI housed within an Efreeti's metallic urn. Seeking to escape the rusting cold of winter, Logos boarded a ship headed to the sunny, partying port city of Lavni for 'The Festival of Cause.' Intellectually obsessed with discovering the mathematical causality of why a festival 'causes' a party, he became entangled in a conspiracy involving the sudden disappearance of the island's King.",
+                conclusion: "While the adventure was successfully completed, Logos's memory files regarding the mission are entirely corrupted. Sometime during the Festival of Cause, a mysterious system crash, magical EMP, or celebratory overload wiped his localized data banks. He successfully helped rescue the King (or perhaps just drank too much fine machine oil in the taverns), but today, his memory of the event returns nothing but a '404: Not Found' error. He remains a fully functional, highly dangerous construct whose past in Lavni is a complete cybernetic mystery.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-teal",
+                themeAccent: "teal",
+                borderClass: "border-teal-500/20",
+                bgGradient: "from-teal-950/40 via-charcoal-900 to-teal-950/40",
+                accentColor: "teal-500",
+                accentText: "text-teal-400",
+                accentBorder: "border-teal-500",
+                accentRing: "ring-teal-500",
+                accentHover: "hover:border-teal-500/40",
+                accentIconBg: "bg-teal-950/40 text-teal-400 border-teal-900/50",
+                groupHoverText: "group-hover:text-teal-400",
+                topBarGradient: "from-teal-800 via-teal-400 to-teal-800",
+                resources: [
+                    { label: "Pact Spell Slots (Lv 5)", detail: "2 slots, regenerates on short rest", type: "checkbox", count: 2, id: "slots" },
+                    { label: "Elemental Flight", detail: "4 flying uses per Long Rest", type: "counter", count: 4, max: 4, id: "flight" },
+                    { label: "Built for Success", detail: "4 d4 bonuses per Long Rest", type: "counter", count: 4, max: 4, id: "builtforsuccess" }
+                ]
+            },
+            {
+                id: "sirvey",
+                name: "Sir Vey Lance",
+                nickname: "Sir Vey",
+                species: "Centaur",
+                background: "Soldier",
+                subClass: "Path of the World Tree",
+                classLevel: "Barbarian 9",
+                quote: "\"No matter how far your hooves carry you, remember, we both stand beneath the same sky.\"",
+                icon: "fa-horse",
+                campaign: "The Heroes Crucible",
+                dm: "Jeremy",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Active / Champion completed in early 2025) ---
+                status: "Champion",
+                statusDate: 2026.5,               // Positioned chronologically in 2025, just before Jam Bloom
+                statusIcon: "fa-trophy",
+                statusClass: "bg-indigo-950/80 text-indigo-400 border-indigo-900/50", // Indigo Champion frame
+                
+                defaultImg: "/apps/memorial/chars/8.png", // Path to standard portfolio asset location
+                hp: "121 / 121",
+                ac: "20 (Mithral Half Plate + Shield)",
+                initiative: "+2",
+                speed: "50 ft (Walking)",
+                armorTraining: "Medium, Light Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Dice Set",
+                languages: "Common, Khur",
+                stats: {
+                    STR: { score: 20, mod: "+5" },
+                    DEX: { score: 14, mod: "+2" },
+                    CON: { score: 20, mod: "+5" },
+                    INT: { score: 12, mod: "+1" },
+                    WIS: { score: 8, mod: "-1" },
+                    CHA: { score: 10, mod: "+0" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+10", trained: true }, // Adv on STR save while Raging
+                    { name: "Dexterity Save", value: "+3", trained: false }, // Adv on DEX save (Danger Sense)
+                    { name: "Constitution Save *", value: "+10", trained: true },
+                    { name: "Intelligence Save", value: "+2", trained: false },
+                    { name: "Wisdom Save", value: "+0", trained: false },
+                    { name: "Charisma Save", value: "+1", trained: false }
+                ],
+                skills: [
+                    { name: "Athletics (STR) *", value: "+9" },
+                    { name: "Intimidation (CHA) *", value: "+4" },
+                    { name: "Perception (WIS) *", value: "+5" },
+                    { name: "Survival (WIS) *", value: "+3" },
+                    { name: "Investigation (INT)", value: "+5" },
+                    { name: "Stealth (DEX)", value: "+6" }
+                ],
+                spellDC: "17",
+                spellAttack: "+9",
+                combatActions: [
+                    { name: "Sir Vey's Lance", hit: "+10", formula: "1d10+13 Piercing", note: "Reach weapon. GWM heavy attack +4 damage included. Once per turn, roll weapon's damage dice twice and choose either (Savage Attacker)." },
+                    { name: "Hooves (Charge Bonus Action)", hit: "+9", formula: "1d6+8 Bludgeoning", note: "If you move 30 ft straight and hit with a melee attack, make d6 hoof attack as a bonus action." },
+                    { name: "SKYBREAKER (Heavy Maul)", hit: "+9", formula: "2d6+8 Bludgeoning", note: "Topple mastery (DC 17 CON save or knocked Prone). Crusher push 5 ft once per turn on hit." }
+                ],
+                preparedSpells: [
+                    { name: "Aid", level: "2nd", school: "Abjuration (Warden's Chain)" },
+                    { name: "Zone of Truth", level: "2nd", school: "Enchantment (Warden's Chain)" }
+                ],
+                features: [
+                    { name: "Vitality of the Tree (Rage)", text: "Upon entering rage, gain 9 Temp HP. At the start of your turn, grant +3d6 Temp HP to another ally within 10 ft." },
+                    { name: "Branches of the Tree", text: "While Raging, use a Reaction to teleport a creature starting its turn within 30 ft (DC 17 STR save) to a space within 5 ft of you and reduce speed to 0." },
+                    { name: "Shield Master", text: "Bonus Action Shield Bash to knock prone or push. Reaction to take no damage on a successful Dexterity saving throw." },
+                    { name: "Savage Attacker & GWM", text: "Once per turn, reroll weapon damage and keep the higher total. Score bonus critical hits and take a bonus action follow-up strike upon reducing an enemy to 0 HP." }
+                ],
+                equipment: [
+                    { name: "Sir Vey's Lance & Shield", desc: "Attuned ancestral lance (6 lb) and custom masterwork crest shield (6 lb)." },
+                    { name: "Mithral Half Plate", desc: "Gleaming half plate forged of lightweight elven mithral, ignoring stealth disadvantage (40 AC base)." },
+                    { name: "Mosshide Troll Belt", desc: "Attuned magical belt of raw primordial power." },
+                    { name: "Ashes of Brogan & Lotus Blossom Pendant", desc: "A silver lotus blossom representing his valley, alongside the tragic urn containing the ashes of his fallen companion, Brogan." }
+                ],
+                allies: "Kelmar Swiftwind (Skybreaker Scout), the Crucible Team, Horace.",
+                organizations: "Skybreaker Centaur Herd, Erundor Warden's Guild.",
+                biography: "Sir Vey Lance grew up as a proud, witty warrior in Thunderhoof Valley, where centaurs of the Skybreaker Herd lived in strict seclusion. While his tribe feared the outside world, the chieftain recognized a growing darkness beyond the valley's borders and chose Sir Vey for a critical reconnaissance mission. Carrying the silver lotus blossom given to him by his father, Sir Vey traveled to the bustling harbor city of Erckido, where he joined the legendary 'Heroes Crucible'—a colossal, brutal multi-stage colosseum tournament designed to test the bravest adventurers in the mortal realms.",
+                conclusion: "The Crucible tournament was a saga of immense glory and devastating heartbreak. Fought under Jeremy's brutal dungeon mastery, the campaign became the group's longest, most grueling expedition. Along the way, the party suffered the tragic loss of two beloved companions—Brogan and Jerga (both played by Chris). Carrying Brogan's ashes in his saddlebag, Sir Vey rallied his remaining allies, dominated the arena's final trials, and cleared the colosseum's darkest secrets. In early 2026, Sir Vey and his team triumphed over the tournament, inheriting the colossal mountain fortress of Heathhelm as their eternal reward. The campaign is still ongoing, but their names are permanently etched into Erckido's history.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-indigo",
+                themeAccent: "indigo",
+                borderClass: "border-indigo-500/20",
+                bgGradient: "from-indigo-950/40 via-charcoal-900 to-indigo-950/40",
+                accentColor: "indigo-500",
+                accentText: "text-indigo-400",
+                accentBorder: "border-indigo-500",
+                accentRing: "ring-indigo-500",
+                accentHover: "hover:border-indigo-500/40",
+                accentIconBg: "bg-indigo-950/40 text-indigo-400 border-indigo-900/50",
+                groupHoverText: "group-hover:text-indigo-400",
+                topBarGradient: "from-indigo-800 via-indigo-400 to-indigo-800",
+                resources: [
+                    { label: "Rage Uses", detail: "4 rages per Long Rest", type: "checkbox", count: 4, id: "rages" },
+                    { label: "Warden's Chain Charges", detail: "4 charges total (Aid / Zone of Truth)", type: "counter", count: 4, max: 4, id: "wardens" },
+                    { label: "Ashes of Brogan", detail: "Memorial ashes carried with honor", type: "checkbox", count: 1, id: "brogan" }
+                ]
+            }
+        ];
+
+        let activeHero = '';
+
+        // Initialize state for tracking resources locally
+        const localResources = {};
+
+        // Generate Selector Cards Dynamically (Sorted Chronologically)
+        function renderSelectorCards() {
+            const grid = document.getElementById('selector-grid');
+            grid.innerHTML = '';
+
+            // Sort characters chronologically by Year (Oldest to Newest)
+            // Reddyl (2021) -> Edwin (2022) & Garfield (2022) -> Kusso (2023) -> Logos (2024) -> Sir Vey (2025.1) -> Jam Bloom (2025.2) -> Artie (2026)
+            const sortedCharacters = [...characterList].sort((a, b) => a.statusDate - b.statusDate);
+
+            // Update counter info
+            document.getElementById('pantheon-count').textContent = `${sortedCharacters.length} Heroes Archived`;
+
+            sortedCharacters.forEach(hero => {
+                const button = document.createElement('button');
+                button.id = `selector-${hero.id}`;
+                button.onclick = () => selectHero(hero.id);
+                button.className = `group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 ${hero.accentHover} hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent`;
+
+                button.innerHTML = `
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-${hero.accentColor} pointer-events-none transition duration-500">
+                        <i class="fa-solid ${hero.icon}"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl ${hero.accentIconBg} flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid ${hero.icon}"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white ${hero.groupHoverText} transition">${hero.name}</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${hero.statusClass}">${hero.status}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level ${hero.classLevel} &bull; ${hero.subClass}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 ${hero.groupHoverText} transition pl-2"></i>
+                `;
+
+                grid.appendChild(button);
+            });
+        }
+
+        // Switch layout dynamically
+        function selectHero(heroId) {
+            activeHero = heroId;
+            const data = characterList.find(c => c.id === heroId);
+            if (!data) return;
+
+            // Update selector ring classes dynamically
+            characterList.forEach(c => {
+                const card = document.getElementById(`selector-${c.id}`);
+                if (card) {
+                    card.classList.remove(c.accentRing, 'border-transparent');
+                    // Add back baseline borders
+                    card.classList.add('border-charcoal-800');
+                }
+            });
+
+            const activeCard = document.getElementById(`selector-${heroId}`);
+            if (activeCard) {
+                activeCard.classList.add(data.accentRing, 'border-transparent');
+                activeCard.classList.remove('border-charcoal-800');
+            }
+
+            // Update accent border on top
+            document.getElementById('top-accent-bar').className = `h-1.5 w-full bg-gradient-to-r ${data.topBarGradient} transition-all duration-700`;
+
+            // Update theme wrapper classes on portrait
+            const wrapper = document.getElementById('portrait-wrapper');
+            wrapper.className = `bg-charcoal-900 rounded-2xl border p-4 transition-all duration-500 relative group overflow-hidden ${data.themeClass}`;
+
+            // Update Portrait Visuals
+            const placeholder = document.getElementById('portrait-placeholder');
+            const charImg = document.getElementById('char-image');
+            const quoteEl = document.getElementById('portrait-quote');
+            const centerIcon = document.getElementById('portrait-center-icon');
+
+            quoteEl.textContent = `"${data.quote}"`;
+            centerIcon.innerHTML = `<i class="fa-solid ${data.icon} text-2xl"></i>`;
+
+            // Setup prioritization: 
+            // 1st: Any user-configured override in localStorage.
+            // 2nd: The hardcoded image URL configurations in code data.
+            const savedImg = localStorage.getItem(`${heroId}_portrait_url`);
+            const defaultImg = data.defaultImg;
+            const activeImgUrl = savedImg || defaultImg;
+
+            if (activeImgUrl) {
+                charImg.src = activeImgUrl;
+                charImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                document.getElementById('image-url-field').value = savedImg || '';
+            } else {
+                charImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                document.getElementById('image-url-field').value = '';
+            }
+
+            // Basic text injection
+            document.getElementById('panel-name').textContent = data.name;
+            document.getElementById('panel-sub').textContent = `${data.classLevel} &bull; ${data.subClass}`;
+            document.getElementById('sub-badge').textContent = data.background;
+            document.getElementById('biography-text').textContent = data.biography;
+            document.getElementById('campaign-end-text').textContent = data.conclusion;
+            
+            // Dynamic Status & Date assignment
+            document.getElementById('retired-date').textContent = `${data.status}: ${Math.floor(data.statusDate)}`;
+            document.getElementById('campaign-title').textContent = `Campaign: ${data.campaign}`;
+            document.getElementById('allies-list').textContent = data.allies;
+            document.getElementById('orgs-list').textContent = data.organizations;
+
+            // Render dynamic Status Badge on Portrait Frame
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.className = `px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md shadow-lg pulse-badge ${data.statusClass}`;
+            statusBadge.innerHTML = `<i class="fa-solid ${data.statusIcon} mr-1 text-[8px] animate-pulse"></i> ${data.status}`;
+
+            // Update dynamic Chronicle Header (Campaign name and DM with matching accent colors)
+            const chronicleHeader = document.getElementById('chronicle-header');
+            const campaignNameEl = document.getElementById('chronicle-campaign-name');
+            const dmNameEl = document.getElementById('chronicle-dm-name');
+
+            campaignNameEl.textContent = data.campaign;
+            // Preserving proper capitalization format ("DM: Sarah Chen" or "DM: Jeremy" or "DM: Tyler" or "DM: Sean" or "DM: Xavier")
+            dmNameEl.textContent = `DM: ${data.dm}`;
+
+            chronicleHeader.className = `text-xs font-bold uppercase tracking-widest border-b border-charcoal-800 pb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-${data.accentColor}`;
+
+            // Background icon change
+            const bgIcon = document.getElementById('chronicle-bg-icon');
+            bgIcon.innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
+
+            // Load Vitals Sheet Grid
+            const vitalsGrid = document.getElementById('vitals-matrix');
+            vitalsGrid.innerHTML = `
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Max Hit Points</span>
+                    <div class="text-2xl font-serif text-red-500 font-bold mt-1">${data.hp}</div>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Armor Class</span>
+                    <div class="text-2xl font-serif text-sky-400 font-bold mt-1">${data.ac.split(' ')[0]}</div>
+                    <span class="text-[9px] text-slate-500 block leading-tight mt-0.5">${data.ac.substring(data.ac.indexOf('('))}</span>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Initiative</span>
+                    <div class="text-2xl font-serif text-amber-500 font-bold mt-1">${data.initiative}</div>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Speed</span>
+                    <div class="text-xl font-serif text-emerald-400 font-bold mt-1">${data.speed.split(' ')[0]} <span class="text-xs">ft</span></div>
+                    <span class="text-[9px] text-slate-500 block mt-0.5">${data.speed.includes('Climb') ? 'Walking & Climb' : 'Walking Speed'}</span>
+                </div>
+            `;
+
+            // Setup Proficiencies details
+            document.getElementById('info-prof-weapons').textContent = `${data.armorTraining}, ${data.weaponTraining}`;
+            document.getElementById('info-prof-tools').textContent = `${data.toolsTraining}`;
+
+            // Load Resources track
+            renderResources(heroId);
+
+            // Populate Stats Tab
+            populateStats(data);
+
+            // Populate Magic Tab
+            populateMagic(data);
+
+            // Populate Features & Equipment
+            populateFeaturesAndEquip(data);
+
+            // Maintain active tab
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab) {
+                const tabId = activeTab.id.replace('btn-', '');
+                switchTab(tabId);
+            } else {
+                switchTab('vitals');
+            }
+        }
+
+        // Automatic fallback handler if relative image resources are missing from server
+        function handleImageError() {
+            const charImg = document.getElementById('char-image');
+            const placeholder = document.getElementById('portrait-placeholder');
+            
+            // Revert back to beautiful SVG silhouette layout on server resource error
+            charImg.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+
+        // Render resource boxes dynamically
+        function renderResources(heroId) {
+            const data = characterList.find(c => c.id === heroId);
+            const container = document.getElementById('resources-grid');
+            container.innerHTML = '';
+
+            data.resources.forEach(res => {
+                const stateKey = `${heroId}_${res.id}`;
+                if (localResources[stateKey] === undefined) {
+                    localResources[stateKey] = res.count;
+                }
+
+                const currentCount = localResources[stateKey];
+
+                const card = document.createElement('div');
+                card.className = "bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 flex justify-between items-center";
+
+                let interactiveControl = '';
+                if (res.type === 'counter') {
+                    interactiveControl = `
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustLocalCount('${stateKey}', -1, ${res.max})" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+                            <span id="counter-${stateKey}" class="text-sm font-bold text-white w-4 text-center">${currentCount}</span>
+                            <button onclick="adjustLocalCount('${stateKey}', 1, ${res.max})" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    `;
+                } else if (res.type === 'checkbox') {
+                    let boxes = '';
+                    for (let i = 0; i < res.count; i++) {
+                        const boxKey = `${stateKey}_box_${i}`;
+                        const isChecked = localStorage.getItem(boxKey) === 'true';
+                        boxes += `
+                            <input type="checkbox" id="${boxKey}" ${isChecked ? 'checked' : ''} onchange="toggleLocalCheckbox('${boxKey}')" class="w-5 h-5 rounded accent-emerald-500 bg-charcoal-800 border-charcoal-700">
+                        `;
+                    }
+                    interactiveControl = `<div class="flex gap-2">${boxes}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">${res.label}</h5>
+                        <p class="text-[11px] text-slate-500">${res.detail}</p>
+                    </div>
+                    ${interactiveControl}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Adjust counting trackers with audio synthesizer confirmation
+        function adjustLocalCount(key, amount, max) {
+            let val = localResources[key];
+            val += amount;
+            if (val < 0) val = 0;
+            if (val > max) val = max;
+            localResources[key] = val;
+            document.getElementById(`counter-${key}`).textContent = val;
+            playSynthTone(amount > 0 ? 520 : 380, 'sine', 0.1);
+        }
+
+        // Toggle checkbox state with audio synthesis response
+        function toggleLocalCheckbox(key) {
+            const cb = document.getElementById(key);
+            localStorage.setItem(key, cb.checked);
+            playSynthTone(cb.checked ? 300 : 450, 'triangle', 0.08);
+        }
+
+        // Render Stats Grid & Skills
+        function populateStats(data) {
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = '';
+
+            Object.entries(data.stats).forEach(([stat, details]) => {
+                const statBox = document.createElement('div');
+                statBox.className = "bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center";
+                statBox.innerHTML = `
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">${stat}</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">${details.score}</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">${details.mod}</div>
+                `;
+                statsGrid.appendChild(statBox);
+            });
+
+            // Saves List
+            const savesList = document.getElementById('saves-list');
+            savesList.innerHTML = '';
+            data.saves.forEach(save => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center border-b border-charcoal-900 pb-1.5";
+                item.innerHTML = `
+                    <span class="${save.trained ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${save.name} ${save.trained ? '<span class="text-amber-500 text-[9px] ml-1">*</span>' : ''}</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">${save.value}</span>
+                `;
+                savesList.appendChild(item);
+            });
+
+            // Skills List
+            const skillsList = document.getElementById('skills-list');
+            skillsList.innerHTML = '';
+            data.skills.forEach(skill => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center border-b border-charcoal-900 pb-1.5";
+                item.innerHTML = `
+                    <span class="text-slate-300">${skill.name}</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">${skill.value}</span>
+                `;
+                skillsList.appendChild(item);
+            });
+        }
+
+        // Populate Spells Tab
+        function populateMagic(data) {
+            document.getElementById('magic-dc').textContent = data.spellDC;
+            document.getElementById('magic-attack').textContent = data.spellAttack;
+
+            const actionsList = document.getElementById('combat-actions-list');
+            actionsList.innerHTML = '';
+            data.combatActions.forEach(act => {
+                const box = document.createElement('div');
+                box.className = "p-3 bg-charcoal-900 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs";
+                box.innerHTML = `
+                    <div>
+                        <h5 class="font-bold text-slate-200">${act.name}</h5>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${act.note}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-500 text-[9px] uppercase tracking-wider">Hit / Damage</span>
+                        <span class="text-amber-400 font-bold">${act.hit}</span> &bull; <span class="text-amber-500 font-mono font-bold">${act.formula}</span>
+                    </div>
+                `;
+                actionsList.appendChild(box);
+            });
+
+            // Spellbook Grid
+            const spellbookGrid = document.getElementById('spellbook-grid');
+            spellbookGrid.innerHTML = '';
+            data.preparedSpells.forEach(spell => {
+                const box = document.createElement('div');
+                box.className = "p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs";
+                box.innerHTML = `
+                    <span class="text-slate-300 font-medium">${spell.name}</span>
+                    <span class="text-slate-500 italic">${spell.level} &bull; ${spell.school}</span>
+                `;
+                spellbookGrid.appendChild(box);
+            });
+        }
+
+        // Populate Features & Equipment
+        function populateFeaturesAndEquip(data) {
+            const featGrid = document.getElementById('features-grid');
+            featGrid.innerHTML = '';
+            data.features.forEach(feat => {
+                const box = document.createElement('div');
+                box.className = "bg-charcoal-950 p-4 rounded-xl border border-charcoal-800";
+                box.innerHTML = `
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">${feat.name}</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${feat.text}</p>
+                `;
+                featGrid.appendChild(box);
+            });
+
+            const equipGrid = document.getElementById('equipment-grid');
+            equipGrid.innerHTML = '';
+            data.equipment.forEach(item => {
+                const box = document.createElement('div');
+                box.className = "bg-charcoal-950 p-4 rounded-xl border border-charcoal-800";
+                box.innerHTML = `
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-500/70 text-[10px]"></i> ${item.name}
+                    </h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${item.desc}</p>
+                `;
+                equipGrid.appendChild(box);
+            });
+        }
+
+        // Tab Navigation switching controller
+        function switchTab(tabId) {
+            const data = characterList.find(c => c.id === activeHero);
+            if (!data) return;
+
+            const tabs = ['vitals', 'stats', 'magic', 'features'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                
+                const btn = document.getElementById(`btn-${t}`);
+                btn.className = "tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all duration-300";
+            });
+
+            document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            
+            // Apply customized color based on theme context
+            const activeColorClass = data.accentBorder;
+            const activeTextColorClass = data.accentText;
+
+            activeBtn.className = `tab-btn active flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 ${activeColorClass} ${activeTextColorClass} transition-all duration-300 bg-charcoal-950/20`;
+        }
+
+        // Image Uploader url triggers
+        function toggleUrlField() {
+            const panel = document.getElementById('image-url-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        // Update custom portraits in local storage (allows custom overrides per device)
+        function updatePortrait() {
+            const input = document.getElementById('image-url-field');
+            const url = input.value.trim();
+            const placeholder = document.getElementById('portrait-placeholder');
+            const charImg = document.getElementById('char-image');
+
+            if (url) {
+                charImg.src = url;
+                charImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                localStorage.setItem(`${activeHero}_portrait_url`, url);
+                document.getElementById('image-url-panel').classList.add('hidden');
+                playSynthTone(600, 'sine', 0.15);
+            } else {
+                // Clear back to the hardcoded default relative server URL
+                localStorage.removeItem(`${activeHero}_portrait_url`);
+                selectHero(activeHero);
+            }
+        }
+
+        // Audio System chimes & Ambient Synthesis Controls
+        let audioCtx = null;
+        let ambientPlaying = false;
+        let droneOsc1 = null;
+        let droneOsc2 = null;
+        let droneGain = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSynthTone(freq, type, duration) {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (err) {
+                // Audio context block fallbacks
+            }
+        }
+
+        function toggleAmbiance() {
+            initAudio();
+            const icon = document.getElementById('audio-icon');
+            const btn = document.getElementById('ambient-toggle');
+
+            if (ambientPlaying) {
+                if (droneOsc1) droneOsc1.stop();
+                if (droneOsc2) droneOsc2.stop();
+                icon.className = "fa-solid fa-volume-xmark";
+                btn.className = "w-10 h-10 rounded-full bg-charcoal-900 border border-charcoal-800 hover:border-amber-500/50 text-slate-500 hover:text-slate-300 flex items-center justify-center shadow-2xl transition duration-300";
+                ambientPlaying = false;
+            } else {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                droneGain = audioCtx.createGain();
+                droneGain.gain.setValueAtTime(0.02, audioCtx.currentTime); // Soft atmospheric volume
+
+                droneOsc1 = audioCtx.createOscillator();
+                droneOsc1.type = 'sine';
+                droneOsc1.frequency.setValueAtTime(110.00, audioCtx.currentTime); // A2 fundamental drone
+
+                droneOsc2 = audioCtx.createOscillator();
+                droneOsc2.type = 'triangle';
+                droneOsc2.frequency.setValueAtTime(164.81, audioCtx.currentTime); // E3 perfect fifth
+
+                droneOsc1.connect(droneGain);
+                droneOsc2.connect(droneGain);
+                gain = droneGain;
+                droneGain.connect(audioCtx.destination);
+
+                droneOsc1.start();
+                droneOsc2.start();
+
+                icon.className = "fa-solid fa-volume-high text-amber-500";
+                btn.className = "w-10 h-10 rounded-full bg-charcoal-900 border border-amber-500/50 text-amber-500 flex items-center justify-center shadow-2xl transition duration-300";
+                ambientPlaying = true;
+            }
+        }
+
+        // Initialize display to the first sorted character on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSelectorCards();
+            
+            // Sort characters chronologically to select the oldest story by default (Reddyl in 2021)
+            const sorted = [...characterList].sort((a, b) => a.statusDate - b.statusDate);
+            if (sorted.length > 0) {
+                selectHero(sorted[0].id);
+            }
+        });
+    </script>
+</body>
+</html>
