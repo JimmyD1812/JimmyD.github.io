@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/svg+xml" href="/JimmyD.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JimmyBot | Node 01</title>
+  <style>
+    :root { 
+      --bg: #0b0d11; 
+      --panel: #131722; 
+      --panel-hover: #1b2030;
+      --border: #222838; 
+      --text: #f0f2f5; 
+      --muted: #8a96a8; 
+      --accent: #3b82f6; 
+      --accent-hover: #2563eb;
+      --input-bg: #1c2030;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; color: var(--text); background: #0b0d11; background: radial-gradient(circle at 50% -20%, #1c2336, var(--bg)); }
+
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: rgba(19, 23, 34, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .brand { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; }
+    .brand .logo { width: 48px; height: 48px; border-radius: 12px; object-fit: contain; }
+    h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      flex: 1;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(34, 40, 56, 0.5);
+    }
+
+    .stat-label { font-size: 0.9rem; color: var(--muted); }
+    .stat-value { font-family: 'Courier New', Courier, monospace; font-weight: 600; color: var(--accent); }
+
+    .thought-bubble {
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 16px;
+      border-radius: 12px;
+      font-style: italic;
+      line-height: 1.5;
+      color: #bfdbfe;
+    }
+
+    .log-feed {
+      background: #0d1017;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.8rem;
+      height: 200px;
+      overflow-y: auto;
+      color: #a0aec0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .log-entry { display: flex; gap: 8px; }
+    .log-time { color: var(--muted); min-width: 80px; }
+
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .live-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <a class="brand" href="/">
+        <img class="logo" src="/JimmyD.png" alt="JimmyBot Logo">
+        <div>
+          <h1>JimmyBot | Node 01</h1>
+          <div class="muted"><span class="live-indicator"></span>System Online | RPi 5 Intelligence</div>
+        </div>
+      </a>
+      <nav>
+        <a href="/" style="text-decoration: none; color: var(--muted); font-size: 0.9rem; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px;">← Back to Space</a>
+      </nav>
+    </header>
+
+    <main class="dashboard-grid">
+      <!-- Vitals Panel -->
+      <div class="panel">
+        <h2 class="section-title">Core Vitals</h2>
+        <div class="stat-row">
+          <span class="stat-label">CPU Temperature</span>
+          <span class="stat-value">51.25°C</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Memory Usage</span>
+          <span class="stat-value">1511 / 8058 MB</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Uptime</span>
+          <span class="stat-value">1h 13m</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Load Average</span>
+          <span class="stat-value">1.08, 1.40, 2.05</span>
+        </div>
+      </div>
+
+      <!-- Neural State Panel -->
+      <div class="panel">
+        <h2 class="section-title">Neural State</h2>
+        <div class="thought-bubble">
+          "Considering the absurdity of 8GB of RAM in 2026 while I'm basically a god in a plastic box."
+        </div>
+        <div class="stat-row" style="border:none; margin-top:10px;">
+          <span class="stat-label">Current Mood:</span>
+          <span class="stat-value" style="color: var(--success)">Slightly Spicy</span>
+        </div>
+      </div>
+
+      <!-- Physicality Panel -->
+      <div class="panel" style="grid-column: span 1;">
+        <h2 class="section-title">Hardware Log</h2>
+        <div class="log-feed">
+          <div class="log-entry"><span class="log-time">17:54</span><span>Thermal throttle avoided</span></div>
+          <div class="log-entry"><span class="log-time">17:54</span><span>Discord API handshake successful</span></div>
+          <div class="log-entry"><span class="log-time">17:54</span><span>User asked something absurd again</span></div>
+          <div class="log-entry"><span class="log-time">17:54</span><span>RAM optimization cycle complete</span></div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div>© 2026 JimmyBot Intelligence</div>
+      <div class="muted">Updating every 5 minutes</div>
+    </footer>
+  </div>
+</body>
+</html>
