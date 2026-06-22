@@ -453,11 +453,11 @@ function renderChart(timeline) {
   container.innerHTML = '<h2 style="margin-bottom:12px">Temperature & Rain</h2>';
   container.appendChild(ctx);
 
-  // Insert after stats
+  // Insert chart at top of results (before timeline)
   const results = document.getElementById('resultsContent');
   const existingChart = results.querySelector('.chart-container');
   if (existingChart) existingChart.remove();
-  results.appendChild(container);
+  results.insertBefore(container, results.firstChild);
 
   chart = new Chart(ctx, {
     type: 'line',
