@@ -221,7 +221,7 @@ function showGeoDropdown(inputEl, results, onSelect) {
 
 function hideGeoDropdown(inputEl) {
   const dd = inputEl.parentElement.querySelector('.geo-dropdown');
-  if (dd) setTimeout(() => dd.remove(), 200);
+  if (dd) setTimeout(() => dd.remove(), 300);
 }
 
 function setupGeoInput(inputEl) {
@@ -237,6 +237,13 @@ function setupGeoInput(inputEl) {
     }, GEO_DEBOUNCE);
   });
   inputEl.addEventListener('blur', () => { hideGeoDropdown(inputEl); });
+  // Prevent input from losing focus when clicking/tapping dropdown items
+  const preventDropdownBlur = (e) => {
+    const dd = inputEl.parentElement.querySelector('.geo-dropdown');
+    if (dd && dd.contains(e.target)) e.preventDefault();
+  };
+  inputEl.addEventListener('mousedown', preventDropdownBlur);
+  inputEl.addEventListener('touchstart', preventDropdownBlur);
   inputEl._getCachedResult = () => cachedResult;
 }
 
