@@ -54,6 +54,11 @@
     border-radius: 2px; color: var(--text); font-size: 16px; outline: none; transition: border-color 0.15s;
   }
   .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field input:-webkit-autofill, .field input:-webkit-autofill:hover, .field input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px var(--bg) inset !important;
+    -webkit-text-fill-color: var(--text) !important;
+    caret-color: var(--text);
+  }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   .btn {
@@ -234,7 +239,7 @@ function showGeoDropdown(inputEl, results, onSelect) {
 
   const dropdown = document.createElement('div');
   dropdown.className = 'geo-dropdown';
-  dropdown.style.cssText = 'position:absolute;background:#fff;border:1px solid var(--border);border-radius:2px;max-height:180px;overflow-y:auto;width:100%;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.08);';
+  dropdown.style.cssText = 'position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:2px;max-height:180px;overflow-y:auto;width:100%;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.08);';
 
   results.forEach(r => {
     const opt = document.createElement('div');
