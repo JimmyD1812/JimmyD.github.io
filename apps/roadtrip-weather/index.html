@@ -550,11 +550,14 @@ async function reverseGeocode(lat, lon) {
 }
 
 if ('geolocation' in navigator && 'ontouchstart' in window) {
+  alert('Geolocation available, requesting...');
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
+      alert('Got position: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
       try {
         const { latitude, longitude } = pos.coords;
         const label = await reverseGeocode(latitude, longitude);
+        alert('Reverse geocode result: ' + label);
         const displayLabel = label || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
         const input = document.getElementById('startInput');
         input.value = displayLabel;
@@ -568,11 +571,11 @@ if ('geolocation' in navigator && 'ontouchstart' in window) {
         input.style.borderColor = 'var(--accent2)';
         setTimeout(() => { input.style.borderColor = ''; }, 1500);
       } catch (e) {
-        console.warn('Geolocation autofill failed:', e);
+        alert('Reverse geocode failed: ' + e.message);
       }
     },
     (err) => {
-      console.warn('Geolocation permission denied or unavailable:', err.message);
+      alert('Geolocation error: ' + err.message);
     },
     { timeout: 8000, maximumAge: 600000 }
   );
