@@ -85,8 +85,18 @@
   .waypoint-marker.end { background: var(--danger); width: 16px; height: 16px; }
 
   @media (max-width: 900px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: auto 50vh 1fr; }
+    .app { grid-template-columns: 1fr; grid-template-rows: auto 40vh 1fr; }
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    #map { grid-row: 2; }
+    .sidebar { grid-row: 3; }
+    .form-section { padding: 12px 16px; }
+    .form-section h2 { margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+    .form-section h2::after { content: '▾'; font-size: 0.65rem; transition: transform 0.2s; }
+    .form-section.collapsed h2::after { transform: rotate(-90deg); }
+    .form-section.collapsed .field,
+    .form-section.collapsed .field-row,
+    .form-section.collapsed .btn { display: none; }
+    .results-section { padding: 12px 16px; }
   }
 </style>
 </head>
@@ -100,7 +110,7 @@
 
   <div class="sidebar">
     <div class="form-section">
-      <h2>Trip Details</h2>
+      <h2 id="formToggle">Trip Details</h2>
       <div class="field">
         <label>Start Location</label>
         <input type="text" id="startInput" placeholder="Denver, CO" value="Denver, CO">
@@ -292,6 +302,10 @@ async function planTrip() {
   } finally {
     goBtn.disabled = false;
     goBtn.textContent = 'Plan Trip';
+    if (window.innerWidth <= 900) {
+      document.querySelector('.form-section').classList.add('collapsed');
+      if (map) setTimeout(() => map.invalidateSize(), 100);
+    }
   }
 }
 
@@ -439,6 +453,19 @@ const yyyy = today.getFullYear();
 const mm = String(today.getMonth()+1).padStart(2,'0');
 const dd = String(today.getDate()).padStart(2,'0');
 document.getElementById('dateInput').value = `${yyyy}-${mm}-${dd}`;
+
+// Mobile form collapse toggle
+const formSection = document.querySelector('.form-section');
+const formToggle = document.getElementById('formToggle');
+if (formToggle) {
+  formToggle.addEventListener('click', () => {
+    formSection.classList.toggle('collapsed');
+    if (map) setTimeout(() => map.invalidateSize(), 100);
+  });
+}
+
+// Re-validate map size on resize
+window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
 </script>
 </body>
 </html>
