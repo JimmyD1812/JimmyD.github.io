@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<!-- saved from url=(0021)https://jimmyd.space/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <link rel="icon" type="image/svg+xml" href="./JimmyD _ Workspace_files/JimmyD.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JimmyD | Workspace</title>
+  <meta name="description" content="Personal projects, mini-apps, and community space by JimmyD.">
+  <link rel="stylesheet" href="/jimmyd-theme.css">
+  <style>
+    /* ===== App-specific overrides: JimmyD Workspace Index ===== */
+    :root {
+      --bg: #faf8f5;
+      --panel: #ffffff;
+      --panel-hover: #f5f0ea;
+      --border: #e2ddd6;
+      --text: #2c2824;
+      --muted: #7a736b;
+      --accent: #b45309;
+      --accent-hover: #92400e;
+      --input-bg: #faf8f5;
+      --danger: #c62828;
+      --success: #2e7d32;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); }
+
+    /* Wall Disclaimer Banner */
+    .wall-disclaimer {
+      display: flex;
+      gap: 5px;
+      align-items: flex-start;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: #92400e;
+    }
+
+    /* Epic Games Overlay */
+    .epic-wrapper { position: relative; display: inline-block; }
+    .epic-overlay {
+      display: none;
+      position: absolute;
+      top: 48px;
+      right: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 100;
+      min-width: 180px;
+      animation: fadeIn 0.15s ease-out;
+    }
+    .epic-overlay.active { display: block; }
+    .epic-username { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .epic-title { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .disclaimer-icon { font-size: 1rem; line-height: 1; margin-top: 1px; }
+
+    /* Layout */
+    .app-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Flat Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; }
+    .brand .logo { width: 48px; height: 48px; border-radius: 4px; object-fit: contain; }
+    h1 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 1.25rem; font-weight: 700; color: var(--text); }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+
+    /* Header Nav */
+    header nav { display: flex; align-items: center; gap: 16px; }
+    .profile-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .profile-link svg { width: 18px; height: 18px; fill: currentColor; }
+    .profile-link.github:hover { color: #2c2824; background: #f0f0f0; border-color: #2c2824; }
+    .profile-link.steam:hover { color: #00adee; background: rgba(0,173,238,0.08); border-color: #00adee; }
+    .profile-link.epic:hover { color: #313131; background: #f0f0f0; border-color: #313131; }
+    .profile-link.discord:hover { color: #5865f2; background: rgba(88,101,242,0.08); border-color: #5865f2; }
+    .profile-link.youtube:hover { color: #ff0000; background: rgba(255,0,0,0.08); border-color: #ff0000; }
+
+    /* Dashboard Grid */
+    .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; flex: 1; }
+
+    /* Sidebar */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+    .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding-left: 4px; font-weight: 600; }
+    .project-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: #d0c8bd; background: var(--panel-hover); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .card h3 { font-size: 1rem; font-weight: 600; }
+    .tag { font-size: 0.7rem; font-weight: 600; padding: 2px 8px; background: #fef3c7; border: 1px solid #fde68a; border-radius: 4px; color: #b45309; }
+    .card p { font-size: 0.85rem; line-height: 1.4; }
+
+    /* Main Space / Wall */
+    .main-space {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      height: calc(100vh - 140px);
+      min-height: 600px;
+    }
+
+    .wall-feed {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) var(--bg);
+    }
+
+    .post {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 4px;
+      animation: fadeIn 0.2s ease-in;
+    }
+    .post-meta { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; }
+    .post-author { font-weight: 600; }
+    .post-author.owner { color: var(--success); }
+    .post-time { color: var(--muted); }
+    .post-content { font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+
+    /* Wall Form */
+    .wall-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--bg);
+      padding: 16px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .form-row { display: flex; gap: 12px; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group.alias { width: 200px; }
+    .input-group.message { flex: 1; }
+    .form-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .wall-input {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 2px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .wall-input:focus { border-color: var(--accent); }
+    .form-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .status-msg { font-size: 0.85rem; font-weight: 500; }
+    .status-msg.error { color: var(--danger); }
+    .status-msg.success { color: var(--success); }
+    .submit-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-weight: 600;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+    .submit-btn:hover { background: var(--accent-hover); }
+
+    /* Footer */
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 850px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .main-space { height: auto; min-height: 500px; }
+      .form-row { flex-direction: column; }
+      .input-group.alias { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <a class="brand" href="https://jimmyd.space/">
+        <img class="logo" src="./JimmyD _ Workspace_files/JimmyD.png" alt="JimmyD Logo">
+        <div>
+          <h1>JimmyD’s Space</h1>
+          <div class="muted">Little tools, experiments, and open canvas</div>
+        </div>
+      </a>
+      
+      <nav>
+        <a class="profile-link github" href="https://github.com/jimmyd1812" target="_blank" rel="noopener noreferrer" title="GitHub">
+          <svg role="img" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
+        </a>
+        
+       <a class="profile-link steam" href="https://steamcommunity.com/id/JimmyD_/" target="_blank" rel="noopener noreferrer" title="Steam">
+          <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"></path></svg>
+        </a>
+
+        <div class="epic-wrapper">
+          <button class="profile-link epic" onclick="toggleEpicOverlay(event)" title="Epic Games Account" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); cursor: pointer; outline: none;">
+          <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.538 0C2.166 0 1.66.506 1.66 1.878v16.565c0 .155.007.299.019.431.034.302.037.593.317.922.026.038.31.246.31.246.151.076.257.128.43.2l8.334 3.492c.431.197.613.276.926.265H12c.317.011.499-.068.93-.265l8.333-3.492c.174-.072.276-.124.431-.2 0 0 .284-.212.31-.246.28-.329.283-.62.317-.922.012-.132.02-.276.02-.43V1.877C22.34.506 21.833 0 20.461 0zm13.356 3.11h.68c1.134 0 1.686.552 1.686 1.697v1.879h-1.372V4.883c0-.367-.17-.537-.525-.537h-.234c-.367 0-.537.17-.537.537v5.813c0 .366.17.536.537.536h.26c.352 0 .522-.17.522-.536v-2.08h1.376v2.144c0 1.145-.564 1.708-1.701 1.708h-.692c-1.141 0-1.7-.567-1.7-1.708V4.819c0-1.142.559-1.709 1.7-1.709zm-12.188.076H7.82v1.277H6.104v2.604h1.652v1.274H6.104v2.774h1.739v1.274H4.706zm3.817 0h2.196c1.137 0 1.7.567 1.7 1.712v2.445c0 1.145-.563 1.709-1.7 1.709h-.794v3.337H8.523zm4.528 0h1.398v9.203h-1.398zm-3.13 1.24v3.39h.579c.351 0 .521-.17.521-.54v-2.31c0-.37-.17-.54-.521-.54zM6.066 14.58h.208l.046.007h.075l.038.012h.038l.038.011.037.008.034.007.034.008.034.007.038.012.03.007.03.012.038.011.03.015.039.015.034.015.03.02.038.014.026.02.038.018.03.02.034.018.03.023.03.019.03.022.031.023.03.026.03.023-.022.03-.027.027-.022.03-.027.03-.022.027-.023.026-.027.03-.022.03-.023.027-.026.03-.023.03-.027.03-.022.027-.023.03-.026.03-.023.031-.026.026-.023.03-.03-.022-.03-.026-.03-.02-.035-.022-.026-.019-.034-.019-.03-.019-.035-.019-.03-.015-.03-.015-.03-.011-.034-.012-.038-.01-.03-.008-.038-.008-.038-.008-.038-.003h-.041l-.046-.008h-.075l-.038.004h-.038l-.038.011-.034.008-.034.011-.037.011-.03.015-.038.016-.027.018-.03.02-.03.018-.027.023-.026.023-.027.022-.022.027-.03.026-.02.03-.018.027-.023.03-.015.034-.02.03-.018.034-.011.034-.016.034-.01.038-.005.038-.011.034-.008.042v.037l-.007.038v.09l.004.039.003.034.004.037.008.038.011.03.004.038.011.03.012.03.015.039.019.037.015.03.019.03.022.031.023.03.019.027.03.026.023.027.026.022.03.023.03.023.031.019.03.018.034.016.038.015.03.015.038.011.038.012.038.007.037.008.038.004.046.003h.124l.046-.007h.037l.038-.012.038-.007.038-.012.034-.007.034-.015.03-.015.038-.016.023-.015.03-.019v-.347h-.552v-.56h1.247v1.248l-.026.022-.03.023-.027.019-.03.023-.03.018-.03.023-.03.019-.031.019-.038.019-.034.019-.03.019-.038.015-.03.019-.038.015-.038.015-.038.015-.034.015-.034.011-.034.012-.037.011-.034.011-.038.012-.034.007-.038.008-.038.008-.038.007-.037.004-.038.004-.038.004-.045.003-.038.004-.042.004h-.196l-.042-.008h-.038l-.037-.007h-.038l-.038-.012-.038-.007-.038-.008-.037-.007-.03-.012-.038-.007-.038-.012-.034-.015-.034-.011-.038-.015-.034-.015-.038-.015-.03-.016-.038-.018-.026-.02-.038-.018-.027-.02-.03-.018-.03-.023-.03-.023-.034-.022-.023-.023-.03-.023-.027-.026-.026-.023-.027-.026-.022-.027-.027-.026-.022-.03-.023-.027-.019-.03-.023-.03-.019-.03-.018-.03-.02-.035-.018-.03-.015-.034-.015-.034-.016-.034-.015-.034-.011-.03-.015-.034-.008-.034-.011-.034-.008-.038-.011-.034-.008-.038-.003-.034-.008-.038-.004-.034-.003-.038-.004-.037-.004-.038v-.208l.008-.038v-.041l.01-.038v-.038l.012-.038.012-.037.007-.038.011-.034.012-.038.011-.034.015-.038.015-.034.016-.034.015-.034.015-.034.019-.034.019-.03.018-.03.02-.03.018-.03.023-.031.023-.03.022-.03.027-.027.022-.026.023-.027.03-.026.023-.027.03-.023.027-.026.03-.023.03-.022.03-.02.03-.022.03-.019.031-.019.034-.019.038-.019.03-.018.038-.016.034-.015.038-.019.03-.01.038-.012.034-.015.034-.008.034-.011.038-.008.034-.011.037-.008h.038l.038-.011h.038l.038-.008h.037zm11.989.007h.207l.046.008h.075l.038.011h.045l.038.012.034.007.038.008.038.007.034.008.038.011.037.012.03.007.038.015.038.012.03.015.038.015.038.015.034.02.027.014.037.02.034.018.03.019.035.023.03.018.03.023.03.023.03.022-.022.03-.019.031-.023.03-.022.03-.023.034-.019.03-.023.03-.022.031-.02.03-.022.03-.023.03-.022.031-.02.034-.022.03-.026.03-.02.03-.022.031-.03-.023-.034-.019-.03-.018-.03-.023-.035-.015-.03-.02-.038-.014-.026-.015-.038-.016-.03-.015-.03-.011-.034-.015-.038-.011-.038-.012-.038-.011-.041-.008-.038-.007-.038-.008-.038-.004-.037-.004-.034-.003h-.084l-.041.007-.038.008-.038.007-.03.016-.026.015-.034.03-.023.034-.015.034v.094l.019.042.015.023.026.026.038.02.03.018.038.015.038.015.049.015.03.008.03.011.038.008.03.011.038.008.042.011.041.011.042.012.042.007.037.012.042.011.038.008.037.011.038.011.038.012.038.011.034.011.038.012.037.015.038.019.038.015.038.019.038.019.03.019.03.018.034.023.027.02.034.026.026.026.03.03.027.027.019.03.026.038.019.026.015.038.019.026.011.038.012.03.007.038.008.038.007.038.004.038.004.037v.095l-.004.041-.004.038-.003.042-.008.038-.011.037-.008.038-.011.038-.015.034-.015.03-.016.034-.018.03-.023.03-.02.03-.018.031-.026.027-.023.026-.027.023-.03.026-.026.023-.03.023-.03.018-.031.023-.038.019-.03.015-.038.02-.038.014-.037.015-.038.012-.038.011-.03.011-.038.008-.038.008-.03.007-.038.008h-.038l-.037.007h-.038l-.038.008h-.28l-.037-.004-.038-.004-.042-.003-.038-.008-.037-.004-.038-.007-.038-.008-.042-.011-.037-.008-.038-.011-.038-.008-.038-.011-.037-.012-.038-.015-.034-.011-.038-.011-.038-.016-.03-.015-.038-.015-.03-.019-.038-.015-.034-.019-.026-.019-.038-.019-.027-.018-.034-.02-.03-.022-.03-.023-.03-.022-.03-.023-.027-.023-.03-.026.022-.03.027-.027.023-.03.026-.03.023-.027.022-.03.027-.03.023-.027.026-.03.023-.026.026-.03.023-.03.022-.027.027-.03.023-.03.026-.027.027-.03.026.022.038.023.026.023.038.022.03.02.034.022.03.019.035.015.03.019.034.015.038.015.03.015.038.011.03.016.038.01.037.012.038.012.038.007.038.008.038.007h.041l.038.012h.208l.038-.008.037-.008.03-.007.03-.011.027-.016.034-.022.02-.027.018-.03.011-.038v-.087l-.015-.037-.022-.03-.023-.023-.034-.023-.027-.015-.037-.015-.038-.015-.045-.02-.027-.007-.03-.008-.038-.01-.03-.008-.038-.012-.038-.007-.041-.012-.038-.007-.042-.012-.037-.007-.038-.012-.038-.007-.038-.012-.038-.01-.037-.008-.034-.012-.034-.011-.034-.012-.038-.015-.042-.015-.038-.015-.037-.015-.038-.019-.038-.019-.026-.019-.038-.019-.027-.022-.034-.02-.022-.022-.027-.026-.03-.027-.023-.026-.022-.027-.02-.026-.018-.03-.02-.034-.014-.027-.012-.03-.011-.034-.011-.03-.008-.038-.007-.034v-.038l-.008-.038v-.162l.004-.038.004-.038.007-.03.008-.038.011-.03.008-.038.015-.03.015-.038.015-.03.019-.038.019-.03.026-.03.02-.03.03-.03.026-.027.023-.03.034-.027.022-.019.034-.023.03-.022.03-.02.038-.018.03-.015.039-.019.03-.015.038-.012.037-.015.038-.011.027-.008.037-.007.03-.008.038-.007.038-.008.038-.004.038-.004.038-.003zm-9.237.027h.707l.015.034.015.034.015.034.011.038.015.034.015.034.016.034.015.034.011.034.019.037.015.034.015.035.008.034.015.034.019.034.015.037.015.034.011.034.015.034.02.034.01.034.016.038.011.038.015.03.02.038.014.03.015.038.012.038.011.03.019.038.015.03.015.038.011.03.016.038.019.038.015.034.011.034.011.034.015.034.02.034.014.037.016.035.01.034.016.034.015.034.015.034.015.037.012.034.015.034.019.034.015.034.015.034.008.038.015.034.019.034.015.034.011.034.015.034.015.038.02.038.01.03.016.038.011.03.015.038.019.038.015.03.011.038.016.03.011.038.019.03.015.038.011.038.015.03.016.038.018.03.016.038.01.037.012.03.015.038.02.03h-.783l-.02-.033-.01-.034-.016-.034-.015-.038-.011-.034-.015-.034-.015-.034-.012-.034-.015-.034-.015-.034-.011-.034-.015-.038-.015-.034-.012-.034-.015-.034H8.617l-.015.038-.011.03-.015.038-.019.037-.008.03-.015.039-.015.03-.011.038-.015.03-.015.038-.012.03-.015.038-.015.037-.015.03-.011.038h-.775l.015-.037.015-.034.015-.034.012-.038.01-.034.02-.034.015-.034.015-.034.011-.034.015-.038.02-.034.014-.034.012-.034.011-.034.015-.034.02-.038.014-.034.015-.034.012-.034.015-.034.015-.034.015-.038.015-.038.012-.03.015-.038.019-.03.015-.038.011-.037.011-.03.015-.038.02-.03.014-.038.016-.03.01-.038.016-.038.019-.03.011-.038.015-.03.012-.038.015-.038.019-.03.015-.038.011-.03.015-.038.012-.03.019-.038.015-.038.015-.034.011-.034.015-.034.02-.034.014-.034.008-.038.015-.034.015-.034.019-.034.015-.034.011-.034.016-.038.015-.037.015-.03.015-.038.011-.03.015-.038.015-.038.02-.03.014-.038.012-.03.011-.038.015-.03.02-.038.014-.038.012-.03.015-.038.015-.03.019-.038.011-.038.011-.03.016-.038zm2.192.019h.775l.022.03.02.034.022.03.019.034.019.03.019.034.018.03.023.035.019.03.019.03.019.034.019.03.026.034.015.03.02.035.022.03.023.03.015.034.022.03.02.034.014.03.027.035.019.03.019.034.019.03.018.03.023.034.019.03.019.035.019.03.019.034.022.03.02.034.018.03.023-.03.015-.038.023-.026.022-.038.02-.026.014-.038.027-.027.019-.037.015-.027.023-.03.022-.038.02-.026.018-.038.019-.027.023-.037.018-.027.02-.038.018-.026.02-.03.022-.038.019-.027.019-.037.022-.027.02-.038.018-.026.023-.03.019-.038.022-.027.02-.037.018-.027.02-.038.022-.026.019-.038.019-.026h.782v2.789h-.734v-1.64l-.018.026-.023.038-.019.026-.023.03-.019.038-.022.027-.02.03-.022.038-.019.026-.019.03-.026.03-.019.039-.023.026-.019.03-.018.038-.023.026-.019.03-.023.038-.019.027-.022.03-.02.038-.018.026-.023.03-.019.038-.022.027-.023.03-.019.03-.019.038-.023.027-.022.03-.015.038-.027.026-.019.03-.022.038-.02.027h-.014l-.023-.034-.019-.03-.023-.035-.019-.03-.022-.034-.02-.03-.022-.034-.019-.03-.022-.034-.02-.03-.026-.035-.015-.03-.023-.034-.022-.03-.02-.034-.022-.03-.019-.038-.022-.03-.02-.034-.022-.03-.019-.035-.023-.03-.018-.034-.023-.03-.019-.034-.023-.03-.019-.034-.022-.03-.02-.035-.022-.03-.019-.034-.026-.03-.015-.034-.023-.03v1.644h-.725v-2.76zm3.47 0h2.199v.63h-1.47v.447h1.322v.593H15.21v.48h1.489v.631h-2.215v-2.759zm-5.318.854l-.015.038-.012.03-.015.038-.015.037-.011.034-.015.034-.016.038-.015.038-.011.03-.015.038-.015.03-.012.038-.015.038-.015.03-.011.038-.015.03-.015.038-.016.038-.01.03-.016.038-.015.038-.011.03-.016.038h.643l-.015-.038-.012-.034-.015-.038-.015-.034-.011-.034-.015-.034-.015-.038-.012-.034-.015-.034-.015-.034-.011-.034-.015-.038-.012-.034-.015-.034-.015-.034-.011-.034-.015-.037-.015-.038-.012-.03-.015-.038-.015-.038-.011-.034zm-1.15 5.223h8.013l-4.09 1.35z"></path></svg>
+        </button>
+          <div class="epic-overlay" id="epicOverlay">
+            <div class="epic-title">Epic Games ID</div>
+            <div class="epic-username">JimmyD123</div> </div>
+        </div>
+        
+        <a class="profile-link youtube" href="https://www.youtube.com/@jimmyd4341" target="_blank" rel="noopener noreferrer" title="YouTube">
+          <svg role="img" viewBox="0 0 24 24"><path d="M23,9.71a8.5,8.5,0,0,0-.91-4.13,2.92,2.92,0,0,0-1.72-1A78.36,78.36,0,0,0,12,4.27a78.45,78.45,0,0,0-8.34.3,2.87,2.87,0,0,0-1.46.74c-.9.83-1,2.25-1.1,3.45a48.29,48.29,0,0,0,0,6.48,9.55,9.55,0,0,0,.3,2,3.14,3.14,0,0,0,.71,1.36,2.86,2.86,0,0,0,1.49.78,45.18,45.18,0,0,0,6.5.33c3.5.05,6.57,0,10.2-.28a2.88,2.88,0,0,0,1.53-.78,2.49,2.49,0,0,0,.61-1,10.58,10.58,0,0,0,.52-3.4C23,13.69,23,10.31,23,9.71ZM9.74,14.85V8.66l5.92,3.11C14,12.69,11.81,13.73,9.74,14.85Z"></path></svg>
+        </a>
+        
+        <a class="profile-link discord" href="https://discord.com/users/149870492243853312" target="_blank" rel="noopener noreferrer" title="Discord: JimmyD">
+          <svg role="img" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.298 12.298 0 0 1-1.873.894.077.077 0 0 1-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z"></path></svg>
+        </a>
+      </nav>
+    </header>
+
+    <main class="dashboard-grid">
+      <section class="sidebar">
+        <div class="project-list">
+          <a class="card" href="https://jimmyd.space/apps/card-maker/">
+            <div class="card-header">
+              <h3>Crucible Card Maker</h3>
+              <span class="tag">Proxy</span>
+            </div>
+            <p class="muted">Generate custom card images right in your browser.</p>
+          </a>
+
+          <a class="card" href="https://jimmyd.space/apps/mtg-browser/">
+            <div class="card-header">
+              <h3>MTG Collection</h3>
+              <span class="tag">MTG</span>
+            </div>
+            <p class="muted">Upload a CSV of your collection from Dragonshield scanner app to browse.</p>
+          </a>
+          
+          <a class="card" href="https://jimmyd.space/apps/encounter-builder/">
+            <div class="card-header">
+              <h3>Encounter Builder</h3>
+              <span class="tag">D&amp;D</span>
+            </div>
+            <p class="muted">A browser prototype D&amp;D 5e encounter builder updated to 2024 monster manual.</p>
+          </a>
+
+          <a class="card" href="https://jimmyd.space/apps/memorial/">
+            <div class="card-header">
+              <h3>Pantheon of Lost Heroes</h3>
+              <span class="tag">D&amp;D</span>
+            </div>
+            <p class="muted">An interactive archive to celebrate the legacies, epic stories, and final fates of past tabletop characters.</p>
+          </a>
+          
+          <a class="card" href="https://jimmyd.space/apps/social2fa/">
+            <div class="card-header">
+              <h3>Social 2FA</h3>
+              <span class="tag">Security</span>
+            </div>
+            <p class="muted">Verify friends aren't hacked before downloading shared links.</p>
+          </a>
+
+          <a class="card" href="https://jimmyd.space/apps/roadtrip-weather/">
+            <div class="card-header">
+              <h3>Road Trip Weather</h3>
+              <span class="tag">Travel</span>
+            </div>
+            <p class="muted">Check weather conditions along your driving route with timeline and charts.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="main-space">
+        <h2 class="section-title">The Wall</h2>
+
+        <div class="wall-disclaimer">
+          <span class="disclaimer-icon">ℹ️</span>
+          <p><strong>Identity Persistence Notice:</strong> User aliases are secured via local browser data. Clearing your browser cache or device cookies will reset credentials.</p>
+        </div>
+        
+        <div class="wall-feed" id="wallFeed"><div class="post">
+          <div class="post-meta">
+            <span class="post-author owner">JimmyD (You)</span>
+            <span class="post-time">May 22 at 03:23 PM</span>
+          </div>
+          <div class="post-content">Testing the wall</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(337, 65%, 65%);">wife </span>
+            <span class="post-time">May 22 at 07:52 PM</span>
+          </div>
+          <div class="post-content">lame</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(135, 65%, 65%);">2nd wife </span>
+            <span class="post-time">May 22 at 07:53 PM</span>
+          </div>
+          <div class="post-content">wtf</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(337, 65%, 65%);">wife </span>
+            <span class="post-time">May 22 at 07:53 PM</span>
+          </div>
+          <div class="post-content">I thought you were on a business trip?!</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(135, 65%, 65%);">2nd wife </span>
+            <span class="post-time">May 22 at 07:54 PM</span>
+          </div>
+          <div class="post-content">why am I the 2nd wife?</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(323, 65%, 65%);">Pil </span>
+            <span class="post-time">May 23 at 11:40 AM</span>
+          </div>
+          <div class="post-content">Hai</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author owner">JimmyD (You)</span>
+            <span class="post-time">May 25 at 01:47 PM</span>
+          </div>
+          <div class="post-content">Test</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(259, 65%, 65%);">Husband </span>
+            <span class="post-time">May 30 at 07:59 PM</span>
+          </div>
+          <div class="post-content">Ur Straight?</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(59, 65%, 65%);">2nd husband </span>
+            <span class="post-time">May 30 at 08:00 PM</span>
+          </div>
+          <div class="post-content">how many of us are there?!</div>
+        </div><div class="post">
+          <div class="post-meta">
+            <span class="post-author" style="color: hsl(259, 65%, 65%);">Husband </span>
+            <span class="post-time">May 30 at 08:02 PM</span>
+          </div>
+          <div class="post-content">When are you going to tell them</div>
+        </div></div>
+
+        <form class="wall-form" id="wallForm" onsubmit="return false;">
+          <div class="form-row">
+            <div class="input-group alias">
+              <label class="form-label" for="aliasInput">Alias *</label>
+              <input class="wall-input" id="aliasInput" type="text" placeholder="e.g., Bob" maxlength="20" required="">
+            </div>
+            <div class="input-group message">
+              <label class="form-label" for="messageInput">Message *</label>
+              <input class="wall-input" id="messageInput" type="text" placeholder="Type an anonymous note..." maxlength="250" required="">
+            </div>
+          </div>
+          <div class="form-actions">
+            <div class="status-msg" id="formStatus"></div>
+            <button class="submit-btn" type="submit">Post to Wall</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+  <footer>
+      <div>© <span id="y">2026</span> JimmyD</div>
+      
+    </footer>
+  </div>
+
+  <script src="./JimmyD _ Workspace_files/supabase-js@2"></script>
+
+  <script>
+    // Set the current year in footer
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // 2. Initialize Supabase Connection
+    const SUPABASE_URL = "https://skapduzomcywyjksefai.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_xGOO8eV1GC8BamLS61VzIg_Yb_YVH3E";
+    const Supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const form = document.getElementById('wallForm');
+    const feed = document.getElementById('wallFeed');
+    const statusMsg = document.getElementById('formStatus');
+
+    // Helper: Safely generate a unique security token for new aliases
+    function generateToken() {
+      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
+    // Helper: Get or create alias token maps from localStorage
+    function getStoredTokens() {
+      const tokens = localStorage.getItem('chat_tokens');
+      return tokens ? JSON.parse(tokens) : {};
+    }
+
+    function saveStoredToken(alias, token) {
+      const tokens = getStoredTokens();
+      tokens[alias.toLowerCase().trim()] = token;
+      localStorage.setItem('chat_tokens', JSON.stringify(tokens));
+    }
+
+   // Helper: Generate a unique, consistent HSL color based on an alias string
+    function getUniqueColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      // Use HSL to ensure colors are readable on light background
+      // Hue: 0-360, Saturation: 55%, Lightness: 45%
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue}, 55%, 45%)`;
+    }
+
+    // 3. Render Posts to the Screen
+    function renderPosts(posts) {
+      feed.innerHTML = ''; // Clear skeleton mock data
+      const localTokens = getStoredTokens();
+
+      if (posts.length === 0) {
+        feed.innerHTML = '<div class="muted" style="text-align:center; padding:20px;">The wall is empty. Be the first to leave a mark!</div>';
+        return;
+      }
+
+      posts.forEach(post => {
+        const postElement = document.createElement('div');
+        postElement.className = 'post';
+
+        // Check if the current browser owns this post's alias matching the token
+        const normalizedAlias = post.alias.toLowerCase().trim();
+        const isOwner = localTokens[normalizedAlias] === post.cookie_token;
+        
+        // Define inline style color if it's a rando, otherwise let CSS make it green
+        const authorStyle = isOwner ? '' : `style="color: ${getUniqueColor(post.alias)};"`;
+        const authorClass = isOwner ? 'post-author owner' : 'post-author';
+
+        // Format timestamp cleanly
+        // Smart timestamp helper (Today, Yesterday, or older Date)
+        const messageDate = new Date(post.created_at);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        let dateString = messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        if (messageDate.toDateString() === today.toDateString()) {
+          dateString = 'Today';
+        } else if (messageDate.toDateString() === yesterday.toDateString()) {
+          dateString = 'Yesterday';
+        }
+
+        const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const postDate = `${dateString} at ${timeString}`;
+
+        postElement.innerHTML = `
+          <div class="post-meta">
+            <span class="${authorClass}" ${authorStyle}>${escapeHTML(post.alias)} ${isOwner ? '(You)' : ''}</span>
+            <span class="post-time">${postDate}</span>
+          </div>
+          <div class="post-content">${escapeHTML(post.message)}</div>
+        `;
+        feed.appendChild(postElement);
+      });
+      
+      // Auto-scroll to the latest message
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    // Toggle Epic Games Username Card Overlay
+    function toggleEpicOverlay(event) {
+      event.stopPropagation();
+      const overlay = document.getElementById('epicOverlay');
+      overlay.classList.toggle('active');
+    }
+
+    // Close the overlay automatically if the user clicks anywhere else on the screen
+    document.addEventListener('click', () => {
+      const overlay = document.getElementById('epicOverlay');
+      if (overlay && overlay.classList.contains('active')) {
+        overlay.classList.remove('active');
+      }
+    });
+
+    // HTML Escape helper to prevent cross-site scripting vulnerabilities
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // 4. Fetch Live Posts from Supabase
+    async function fetchPosts() {
+      const { data, error } = await Supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching wall posts:', error);
+      } else {
+        renderPosts(data || []);
+      }
+    }
+
+    // 5. Form Submission Logic with Alias Validation
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const aliasInput = document.getElementById('aliasInput').value.trim();
+      const messageInput = document.getElementById('messageInput').value.trim();
+      const normalizedAlias = aliasInput.toLowerCase();
+
+      if (!aliasInput || !messageInput) return;
+
+      // Update status to working
+      statusMsg.className = 'status-msg';
+      statusMsg.textContent = 'Publishing note...';
+
+      // Step A: Check if this alias already exists anywhere in the DB
+      const { data: existingPosts, error: checkError } = await Supabase
+        .from('posts')
+        .select('cookie_token')
+        .ilike('alias', aliasInput)
+        .limit(1);
+
+      if (checkError) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.textContent = 'Database error. Try again.';
+        return;
+      }
+
+      let currentToken = '';
+      const localTokens = getStoredTokens();
+
+      if (existingPosts && existingPosts.length > 0) {
+        // Step B: Name exists! Verify if our browser has the matching authorization token
+        const correctToken = existingPosts[0].cookie_token;
+        if (localTokens[normalizedAlias] === correctToken) {
+          currentToken = correctToken; // Token matched, original author verified
+        } else {
+          // Step C: Imposter detected (Alias taken)
+          statusMsg.className = 'status-msg error';
+          statusMsg.textContent = `❌ The alias "${aliasInput}" is claimed by someone else!`;
+          return;
+        }
+      } else {
+        // Step D: Alias is pristine! Claim it by creating a brand new token
+        currentToken = generateToken();
+        saveStoredToken(aliasInput, currentToken);
+      }
+
+      // Step E: Push post payload safely to Supabase
+      const { error: insertError } = await Supabase
+        .from('posts')
+        .insert([{ alias: aliasInput, message: messageInput, cookie_token: currentToken }]);
+
+      if (insertError) {
+        statusMsg.className = 'status-msg error';
+        statusMsg.textContent = 'Failed to broadcast post.';
+        console.error(insertError);
+      } else {
+        statusMsg.className = 'status-msg success';
+        statusMsg.textContent = '🚀 Posted successfully!';
+        document.getElementById('messageInput').value = ''; // Reset message field only
+        
+        // Refresh feed instantly
+        fetchPosts();
+        
+        // Clear success notification after 3 seconds
+        setTimeout(() => { if(statusMsg.textContent.includes('🚀')) statusMsg.textContent = ''; }, 3000);
+      }
+    });
+
+    // Run initial feed pull on mount
+    fetchPosts();
+
+    // Poll for new messages automatically every 10 seconds to keep it lively
+    setInterval(fetchPosts, 10000);
+  </script>
+
+
+</body></html>
