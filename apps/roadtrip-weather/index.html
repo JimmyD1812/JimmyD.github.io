@@ -204,7 +204,14 @@ function showGeoDropdown(inputEl, results, onSelect) {
     const opt = document.createElement('div');
     const label = `${r.name}${r.admin1 ? ', ' + r.admin1 : ''}${r.country ? ', ' + r.country : ''}`;
     opt.textContent = label;
-    opt.style.cssText = 'padding:9px 12px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--border);';
+    opt.style.cssText = 'padding:9px 12px;font-size:16px;cursor:pointer;border-bottom:1px solid var(--border);';
+    opt.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+    opt.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      inputEl.value = label;
+      dropdown.remove();
+      onSelect({ name: label, lat: r.latitude, lon: r.longitude, tz: r.timezone || 'auto' });
+    });
     opt.addEventListener('mouseenter', () => { opt.style.background = 'var(--bg)'; });
     opt.addEventListener('mouseleave', () => { opt.style.background = '#fff'; });
     opt.addEventListener('click', () => {
@@ -237,13 +244,6 @@ function setupGeoInput(inputEl) {
     }, GEO_DEBOUNCE);
   });
   inputEl.addEventListener('blur', () => { hideGeoDropdown(inputEl); });
-  // Prevent input from losing focus when clicking/tapping dropdown items
-  const preventDropdownBlur = (e) => {
-    const dd = inputEl.parentElement.querySelector('.geo-dropdown');
-    if (dd && dd.contains(e.target)) e.preventDefault();
-  };
-  inputEl.addEventListener('mousedown', preventDropdownBlur);
-  inputEl.addEventListener('touchstart', preventDropdownBlur);
   inputEl._getCachedResult = () => cachedResult;
 }
 
