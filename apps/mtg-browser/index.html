@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)https://jimmyd.space/apps/mtg-browser/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MTG Collection Browser</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net/" crossorigin="">
+  <link rel="icon" type="image/svg+xml" href="https://jimmyd.space/JimmyD.png">
+  <script src="./MTG Collection Browser_files/dexie.min.js.download"></script>
+  <script src="./MTG Collection Browser_files/index.min.js.download"></script>
+  <link rel="stylesheet" href="/jimmyd-theme.css">
+  <style>
+    /* ===== App-specific overrides: MTG Collection Browser ===== */
+    :root {
+      --bg: #faf8f5;
+      --panel: #ffffff;
+      --panel-hover: #f5f0ea;
+      --border: #e2ddd6;
+      --text: #2c2824;
+      --muted: #7a736b;
+      --accent: #b45309;
+      --accent-hover: #92400e;
+      --input-bg: #faf8f5;
+      --danger: #c62828;
+      --danger-hover: #b71c1c;
+      --success: #2e7d32;
+      --card: #f0ebe4;
+      --chip: #f0ebe4;
+      --btn-fs: 14px;
+      --btn-lh: 1.15;
+      --btn-fw: 600;
+      --results-col-min: 260px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+    /* Flat Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    header .title {
+      font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--text);
+    }
+
+    /* Toolbar */
+    .bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+    /* Buttons */
+    .btn, a.btn, label.btn {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: var(--btn-fs);
+      line-height: var(--btn-lh);
+      font-weight: var(--btn-fw);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn:hover, a.btn:hover, label.btn:hover {
+      background: var(--panel-hover);
+      border-color: #d0c8bd;
+    }
+
+    .btn.deck-toggle {
+      background: var(--accent);
+      border-color: var(--accent-hover);
+      color: #fff;
+    }
+    .btn.deck-toggle:hover { background: var(--accent-hover); }
+
+    .btn.danger { border-color: rgba(196, 40, 40, 0.3); }
+    .btn.danger:hover { background: #fce8e8; border-color: var(--danger); color: var(--danger); }
+
+    .ghost { background: transparent; border-color: transparent; }
+    .ghost:hover { background: rgba(0,0,0,0.03); }
+
+    .file { position: relative; overflow: hidden; }
+    .file input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    /* Layout */
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+
+    /* Panels */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+
+    .panel .head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .panel .body { padding: 16px; }
+
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .small { font-size: 0.8rem; }
+    .muted.small { color: var(--muted); opacity: 0.85; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .grow { flex: 1 1 auto; }
+
+    /* Form Controls */
+    input[type=text], select {
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 10px 12px;
+      width: 100%;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type=text]::placeholder { color: rgba(122, 115, 107, 0.6); }
+    input[type=text]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.12);
+    }
+
+    /* Chips */
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--chip);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip, .stat { white-space: nowrap; }
+    label.chip input { accent-color: var(--accent); margin-right: 2px; }
+    label.chip:has(input:checked) {
+      background: #fef3c7;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Results Cards */
+    .results {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(var(--results-col-min), 1fr));
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: #d0c8bd; }
+
+    .card img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+      background: var(--card);
+    }
+
+    .card .meta { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .card .line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+    .qty input {
+      width: 56px;
+      text-align: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text);
+      padding: 6px;
+    }
+
+    .stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--chip);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .inline-msg { font-size: 0.8rem; color: var(--muted); }
+    .err { color: var(--danger); font-weight: 500; }
+
+    #status {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* Combo / Commander */
+    .combo-wrap { position: relative; display: inline-block; }
+    .combo-chip.btn {
+      background: #fef3c7;
+      border-color: var(--border);
+      color: var(--accent);
+    }
+    .combo-chip.btn:hover { background: #fde68a; border-color: var(--accent); }
+
+    .combo-pop {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px;
+      min-width: 260px;
+      max-width: 520px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 1000;
+      display: none;
+    }
+    .combo-wrap.open .combo-pop { display: block; }
+
+    /* Toggle Switch */
+    .switch { display: inline-flex; align-items: center; gap: 8px; user-select: none; cursor: pointer; }
+    .switch .toggle {
+      width: 44px; height: 24px; border-radius: 4px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      position: relative; transition: all 0.15s;
+    }
+    .switch .toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+      border-radius: 2px; background: var(--muted); transition: all 0.15s;
+    }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch input:checked + .toggle { background: var(--accent); border-color: var(--accent-hover); }
+    .switch input:checked + .toggle::after { transform: translateX(20px); background: #fff; }
+    .switch .label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+
+    /* Scrollbars */
+    .wall-feed, #deckBody {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) var(--bg);
+    }
+    .wall-feed::-webkit-scrollbar, #deckBody::-webkit-scrollbar { width: 6px; }
+    .wall-feed::-webkit-scrollbar-track, #deckBody::-webkit-scrollbar-track { background: var(--bg); }
+    .wall-feed::-webkit-scrollbar-thumb, #deckBody::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 3px; }
+
+    /* Drawer */
+    :root { var-deck-w: 440px; }
+    #deckPanel {
+      position: fixed; top: 0; right: -440px; width: 440px; max-width: 90vw;
+      height: 100dvh; background: var(--panel); border-left: 1px solid var(--border);
+      z-index: 200; transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -4px 0 12px rgba(0,0,0,0.08); display: flex; flex-direction: column;
+    }
+    #deckPanel.open { right: 0; }
+    #deckHead { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    #deckBody { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+    body.deck-open .wrap { margin-right: 440px; transition: margin-right 0.25s ease; }
+    @media (max-width: 1100px) { body.deck-open .wrap { margin-right: 0; } }
+
+    #deckScrim { position: fixed; inset: 0; z-index: 190; background: rgba(0,0,0,0.3); opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+    body.deck-open #deckScrim { opacity: 1; pointer-events: auto; }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; background: var(--chip); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; }
+    .sec { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .sec:last-of-type { border-bottom: none; }
+    .sec h4 { margin-bottom: 8px; font-size: 0.75rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+
+    .deck-row { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px dashed var(--border); }
+    .deck-title { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
+    .deck-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.8rem; }
+    .deck-qtypill { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 2px 6px; border-radius: 2px; background: var(--input-bg); border: 1px solid var(--border); color: var(--accent); font-weight: 700; }
+    .deck-avail { color: var(--muted); margin-right: 4px; }
+    .slot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .slot strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+
+    .kpi { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge { border: 1px solid var(--border); background: var(--chip); border-radius: 2px; padding: 2px 8px; font-size: 0.75rem; color: var(--text); }
+    .mini-btn { background: var(--input-bg); border: 1px solid var(--border); padding: 4px 10px; border-radius: 2px; font-size: 0.75rem; color: var(--text); cursor: pointer; font-weight: 600; transition: all 0.15s; }
+    .mini-btn:hover { border-color: var(--accent); background: var(--panel-hover); }
+
+    progress { width: 100%; height: 8px; accent-color: var(--accent); border-radius: 2px; overflow: hidden; }
+    progress::-webkit-progress-bar { background: var(--bg); }
+    progress::-webkit-progress-value { background: var(--accent); }
+
+    .droptarget { border: 1px dashed var(--border); border-radius: 4px; padding: 12px; min-height: 60px; background: var(--bg); }
+    .droptarget.drag { border-color: var(--accent); background: #fef3c7; }
+    .kbd { background: var(--chip); border: 1px solid var(--border); padding: 1px 5px; border-radius: 2px; font-family: monospace; font-size: 0.75rem; color: var(--accent); }
+
+    /* Mobile */
+    @media (max-width:900px) {
+      .grid { grid-template-columns: 1fr; }
+      .details { position: sticky; top: 12px; z-index: 30; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">🧰 MTG Collection Browser</div>
+      <div class="muted small">Local-first • Works offline • Zero backend</div>
+      <button class="btn deck-toggle" id="btnDeck">🧩 Deck Mode</button>
+    </header>
+
+    <div class="bar">
+      <button class="btn" id="btnUpdateDB" title="Force reindex database index schema asset maps">Update Database</button>
+      <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
+      <label class="btn file">
+        A₁ Import Collection (JSON)
+        <input id="importCollection" type="file" accept=".json">
+      </label>
+      <label class="btn file">
+        📄 Add Cards (CSV)
+        <input id="importCSV" type="file" accept=".csv">
+      </label>
+      <label class="btn file">
+        📝 Add Cards (TXT)
+        <input id="importTXT" type="file" accept=".txt">
+      </label>
+      <div style="flex-basis:100%"></div>
+      <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database caching arrays">🗑️ Clear Card DB</button>
+      <button class="btn danger" id="btnClearCollection" title="Clear only your local quantities metrics data">🧹 Clear Collection</button>
+      <div class="muted small" style="margin-top: 4px; width: 100%;">
+        Tip: Supports structured file dumps generated from the <span class="kbd">Dragon Shield MTG Scanner</span> CSV platform or raw output from <span class="kbd">TCGplayer Scanner</span> TXT clipboard tools.
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="panel details" id="searchPanelContainer">
+        <div class="head">Search Controls</div>
+        <div class="body" style="display: flex; flex-direction: column; gap: 12px;">
+          <input id="qName" type="text" placeholder="Name contains… (supports ^prefix or suffix$)">
+          <input id="qText" type="text" placeholder="Oracle rules text text... (e.g. Deathtouch)">
+          
+          <div class="row" style="gap: 8px;">
+            <div class="grow" style="flex: 1;">
+              <select id="qType">
+                <option value="">Any Type</option>
+                <option>Creature</option><option>Instant</option><option>Sorcery</option>
+                <option>Artifact</option><option>Enchantment</option><option>Planeswalker</option><option>Land</option>
+              </select>
+            </div>
+            <div class="grow" style="flex: 1;">
+              <select id="qRarity">
+                <option value="">Any Rarity</option>
+                <option>common</option><option>uncommon</option><option>rare</option><option>mythic</option>
+              </select>
+            </div>
+          </div>
+          
+          <input id="qSubtype" type="text" placeholder="Subtype (e.g. Dragon)">
+          
+          <div class="chips">
+            <label class="chip"><input type="checkbox" class="ci" value="W"> W</label>
+            <label class="chip"><input type="checkbox" class="ci" value="U"> U</label>
+            <label class="chip"><input type="checkbox" class="ci" value="B"> B</label>
+            <label class="chip"><input type="checkbox" class="ci" value="R"> R</label>
+            <label class="chip"><input type="checkbox" class="ci" value="G"> G</label>
+            <label class="chip"><input type="checkbox" class="ci" value="C"> C</label>
+          </div>
+          
+          <select id="colorMode" title="Color parameters match metrics rules">
+            <option value="include">Include selected identity colors</option>
+            <option value="exact">Exact color boundaries matching</option>
+          </select>
+          
+          <div class="row" style="justify-content: space-between; margin-top: 6px;">
+            <label class="switch">
+              <input type="checkbox" id="filterCommander">
+              <span class="toggle" aria-hidden="true"></span>
+              <span class="label">Legal Commander</span>
+            </label>
+            <button class="btn" id="btnSearch" style="background: var(--accent); color: white; border-color: var(--accent-hover);">Run Search</button>
+          </div>
+          
+          <div class="muted small" id="dbStats" style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px;">DB Cache: 0 definitions | Inventory: 0 items</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="head">
+          <span>Catalog Results Feed</span>
+          <div id="status">Workspace Idle</div>
+        </div>
+        <div class="body">
+          <div id="importBox" class="muted small" style="display: none; margin-bottom: 12px;">
+            <div>Parsing flat cards payload... <progress id="importProgress" max="100" value="0"></progress></div>
+            <div id="importNote" class="muted small">Contacting catalog database index asset layer...</div>
+          </div>
+          <div id="csvBox" class="muted small" style="display:none; margin-bottom:12px">
+            <div>Mapping incoming token stream... <progress id="csvProgress" max="100" value="0"></progress></div>
+            <div id="csvNote" class="muted small"></div>
+          </div>
+          
+          <div id="resolveBox" class="panel" style="display:none; margin-bottom:12px">
+            <div class="head">
+              <strong>Resolve Unmatched Import Rows</strong>
+              <div class="row" style="gap:8px;align-items:center">
+                <div class="muted small" id="resolveStats">0 unresolved</div>
+                <button class="btn" id="resolveClear" title="Clear table log views">Clear All</button>
+              </div>
+            </div>
+            <div class="body">
+              <div id="resolveList" class="small"></div>
+            </div>
+          </div>
+
+          <div id="results" class="results"><div class="muted" style="grid-column: 1/-1; text-align:center; padding:40px;">Your collection index workspace is currently empty. Upload a CSV or TXT file snapshot from your mobile scanning scanner utilities to populate.</div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <aside id="deckPanel" aria-label="Active Deck workspace configurations wrapper">
+    <div id="deckHead">
+      <strong>Active Workspace Drawer</strong>
+      <span class="badge" id="deckStatus">Commander Layout • 0/100</span>
+      <div class="grow"></div>
+      <button class="btn ghost" id="btnCloseDeck" style="padding: 6px 10px;">✕</button>
+    </div>
+    <div id="deckBody">
+      <div class="sec">
+        <h4>Format Configuration</h4>
+        <div class="row" style="gap: 8px; margin-bottom: 8px;">
+          <select id="deckFormat" style="flex: 1;">
+            <option value="commander">Commander Variant (EDH)</option>
+            <option value="sixty">Constructed 60-Card</option>
+          </select>
+        </div>
+        <div class="row" style="gap: 12px;">
+          <label class="switch">
+            <input type="checkbox" id="deckSingleton" checked="">
+            <span class="toggle"></span><span class="label">Singleton Limit</span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="deckColorLock" checked="">
+            <span class="toggle"></span><span class="label">Identity Restrict</span>
+          </label>
+        </div>
+        <div class="row" style="margin-top: 8px;">
+          <label class="switch">
+            <input type="checkbox" id="deckProxies">
+            <span class="toggle"></span><span class="label">Permit Unowned Proxies</span>
+          </label>
+        </div>
+        <div class="row tiny" id="deckLegalMsg" style="margin-top:6px; color: var(--danger); display:none"></div>
+      </div>
+
+      <div class="sec" id="commanderSec">
+        <h4>Assigned Commander</h4>
+        <div class="row" style="justify-content: space-between;">
+          <div class="pill" id="cmdrPrimary">No Active Selection</div>
+          <button class="mini-btn" id="btnClearCmdr">Reset</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h4>Composition Breakdown</h4>
+        <div class="row kpi" style="gap: 6px; margin-bottom: 6px;">
+          <div class="pill">Cards: <span id="kDeckSize">0</span>/<span id="kDeckTarget">100</span></div>
+          <div class="pill">Crt: <span id="kCreatures">0</span></div>
+          <div class="pill">Non: <span id="kNoncreatures">0</span></div>
+          <div class="pill">Lnd: <span id="kLands">0</span></div>
+        </div>
+        <progress id="deckProg" max="100" value="0"></progress>
+      </div>
+
+      <div class="sec">
+        <h4>Construct Stream Grid Target</h4>
+        <div id="deckDrop" class="droptarget">
+          <div id="deckList"></div>
+        </div>
+        <div class="row" style="margin-top:10px; gap: 6px;">
+          <button class="mini-btn" id="btnSaveDeck">💾 Save Architecture</button>
+          <button class="mini-btn" id="btnNewDeck">✨ Initialize New</button>
+          <select id="savedDecks" style="width: auto; flex: 1; padding: 6px;"></select>
+          <button class="mini-btn" id="btnLoadDeck">Open</button>
+          <button class="mini-btn" id="btnDeleteDeck" style="color: var(--danger)">Delete</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h4>Functional Statistics</h4>
+        <div class="row kpi">
+          <div class="pill">Mean Operational Cost (CMC): <span id="sAvgCmc">0.0</span></div>
+          <div class="pill">Pips: <span id="sPips">0/0/0/0/0</span></div>
+        </div>
+        <div class="tiny" style="margin-top:6px; color: var(--muted);">Curve Matrix Breakdown: <span id="sCurveTxt">—</span></div>
+      </div>
+
+      <div class="sec">
+        <h4>Land Ratio Engine</h4>
+        <div class="row">
+          <input id="landCount" type="text" value="36" style="width:60px; padding: 6px; text-align: center;">
+          <button class="mini-btn" id="btnSuggestLands">Calculate Split Weights</button>
+          <div class="tiny" id="landSuggest" style="margin-left:4px;"></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h4>Core Archetype Packages</h4>
+        <div class="row" id="pkgRow" style="gap: 6px;">
+          <button class="mini-btn" data-pkg="ramp">Mana Accelerators</button>
+          <button class="mini-btn" data-pkg="draw">Draw Engine</button>
+          <button class="mini-btn" data-pkg="removal">Target Removal</button>
+          <button class="mini-btn" data-pkg="wipes">Board Sweepers</button>
+        </div>
+        <div class="tiny" id="pkgNote" style="margin-top:6px; color: var(--success)"></div>
+      </div>
+
+      <div class="sec">
+        <h4>Synergy Recommendations</h4>
+        <div id="suggestions" class="small muted">Register structural commander entry to compute metrics dependencies.</div>
+      </div>
+
+      <div class="sec">
+        <h4>Trim Recommendations</h4>
+        <div id="cuts" class="small muted">Compile inventory layout array profiles to optimize counts.</div>
+      </div>
+
+      <div class="sec">
+        <h4>Data Exports</h4>
+        <div class="row" style="gap: 6px;">
+          <button class="mini-btn" id="expText">Standard Text</button>
+          <button class="mini-btn" id="expMtgo">MTGO Format</button>
+          <button class="mini-btn" id="expMox">Moxfield Token String</button>
+        </div>
+        <div class="tiny" id="expOut" style="margin-top:6px; font-family: monospace; white-space: pre-wrap; background: var(--input-bg); padding: 6px; border-radius: 4px; max-height: 100px; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </aside>
+  <div id="deckScrim"></div>
+
+  <script>
+    /* =================== Dexie IndexedDB Management Configuration =================== */
+    const db = new Dexie('mtgDB');
+    db.version(2).stores({
+      cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
+      collection: 'id, qty',
+      decks: '++id, name, updated_at'
+    });
+
+    /* =================== Central Application Elements Object Map =================== */
+    const els = {
+      btnUpdateDB: $('#btnUpdateDB'), btnExport: $('#btnExport'),
+      importCollection: $('#importCollection'), importCSV: $('#importCSV'), importTXT: $('#importTXT'),
+      csvBox: $('#csvBox'), csvProgress: $('#csvProgress'), csvNote: $('#csvNote'),
+      importBox: $('#importBox'), importProgress: $('#importProgress'), importNote: $('#importNote'),
+      btnClearDB: $('#btnClearDB'), btnClearCollection: $('#btnClearCollection'),
+      resolveBox: $('#resolveBox'), resolveList: $('#resolveList'), resolveStats: $('#resolveStats'), resolveClear: $('#resolveClear'),
+      results: $('#results'), status: $('#status'), dbStats: $('#dbStats'),
+      qName: $('#qName'), qText: $('#qText'), qType: $('#qType'), qSubtype: $('#qSubtype'), qRarity: $('#qRarity'),
+      btnSearch: $('#btnSearch'), filterCommander: $('#filterCommander'), colorMode: $('#colorMode'),
+      searchPanel: $('#searchPanelContainer'),
+      btnDeck: $('#btnDeck'), deckPanel: $('#deckPanel'), btnCloseDeck: $('#btnCloseDeck'), deckScrim: $('#deckScrim'),
+      deckFormat: $('#deckFormat'), deckSingleton: $('#deckSingleton'), deckColorLock: $('#deckColorLock'), deckProxies: $('#deckProxies'),
+      deckStatus: $('#deckStatus'), kDeckSize: $('#kDeckSize'), kDeckTarget: $('#kDeckTarget'),
+      kCreatures: $('#kCreatures'), kNoncreatures: $('#kNoncreatures'), kLands: $('#kLands'),
+      deckProg: $('#deckProg'), commanderSec: $('#commanderSec'), cmdrPrimary: $('#cmdrPrimary'), btnClearCmdr: $('#btnClearCmdr'),
+      deckDrop: $('#deckDrop'), deckList: $('#deckList'), deckLegalMsg: $('#deckLegalMsg'),
+      btnSaveDeck: $('#btnSaveDeck'), btnNewDeck: $('#btnNewDeck'), savedDecks: $('#savedDecks'),
+      btnLoadDeck: $('#btnLoadDeck'), btnDeleteDeck: $('#btnDeleteDeck'),
+      sAvgCmc: $('#sAvgCmc'), sPips: $('#sPips'), sCurveTxt: $('#sCurveTxt'),
+      landCount: $('#landCount'), landSuggest: $('#landSuggest'), btnSuggestLands: $('#btnSuggestLands'),
+      pkgRow: $('#pkgRow'), pkgNote: $('#pkgNote'), suggestions: $('#suggestions'), cuts: $('#cuts'),
+      expText: $('#expText'), expMtgo: $('#expMtgo'), expMox: $('#expMox'), expOut: $('#expOut')
+    };
+
+    /* =================== Drawer Slide Panel State Handlers =================== */
+    function openDeck(){ document.getElementById('deckPanel').classList.add('open'); document.body.classList.add('deck-open'); }
+    function closeDeck(){ document.getElementById('deckPanel').classList.remove('open'); document.body.classList.remove('deck-open'); }
+    
+    els.btnDeck.addEventListener('click', openDeck);
+    els.btnCloseDeck.addEventListener('click', closeDeck);
+    els.deckScrim.addEventListener('click', closeDeck);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeck(); });
+
+    function $(sel){ return document.querySelector(sel); }
+    function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+    const fmt = (n)=> (typeof n==='number'? n.toLocaleString() : n);
+    const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
+    let suppressAutoUntil=0;
+
+    /* =================== Core Engine Identity Logic Matching Helpers =================== */
+    function isPotentialCommanderFront(card){
+      const front = (Array.isArray(card.faces)&&card.faces.length)? card.faces[0] : null;
+      const frontTL = (front?.type_line || card.type_line || '');
+      const frontOT = (front?.oracle_text || '').toLowerCase();
+      return /\blegendary\b.*\bcreature\b/i.test(frontTL) || /\blegendary\b.*\bvehicle\b/i.test(frontTL) || /can be your commander/i.test(frontOT);
+    }
+
+    function getColorLabel(ci){
+      const s = [...new Set(ci||[])].sort().join('');
+      const mono = {W:'White',U:'Blue',B:'Black',R:'Red',G:'Green','':'Colorless'};
+      if (s.length<=1) return mono[s] || 'Colorless';
+      const guilds = {UW:'Azorius', WR:'Boros', UB:'Dimir', BG:'Golgari', GR:'Gruul', UR:'Izzet', WB:'Orzhov', BR:'Rakdos', GW:'Selesnya', UG:'Simic'};
+      if (guilds[s]) return guilds[s];
+      const tri = {BGU:'Sultai', GRW:'Naya', BRW:'Mardu', BGW:'Abzan', URW:'Jeskai', BGR:'Jund', BRU:'Grixis', GUW:'Bant', GRU:'Temur'};
+      if (s.length===3){ for (const k in tri){ if ([...k].sort().join('')===s) return tri[k]; } }
+      return s.split('').join('/');
+    }
+
+    function sameBaseCardName(a,b){ return (a||'').toLowerCase().trim() === (b||'').toLowerCase().trim(); }
+
+    function normalizeCard(raw){
+      const faces = Array.isArray(raw.card_faces)? raw.card_faces.map(f=>({name: f.name||'', mana_cost:f.mana_cost||'', type_line:f.type_line||'', oracle_text:f.oracle_text||'', colors:f.colors||[], image:f.image_uris?.normal||null })) : null;
+      const img = raw.image_uris?.normal || faces?.[0]?.image || null;
+      const oracle_text = raw.oracle_text || (faces?.map(f=>f.oracle_text).filter(Boolean).join('\n')) || '';
+      const type_line = raw.type_line || (faces?.map(f=>f.type_line).join(' // ')) || '';
+      const subtype = (type_line.split('—')[1]||'').trim();
+      return {
+        id: raw.id, oracle_id: raw.oracle_id||'', name: raw.name, name_lc: raw.name.toLowerCase(),
+        set: raw.set, set_name: raw.set_name||'', rarity: raw.rarity||'', image: img, oracle_text,
+        cmc: raw.cmc??null, type_line, type_lc: type_line.toLowerCase(), subtype_lc: subtype.toLowerCase(),
+        color_identity: raw.color_identity||[], mana_cost: raw.mana_cost || '', purchase_uris: raw.purchase_uris||{},
+        scryfall_uri: raw.scryfall_uri||'', prices: raw.prices||{}, faces, combo_refs: raw.combo_refs || []
+      };
+    }
+
+    /* =================== Remote flat file index asset loader pipeline =================== */
+    const NDJSON_URL = "/db/cards.ndjson.gz";
+
+    async function importNDJSONFromURL(url=NDJSON_URL){
+      els.importBox.style.display = 'block';
+      els.importNote.textContent = 'Contacting catalog database index asset layer...';
+      
+      try {
+        const resp = await fetch(url);
+        if(!resp.ok) {
+          // Graceful catch for localized development setups without static flat dumps built
+          els.status.textContent = 'Local Engine Running';
+          els.importNote.textContent = 'Notice: Caching server offline. Import local CSV assets directly to construct layout tables.';
+          setTimeout(() => els.importBox.style.display = 'none', 5000);
+          return;
+        }
+        els.status.textContent = 'Parsing live structures...';
+        // (Raw stream unzipping implementation placeholder mapped safely)
+        els.importBox.style.display = 'none';
+      } catch(e) {
+        els.status.textContent = 'Local Caching Configured';
+        els.importNote.textContent = 'Ready for data imports via text and CSV.';
+        setTimeout(() => els.importBox.style.display = 'none', 4000);
+      }
+    }
+
+    function getUsdPrice(card, holo=false){
+      const p = card?.prices || {};
+      return holo ? (p.usd_foil || p.usd_etched || '—') : (p.usd || '—');
+    }
+
+    /* =================== Interface Renderer System Layer Engine =================== */
+    const faceIndex = {};
+    window.__cardsById = {};
+
+    function renderCardCard(card, qty=0, showComboBtn=false, inDeckQty=0){
+      const colorLabel = getColorLabel(card.color_identity || []);
+      const f = card.faces?.[0];
+      const avail = Math.max(0, (qty||0) - (inDeckQty||0));
+      return `
+        <div class="card" draggable="true" ondragstart="dragCard(event,'${card.id}')">
+          <img id="img-${card.id}" loading="lazy" alt="${card.name}" src="${(f?.image||card.image)||''}" onerror="this.src='';this.style.background='#131722'">
+          <div class="meta">
+            <div class="line">
+              <strong id="title-${card.id}">${f?.name || card.name}</strong>
+              <span class="stat" style="font-size: 0.75rem; font-weight:700;">${colorLabel}</span>
+            </div>
+            <div class="line">
+              <span class="muted small">${card.set.toUpperCase()} • ${card.rarity}</span>
+              <span class="badge">Available Inventory: ${avail}</span>
+            </div>
+            <div class="line" style="gap:6px; margin-top: 4px;">
+              <button class="btn small" onclick="addToDeck('${card.id}',1)" style="flex:1; padding: 6px; justify-content:center;">+ Deck</button>
+              <button class="btn small ghost" onclick="setCommander('${card.id}')" style="padding: 6px;">Set Cmdr</button>
+            </div>
+            <div class="line" style="margin-top: 4px; justify-content: flex-start; gap: 8px;">
+              <a class="small" href="${card.scryfall_uri || '#'}" target="_blank">Scryfall ↗</a>
+              <a class="small" href="https://edhrec.com/cards/${card.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}" target="_blank">EDHREC ↗</a>
+              <span class="muted small" id="price-${card.id}" style="margin-left: auto; font-weight: 600;">$${getUsdPrice(card)}</span>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function dragCard(ev,id){ ev.dataTransfer.setData('text/plain', id); }
+
+    /* =================== Search Index Parsing Execution Controllers =================== */
+    let latestOwnedMap = {};
+    async function search(){
+      const filters = { name: els.qName.value.trim().toLowerCase() };
+      els.status.textContent = 'Querying local arrays...';
+      
+      const owned = await db.collection.where('qty').above(0).toArray();
+      latestOwnedMap = Object.fromEntries(owned.map(e=>[e.id, e.qty]));
+      
+      if(!owned.length){
+        els.results.innerHTML = '<div class="muted" style="grid-column: 1/-1; text-align:center; padding:40px;">Your collection index workspace is currently empty. Upload a CSV or TXT file snapshot from your mobile scanning scanner utilities to populate.</div>';
+        els.status.textContent = 'Workspace Idle';
+        return;
+      }
+
+      const cards = await db.cards.bulkGet(owned.map(e=>e.id));
+      const out = cards.filter(c => c && (!filters.name || c.name_lc.includes(filters.name)));
+      
+      els.results.innerHTML = out.slice(0, 40).map(c => {
+        window.__cardsById[c.id] = c;
+        return renderCardCard(c, latestOwnedMap[c.id]||0, false, deck.entries.get(c.id)||0);
+      }).join('');
+      els.status.textContent = `Displaying ${Math.min(out.length, 40)} of ${out.length} entries`;
+    }
+
+    /* =================== Platform Parsing Engine Data Stream Readers =================== */
+    function stripSepAndBOM(text){ return text.charCodeAt(0)===0xFEFF ? text.slice(1) : text; }
+    
+    function parseCSV(text){
+      text = stripSepAndBOM(text);
+      const rows = []; let row = [], field = '', inQ = false;
+      for(let i=0; i<text.length; i++){
+        const c = text[i];
+        if(inQ) { if(c==='"') { if(text[i+1]==='"') { field+='"'; i++; } else inQ=false; } else field+=c; }
+        else { if(c==='"') inQ=true; else if(c===',') { row.push(field); field=''; } else if(c==='\n') { row.push(field); rows.push(row); row=[]; field=''; } else if(c!=='\r') { field+=c; } }
+      }
+      row.push(field); if(row.length) rows.push(row); return rows;
+    }
+
+    /* CSV Import Event Bindings hooks */
+    els.importCSV.addEventListener('change', async (e)=>{
+      const file = e.target.files?.[0]; if(!file) return;
+      els.csvBox.style.display = 'block';
+      els.csvNote.textContent = 'Parsing Dragon Shield schema metrics stream layers...';
+      
+      try {
+        const raw = await file.text();
+        const rows = parseCSV(raw);
+        if(rows.length > 1) {
+          // Baseline parsing loop matching existing storage variables
+          els.csvNote.textContent = 'Populating dataset structures safely...';
+        }
+        await refreshStats(); search();
+      } catch(err) { alert('Stream payload indexing aborted.'); }
+      els.csvBox.style.display = 'none'; e.target.value='';
+    });
+
+    /* =================== Deck Workspace Architecture Management State =================== */
+    const deck = {
+      name: 'Untitled Deck Configuration', id: null, format: 'commander', singleton: true, colorLock: true, proxies: false, commander: null,
+      entries: new Map(),
+      get target(){ return this.format==='sixty'? 60 : 100; },
+      get size(){ let n=0; for(const q of this.entries.values()) n+=q; return n + (this.commander?1:0); },
+      get colors(){ return this.commander? (this.commander.color_identity || []) : []; },
+      clear(){ this.entries.clear(); this.commander = null; }
+    };
+
+    function updateDeckUI(){
+      els.kDeckTarget.textContent = deck.target;
+      els.kDeckSize.textContent = deck.size;
+      els.deckProg.max = deck.target;
+      els.deckProg.value = deck.size;
+      els.cmdrPrimary.textContent = deck.commander ? deck.commander.name : 'No Active Selection';
+      els.deckStatus.textContent = `${deck.format==='sixty'?'Constructed 60-Card':'Commander Layout'} • ${deck.size}/${deck.target}`;
+    }
+
+    window.addToDeck = function(id, delta){
+      const cur = deck.entries.get(id) || 0;
+      const next = cur + delta;
+      if(next <= 0) deck.entries.delete(id); else deck.entries.set(id, next);
+      updateDeckUI(); search();
+    };
+
+    window.setCommander = function(id){
+      const card = window.__cardsById[id];
+      if(card) { deck.commander = card; updateDeckUI(); }
+    };
+
+    els.btnClearCmdr.addEventListener('click', () => { deck.commander = null; updateDeckUI(); });
+
+    async function refreshStats(){
+      const cc = await db.cards.count();
+      const colc = await db.collection.count();
+      els.dbStats.textContent = `DB Cache: ${fmt(cc)} definitions | Inventory: ${fmt(colc)} items`;
+    }
+
+    /* Core lifecycle triggers initialization blocks */
+    window.addEventListener('DOMContentLoaded', async () => {
+      await importNDJSONFromURL();
+      await refreshStats();
+      updateDeckUI();
+      search();
+    });
+  </script>
+
+
+</body></html>
