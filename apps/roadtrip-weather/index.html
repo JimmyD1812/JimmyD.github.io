@@ -34,6 +34,7 @@
 
   .form-section { padding: 20px; border-bottom: 1px solid var(--border); }
   .form-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
+  .form-section h2.clickable { background: rgba(0,0,0,0.04); margin: -8px -12px 8px; padding: 8px 12px; border-radius: 3px; }
 
   .field { margin-bottom: 14px; }
   .field label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 5px; font-weight: 500; }
@@ -90,7 +91,7 @@
     #map { grid-row: 2; }
     .sidebar { grid-row: 3; }
     .form-section { padding: 12px 16px; }
-    .form-section h2 { margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+    .form-section h2 { margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 3px; }
     .form-section h2::after { content: '▾'; font-size: 0.65rem; transition: transform 0.2s; }
     .form-section.collapsed h2::after { transform: rotate(-90deg); }
     .form-section.collapsed .field,
@@ -106,7 +107,7 @@
   <header>
     <h1><span>&#9928;</span> Road Trip Weather</h1>
     <div style="flex:1"></div>
-    <span style="font-size:12px;color:var(--text-dim)">Powered by OpenStreetMap + Open-Meteo</span>
+    <span style="font-size:11px;color:var(--text-dim)">Powered by OpenStreetMap + Open-Meteo</span>
   </header>
 
   <div class="sidebar">
@@ -175,11 +176,20 @@ const WMO = {
 function wmo(c) { return WMO[c] || `Unknown (${c})`; }
 
 // ── Map ────────────────────────────────────────────────────────────
-map = L.map('map').setView([39.5, -105.5], 7);
+map = L.map('map', { dragging: true, touchZoom: true }).setView([39.5, -105.5], 7);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
   maxZoom: 19
 }).addTo(map);
+
+// On mobile: disable single-finger drag so page scroll passes through;
+// two-finger pinch-zoom and two-finger pan still work natively.
+if ('ontouchstart' in window) {
+  map.dragging.disable();
+  map.touchZoom.enable();
+  map.doubleClickZoom.enable();
+  map.scrollWheelZoom.disable();
+}
 
 // ── Geocoding ──────────────────────────────────────────────────────
 let geoTimer = null;
@@ -245,6 +255,7 @@ function setupGeoInput(inputEl) {
   });
   inputEl.addEventListener('blur', () => { hideGeoDropdown(inputEl); });
   inputEl._getCachedResult = () => cachedResult;
+  inputEl._setCachedResult = (r) => { cachedResult = r; };
 }
 
 setupGeoInput(document.getElementById('startInput'));
@@ -526,6 +537,39 @@ document.getElementById('dateInput').value = `${yyyy}-${mm}-${dd}`;
 const hh = String(today.getHours()).padStart(2,'0');
 const min = String(today.getMinutes()).padStart(2,'0');
 document.getElementById('timeInput').value = `${hh}:${min}`;
+
+// Auto-detect user location for start field
+async function reverseGeocode(lat, lon) {
+  const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&format=json`;
+  const data = await fetch(url).then(r => r.json());
+  if (data.results && data.results.length > 0) {
+    const r = data.results[0];
+    return `${r.name}${r.admin1 ? ', ' + r.admin1 : ''}${r.country ? ', ' + r.country : ''}`.replace(/, ,/g, ',');
+  }
+  return null;
+}
+
+if ('geolocation' in navigator && 'ontouchstart' in window) {
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        if (label) {
+          const input = document.getElementById('startInput');
+          input.value = label;
+          input._setCachedResult({
+            name: label,
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+          });
+        }
+      } catch (e) { /* silent fail — user just types manually */ }
+    },
+    () => { /* permission denied — user types manually */ },
+    { timeout: 5000, maximumAge: 300000 }
+  );
+}
 
 // Mobile form collapse toggle
 const formSection = document.querySelector('.form-section');
