@@ -550,18 +550,13 @@ async function reverseGeocode(lat, lon) {
 }
 
 if ('geolocation' in navigator && 'ontouchstart' in window) {
-  alert('Geolocation available, requesting...');
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
-      alert('Got position: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
       const { latitude, longitude } = pos.coords;
       let label = null;
       try {
         label = await reverseGeocode(latitude, longitude);
-        alert('Reverse geocode result: ' + label);
-      } catch (e) {
-        alert('Reverse geocode failed, using coords: ' + e.message);
-      }
+      } catch (e) { /* fallback to coords */ }
       const displayLabel = label || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
       const input = document.getElementById('startInput');
       input.value = displayLabel;
@@ -571,13 +566,10 @@ if ('geolocation' in navigator && 'ontouchstart' in window) {
         lon: longitude,
         tz: Intl.DateTimeFormat().resolvedOptions().timeZone
       });
-      // Visual feedback that location was detected
       input.style.borderColor = 'var(--accent2)';
       setTimeout(() => { input.style.borderColor = ''; }, 1500);
     },
-    (err) => {
-      alert('Geolocation error: ' + err.message);
-    },
+    () => { /* permission denied — user types manually */ },
     { timeout: 8000, maximumAge: 600000 }
   );
 }
