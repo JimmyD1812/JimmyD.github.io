@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Road Trip Weather</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/jimmyd-theme.css">
+<style>
+  /* ===== App-specific overrides: Road Trip Weather ===== */
+  :root {
+    --bg: #faf8f5;
+    --surface: #ffffff;
+    --border: #e2ddd6;
+    --text: #2c2824;
+    --text-dim: #7a736b;
+    --accent: #b45309;
+    --accent2: #2e7d32;
+    --warn: #e65100;
+    --danger: #c62828;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .app { display: grid; grid-template-columns: 420px 1fr; grid-template-rows: auto 1fr; height: 100vh; gap: 0; }
+
+  header { grid-column: 1 / -1; background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 1.15rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+  header h1 span { color: var(--accent); }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+
+  .form-section { padding: 20px; border-bottom: 1px solid var(--border); }
+  .form-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 5px; font-weight: 500; }
+  .field input, .field select {
+    width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 2px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn {
+    width: 100%; padding: 11px; border: none; border-radius: 2px; font-size: 0.9rem;
+    font-weight: 600; cursor: pointer; transition: background 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #92400e; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .results-section { flex: 1; padding: 20px; overflow-y: auto; }
+  .results-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 14px; }
+  .stat-card .value { font-size: 1.4rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
+  .stat-card .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-top: 2px; font-weight: 600; }
+
+  .chart-container { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
+  .chart-container canvas { width: 100% !important; }
+
+  .timeline { margin-top: 10px; }
+  .timeline-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-time { font-size: 0.85rem; font-weight: 600; min-width: 70px; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
+  .timeline-loc { font-size: 0.8rem; color: var(--text-dim); min-width: 100px; }
+  .timeline-temp { font-size: 1rem; font-weight: 700; min-width: 55px; }
+  .timeline-cond { font-size: 0.85rem; flex: 1; }
+  .timeline-wind { font-size: 0.75rem; color: var(--text-dim); min-width: 70px; text-align: right; }
+
+  .loading { text-align: center; padding: 40px; color: var(--text-dim); }
+  .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error { background: #fce8e8; border: 1px solid var(--danger); border-radius: 4px; padding: 12px; color: var(--danger); font-size: 0.85rem; margin-bottom: 14px; }
+
+  #map { width: 100%; height: 100%; background: var(--bg); }
+
+  .waypoint-marker { background: var(--accent); border: 2px solid #fff; border-radius: 50%; width: 12px; height: 12px; }
+  .waypoint-marker.start { background: var(--accent2); width: 16px; height: 16px; }
+  .waypoint-marker.end { background: var(--danger); width: 16px; height: 16px; }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: auto 50vh 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1><span>&#9928;</span> Road Trip Weather</h1>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:var(--text-dim)">Powered by OpenStreetMap + Open-Meteo</span>
+  </header>
+
+  <div class="sidebar">
+    <div class="form-section">
+      <h2>Trip Details</h2>
+      <div class="field">
+        <label>Start Location</label>
+        <input type="text" id="startInput" placeholder="Denver, CO" value="Denver, CO">
+      </div>
+      <div class="field">
+        <label>End Location</label>
+        <input type="text" id="endInput" placeholder="Moab, UT" value="Moab, UT">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="dateInput">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <input type="time" id="timeInput" value="08:00">
+        </div>
+      </div>
+      <div class="field">
+        <label>Avg Speed (mph)</label>
+        <input type="number" id="speedInput" value="65" min="20" max="100">
+      </div>
+      <button class="btn btn-primary" id="goBtn" onclick="planTrip()">Plan Trip</button>
+    </div>
+
+    <div class="results-section" id="results">
+      <h2>Results</h2>
+      <div id="resultsContent">
+        <p style="color:var(--text-dim);font-size:13px">Enter a route and click Plan Trip to see weather along your drive.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+let map, routeLayer, markers = [];
+const GEO_URL = 'https://geocoding-api.open-meteo.com/v1/search';
+const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
+
+const WMO = {
+  0:'☀️ Clear',1:'🌤 Mostly clear',2:'⛅ Partly cloudy',3:'☁️ Overcast',
+  45:'🌫 Foggy',48:'🌫 Rime fog',51:'🌧 Light drizzle',53:'🌧 Drizzle',55:'🌧 Heavy drizzle',
+  61:'🌦 Slight rain',63:'🌧 Moderate rain',65:'🌧 Heavy rain',
+  71:'🌨 Slight snow',73:'🌨 Moderate snow',75:'🌨 Heavy snow',
+  80:'🌦 Rain showers',81:'🌧 Moderate showers',82:'🌧 Violent showers',
+  85:'🌨 Snow showers',86:'🌨 Heavy snow showers',
+  95:'⛈ Thunderstorm',96:'⛈ T-storm + hail',99:'⛈ T-storm + heavy hail'
+};
+
+function wmo(c) { return WMO[c] || `Unknown (${c})`; }
+
+// ── Map ────────────────────────────────────────────────────────────
+map = L.map('map').setView([39.5, -105.5], 7);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  maxZoom: 19
+}).addTo(map);
+
+// ── Geocoding ──────────────────────────────────────────────────────
+async function geocode(place) {
+  const queries = [];
+  if (place.includes(',')) queries.push(place.split(',')[0].trim());
+  queries.push(place.trim());
+  for (const q of queries) {
+    const url = `${GEO_URL}?name=${encodeURIComponent(q)}&count=5&language=en&format=json`;
+    const data = await fetch(url).then(r => r.json());
+    if (data.results && data.results.length > 0) {
+      const r = data.results[0];
+      return { name: `${r.name}, ${r.admin1||''}, ${r.country||''}`.replace(/, ,/g, ','), lat: r.latitude, lon: r.longitude, tz: r.timezone || 'auto' };
+    }
+  }
+  throw new Error(`Could not geocode: ${place}`);
+}
+
+// ── OSRM Route ─────────────────────────────────────────────────────
+async function getRoute(start, end) {
+  const url = `${OSRM_URL}/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson`;
+  const data = await fetch(url).then(r => r.json());
+  if (data.code !== 'Ok') throw new Error(data.message || 'Routing failed');
+  const route = data.routes[0];
+  const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);  // Leaflet wants [lat, lon]
+  return {
+    distanceMi: route.distance / 1609.34,
+    durationMin: route.duration / 60,
+    coords
+  };
+}
+
+// ── Weather ────────────────────────────────────────────────────────
+async function getForecast(lat, lon, tz) {
+  const hourly = ['temperature_2m','apparent_temperature','precipitation_probability','precipitation','weather_code','wind_speed_10m','wind_gusts_10m','visibility','cloud_cover'];
+  const url = `${FORECAST_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourly.join(',')}&timezone=${encodeURIComponent(tz)}&forecast_days=3`;
+  return fetch(url).then(r => r.json());
+}
+
+function pickHourly(wx, targetDate) {
+  const times = wx.hourly.time;
+  let best = 0, bestDt = Infinity;
+  for (let i = 0; i < times.length; i++) {
+    const d = new Date(times[i]);
+    const dt = Math.abs(d - targetDate);
+    if (dt < bestDt) { bestDt = dt; best = i; }
+  }
+  if (bestDt > 3600000) return null; // >1h off
+  const h = wx.hourly;
+  return {
+    time: times[best],
+    tempF: h.temperature_2m[best] * 9/5 + 32,
+    feelsF: h.apparent_temperature[best] * 9/5 + 32,
+    rain: h.precipitation_probability[best],
+    wind: h.wind_speed_10m[best],
+    gust: h.wind_gusts_10m[best],
+    code: h.weather_code[best],
+    cond: wmo(h.weather_code[best]),
+    vis: h.visibility[best],
+    cloud: h.cloud_cover[best]
+  };
+}
+
+// ── Main ───────────────────────────────────────────────────────────
+let chart = null;
+
+async function planTrip() {
+  const startPlace = document.getElementById('startInput').value.trim();
+  const endPlace = document.getElementById('endInput').value.trim();
+  const date = document.getElementById('dateInput').value;
+  const time = document.getElementById('timeInput').value;
+  const speed = parseFloat(document.getElementById('speedInput').value) || 65;
+
+  if (!startPlace || !endPlace || !date || !time) {
+    showError('Please fill in all fields.');
+    return;
+  }
+
+  const goBtn = document.getElementById('goBtn');
+  goBtn.disabled = true;
+  goBtn.textContent = 'Planning...';
+  showLoading('Geocoding locations...');
+
+  try {
+    // Step 1: Geocode
+    const [start, end] = await Promise.all([geocode(startPlace), geocode(endPlace)]);
+    showLoading('Getting route from OpenStreetMap...');
+
+    // Step 2: Route
+    const route = await getRoute(start, end);
+    showLoading('Fetching weather forecasts...');
+
+    // Step 3: Generate waypoints along the route
+    const numWaypoints = Math.min(Math.max(Math.ceil(route.distanceMi / 40), 4), 12);
+    const waypoints = [];
+    for (let i = 0; i <= numWaypoints; i++) {
+      const frac = i / numWaypoints;
+      const idx = Math.min(Math.floor(frac * (route.coords.length - 1)), route.coords.length - 1);
+      waypoints.push({ lat: route.coords[idx][0], lon: route.coords[idx][1], frac });
+    }
+
+    // Step 4: Fetch forecasts for each waypoint
+    const forecasts = [];
+    for (const wp of waypoints) {
+      const fc = await getForecast(wp.lat, wp.lon, 'auto');
+      forecasts.push(fc);
+    }
+
+    // Step 5: Build timeline
+    const depart = new Date(`${date}T${time}`);
+    const segmentH = route.durationMin / 60 / (waypoints.length - 1);
+    const timeline = [];
+    for (let h = 0; h * segmentH <= route.durationMin / 60 + 0.5; h++) {
+      const arrival = new Date(depart.getTime() + h * segmentH * 3600000);
+      const frac = Math.min((h * segmentH) / (route.durationMin / 60), 1);
+      const wpIdx = Math.min(Math.floor(frac * (waypoints.length - 1)), waypoints.length - 1);
+      const wx = pickHourly(forecasts[wpIdx], arrival);
+      timeline.push({ hour: h, arrival, frac, wx, wpIdx });
+    }
+
+    // Step 6: Render
+    renderMap(start, end, route, waypoints);
+    renderResults(start, end, route, timeline, depart, speed);
+    renderChart(timeline);
+
+  } catch (err) {
+    showError(err.message);
+    console.error(err);
+  } finally {
+    goBtn.disabled = false;
+    goBtn.textContent = 'Plan Trip';
+  }
+}
+
+// ── Map Rendering ──────────────────────────────────────────────────
+function renderMap(start, end, route, waypoints) {
+  if (routeLayer) map.removeLayer(routeLayer);
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  routeLayer = L.polyline(route.coords, { color: '#b45309', weight: 4, opacity: 0.8 }).addTo(map);
+
+  const startPt = route.coords[0];
+  const endPt = route.coords[route.coords.length - 1];
+  markers.push(L.circleMarker(startPt, { radius: 8, fillColor: '#2e7d32', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup(start.name));
+  markers.push(L.circleMarker(endPt, { radius: 8, fillColor: '#c62828', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup(end.name));
+
+  // Add waypoint markers
+  for (let i = 1; i < waypoints.length - 1; i++) {
+    const wp = waypoints[i];
+    markers.push(L.circleMarker([wp.lat, wp.lon], { radius: 5, fillColor: '#b45309', color: '#fff', weight: 1.5, fillOpacity: 0.8 }).addTo(map));
+  }
+
+  map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
+}
+
+// ── Results Rendering ──────────────────────────────────────────────
+function renderResults(start, end, route, timeline, depart, speed) {
+  const dist = route.distanceMi;
+  const dur = route.durationMin;
+  const eta = new Date(depart.getTime() + dur * 60000);
+
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
+      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
+      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
+      <div class="stat-card"><div class="value">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+    </div>
+
+    <h2 style="margin-top:20px">Weather Timeline</h2>
+    <div class="timeline">`;
+
+  for (const t of timeline) {
+    if (!t.wx) continue;
+    const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const locStr = t.frac < 0.15 ? start.name.split(',')[0] : t.frac > 0.85 ? end.name.split(',')[0] : `${Math.round(t.frac*100)}%`;
+    html += `
+      <div class="timeline-item">
+        <span class="timeline-time">${timeStr}</span>
+        <span class="timeline-loc">${locStr}</span>
+        <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
+        <span class="timeline-cond">${t.wx.cond}</span>
+        <span class="timeline-wind">${t.wx.wind.toFixed(0)} km/h ${t.wx.rain}%</span>
+      </div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('resultsContent').innerHTML = html;
+}
+
+// ── Chart ──────────────────────────────────────────────────────────
+function renderChart(timeline) {
+  const valid = timeline.filter(t => t.wx);
+  const labels = valid.map(t => t.arrival.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}));
+  const temps = valid.map(t => t.wx.tempF);
+  const rain = valid.map(t => t.wx.rain);
+  const wind = valid.map(t => t.wx.wind);
+
+  if (chart) chart.destroy();
+
+  const ctx = document.createElement('canvas');
+  ctx.id = 'weatherChart';
+  const container = document.createElement('div');
+  container.className = 'chart-container';
+  container.innerHTML = '<h2 style="margin-bottom:12px">Temperature & Rain</h2>';
+  container.appendChild(ctx);
+
+  // Insert after stats
+  const results = document.getElementById('resultsContent');
+  const existingChart = results.querySelector('.chart-container');
+  if (existingChart) existingChart.remove();
+  results.appendChild(container);
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Temp (°F)',
+          data: temps,
+          borderColor: '#b45309',
+          backgroundColor: 'rgba(180,83,9,0.08)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Rain %',
+          data: rain,
+          borderColor: '#2e7d32',
+          backgroundColor: 'rgba(46,125,50,0.08)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1'
+        },
+        {
+          label: 'Wind (km/h)',
+          data: wind,
+          borderColor: '#e65100',
+          borderDash: [4, 4],
+          tension: 0.3,
+          pointRadius: 0,
+          yAxisID: 'y'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#7a736b', font: { size: 11 } } },
+        tooltip: { backgroundColor: '#fff', titleColor: '#2c2824', bodyColor: '#2c2824', borderColor: '#e2ddd6', borderWidth: 1 }
+      },
+      scales: {
+        x: { ticks: { color: '#7a736b', font: { size: 10 } }, grid: { color: 'rgba(226,221,214,0.5)' } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#b45309', font: { size: 10 }, callback: v => v + '°' }, grid: { color: 'rgba(226,221,214,0.5)' }, title: { display: true, text: 'Temp °F', color: '#b45309', font: { size: 11 } } },
+        y1: { type: 'linear', position: 'right', min: 0, max: 100, ticks: { color: '#2e7d32', font: { size: 10 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Rain %', color: '#2e7d32', font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── UI Helpers ─────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('resultsContent').innerHTML = `<div class="loading"><div class="spinner"></div><div>${msg}</div></div>`;
+}
+function showError(msg) {
+  document.getElementById('resultsContent').innerHTML = `<div class="error">${msg}</div>`;
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth()+1).padStart(2,'0');
+const dd = String(today.getDate()).padStart(2,'0');
+document.getElementById('dateInput').value = `${yyyy}-${mm}-${dd}`;
+</script>
+</body>
+</html>
