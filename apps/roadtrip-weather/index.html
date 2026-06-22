@@ -554,25 +554,26 @@ if ('geolocation' in navigator && 'ontouchstart' in window) {
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       alert('Got position: ' + pos.coords.latitude + ', ' + pos.coords.longitude);
+      const { latitude, longitude } = pos.coords;
+      let label = null;
       try {
-        const { latitude, longitude } = pos.coords;
-        const label = await reverseGeocode(latitude, longitude);
+        label = await reverseGeocode(latitude, longitude);
         alert('Reverse geocode result: ' + label);
-        const displayLabel = label || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-        const input = document.getElementById('startInput');
-        input.value = displayLabel;
-        input._setCachedResult({
-          name: displayLabel,
-          lat: latitude,
-          lon: longitude,
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone
-        });
-        // Visual feedback that location was detected
-        input.style.borderColor = 'var(--accent2)';
-        setTimeout(() => { input.style.borderColor = ''; }, 1500);
       } catch (e) {
-        alert('Reverse geocode failed: ' + e.message);
+        alert('Reverse geocode failed, using coords: ' + e.message);
       }
+      const displayLabel = label || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+      const input = document.getElementById('startInput');
+      input.value = displayLabel;
+      input._setCachedResult({
+        name: displayLabel,
+        lat: latitude,
+        lon: longitude,
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+      });
+      // Visual feedback that location was detected
+      input.style.borderColor = 'var(--accent2)';
+      setTimeout(() => { input.style.borderColor = ''; }, 1500);
     },
     (err) => {
       alert('Geolocation error: ' + err.message);
