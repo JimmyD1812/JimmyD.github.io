@@ -553,21 +553,28 @@ if ('geolocation' in navigator && 'ontouchstart' in window) {
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       try {
-        const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        if (label) {
-          const input = document.getElementById('startInput');
-          input.value = label;
-          input._setCachedResult({
-            name: label,
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-            tz: Intl.DateTimeFormat().resolvedOptions().timeZone
-          });
-        }
-      } catch (e) { /* silent fail — user just types manually */ }
+        const { latitude, longitude } = pos.coords;
+        const label = await reverseGeocode(latitude, longitude);
+        const displayLabel = label || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+        const input = document.getElementById('startInput');
+        input.value = displayLabel;
+        input._setCachedResult({
+          name: displayLabel,
+          lat: latitude,
+          lon: longitude,
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+        // Visual feedback that location was detected
+        input.style.borderColor = 'var(--accent2)';
+        setTimeout(() => { input.style.borderColor = ''; }, 1500);
+      } catch (e) {
+        console.warn('Geolocation autofill failed:', e);
+      }
     },
-    () => { /* permission denied — user types manually */ },
-    { timeout: 5000, maximumAge: 300000 }
+    (err) => {
+      console.warn('Geolocation permission denied or unavailable:', err.message);
+    },
+    { timeout: 8000, maximumAge: 600000 }
   );
 }
 
