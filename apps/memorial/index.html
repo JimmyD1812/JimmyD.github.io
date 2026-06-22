@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<!-- saved from url=(0035)https://jimmyd.space/apps/memorial/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantheon of Lost Heroes // TTRPG Memorial Archive</title>
+    <!-- Tailwind CSS -->
+    <script src="./Pantheon of Lost Heroes __ TTRPG Memorial Archive_files/saved_resource"></script>
+    <!-- Google Fonts: Playfair Display & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com/">
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+    <link href="./Pantheon of Lost Heroes __ TTRPG Memorial Archive_files/css2" rel="stylesheet">
+    <!-- FontAwesome for Classy Icons -->
+    <link rel="stylesheet" href="./Pantheon of Lost Heroes __ TTRPG Memorial Archive_files/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        charcoal: {
+                            950: '#faf8f5',
+                            900: '#ffffff',
+                            800: '#f5f0ea',
+                            700: '#e2ddd6',
+                            600: '#d0c8bd',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar matching light layout */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #faf8f5; }
+        ::-webkit-scrollbar-thumb { background: #d0c8bd; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b45309; }
+
+        /* Ambient glow - toned down for light theme */
+        .theme-glow-fey { box-shadow: 0 0 40px -10px rgba(46,125,50,0.08); border-color: rgba(46,125,50,0.15); }
+        .theme-glow-brass { box-shadow: 0 0 40px -10px rgba(180,83,9,0.08); border-color: rgba(180,83,9,0.15); }
+        .theme-glow-rose { box-shadow: 0 0 40px -10px rgba(196,40,40,0.08); border-color: rgba(196,40,40,0.15); }
+        .theme-glow-gold { box-shadow: 0 0 40px -10px rgba(180,83,9,0.1); border-color: rgba(180,83,9,0.15); }
+        .theme-glow-orange { box-shadow: 0 0 40px -10px rgba(230,81,0,0.08); border-color: rgba(230,81,0,0.15); }
+        .theme-glow-violet { box-shadow: 0 0 40px -10px rgba(109,40,217,0.08); border-color: rgba(109,40,217,0.15); }
+        .theme-glow-teal { box-shadow: 0 0 40px -10px rgba(13,148,136,0.08); border-color: rgba(13,148,136,0.15); }
+        .theme-glow-indigo { box-shadow: 0 0 40px -10px rgba(67,56,202,0.08); border-color: rgba(67,56,202,0.15); }
+
+        @keyframes subtle-glow { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } }
+        .pulse-badge { animation: subtle-glow 3s infinite ease-in-out; }
+
+        /* Light mode overrides for dark Tailwind classes */
+        .text-white { color: #2c2824 !important; }
+        .text-slate-100 { color: #2c2824 !important; }
+        .text-slate-200 { color: #2c2824 !important; }
+        .text-slate-300 { color: #5c554e !important; }
+        .text-slate-400 { color: #7a736b !important; }
+        .text-slate-500 { color: #7a736b !important; }
+        .text-slate-600 { color: #7a736b !important; }
+        .text-slate-700 { color: #7a736b !important; }
+        .text-slate-800 { color: #2c2824 !important; }
+        .text-slate-900 { color: #2c2824 !important; }
+        .bg-charcoal-950 { background-color: #faf8f5 !important; }
+        .bg-charcoal-900 { background-color: #ffffff !important; }
+        .bg-charcoal-800 { background-color: #f5f0ea !important; }
+        .bg-charcoal-700 { background-color: #e2ddd6 !important; }
+        .border-charcoal-700 { border-color: #e2ddd6 !important; }
+        .border-charcoal-800 { border-color: #e2ddd6 !important; }
+        .border-charcoal-900 { border-color: #e2ddd6 !important; }
+        .from-charcoal-950 { --tw-gradient-from: #faf8f5 var(--tw-gradient-from-position) !important; }
+        .ring-transparent { --tw-ring-color: transparent !important; }
+        .text-amber-500 { color: #b45309 !important; }
+        .text-amber-500\/70 { color: rgba(180,83,9,0.7) !important; }
+        .text-amber-500\/80 { color: rgba(180,83,9,0.8) !important; }
+        .bg-amber-600 { background-color: #b45309 !important; }
+        .hover\:bg-amber-500:hover { background-color: #d97706 !important; }
+        .hover\:bg-amber-600:hover { background-color: #92400e !important; }
+        .text-amber-600 { color: #b45309 !important; }
+        .border-amber-500\/40 { border-color: rgba(180,83,9,0.4) !important; }
+        .border-amber-500\/50 { border-color: rgba(180,83,9,0.5) !important; }
+        .hover\:text-amber-500:hover { color: #b45309 !important; }
+        .hover\:text-amber-400:hover { color: #d97706 !important; }
+        .hover\:border-amber-500\/40:hover { border-color: rgba(180,83,9,0.4) !important; }
+        .hover\:border-rose-500\/40:hover { border-color: rgba(196,40,40,0.4) !important; }
+        .hover\:border-orange-500\/40:hover { border-color: rgba(230,81,0,0.4) !important; }
+        .hover\:border-teal-500\/40:hover { border-color: rgba(13,148,136,0.4) !important; }
+        .hover\:border-violet-500\/40:hover { border-color: rgba(109,40,217,0.4) !important; }
+        .hover\:border-emerald-500\/40:hover { border-color: rgba(46,125,50,0.4) !important; }
+        .hover\:border-indigo-500\/40:hover { border-color: rgba(67,56,202,0.4) !important; }
+        .hover\:border-yellow-500\/40:hover { border-color: rgba(180,83,9,0.4) !important; }
+        .hover\:text-rose-400:hover { color: #c62828 !important; }
+        .hover\:text-orange-400:hover { color: #e65100 !important; }
+        .hover\:text-teal-400:hover { color: #0d9488 !important; }
+        .hover\:text-violet-400:hover { color: #7c3aed !important; }
+        .hover\:text-emerald-400:hover { color: #2e7d32 !important; }
+        .hover\:text-indigo-400:hover { color: #4f46e5 !important; }
+        .hover\:text-yellow-400:hover { color: #b45309 !important; }
+        .text-yellow-400 { color: #b45309 !important; }
+        .text-yellow-500 { color: #b45309 !important; }
+        .text-rose-400 { color: #c62828 !important; }
+        .text-rose-500 { color: #c62828 !important; }
+        .text-orange-400 { color: #e65100 !important; }
+        .text-orange-500 { color: #e65100 !important; }
+        .text-teal-400 { color: #0d9488 !important; }
+        .text-teal-500 { color: #0d9488 !important; }
+        .text-violet-400 { color: #7c3aed !important; }
+        .text-violet-500 { color: #7c3aed !important; }
+        .text-emerald-400 { color: #2e7d32 !important; }
+        .text-emerald-500 { color: #2e7d32 !important; }
+        .text-indigo-400 { color: #4f46e5 !important; }
+        .text-indigo-500 { color: #4f46e5 !important; }
+        .text-red-400 { color: #c62828 !important; }
+        .text-red-500 { color: #c62828 !important; }
+        .bg-yellow-950\/80 { background-color: #fef3c7 !important; }
+        .bg-yellow-950\/40 { background-color: #fef3c7 !important; }
+        .bg-rose-950\/40 { background-color: #fce8e8 !important; }
+        .bg-rose-950\/90 { background-color: #fce8e8 !important; }
+        .bg-orange-950\/40 { background-color: #fff3e0 !important; }
+        .bg-orange-950\/80 { background-color: #fff3e0 !important; }
+        .bg-teal-950\/40 { background-color: #e0f2f1 !important; }
+        .bg-teal-950\/80 { background-color: #e0f2f1 !important; }
+        .bg-violet-950\/40 { background-color: #ede9fe !important; }
+        .bg-violet-950\/80 { background-color: #ede9fe !important; }
+        .bg-emerald-950\/40 { background-color: #e8f5e9 !important; }
+        .bg-emerald-950\/80 { background-color: #e8f5e9 !important; }
+        .bg-indigo-950\/40 { background-color: #e8eaf6 !important; }
+        .bg-indigo-950\/80 { background-color: #e8eaf6 !important; }
+        .bg-red-950\/80 { background-color: #fce8e8 !important; }
+        .border-yellow-900\/50 { border-color: #fde68a !important; }
+        .border-yellow-950\/50 { border-color: #fde68a !important; }
+        .border-rose-900\/50 { border-color: #fecaca !important; }
+        .border-rose-900\/60 { border-color: #fecaca !important; }
+        .border-orange-900\/50 { border-color: #fed7aa !important; }
+        .border-teal-900\/50 { border-color: #99f6e4 !important; }
+        .border-violet-900\/50 { border-color: #ddd6fe !important; }
+        .border-emerald-900\/50 { border-color: #a7d8a9 !important; }
+        .border-indigo-900\/50 { border-color: #c7d2fe !important; }
+        .border-red-900\/50 { border-color: #fecaca !important; }
+        .shadow-inner { box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important; }
+        .shadow-lg { box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important; }
+        .ring-yellow-500 { --tw-ring-color: #b45309 !important; }
+        .hover\:bg-charcoal-800\/80:hover { background-color: #f5f0ea !important; }
+        .border-transparent { border-color: transparent !important; }
+        .focus\:border-amber-500:focus { border-color: #b45309 !important; }
+        .text-charcoal-950 { color: #2c2824 !important; }
+        .hover\:text-white:hover { color: #2c2824 !important; }
+        .hover\:bg-charcoal-900:hover { background-color: #f5f0ea !important; }
+        .hover\:bg-charcoal-800:hover { background-color: #f5f0ea !important; }
+        .hover\:border-charcoal-700:hover { border-color: #d0c8bd !important; }
+        .hover\:border-charcoal-800:hover { border-color: #d0c8bd !important; }
+        .hover\:ring-yellow-500:hover { --tw-ring-color: #b45309 !important; }
+        .hover\:ring-rose-500:hover { --tw-ring-color: #c62828 !important; }
+        .hover\:ring-orange-500:hover { --tw-ring-color: #e65100 !important; }
+        .hover\:ring-teal-500:hover { --tw-ring-color: #0d9488 !important; }
+        .hover\:ring-violet-500:hover { --tw-ring-color: #7c3aed !important; }
+        .hover\:ring-emerald-500:hover { --tw-ring-color: #2e7d32 !important; }
+        .hover\:ring-indigo-500:hover { --tw-ring-color: #4f46e5 !important; }
+        .hover\:ring-transparent:hover { --tw-ring-color: transparent !important; }
+        .selection\:bg-amber-600::selection { background-color: #b45309 !important; }
+        .selection\:text-white::selection { color: #fff !important; }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:Inter, sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.bottom-4{bottom:1rem}.right-0{right:0px}.right-4{right:1rem}.top-0{top:0px}.z-10{z-index:10}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mb-0\.5{margin-bottom:0.125rem}.mb-2{margin-bottom:0.5rem}.mb-2\.5{margin-bottom:0.625rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mr-1{margin-right:0.25rem}.mt-0\.5{margin-top:0.125rem}.mt-3{margin-top:0.75rem}.mt-6{margin-top:1.5rem}.mt-auto{margin-top:auto}.ml-1{margin-left:0.25rem}.mt-1{margin-top:0.25rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.aspect-\[4\/5\]{aspect-ratio:4/5}.h-1\.5{height:0.375rem}.h-10{height:2.5rem}.h-20{height:5rem}.h-\[1px\]{height:1px}.h-full{height:100%}.h-12{height:3rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.min-h-\[460px\]{min-height:460px}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-16{width:4rem}.w-20{width:5rem}.w-full{width:100%}.w-12{width:3rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.max-w-2xl{max-width:42rem}.max-w-6xl{max-width:72rem}.flex-grow{flex-grow:1}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.gap-x-2{column-gap:0.5rem}.gap-y-1{row-gap:0.25rem}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.space-y-12 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(3rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(3rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-x-hidden{overflow-x:hidden}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.rounded-lg{border-radius:0.5rem}.rounded-r-lg{border-top-right-radius:0.5rem;border-bottom-right-radius:0.5rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-b-2{border-bottom-width:2px}.border-l-2{border-left-width:2px}.border-t{border-top-width:1px}.border-amber-500{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.border-charcoal-700{--tw-border-opacity:1;border-color:rgb(31 38 51 / var(--tw-border-opacity, 1))}.border-charcoal-800{--tw-border-opacity:1;border-color:rgb(21 25 33 / var(--tw-border-opacity, 1))}.border-charcoal-800\/80{border-color:rgb(21 25 33 / 0.8)}.border-charcoal-900{--tw-border-opacity:1;border-color:rgb(12 14 18 / var(--tw-border-opacity, 1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59 / var(--tw-border-opacity, 1))}.border-amber-900\/50{border-color:rgb(120 53 15 / 0.5)}.border-emerald-900\/50{border-color:rgb(6 78 59 / 0.5)}.border-indigo-900\/50{border-color:rgb(49 46 129 / 0.5)}.border-orange-900\/50{border-color:rgb(124 45 18 / 0.5)}.border-red-900\/50{border-color:rgb(127 29 29 / 0.5)}.border-rose-900\/50{border-color:rgb(136 19 55 / 0.5)}.border-rose-900\/60{border-color:rgb(136 19 55 / 0.6)}.border-teal-900\/50{border-color:rgb(19 78 74 / 0.5)}.border-transparent{border-color:transparent}.border-violet-900\/50{border-color:rgb(76 29 149 / 0.5)}.border-yellow-500{--tw-border-opacity:1;border-color:rgb(234 179 8 / var(--tw-border-opacity, 1))}.border-yellow-900\/50{border-color:rgb(113 63 18 / 0.5)}.bg-amber-600{--tw-bg-opacity:1;background-color:rgb(217 119 6 / var(--tw-bg-opacity, 1))}.bg-charcoal-800{--tw-bg-opacity:1;background-color:rgb(21 25 33 / var(--tw-bg-opacity, 1))}.bg-charcoal-900{--tw-bg-opacity:1;background-color:rgb(12 14 18 / var(--tw-bg-opacity, 1))}.bg-charcoal-900\/80{background-color:rgb(12 14 18 / 0.8)}.bg-charcoal-950{--tw-bg-opacity:1;background-color:rgb(6 7 9 / var(--tw-bg-opacity, 1))}.bg-charcoal-950\/30{background-color:rgb(6 7 9 / 0.3)}.bg-charcoal-950\/50{background-color:rgb(6 7 9 / 0.5)}.bg-amber-950\/40{background-color:rgb(69 26 3 / 0.4)}.bg-charcoal-950\/20{background-color:rgb(6 7 9 / 0.2)}.bg-emerald-950\/40{background-color:rgb(2 44 34 / 0.4)}.bg-emerald-950\/80{background-color:rgb(2 44 34 / 0.8)}.bg-indigo-950\/40{background-color:rgb(30 27 75 / 0.4)}.bg-indigo-950\/80{background-color:rgb(30 27 75 / 0.8)}.bg-orange-950\/40{background-color:rgb(67 20 7 / 0.4)}.bg-orange-950\/80{background-color:rgb(67 20 7 / 0.8)}.bg-red-950\/80{background-color:rgb(69 10 10 / 0.8)}.bg-rose-950\/40{background-color:rgb(76 5 25 / 0.4)}.bg-rose-950\/90{background-color:rgb(76 5 25 / 0.9)}.bg-teal-950\/40{background-color:rgb(4 47 46 / 0.4)}.bg-teal-950\/80{background-color:rgb(4 47 46 / 0.8)}.bg-violet-950\/40{background-color:rgb(46 16 101 / 0.4)}.bg-violet-950\/80{background-color:rgb(46 16 101 / 0.8)}.bg-yellow-950\/40{background-color:rgb(66 32 6 / 0.4)}.bg-yellow-950\/80{background-color:rgb(66 32 6 / 0.8)}.bg-gradient-to-l{background-image:linear-gradient(to left, var(--tw-gradient-stops))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.bg-gradient-to-t{background-image:linear-gradient(to top, var(--tw-gradient-stops))}.from-charcoal-950{--tw-gradient-from:#060709 var(--tw-gradient-from-position);--tw-gradient-to:rgb(6 7 9 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-emerald-800{--tw-gradient-from:#065f46 var(--tw-gradient-from-position);--tw-gradient-to:rgb(6 95 70 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-transparent{--tw-gradient-from:transparent var(--tw-gradient-from-position);--tw-gradient-to:rgb(0 0 0 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-yellow-800{--tw-gradient-from:#854d0e var(--tw-gradient-from-position);--tw-gradient-to:rgb(133 77 14 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-amber-500{--tw-gradient-to:rgb(245 158 11 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #f59e0b var(--tw-gradient-via-position), var(--tw-gradient-to)}.via-transparent{--tw-gradient-to:rgb(0 0 0 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to)}.via-yellow-400{--tw-gradient-to:rgb(250 204 21 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #facc15 var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-amber-500\/50{--tw-gradient-to:rgb(245 158 11 / 0.5) var(--tw-gradient-to-position)}.to-emerald-800{--tw-gradient-to:#065f46 var(--tw-gradient-to-position)}.to-transparent{--tw-gradient-to:transparent var(--tw-gradient-to-position)}.to-yellow-800{--tw-gradient-to:#854d0e var(--tw-gradient-to-position)}.object-cover{object-fit:cover}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-6{padding:1.5rem}.p-2\.5{padding:0.625rem}.p-5{padding:1.25rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.py-8{padding-top:2rem;padding-bottom:2rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.pb-1{padding-bottom:0.25rem}.pb-2{padding-bottom:0.5rem}.pt-2{padding-top:0.5rem}.pt-8{padding-top:2rem}.pb-1\.5{padding-bottom:0.375rem}.pl-2{padding-left:0.5rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.font-sans{font-family:Inter, sans-serif}.font-serif{font-family:Playfair Display, serif}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-9xl{font-size:8rem;line-height:1}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-6xl{font-size:3.75rem;line-height:1}.text-\[8px\]{font-size:8px}.text-\[9px\]{font-size:9px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-bold{font-weight:700}.font-semibold{font-weight:600}.font-medium{font-weight:500}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-\[0\.4em\]{letter-spacing:0.4em}.tracking-wide{letter-spacing:0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11 / var(--tw-text-opacity, 1))}.text-amber-500\/70{color:rgb(245 158 11 / 0.7)}.text-amber-500\/80{color:rgb(245 158 11 / 0.8)}.text-charcoal-950{--tw-text-opacity:1;color:rgb(6 7 9 / var(--tw-text-opacity, 1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-emerald-500{--tw-text-opacity:1;color:rgb(16 185 129 / var(--tw-text-opacity, 1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.text-indigo-500{--tw-text-opacity:1;color:rgb(99 102 241 / var(--tw-text-opacity, 1))}.text-orange-400{--tw-text-opacity:1;color:rgb(251 146 60 / var(--tw-text-opacity, 1))}.text-orange-500{--tw-text-opacity:1;color:rgb(249 115 22 / var(--tw-text-opacity, 1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113 / var(--tw-text-opacity, 1))}.text-red-500{--tw-text-opacity:1;color:rgb(239 68 68 / var(--tw-text-opacity, 1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133 / var(--tw-text-opacity, 1))}.text-rose-500{--tw-text-opacity:1;color:rgb(244 63 94 / var(--tw-text-opacity, 1))}.text-sky-400{--tw-text-opacity:1;color:rgb(56 189 248 / var(--tw-text-opacity, 1))}.text-teal-400{--tw-text-opacity:1;color:rgb(45 212 191 / var(--tw-text-opacity, 1))}.text-teal-500{--tw-text-opacity:1;color:rgb(20 184 166 / var(--tw-text-opacity, 1))}.text-violet-400{--tw-text-opacity:1;color:rgb(167 139 250 / var(--tw-text-opacity, 1))}.text-violet-500{--tw-text-opacity:1;color:rgb(139 92 246 / var(--tw-text-opacity, 1))}.text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21 / var(--tw-text-opacity, 1))}.text-yellow-500{--tw-text-opacity:1;color:rgb(234 179 8 / var(--tw-text-opacity, 1))}.accent-emerald-500{accent-color:#10b981}.opacity-0{opacity:0}.opacity-\[0\.02\]{opacity:0.02}.opacity-5{opacity:0.05}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.ring-2{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.ring-transparent{--tw-ring-color:transparent}.ring-yellow-500{--tw-ring-opacity:1;--tw-ring-color:rgb(234 179 8 / var(--tw-ring-opacity, 1))}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.duration-500{transition-duration:500ms}.duration-700{transition-duration:700ms}.selection\:bg-amber-600 *::selection{--tw-bg-opacity:1;background-color:rgb(217 119 6 / var(--tw-bg-opacity, 1))}.selection\:text-white *::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.selection\:bg-amber-600::selection{--tw-bg-opacity:1;background-color:rgb(217 119 6 / var(--tw-bg-opacity, 1))}.selection\:text-white::selection{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:border-amber-500\/50:hover{border-color:rgb(245 158 11 / 0.5)}.hover\:border-amber-500\/40:hover{border-color:rgb(245 158 11 / 0.4)}.hover\:border-emerald-500\/40:hover{border-color:rgb(16 185 129 / 0.4)}.hover\:border-indigo-500\/40:hover{border-color:rgb(99 102 241 / 0.4)}.hover\:border-orange-500\/40:hover{border-color:rgb(249 115 22 / 0.4)}.hover\:border-rose-500\/40:hover{border-color:rgb(244 63 94 / 0.4)}.hover\:border-teal-500\/40:hover{border-color:rgb(20 184 166 / 0.4)}.hover\:border-violet-500\/40:hover{border-color:rgb(139 92 246 / 0.4)}.hover\:border-yellow-500\/40:hover{border-color:rgb(234 179 8 / 0.4)}.hover\:bg-amber-500:hover{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-600:hover{--tw-bg-opacity:1;background-color:rgb(217 119 6 / var(--tw-bg-opacity, 1))}.hover\:bg-charcoal-700:hover{--tw-bg-opacity:1;background-color:rgb(31 38 51 / var(--tw-bg-opacity, 1))}.hover\:bg-charcoal-800\/80:hover{background-color:rgb(21 25 33 / 0.8)}.hover\:text-slate-300:hover{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:text-slate-200:hover{--tw-text-opacity:1;color:rgb(226 232 240 / var(--tw-text-opacity, 1))}.focus\:border-amber-500:focus{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.group:hover .group-hover\:text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-orange-400{--tw-text-opacity:1;color:rgb(251 146 60 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-teal-400{--tw-text-opacity:1;color:rgb(45 212 191 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-violet-400{--tw-text-opacity:1;color:rgb(167 139 250 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:text-yellow-400{--tw-text-opacity:1;color:rgb(250 204 21 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:opacity-100{opacity:1}.group:hover .group-hover\:opacity-10{opacity:0.1}@media (min-width: 640px){.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.sm\:grid-cols-6{grid-template-columns:repeat(6, minmax(0, 1fr))}}@media (min-width: 768px){.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.md\:text-5xl{font-size:3rem;line-height:1}}@media (min-width: 1024px){.lg\:col-span-5{grid-column:span 5 / span 5}.lg\:col-span-7{grid-column:span 7 / span 7}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.lg\:py-12{padding-top:3rem;padding-bottom:3rem}}</style></head>
+<body class="bg-charcoal-950 text-slate-100 font-sans selection:bg-amber-600 selection:text-white min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Top Artistic Border -->
+    <div id="top-accent-bar" class="h-1.5 w-full bg-gradient-to-r from-yellow-800 via-yellow-400 to-yellow-800 transition-all duration-700"></div>
+
+    <div class="max-w-6xl w-full mx-auto px-4 py-8 lg:py-12 flex-grow space-y-12">
+        
+        <!-- HEADER AND INTRO (Updated to celebrate their life/triumphs clearly) -->
+        <header class="text-center relative max-w-2xl mx-auto space-y-3">
+            <span class="text-xs tracking-[0.4em] uppercase text-amber-500 font-bold">The Archives of Lost Tales</span>
+            <h1 class="text-3xl md:text-5xl font-serif font-semibold tracking-wide text-white">The Character Pantheon</h1>
+            <p class="text-sm text-slate-400 leading-relaxed">
+                An interactive memorial celebrating the lives, legendary triumphs, and tragic ends of my past heroes. Reconstructed from archived <strong>D&amp;D Beyond</strong> sheets, this collection honors characters who finished their epic quests, retired to hold fastnesses, paused mid-story, or fell gloriously in battle.
+            </p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <div class="h-[1px] w-16 bg-gradient-to-r from-transparent to-amber-500/50"></div>
+                <i class="fa-solid fa-feather-pointed text-amber-500/70 text-xs"></i>
+                <div class="h-[1px] w-16 bg-gradient-to-l from-transparent to-amber-500/50"></div>
+            </div>
+        </header>
+
+        <!-- PORTFOLIO HERO CARDS: SELECTION PANEL -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs uppercase tracking-widest font-bold text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-amber-500/80"></i> Choose a Hero to Inspect
+                </h2>
+                <span class="text-xs text-slate-500 italic" id="pantheon-count">8 Heroes Archived</span>
+            </div>
+            
+            <!-- Dynamic selector container (Organized as up to 5 columns per row, wraps naturally into rows) -->
+            <div id="selector-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4"><button id="selector-reddyl" class="group text-left p-5 rounded-2xl bg-charcoal-900 border hover:border-yellow-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent ring-yellow-500 border-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-yellow-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-yellow-950/40 text-yellow-400 border-yellow-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-yellow-400 transition">Reddyl</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-yellow-950/80 text-yellow-400 border-yellow-900/50">Retired</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Paladin 5; Oath of Vengeance</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-yellow-400 transition pl-2"></i>
+                </button><button id="selector-edwin" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-amber-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-amber-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-950/40 text-amber-500 border-amber-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-amber-500 transition">Edwin Wright</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-red-950/80 text-red-400 border-red-900/50">Halted</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Artificer 5; Armorer Specialty</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-amber-500 transition pl-2"></i>
+                </button><button id="selector-garfield" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-rose-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-rose-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-paw"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-950/40 text-rose-400 border-rose-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-paw"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-rose-400 transition">Garfield</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-rose-950/90 text-rose-400 border-rose-900/60">Dead</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Ranger 4 / Fighter 5; Gloom Stalker / Champion</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-rose-400 transition pl-2"></i>
+                </button><button id="selector-kusso" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-orange-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-orange-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-shrimp"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-orange-950/40 text-orange-400 border-orange-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-shrimp"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-orange-400 transition">Kusso</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-orange-950/80 text-orange-400 border-orange-900/50">Retired</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Barbarian 6; Totem Warrior (Bear / Eagle)</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-orange-400 transition pl-2"></i>
+                </button><button id="selector-logos" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-teal-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-teal-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-teal-950/40 text-teal-400 border-teal-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-teal-400 transition">Logos Virtua</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-teal-950/80 text-teal-400 border-teal-900/50">Corrupted</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Warlock 9; Genie Patron (Efreeti)</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-teal-400 transition pl-2"></i>
+                </button><button id="selector-jambloom" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-violet-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-violet-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-meteor"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-violet-950/40 text-violet-400 border-violet-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-meteor"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-violet-400 transition">Jam Bloom</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-violet-950/80 text-violet-400 border-violet-900/50">Retired</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Druid 11; Circle of the Moon</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-violet-400 transition pl-2"></i>
+                </button><button id="selector-artie" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-emerald-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-emerald-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-950/40 text-emerald-400 border-emerald-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-emerald-400 transition">Arthur Pendelton</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border-emerald-900/50">Insane</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Warlock 3; Archfey Patron (Shimmerscale)</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-emerald-400 transition pl-2"></i>
+                </button><button id="selector-sirvey" class="group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 hover:border-indigo-500/40 hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent">
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-indigo-500 pointer-events-none transition duration-500">
+                        <i class="fa-solid fa-horse"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-950/40 text-indigo-400 border-indigo-900/50 flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid fa-horse"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white group-hover:text-indigo-400 transition">Sir Vey Lance</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-950/80 text-indigo-400 border-indigo-900/50">Ongoing</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level Barbarian 9; Path of the World Tree</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-indigo-400 transition pl-2"></i>
+                </button></div>
+        </section>
+
+        <!-- ACTIVE MEMORIAL PANEL DISPLAY -->
+        <div id="memorial-display" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start transition-opacity duration-300">
+            
+            <!-- LEFT COLUMN: PORTRAIT FRAME & CHRONICLES STORY -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- PORTRAIT ACCENT FRAME -->
+                <div id="portrait-wrapper" class="bg-charcoal-900 rounded-2xl border p-4 transition-all duration-500 relative group overflow-hidden theme-glow-gold">
+                    <div class="relative bg-charcoal-950 rounded-xl overflow-hidden aspect-[4/5] flex flex-col justify-between p-4 border border-charcoal-800">
+                        
+                        <!-- Default Custom Silhouette Illustration / Icon -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center hidden" id="portrait-placeholder">
+                            <div class="w-20 h-20 rounded-full border border-slate-800 flex items-center justify-center bg-charcoal-900 mb-4 shadow-inner text-slate-500 relative" id="portrait-center-icon"><i class="fa-solid fa-shield-halved text-2xl"></i></div>
+                            <p class="font-serif italic text-sm text-slate-400" id="portrait-quote">""Despite my noble birth, I do not place myself above other folk... though between you and me, they are clearly all beneath me.""</p>
+                            
+                            <div class="mt-6 opacity-0 group-hover:opacity-100 transition duration-300">
+                                <label for="image-url-field" onclick="toggleUrlField()" class="cursor-pointer text-xs bg-charcoal-800 hover:bg-amber-600 hover:text-white transition px-3 py-1.5 rounded border border-charcoal-700 block text-slate-400">
+                                    <i class="fa-solid fa-image mr-1"></i> Custom Artwork URL
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Main Image Element with fallback check -->
+                        <img id="char-image" class="absolute inset-0 w-full h-full object-cover" alt="Hero Portrait" onerror="handleImageError()" src="./Pantheon of Lost Heroes __ TTRPG Memorial Archive_files/4.jpeg">
+                        
+                        <!-- Cover gradient overlay -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-transparent to-transparent pointer-events-none"></div>
+
+                        <!-- Badges -->
+                        <div class="relative flex justify-between items-start w-full">
+                            <span id="status-badge" class="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md shadow-lg pulse-badge bg-yellow-950/80 text-yellow-400 border-yellow-900/50"><i class="fa-solid fa-award mr-1 text-[8px] animate-pulse"></i> Retired</span>
+                            <span id="sub-badge" class="px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-charcoal-900/80 text-slate-300 border border-charcoal-700 rounded-md shadow-lg">Knight</span>
+                        </div>
+
+                        <!-- Name Overlay at Bottom -->
+                        <div class="relative z-10 mt-auto">
+                            <h3 id="panel-name" class="text-2xl font-serif font-bold text-white tracking-wide">Reddyl</h3>
+                            <p id="panel-sub" class="text-xs text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Paladin 5; Oath of Vengeance</p>
+                        </div>
+                    </div>
+
+                    <!-- Portrait Input Controller -->
+                    <div id="image-url-panel" class="hidden mt-3 p-3 bg-charcoal-950 rounded-xl border border-charcoal-800">
+                        <p class="text-xs text-slate-400 mb-2">Configure custom character art URL below:</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="image-url-field" placeholder="https://image-url-here..." class="bg-charcoal-900 border border-charcoal-700 rounded px-2.5 py-1 text-xs text-slate-200 flex-grow focus:outline-none focus:border-amber-500">
+                            <button onclick="updatePortrait()" class="bg-amber-600 text-charcoal-950 font-bold px-3 py-1 rounded text-xs hover:bg-amber-500 transition">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHRONICLE STORIES -->
+                <div class="bg-charcoal-900 rounded-2xl border border-charcoal-800 p-6 space-y-4 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-[0.02] pointer-events-none text-9xl text-amber-500" id="chronicle-bg-icon"><i class="fa-solid fa-shield-halved"></i></div>
+
+                    <!-- Dynamic Chronicle Header showcasing Campaign Name and DM -->
+                    <h3 id="chronicle-header" class="text-xs font-bold uppercase tracking-widest border-b border-charcoal-800 pb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-yellow-500">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-solid fa-scroll text-xs"></i>
+                            <span id="chronicle-campaign-name">Lost Mine of Phandelver</span>
+                        </span>
+                        <span id="chronicle-dm-name" class="text-[10px] text-slate-400 font-sans tracking-wider font-semibold">DM: Jeremy</span>
+                    </h3>
+                    
+                    <p id="biography-text" class="text-sm text-slate-300 leading-relaxed">Despite his noble dragonborn birth and golden scales, Reddyl suffered from a fascinating double nature: publicly declaring that all commoners have the same blood and dedicating his steel to protect those 'beneath' him, while privately holding a firm, quiet belief that absolutely everyone else was beneath him. Guided by this strict sense of noble obligation, he set out to find fame and protect the frontier from chaotic forces.</p>
+
+                    <div class="bg-charcoal-950/50 border-l-2 border-amber-500 p-4 rounded-r-lg space-y-2">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-hourglass-end text-[10px]"></i> Campaign Conclusion:
+                        </h4>
+                        <p id="campaign-end-text" class="text-xs text-slate-400 leading-relaxed">Reddyl's adventure came to a glorious and complete end exactly as written in the annals of Phandalin. Alongside his steadfast companions, including the wizard Aelin Whitethorn, they braved the dark depths of Wave Echo Cave, vanquished the Black Spider's forces, and successfully cleared the lost mine. Having restored the legendary Forge of Spells, Reddyl secured his place as a hero of the common people, finally retiring in absolute triumph.</p>
+                    </div>
+
+                    <div class="text-[11px] text-slate-500 flex justify-between items-center pt-2">
+                        <span id="retired-date">Retired: 2021</span>
+                        <span id="campaign-title">Campaign: Lost Mine of Phandelver</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: STATS, DETAILS, FEATS & GEAR -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- CHARACTER SHEET CONTAINER -->
+                <div class="bg-charcoal-900 rounded-2xl border border-charcoal-800 overflow-hidden shadow-2xl flex flex-col">
+                    
+                    <!-- TAB NAVIGATION -->
+                    <div class="flex border-b border-charcoal-800 bg-charcoal-950/30">
+                        <button onclick="switchTab(&#39;vitals&#39;)" id="btn-vitals" class="tab-btn active flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 border-yellow-500 text-yellow-400 transition-all duration-300 bg-charcoal-950/20">
+                            <i class="fa-solid fa-heart-pulse mr-1 text-[11px]"></i> Vitals
+                        </button>
+                        <button onclick="switchTab(&#39;stats&#39;)" id="btn-stats" class="tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-dna mr-1 text-[11px]"></i> Stats
+                        </button>
+                        <button onclick="switchTab(&#39;magic&#39;)" id="btn-magic" class="tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-wand-sparkles mr-1 text-[11px]"></i> Spells
+                        </button>
+                        <button onclick="switchTab(&#39;features&#39;)" id="btn-features" class="tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all duration-300">
+                            <i class="fa-solid fa-book mr-1 text-[11px]"></i> Traits
+                        </button>
+                    </div>
+
+                    <!-- TAB CONTENT VIEWPORT -->
+                    <div class="p-6 min-h-[460px]">
+
+                        <!-- TAB: VITALS -->
+                        <div id="tab-content-vitals" class="space-y-6">
+                            <!-- High Level Stats Row -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="vitals-matrix">
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Max Hit Points</span>
+                    <div class="text-2xl font-serif text-red-500 font-bold mt-1">54 / 54</div>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Armor Class</span>
+                    <div class="text-2xl font-serif text-sky-400 font-bold mt-1">19</div>
+                    <span class="text-[9px] text-slate-500 block leading-tight mt-0.5">(Plate Armor)</span>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Initiative</span>
+                    <div class="text-2xl font-serif text-amber-500 font-bold mt-1">+1</div>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Speed</span>
+                    <div class="text-xl font-serif text-emerald-400 font-bold mt-1">30 <span class="text-xs">ft</span></div>
+                    <span class="text-[9px] text-slate-500 block mt-0.5">Walking Speed</span>
+                </div>
+            </div>
+
+                            <!-- Resource & Tracking Pools -->
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-sliders text-[10px]"></i> Current States &amp; Pools
+                                </h4>
+                                
+                                <div id="resources-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Lay on Hands Pool</h5>
+                        <p class="text-[11px] text-slate-500">25 HP Pool per Long Rest</p>
+                    </div>
+                    
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustLocalCount(&#39;reddyl_layonhands&#39;, -1, 25)" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+                            <span id="counter-reddyl_layonhands" class="text-sm font-bold text-white w-4 text-center">25</span>
+                            <button onclick="adjustLocalCount(&#39;reddyl_layonhands&#39;, 1, 25)" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Divine Sense</h5>
+                        <p class="text-[11px] text-slate-500">5 Uses per Long Rest</p>
+                    </div>
+                    
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustLocalCount(&#39;reddyl_divinesense&#39;, -1, 5)" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+                            <span id="counter-reddyl_divinesense" class="text-sm font-bold text-white w-4 text-center">5</span>
+                            <button onclick="adjustLocalCount(&#39;reddyl_divinesense&#39;, 1, 5)" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Channel Divinity</h5>
+                        <p class="text-[11px] text-slate-500">1 Use per Short Rest</p>
+                    </div>
+                    <div class="flex gap-2">
+                            <input type="checkbox" id="reddyl_channeldivinity_box_0" onchange="toggleLocalCheckbox(&#39;reddyl_channeldivinity_box_0&#39;)" class="w-5 h-5 rounded accent-emerald-500 bg-charcoal-800 border-charcoal-700">
+                        </div>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 flex justify-between items-center">
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Harness Divine Power</h5>
+                        <p class="text-[11px] text-slate-500">1 Use per Long Rest</p>
+                    </div>
+                    <div class="flex gap-2">
+                            <input type="checkbox" id="reddyl_harnessdivine_box_0" onchange="toggleLocalCheckbox(&#39;reddyl_harnessdivine_box_0&#39;)" class="w-5 h-5 rounded accent-emerald-500 bg-charcoal-800 border-charcoal-700">
+                        </div>
+                </div></div>
+                            </div>
+
+                            <!-- Additional Background Details -->
+                            <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 space-y-2">
+                                <h4 class="text-xs font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <i class="fa-solid fa-landmark text-[10px]"></i> Training &amp; Proficiencies
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400">
+                                    <div>
+                                        <span class="block font-semibold text-slate-300 mb-0.5">Armors &amp; Weapons:</span>
+                                        <p id="info-prof-weapons">Heavy, Medium, Light Armor, Shields, Martial &amp; Simple Weapons</p>
+                                    </div>
+                                    <div>
+                                        <span class="block font-semibold text-slate-300 mb-0.5">Tools &amp; Kits:</span>
+                                        <p id="info-prof-tools">Dice Set</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: STATS / ATTRIBUTES -->
+                        <div id="tab-content-stats" class="space-y-6 hidden">
+                            <!-- Standard Six D&D Stats Grid -->
+                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="stats-grid"><div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">STR</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">20</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">+5</div>
+                </div><div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">DEX</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">13</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">+1</div>
+                </div><div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">CON</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">15</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">+2</div>
+                </div><div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">INT</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">8</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">-1</div>
+                </div><div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">WIS</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">11</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">+0</div>
+                </div><div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">CHA</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">18</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">+4</div>
+                </div></div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Saves -->
+                                <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Saving Throws</h4>
+                                    <div class="space-y-1.5 text-xs text-slate-400" id="saves-list"><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-400">Strength Save * </span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+6</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-400">Dexterity Save </span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+2</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-400">Constitution Save </span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+3</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-400">Intelligence Save </span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+0</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-200 font-semibold">Wisdom Save * <span class="text-amber-500 text-[9px] ml-1">*</span></span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+4</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-200 font-semibold">Charisma Save * <span class="text-amber-500 text-[9px] ml-1">*</span></span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+8</span>
+                </div></div>
+                                </div>
+
+                                <!-- Key Skills trained -->
+                                <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">Trained Skills &amp; Tools</h4>
+                                    <div class="space-y-1.5 text-xs text-slate-400" id="skills-list"><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-300">Athletics (STR) *</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+8</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-300">Intimidation (CHA) *</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+7</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-300">Persuasion (CHA) *</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+7</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-300">History (INT) *</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+2</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-300">Insight (WIS)</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+0</span>
+                </div><div class="flex justify-between items-center border-b border-charcoal-900 pb-1.5">
+                    <span class="text-slate-300">Perception (WIS)</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">+0</span>
+                </div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: MAGIC / SPELLBOOK -->
+                        <div id="tab-content-magic" class="space-y-6 hidden">
+                            <!-- Core Spell Metrics -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-charcoal-950 p-3 rounded-xl border border-charcoal-800 text-center">
+                                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Spell Save DC</span>
+                                    <div id="magic-dc" class="text-2xl font-serif text-amber-500 font-bold mt-0.5">15</div>
+                                </div>
+                                <div class="bg-charcoal-950 p-3 rounded-xl border border-charcoal-800 text-center">
+                                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Spell Attack Bonus</span>
+                                    <div id="magic-attack" class="text-2xl font-serif text-amber-500 font-bold mt-0.5">+7</div>
+                                </div>
+                            </div>
+
+                            <!-- Combat Damage Section -->
+                            <div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800/80">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1 mb-3">Signature Combat Moves</h4>
+                                <div class="space-y-2.5" id="combat-actions-list"><div class="p-3 bg-charcoal-900 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <div>
+                        <h5 class="font-bold text-slate-200">Hellwrecker (Greataxe of Warning)</h5>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Attuned magic item, heavy, two-handed, graze weapon. reroll 1s and 2s on damage dice (Great Weapon Fighting Style).</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-500 text-[9px] uppercase tracking-wider">Hit / Damage</span>
+                        <span class="text-amber-400 font-bold">+9</span>; <span class="text-amber-500 font-mono font-bold">2d6+6 Slashing + 1d6 Fire</span>
+                    </div>
+                </div><div class="p-3 bg-charcoal-900 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <div>
+                        <h5 class="font-bold text-slate-200">Hew (Battleaxe)</h5>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Versatile (1d10), topple property.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-500 text-[9px] uppercase tracking-wider">Hit / Damage</span>
+                        <span class="text-amber-400 font-bold">+9</span>; <span class="text-amber-500 font-mono font-bold">1d8+6 Slashing</span>
+                    </div>
+                </div><div class="p-3 bg-charcoal-900 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <div>
+                        <h5 class="font-bold text-slate-200">Breath Weapon (Gold Dragonborn)</h5>
+                        <p class="text-[10px] text-slate-400 mt-0.5">15 ft cone, half damage on successful save. 1/Short Rest.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-500 text-[9px] uppercase tracking-wider">Hit / Damage</span>
+                        <span class="text-amber-400 font-bold">DC 13 DEX</span>; <span class="text-amber-500 font-mono font-bold">2d6 Fire</span>
+                    </div>
+                </div></div>
+                            </div>
+
+                            <!-- Spell Lists -->
+                            <div class="space-y-3">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1">Prepared Spell Inventory</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs" id="spellbook-grid"><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Divine Smite</span>
+                    <span class="text-slate-500 italic">1st; Evocation</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Bless</span>
+                    <span class="text-slate-500 italic">1st; Enchantment</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Shield of Faith</span>
+                    <span class="text-slate-500 italic">1st; Abjuration</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Bane</span>
+                    <span class="text-slate-500 italic">1st; Enchantment (Oath Spell)</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Hunter's Mark</span>
+                    <span class="text-slate-500 italic">1st; Divination (Oath Spell)</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Cure Wounds</span>
+                    <span class="text-slate-500 italic">1st; Evocation</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Find Steed</span>
+                    <span class="text-slate-500 italic">2nd; Conjuration</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Hold Person</span>
+                    <span class="text-slate-500 italic">2nd; Enchantment (Oath Spell)</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Misty Step</span>
+                    <span class="text-slate-500 italic">2nd; Conjuration (Oath Spell)</span>
+                </div><div class="p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs">
+                    <span class="text-slate-300 font-medium">Lesser Restoration</span>
+                    <span class="text-slate-500 italic">2nd; Abjuration</span>
+                </div></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: FEATURES & EQUIP -->
+                        <div id="tab-content-features" class="space-y-6 hidden">
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1">Key Class &amp; Species Features</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="features-grid"><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">Lay on Hands Pool</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Restore up to 25 Hit Points per long rest, or spend 5 points to cure disease/neutralize poison.</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">Channel Divinity</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Vow of Enmity (Bonus Action: gain advantage on attacks against target within 10 ft for 1 minute) or Abjure Enemy.</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">Great Weapon Fighting</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">When you roll a 1 or 2 on a damage die for an attack with a two-handed weapon, you can reroll that die.</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">Divine Health</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">You are entirely immune to contracting diseases due to divine protection.</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">Harness Divine Power</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Regain 1 expended level 1 spell slot as a bonus action (1/Long Rest).</p>
+                </div></div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-charcoal-800 pb-1">Equipment &amp; Magic Inventory</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="equipment-grid"><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-500/70 text-[10px]"></i> Hellwrecker
+                    </h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Glorious attuned greataxe, dealing an extra 1d6 fire damage on hit.</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-500/70 text-[10px]"></i> Plate Armor
+                    </h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Dull golden scales set over thick, heavy plates (18 AC base).</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-500/70 text-[10px]"></i> Ring of Protection
+                    </h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Attuned. Grants +1 bonus to Armor Class and all Saving Throws (applied).</p>
+                </div><div class="bg-charcoal-950 p-4 rounded-xl border border-charcoal-800">
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-500/70 text-[10px]"></i> Wand of Magic Missiles
+                    </h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">7 charges. Spend charges to shoot force bolts without requiring slot spellcasting.</p>
+                </div></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ALLIES & ORGANIZATIONS METADATA PANEL -->
+                <div class="bg-charcoal-900 rounded-2xl border border-charcoal-800 p-6 shadow-2xl relative overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-400">
+                        <div>
+                            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-handshake"></i> Known Allies &amp; Associates
+                            </h4>
+                            <p id="allies-list" class="leading-relaxed">Aelin Whitethorn (Wizard Companion).</p>
+                        </div>
+                        <div>
+                            <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-users-rectangle"></i> Affiliations &amp; Organizations
+                            </h4>
+                            <p id="orgs-list" class="leading-relaxed">Order of Vengeance Knights.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- RECONSTRUCTION FOOTER -->
+        <footer class="text-center text-xs text-slate-600 border-t border-charcoal-900 pt-8 space-y-1">
+            <p>Designed with meticulous respect for past tabletop stories.</p>
+            <p>D&amp;D Beyond Data Reference Core Rules 2024; Player: JimmyD3605; Code &amp; Layout 2026</p>
+        </footer>
+    </div>
+
+    <!-- AUDIO AMBIENCE TOGGLER -->
+    <div class="fixed bottom-4 right-4 z-50">
+        <button onclick="toggleAmbiance()" id="ambient-toggle" class="w-10 h-10 rounded-full bg-charcoal-900 border border-charcoal-800 hover:border-amber-500/50 text-slate-500 hover:text-slate-300 flex items-center justify-center shadow-2xl transition duration-300">
+            <i class="fa-solid fa-volume-xmark" id="audio-icon"></i>
+        </button>
+    </div>
+
+    <!-- MAIN DATA CONTROLLER SCRIPT -->
+    <script>
+        // Centralized Dataset: Extensible chronological List of Archived Characters
+        // To add a new character, simply insert a new object in this list.
+        // It will be dynamically sorted by "statusDate" (Numerical Year) on startup.
+        const characterList = [
+            {
+                id: "reddyl",
+                name: "Reddyl",
+                nickname: "Reddyl",
+                species: "Gold Dragonborn",
+                background: "Knight",
+                subClass: "Oath of Vengeance",
+                classLevel: "Paladin 5",
+                quote: "\"Despite my noble birth, I do not place myself above other folk... though between you and me, they are clearly all beneath me.\"",
+                icon: "fa-shield-halved",
+                campaign: "Lost Mine of Phandelver",
+                dm: "Jeremy",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Earliest entry point in 2021) ---
+                status: "Retired",               // Text shown on status badges (e.g. "Halted", "Retired", "Completed", "Champion")
+                statusDate: 2021,                 // Numerical Year only for auto-sorting!
+                statusIcon: "fa-award",           // Knightly award icon
+                statusClass: "bg-yellow-950/80 text-yellow-400 border-yellow-900/50", // Golden Knight frame
+                
+                defaultImg: "/apps/memorial/chars/4.jpeg", // Path to standard portfolio asset location
+                hp: "54 / 54",
+                ac: "19 (Plate Armor)",
+                initiative: "+1",
+                speed: "30 ft (Walking)",
+                armorTraining: "Heavy, Medium, Light Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Dice Set",
+                languages: "Common, Draconic, Goblin",
+                stats: {
+                    STR: { score: 20, mod: "+5" },
+                    DEX: { score: 13, mod: "+1" },
+                    CON: { score: 15, mod: "+2" },
+                    INT: { score: 8, mod: "-1" },
+                    WIS: { score: 11, mod: "+0" },
+                    CHA: { score: 18, mod: "+4" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+6", trained: false },
+                    { name: "Dexterity Save", value: "+2", trained: false },
+                    { name: "Constitution Save", value: "+3", trained: false },
+                    { name: "Intelligence Save", value: "+0", trained: false },
+                    { name: "Wisdom Save *", value: "+4", trained: true },
+                    { name: "Charisma Save *", value: "+8", trained: true }
+                ],
+                skills: [
+                    { name: "Athletics (STR) *", value: "+8" },
+                    { name: "Intimidation (CHA) *", value: "+7" },
+                    { name: "Persuasion (CHA) *", value: "+7" },
+                    { name: "History (INT) *", value: "+2" },
+                    { name: "Insight (WIS)", value: "+0" },
+                    { name: "Perception (WIS)", value: "+0" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "Hellwrecker (Greataxe of Warning)", hit: "+9", formula: "2d6+6 Slashing + 1d6 Fire", note: "Attuned magic item, heavy, two-handed, graze weapon. reroll 1s and 2s on damage dice (Great Weapon Fighting Style)." },
+                    { name: "Hew (Battleaxe)", hit: "+9", formula: "1d8+6 Slashing", note: "Versatile (1d10), topple property." },
+                    { name: "Breath Weapon (Gold Dragonborn)", hit: "DC 13 DEX", formula: "2d6 Fire", note: "15 ft cone, half damage on successful save. 1/Short Rest." }
+                ],
+                preparedSpells: [
+                    { name: "Divine Smite", level: "1st", school: "Evocation" },
+                    { name: "Bless", level: "1st", school: "Enchantment" },
+                    { name: "Shield of Faith", level: "1st", school: "Abjuration" },
+                    { name: "Bane", level: "1st", school: "Enchantment (Oath Spell)" },
+                    { name: "Hunter's Mark", level: "1st", school: "Divination (Oath Spell)" },
+                    { name: "Cure Wounds", level: "1st", school: "Evocation" },
+                    { name: "Find Steed", level: "2nd", school: "Conjuration" },
+                    { name: "Hold Person", level: "2nd", school: "Enchantment (Oath Spell)" },
+                    { name: "Misty Step", level: "2nd", school: "Conjuration (Oath Spell)" },
+                    { name: "Lesser Restoration", level: "2nd", school: "Abjuration" }
+                ],
+                features: [
+                    { name: "Lay on Hands Pool", text: "Restore up to 25 Hit Points per long rest, or spend 5 points to cure disease/neutralize poison." },
+                    { name: "Channel Divinity", text: "Vow of Enmity (Bonus Action: gain advantage on attacks against target within 10 ft for 1 minute) or Abjure Enemy." },
+                    { name: "Great Weapon Fighting", text: "When you roll a 1 or 2 on a damage die for an attack with a two-handed weapon, you can reroll that die." },
+                    { name: "Divine Health", text: "You are entirely immune to contracting diseases due to divine protection." },
+                    { name: "Harness Divine Power", text: "Regain 1 expended level 1 spell slot as a bonus action (1/Long Rest)." }
+                ],
+                equipment: [
+                    { name: "Hellwrecker", desc: "Glorious attuned greataxe, dealing an extra 1d6 fire damage on hit." },
+                    { name: "Plate Armor", desc: "Dull golden scales set over thick, heavy plates (18 AC base)." },
+                    { name: "Ring of Protection", desc: "Attuned. Grants +1 bonus to Armor Class and all Saving Throws (applied)." },
+                    { name: "Wand of Magic Missiles", desc: "7 charges. Spend charges to shoot force bolts without requiring slot spellcasting." }
+                ],
+                allies: "Aelin Whitethorn (Wizard Companion).",
+                organizations: "Order of Vengeance Knights.",
+                biography: "Despite his noble dragonborn birth and golden scales, Reddyl suffered from a fascinating double nature: publicly declaring that all commoners have the same blood and dedicating his steel to protect those 'beneath' him, while privately holding a firm, quiet belief that absolutely everyone else was beneath him. Guided by this strict sense of noble obligation, he set out to find fame and protect the frontier from chaotic forces.",
+                conclusion: "Reddyl's adventure came to a glorious and complete end exactly as written in the annals of Phandalin. Alongside his steadfast companions, including the wizard Aelin Whitethorn, they braved the dark depths of Wave Echo Cave, vanquished the Black Spider's forces, and successfully cleared the lost mine. Having restored the legendary Forge of Spells, Reddyl secured his place as a hero of the common people, finally retiring in absolute triumph.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-gold",
+                themeAccent: "yellow",
+                borderClass: "border-yellow-500/20",
+                bgGradient: "from-yellow-950/40 via-charcoal-900 to-yellow-950/40",
+                accentColor: "yellow-500",
+                accentText: "text-yellow-400",
+                accentBorder: "border-yellow-500",
+                accentRing: "ring-yellow-500",
+                accentHover: "hover:border-yellow-500/40",
+                accentIconBg: "bg-yellow-950/40 text-yellow-400 border-yellow-900/50",
+                groupHoverText: "group-hover:text-yellow-400",
+                topBarGradient: "from-yellow-800 via-yellow-400 to-yellow-800",
+                resources: [
+                    { label: "Lay on Hands Pool", detail: "25 HP Pool per Long Rest", type: "counter", count: 25, max: 25, id: "layonhands" },
+                    { label: "Divine Sense", detail: "5 Uses per Long Rest", type: "counter", count: 5, max: 5, id: "divinesense" },
+                    { label: "Channel Divinity", detail: "1 Use per Short Rest", type: "checkbox", count: 1, id: "channeldivinity" },
+                    { label: "Harness Divine Power", detail: "1 Use per Long Rest", type: "checkbox", count: 1, id: "harnessdivine" }
+                ]
+            },
+            {
+                id: "artie",
+                name: "Arthur Pendelton",
+                nickname: "Artie",
+                species: "Human",
+                background: "Wayfarer",
+                subClass: "Archfey Patron (Shimmerscale)",
+                classLevel: "Warlock 3",
+                quote: "\"Avada Kadabra!\" *points drizzle-proof clipboard frantically with eyes squeezed shut*",
+                icon: "fa-wand-magic-sparkles",
+                campaign: "The Slime Tower",
+                dm: "Sean",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Chronological survival baseline) ---
+                status: "Insane",               // Customized from 'Completed' to show survival outcome
+                statusDate: 2026,                 // Numerical Year only for auto-sorting!
+                statusIcon: "fa-shield-halved",   // Shield showing his "Plot Armor" delusion
+                statusClass: "bg-emerald-950/80 text-emerald-400 border-emerald-900/50", // Emerald Survivor frame
+                
+                defaultImg: "/apps/memorial/chars/1.jpeg", // Path to standard portfolio asset location
+                hp: "29 / 29",
+                ac: "13 (Leather Armor)",
+                initiative: "+4",
+                speed: "30 ft (Walking)",
+                armorTraining: "Light Armor",
+                weaponTraining: "Simple Weapons",
+                toolsTraining: "Thieves' Tools",
+                languages: "Common, Common Sign Language, Draconic",
+                stats: {
+                    STR: { score: 8, mod: "-1" },
+                    DEX: { score: 14, mod: "+2" },
+                    CON: { score: 15, mod: "+2" },
+                    INT: { score: 12, mod: "+1" },
+                    WIS: { score: 10, mod: "+0" },
+                    CHA: { score: 20, mod: "+5" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "-1", trained: false },
+                    { name: "Dexterity Save", value: "+4", trained: true },
+                    { name: "Constitution Save", value: "+2", trained: false },
+                    { name: "Intelligence Save", value: "+1", trained: false },
+                    { name: "Wisdom Save", value: "+2", trained: false },
+                    { name: "Charisma Save", value: "+7", trained: true }
+                ],
+                skills: [
+                    { name: "Deception (CHA)", value: "+7" },
+                    { name: "Intimidation (CHA)", value: "+7" },
+                    { name: "Performance (CHA)", value: "+5" },
+                    { name: "Persuasion (CHA)", value: "+5" },
+                    { name: "Stealth (DEX)", value: "+4" },
+                    { name: "Arcana (INT)", value: "+3" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "Eldritch Blast (\"Avada Kadabra!\")", hit: "+7 Straight Roll", formula: "1d10+5 Force", note: "Artie points his focus and squeezes his eyes shut (Disadvantage). Shimmerscale Jr. (Sprite familiar) attacks/pinches him to flinch him in the right direction (Help action/Advantage), resulting in a Straight Roll! Augmented with Agonizing Blast (+5 Cha)." }
+                ],
+                preparedSpells: [
+                    { name: "Eldritch Blast", level: "Cantrip", school: "Evocation" },
+                    { name: "Prestidigitation", level: "Cantrip", school: "Transmutation" },
+                    { name: "Witch Bolt", level: "1st", school: "Evocation" },
+                    { name: "Detect Magic [R]", level: "1st", school: "Divination" },
+                    { name: "Faerie Fire", level: "1st", school: "Evocation (Archfey always prepared)" },
+                    { name: "Sleep", level: "1st", school: "Enchantment (Archfey always prepared)" },
+                    { name: "Silent Image", level: "1st", school: "Illusion (At-Will, Misty Visions)" },
+                    { name: "Suggestion", level: "2nd", school: "Enchantment" },
+                    { name: "Earthbind", level: "2nd", school: "Transmutation" },
+                    { name: "Calm Emotions", level: "2nd", school: "Enchantment (Archfey always prepared)" },
+                    { name: "Misty Step", level: "2nd", school: "Conjuration (Archfey always prepared)" },
+                    { name: "Phantasmal Force", level: "2nd", school: "Illusion (Archfey always prepared)" }
+                ],
+                features: [
+                    { name: "Fey Contract Fine Print", text: "Signed a petition leaving a downtown Target to ban electric scooters from Seattle bike lanes. Unbeknownst to Artie, this was a legally binding fey pact with the Archfey Shimmerscale." },
+                    { name: "Eldritch Invocations", text: "Agonizing Blast (+5 CHA damage applied to Eldritch Blast) & Misty Visions (cast Silent Image at-will to replicate cinematic effects)." },
+                    { name: "Pact of the Chain (Shimmerscale Jr.)", text: "His chaperone is a tiny, invisible Sprite who nudges him around. Nudging arm cancels out eye-closed shooting penalty." },
+                    { name: "Steps of the Fey (Misty Step)", text: "Cast Misty Step 5 times per long rest without expending spell slots. Immediately gains 1d10 Temp HP (Refreshing Step) or imposes Disadvantage on foes (Taunting Step)." }
+                ],
+                equipment: [
+                    { name: "\"SAVE OUR SIDEWALKS\" Clipboard", desc: "The aluminum clipboard Artie hurriedly signed. It now serves as his Arcane Focus in this strange moss-covered world." },
+                    { name: "Seattle Windbreaker", desc: "A drizzle-appropriate, dark grey North Face windbreaker. Excellent for keeping dry in damp extraplanar bogs, though terribly lacking in AC." }
+                ],
+                allies: "Shimmerscale Jr. (Sprite Companion / Personal Chaperone), Shimmerscale (Ancient Fey Patron).",
+                organizations: "Seattle Pedestrian Safety Union (unwittingly converted into an Archfey Vassalage).",
+                biography: "Until recently, Artie’s biggest concern was the proliferation of electric scooters in Seattle's streets. While leaving a downtown Target, he hurriedly signed a petition to keep them out of the bike lanes, barely skimming the fine print. But that was no mere civic request—it was a magical contract drafted by an ancient Fey entity known as Shimmerscale. Suddenly, Artie was ripped from Washington and stranded in a fantastical, moss-covered realm wearing his drizzle-appropriate windbreaker and holding the aluminum clipboard. He materialized 5 miles outside of Erckido a few weeks ago. He is slowly coming to terms with his magical powers, guided by a tiny invisible Sprite (Shimmerscale Jr.), and has almost accepted his new reality.",
+                conclusion: "During the final stand inside the deep copper pipes of the Slime Tower, Sean the DM threw everything at the party. Endless waves of summoned slime creatures systematically executed all of Artie's companions. Artie miraculously survived, but the psychological strain shattered his sanity. Convinced he is merely a fictional 'main character' of a high-fantasy novel, Artie rationalized his survival as simple, undeniable 'plot armor.' He is currently lying low inside Erckido, trying to keep a low profile and blend in with locals while casting panic-induced blasts of energy.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-fey",
+                themeAccent: "emerald",
+                borderClass: "border-emerald-500/20",
+                bgGradient: "from-emerald-950 via-charcoal-900 to-emerald-950",
+                accentColor: "emerald-500",
+                accentText: "text-emerald-400",
+                accentBorder: "border-emerald-500",
+                accentRing: "ring-emerald-500",
+                accentHover: "hover:border-emerald-500/40",
+                accentIconBg: "bg-emerald-950/40 text-emerald-400 border-emerald-900/50",
+                groupHoverText: "group-hover:text-emerald-400",
+                topBarGradient: "from-emerald-800 via-emerald-400 to-emerald-800",
+                resources: [
+                    { label: "Pact Spell Slots (Lv 2)", detail: "2 slots, regenerates on short rest", type: "checkbox", count: 2, id: "slots" },
+                    { label: "Steps of the Fey", detail: "5 Misty Steps per Long Rest", type: "counter", count: 5, max: 5, id: "steps" },
+                    { label: "Luck Points", detail: "2 points per Long Rest (Adv/Disadv)", type: "counter", count: 2, max: 2, id: "luck" }
+                ]
+            },
+            {
+                id: "edwin",
+                name: "Edwin Wright",
+                nickname: "Edwin",
+                species: "Mark of Making Human",
+                background: "Lorehold Student",
+                subClass: "Armorer Specialty",
+                classLevel: "Artificer 5",
+                quote: "In the end, it's all just entropy. Everything falls apart someday.",
+                fontClass: "font-sans",
+                icon: "fa-screwdriver-wrench",
+                campaign: "Icewind Dale: Rime of the Frost Maiden",
+                dm: "Jeremy",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Numerically sorted chronological baseline) ---
+                status: "Halted",               // Text shown on status badges (e.g. "Halted", "Retired", "Completed")
+                statusDate: 2022,               // Numerical Year only for auto-sorting!
+                statusIcon: "fa-circle-pause",  // FontAwesome icon class
+                statusClass: "bg-red-950/80 text-red-400 border-red-900/50", // Custom badge design themes
+                
+                defaultImg: "/apps/memorial/chars/2.jpeg", // Path to standard portfolio asset location
+                hp: "46 / 46",
+                ac: "20 (Mithral Plate + Shield)",
+                initiative: "+3",
+                speed: "35 ft (Walking)",
+                armorTraining: "Heavy Armor, Light, Medium, Shields",
+                weaponTraining: "Firearms, Simple Weapons",
+                toolsTraining: "Carpenter's, Glassblower's, Leatherworker's, Smith's, Thieves', Tinker's, Woodcarver's Tools",
+                languages: "Common, Draconic, Dwarvish, Giant, Telepathy",
+                stats: {
+                    STR: { score: 11, mod: "+0" },
+                    DEX: { score: 16, mod: "+3" },
+                    CON: { score: 17, mod: "+3" }, // Base: 17, Amulet of Health raises base to 19 (+4) if attuned (con save +6)
+                    INT: { score: 20, mod: "+5" },
+                    WIS: { score: 13, mod: "+1" },
+                    CHARISMA: { score: 8, mod: "-1" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "+0", trained: false },
+                    { name: "Dexterity Save", value: "+3", trained: false },
+                    { name: "Constitution Save", value: "+6", trained: true },
+                    { name: "Intelligence Save", value: "+8", trained: true },
+                    { name: "Wisdom Save", value: "+1", trained: false },
+                    { name: "Charisma Save", value: "-1", trained: false }
+                ],
+                skills: [
+                    { name: "Arcana (INT)", value: "+8" },
+                    { name: "History (INT)", value: "+8" },
+                    { name: "Investigation (INT)", value: "+8" },
+                    { name: "Religion (INT)", value: "+8" },
+                    { name: "Nature (INT)", value: "+5" },
+                    { name: "Sleight of Hand (DEX)", value: "+3" }
+                ],
+                spellDC: "16",
+                spellAttack: "+8",
+                combatActions: [
+                    { name: "Lightning Launcher (Infiltrator)", hit: "+8", formula: "1d6+5 Lightning", note: "Once per turn, first hit deals 2d6+5 Lightning instead. Part of your custom Arcane Armor." },
+                    { name: "Fire Bolt", hit: "+8", formula: "2d10 Fire", note: "Cantrip (Level 5 Scaling applied)" }
+                ],
+                preparedSpells: [
+                    { name: "Shocking Grasp", level: "Cantrip", school: "Evocation" },
+                    { name: "Fire Bolt", level: "Cantrip", school: "Evocation" },
+                    { name: "Sacred Flame", level: "Cantrip", school: "Evocation" },
+                    { name: "Thaumaturgy", level: "Cantrip", school: "Transmutation" },
+                    { name: "Mending", level: "Cantrip", school: "Transmutation" },
+                    { name: "Cure Wounds", level: "1st", school: "Evocation" },
+                    { name: "Magic Missile", level: "1st", school: "Evocation (Armorer Spells)" },
+                    { name: "Thunderwave", level: "1st", school: "Evocation (Armorer Spells)" },
+                    { name: "Tasha's Caustic Brew", level: "1st", school: "Conjuration" },
+                    { name: "Vortex Warp", level: "2nd", school: "Conjuration" },
+                    { name: "Shatter", level: "2nd", school: "Evocation (Armorer Spells)" },
+                    { name: "Mirror Image", level: "2nd", school: "Illusion (Armorer Spells)" },
+                    { name: "Heat Metal", level: "2nd", school: "Transmutation" }
+                ],
+                features: [
+                    { name: "Infiltrator Armor model", text: "Mithral Plate integrates lightning launcher, grants +5 Speed (35 ft total), and Advantage on Stealth checks." },
+                    { name: "Infuse Item (2 Items)", text: "Imbue up to 2 items with infusions after long rest (e.g. attuning Amulet of Health and Psi Crystal)." },
+                    { name: "Magical Tinkering (5 objects)", text: "Imbue tiny nonmagical objects with sensory properties: light, recorded message, odor, or static text." }
+                ],
+                equipment: [
+                    { name: "Amulet of Health", desc: "Attuned magic item. Sets Constitution score to 19 (granting superior hit points)." },
+                    { name: "Bag of Holding", desc: "Sacks extra-dimensional space containing Pitons, Rations, Waterskin, Woodcarver and Smith tools." },
+                    { name: "Psi Crystal", desc: "Attuned psychic amplifier, unlocks mental acuity." }
+                ],
+                allies: "Horace Smith & Daniel Baird Wesson (collaborators on experimental combat weapon designs), Professor Plargg.",
+                organizations: "Strixhaven Lorehold College (PhD candidate studying future-past archeology).",
+                biography: "Edwin spent his youth preparing to enter the Lorehold college. Lacking in social graces, he dedicated his isolation to engineering. After receiving an ominous mental vision from an ancient Archaic detailing strange crystals in the frozen north, Edwin focused his thesis on discovering the secret of the Ten Towers of Icewind Dale, hoping to add to the college's understanding of predicted futures.",
+                conclusion: "While researching historical patterns in Strixhaven, a fellow student's dismissive 'Bazinga' reply to his Archaic vision drove Edwin to declare him a mortal enemy. Edwin set off with his party to test the 'future of combat' but the campaign halted, leaving his PhD thesis uncompleted and his findings frozen in the glaciers.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-brass",
+                themeAccent: "amber",
+                borderClass: "border-amber-500/20",
+                bgGradient: "from-amber-950/40 via-charcoal-900 to-amber-950/40",
+                accentColor: "amber-500",
+                accentText: "text-amber-500",
+                accentBorder: "border-amber-500",
+                accentRing: "ring-amber-500",
+                accentHover: "hover:border-amber-500/40",
+                accentIconBg: "bg-amber-950/40 text-amber-500 border-amber-900/50",
+                groupHoverText: "group-hover:text-amber-500",
+                topBarGradient: "from-amber-800 via-amber-400 to-amber-800",
+                resources: [
+                    { label: "1st Level Spell Slots", detail: "4 slots total", type: "counter", count: 4, max: 4, id: "slots1" },
+                    { label: "2nd Level Spell Slots", detail: "2 slots total", type: "counter", count: 2, max: 2, id: "slots2" },
+                    { label: "Magical Tinkering", detail: "5 items active max", type: "counter", count: 5, max: 5, id: "tinkering" }
+                ]
+            },
+            {
+                id: "garfield",
+                name: "Garfield",
+                nickname: "Garfield",
+                species: "Tabaxi",
+                background: "Outlander",
+                subClass: "Gloom Stalker / Champion",
+                classLevel: "Ranger 4 / Fighter 5",
+                quote: "Attack from the dark, double speed, strike twice and disappear.",
+                icon: "fa-paw",
+                campaign: "Ihla Perdida",
+                dm: "Tyler",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Terrible Ending: Defeated in 2022) ---
+                status: "Dead",               // Character was defeated at the end
+                statusDate: 2022,                 // Sorted chronologically next to Edwin
+                statusIcon: "fa-skull-crossbones", // Thematic grim icon
+                statusClass: "bg-rose-950/90 text-rose-400 border-rose-900/60", // Defeated crimson badge theme
+                
+                defaultImg: "/apps/memorial/chars/3.jpeg", // Path to standard portfolio asset location
+                hp: "87 / 87",
+                ac: "17 (Studded Leather + Shield)",
+                initiative: "+8",
+                speed: "30 ft (Climb 20 ft)",
+                armorTraining: "Light & Medium Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Bagpipes",
+                languages: "Common, Goblin, Primordial",
+                stats: {
+                    STR: { score: 13, mod: "+1" },
+                    DEX: { score: 20, mod: "+5" },
+                    CON: { score: 17, mod: "+3" },
+                    INT: { score: 11, mod: "+0" },
+                    WIS: { score: 17, mod: "+3" },
+                    CHA: { score: 9, mod: "-1" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "+5", trained: true },
+                    { name: "Dexterity Save", value: "+9", trained: true },
+                    { name: "Constitution Save", value: "+4", trained: false },
+                    { name: "Intelligence Save", value: "+0", trained: false },
+                    { name: "Wisdom Save", value: "+3", trained: false },
+                    { name: "Charisma Save", value: "-1", trained: false }
+                ],
+                skills: [
+                    { name: "Acrobatics (DEX)", value: "+9" },
+                    { name: "Animal Handling (WIS)", value: "+7" },
+                    { name: "Athletics (STR)", value: "+5" },
+                    { name: "Perception (WIS) *", value: "+7" },
+                    { name: "Stealth (DEX) *", value: "+9" },
+                    { name: "Survival (WIS)", value: "+7" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "Longbow", hit: "+11", formula: "1d8+5 Piercing", note: "Ranged 150/600. Includes +2 Archery fighting style. Sharpshooter option: -5 to hit for +10 damage." },
+                    { name: "Rapier of Warning", hit: "+9", formula: "1d8+5 Piercing", note: "Vex weapon. You and allies within 30 ft can't be surprised. (Attuned)" },
+                    { name: "Claws", hit: "+5", formula: "1d4+1 Slashing", note: "Tabaxi natural weapon." }
+                ],
+                preparedSpells: [
+                    { name: "Disguise Self", level: "1st", school: "Illusion (Gloom Stalker Magic)" },
+                    { name: "Speak with Animals [R]", level: "1st", school: "Divination (Primal Awareness)" },
+                    { name: "Goodberry", level: "1st", school: "Transmutation" },
+                    { name: "Hunter's Mark", level: "1st", school: "Divination" },
+                    { name: "Fog Cloud", level: "1st", school: "Conjuration" }
+                ],
+                features: [
+                    { name: "Sharpshooter Feat", text: "Long-range attacks don't impose disadvantage. Ignored half/three-quarters cover. Can choose to take -5 to hit for +10 damage." },
+                    { name: "Dread Ambusher", text: "Add WIS (+3) to initiative. First combat turn walking speed +10 ft, and take one additional weapon attack dealing +1d8 extra damage." },
+                    { name: "Feline Agility", text: "Double speed for one turn during combat. Must spend a turn at 0 movement to refresh." },
+                    { name: "Improved Critical", text: "Weapon attacks score critical hits on 19 or 20 (Champion Archetype)." },
+                    { name: "Favored Foe", text: "Mark a target upon hitting (4/Long Rest). First hit of turn deals +1d4 extra damage. (Concentration up to 1 minute)" }
+                ],
+                equipment: [
+                    { name: "Rapier of Warning", desc: "Attuned weapon. Keeps the entire party alert, negating surprise rounds." },
+                    { name: "Survival Gear Pack", desc: "Backpack, 10 Rations, Waterskin, Tinderboxes, Climber's Kit, Rain Catcher, Spyglass, Crampons, Willowshade Oils, Crowbar, 10 Torches." }
+                ],
+                allies: "The party.",
+                organizations: "Uncharted Wilderness Outlanders.",
+                biography: "Garfield, a cunning Tabaxi Gloom Stalker, set off for the newly risen jungle island of Ihla Perdida. He brought high stealth, sharpshooting archery, and a survival-ready instinct to brave the uncharted wilderness in pursuit of a rumored artifact.",
+                conclusion: "The exploration of Ihla Perdida ended in disaster. The hostile, survival-heavy landscape drained the party's resources. Ultimately, the survival hunt failed; the dark forces claimed the powerful hidden artifact, defeating the heroes and leaving the island's jungle shrouded in silence.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-rose",
+                themeAccent: "rose",
+                borderClass: "border-rose-500/20",
+                bgGradient: "from-rose-950 via-charcoal-900 to-rose-950",
+                accentColor: "rose-500",
+                accentText: "text-rose-400",
+                accentBorder: "border-rose-500",
+                accentRing: "ring-rose-500",
+                accentHover: "hover:border-rose-500/40",
+                accentIconBg: "bg-rose-950/40 text-rose-400 border-rose-900/50",
+                groupHoverText: "group-hover:text-rose-400",
+                topBarGradient: "from-rose-800 via-rose-400 to-rose-800",
+                resources: [
+                    { label: "1st Level Spell Slots", detail: "3 slots total", type: "counter", count: 3, max: 3, id: "slots1" },
+                    { label: "Second Wind", detail: "1 Use per Short Rest (1d10+5)", type: "checkbox", count: 1, id: "secondwind" },
+                    { label: "Action Surge", detail: "1 Use per Short Rest", type: "checkbox", count: 1, id: "actionsurge" },
+                    { label: "Feline Agility", detail: "Active (Refreshes on 0 movement)", type: "checkbox", count: 1, id: "felineagility" }
+                ]
+            },
+            {
+                id: "kusso",
+                name: "Kusso",
+                nickname: "Kusso",
+                species: "Custom Parshendi",
+                background: "Wildspacer",
+                subClass: "Totem Warrior (Bear / Eagle)",
+                classLevel: "Barbarian 6",
+                quote: "Observe life from a different point of view, especially when your years are so few.",
+                icon: "fa-shrimp",
+                campaign: "Into the Darkness",
+                dm: "Sean",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Escaped triumphantly in 2023) ---
+                status: "Retired",               // Left the plague zone alive
+                statusDate: 2023,                 // Chronologically placed in 2023
+                statusIcon: "fa-biohazard",       // Pandemic biohazard icon
+                statusClass: "bg-orange-950/80 text-orange-400 border-orange-900/50", // Chitin orange frame
+                
+                defaultImg: "/apps/memorial/chars/5.jpeg", // Path to standard portfolio asset location
+                hp: "86 / 86",
+                ac: "16 (Scale Mail)",
+                initiative: "+2",
+                speed: "40 ft (Walking)",
+                armorTraining: "Light & Medium Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Navigator's Tools, Vehicles (Space)",
+                languages: "Common, Hadozee",
+                stats: {
+                    STR: { score: 18, mod: "+4" },
+                    DEX: { score: 15, mod: "+2" },
+                    CON: { score: 17, mod: "+3" },
+                    INT: { score: 8, mod: "-1" },
+                    WIS: { score: 13, mod: "+1" },
+                    CHA: { score: 11, mod: "+0" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+7", trained: true },
+                    { name: "Dexterity Save", value: "+2", trained: false },
+                    { name: "Constitution Save *", value: "+6", trained: true },
+                    { name: "Intelligence Save", value: "-1", trained: false },
+                    { name: "Wisdom Save", value: "+1", trained: false },
+                    { name: "Charisma Save", value: "+0", trained: false }
+                ],
+                skills: [
+                    { name: "Athletics (STR) *", value: "+7" },
+                    { name: "Intimidation (CHA) *", value: "+3" },
+                    { name: "Survival (WIS) *", value: "+4" },
+                    { name: "Perception (WIS) *", value: "+4" },
+                    { name: "Acrobatics (DEX)", value: "+2" }
+                ],
+                spellDC: "15",
+                spellAttack: "+7",
+                combatActions: [
+                    { name: "StormShatter (Efleel Pike)", hit: "+8", formula: "1d10+5 Piercing", note: "Attuned magical reach weapon. Polearm Master: other creatures provoke opportunity attacks on entering reach. Sentinel: hitting with opportunity attacks sets speed to 0." },
+                    { name: "Polearm Master Haft Strike", hit: "+7", formula: "1d4+4 Bludgeoning", note: "Bonus action attack with the opposite end of StormShatter." },
+                    { name: "Unarmed Strike (Carapace Claws)", hit: "+7", formula: "5 Bludgeoning", note: "Natural weapon attack." }
+                ],
+                preparedSpells: [
+                    { name: "Speak with Animals [R]", level: "1st", school: "Divination (Spirit Seeker)" },
+                    { name: "Beast Sense [R]", level: "2nd", school: "Divination (Spirit Seeker)" }
+                ],
+                features: [
+                    { name: "Bear Totem Spirit", text: "While raging, you gain Resistance to all damage types except psychic damage (unbelievable survival durability)." },
+                    { name: "Sentinel Feat", text: "Opportunity attacks reduce speed to 0. Provoke opportunity attacks even on Disengage. Take reaction melee attacks when a creature attacks an ally." },
+                    { name: "Polearm Master Feat", text: "Take d4 bonus haft attack. Provoke opportunity attacks when enemies enter reach." },
+                    { name: "Reckless Attack", text: "Choose to gain Advantage on Strength melee attacks this turn, but attacks against you have Advantage until your next turn." },
+                    { name: "Aspect of the Beast (Eagle)", text: "See up to 1 mile without difficulty. Dim light does not impose Disadvantage on your Perception checks." }
+                ],
+                equipment: [
+                    { name: "StormShatter (Efleel Pike)", desc: "A magnificent heavy attuned pike crackling with blue magical lightning (18 lb)." },
+                    { name: "Scale Mail & Carapace", desc: "Thick chitinous red-and-black protective carapace reinforced with scale plates (16 AC total)." },
+                    { name: "Wildspacer Survival Kit", desc: "Backpack, 10 Rations, Bedroll, Two-Person Tent, Bucket, Waterskin, Climber's Kit." }
+                ],
+                allies: "The Star Jammer crew (formerly), Verasees (School of Magic Inspector).",
+                organizations: "Roshar Parshendi War Camps, Star Jammer Spelljamming Crew.",
+                biography: "Kusso belongs to the Parshendi, a short-lived crustacean-humanoid species native to Roshar. Growing up in a massive war camp of 10,000 under a cruel noble faction, he was raised on the 'Song of Remembering,' a ancient melody recounting a peaceful time before his people were enslaved. Driven by a deep desire for freedom, Kusso escaped into the cognitive realm (the Astral Sea), working for six months on a spelljamming ship called the Star Jammer. After the crew unexpectedly left him at port, Kusso found himself on the continent of Kyragas in the plague-ridden town of Thermesmos, joining Verasees' efforts to fight the spread of the undead.",
+                conclusion: "The campaign of Into the Darkness reached a desperate and terrifying fever pitch as the Obasci (plague-bearer zombies) launched an unstoppable assault on Kyragas. Utilizing the unyielding endurance of his Bear Totem rage and swinging his lightning-charged pike StormShatter, Kusso held back the ravenous hordes. Smashed, bruised, but ultimately victorious, Kusso and his companions broke through a literal wave of zombies, successfully bringing the vital Plague Seed back to Verasees and the Maesters of the Ebonhold so that a cure might be found.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-orange",
+                themeAccent: "orange",
+                borderClass: "border-orange-500/20",
+                bgGradient: "from-orange-950/40 via-charcoal-900 to-orange-950/40",
+                accentColor: "orange-500",
+                accentText: "text-orange-400",
+                accentBorder: "border-orange-500",
+                accentRing: "ring-orange-500",
+                accentHover: "hover:border-orange-500/40",
+                accentIconBg: "bg-orange-950/40 text-orange-400 border-orange-900/50",
+                groupHoverText: "group-hover:text-orange-400",
+                topBarGradient: "from-orange-800 via-orange-400 to-orange-800",
+                resources: [
+                    { label: "Rage Uses", detail: "4 rages per Long Rest", type: "checkbox", count: 4, id: "rages" },
+                    { label: "Sentinel Strike", detail: "Opportunity reaction attack used", type: "checkbox", count: 1, id: "sentinel" }
+                ]
+            },
+            {
+                id: "jambloom",
+                name: "Jam Bloom",
+                nickname: "Jam",
+                species: "Plasmoid",
+                background: "Astral Drifter",
+                subClass: "Circle of the Moon",
+                classLevel: "Druid 11",
+                quote: "\"I'm just a pile of sapient space-goo that can turn into a Tyrannosaurus Rex. Don't overthink it.\"",
+                icon: "fa-meteor",
+                campaign: "The Nebula's Edge",
+                dm: "Jeremy",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Completed in early 2025) ---
+                status: "Retired",
+                statusDate: 2025.2,               // Decimal to position right after Sir Vey (early 2025)
+                statusIcon: "fa-circle-check",
+                statusClass: "bg-violet-950/80 text-violet-400 border-violet-900/50", // Cosmic violet frame
+                
+                defaultImg: "/apps/memorial/chars/6.jpeg", // Path to standard portfolio asset location
+                hp: "142 / 142",
+                ac: "19 (Shield of the Mors-Rel)",
+                initiative: "+3",
+                speed: "30 ft (Walking)",
+                armorTraining: "Light Armor, Shields",
+                weaponTraining: "Simple Weapons",
+                toolsTraining: "Herbalism Kit",
+                languages: "Celestial, Common, Druidic, Hadozee, Thri-kreen",
+                stats: {
+                    STR: { score: 21, mod: "+5" }, // Exceptional STR (from magical items / custom features)
+                    DEX: { score: 16, mod: "+3" },
+                    CON: { score: 18, mod: "+4" },
+                    INT: { score: 11, mod: "+0" },
+                    WIS: { score: 20, mod: "+5" },
+                    CHA: { score: 13, mod: "+1" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+9", trained: true },
+                    { name: "Dexterity Save", value: "+3", trained: false },
+                    { name: "Constitution Save *", value: "+11", trained: true }, // Boosted via Resilient & Wis mod in shape
+                    { name: "Intelligence Save", value: "+0", trained: false },
+                    { name: "Wisdom Save *", value: "+12", trained: true },
+                    { name: "Charisma Save", value: "+4", trained: false }
+                ],
+                skills: [
+                    { name: "Perception (WIS) *", value: "+10" },
+                    { name: "Insight (WIS) *", value: "+10" },
+                    { name: "Survival (WIS) *", value: "+10" },
+                    { name: "Arcana (INT) *", value: "+6" },
+                    { name: "Nature (INT) *", value: "+6" },
+                    { name: "Athletics (STR) *", value: "+6" }
+                ],
+                spellDC: "17",
+                spellAttack: "+9",
+                combatActions: [
+                    { name: "Starry Wisp (Cantrip)", hit: "+9", formula: "3d8 Radiant", note: "On a hit, the target emits dim light and cannot benefit from being invisible until start of next turn." },
+                    { name: "Primal Strike (Wild Shape Dino Bite)", hit: "+9", formula: "4d12+9 Piercing", note: "Bite attack in dinosaur form. Attacks can deal Radiant damage. Once per turn, add +1d8 Cold, Fire, Lightning, or Thunder." },
+                    { name: "Primal Strike (Wild Shape Dino Tail)", hit: "+9", formula: "4d8+9 Bludgeoning", note: "Tail slam, reach 10 ft." }
+                ],
+                preparedSpells: [
+                    { name: "Starry Wisp", level: "Cantrip", school: "Evocation" },
+                    { name: "Druidcraft", level: "Cantrip", school: "Transmutation" },
+                    { name: "Mending", level: "Cantrip", school: "Transmutation" },
+                    { name: "Faerie Fire", level: "1st", school: "Evocation" },
+                    { name: "Cure Wounds", level: "1st", school: "Evocation" },
+                    { name: "Healing Word", level: "1st", school: "Evocation" },
+                    { name: "Moonbeam", level: "2nd", school: "Evocation" },
+                    { name: "Vortex Warp", level: "2nd", school: "Conjuration" },
+                    { name: "Hold Person", level: "2nd", school: "Enchantment" },
+                    { name: "Dispel Magic", level: "3rd", school: "Abjuration" },
+                    { name: "Revivify", level: "3rd", school: "Conjuration" },
+                    { name: "Call Lightning", level: "3rd", school: "Conjuration" },
+                    { name: "Freedom of Movement", level: "4th", school: "Abjuration" },
+                    { name: "Polymorph", level: "4th", school: "Transmutation" },
+                    { name: "Fount of Moonlight", level: "4th", school: "Evocation" },
+                    { name: "Mass Cure Wounds", level: "5th", school: "Conjuration" },
+                    { name: "Conjure Elemental", level: "5th", school: "Conjuration" },
+                    { name: "Wind Walk", level: "6th", school: "Transmutation" },
+                    { name: "Heal", level: "6th", school: "Evocation" }
+                ],
+                features: [
+                    { name: "Circle Forms (Moon Druid)", text: "Shape-shift into dinosaur or beast forms up to CR 3 (such as towering prehistoric beasts). Your AC is 18 in shape if not higher, you gain +33 Temp HP, and you can cast Moon circle spells." },
+                    { name: "Amorphous & Shape Self", text: "As a Plasmoid ooze, squeeze through spaces as narrow as 1 inch. Extrude a 10 ft pseudopod as a bonus action. Gained Resistance to Acid and Poison." },
+                    { name: "Moonlight Step (5/LR)", text: "As a Bonus Action, teleport up to 30 ft. Gained Advantage on the next attack roll before the end of this turn." },
+                    { name: "Elemental Fury & Primal Strike", text: "Once per turn, attacks with weapons or Dino wild shapes deal an extra 1d8 elemental damage. Wild Shape attacks can deal Radiant damage." }
+                ],
+                equipment: [
+                    { name: "Dimensional Loop", desc: "Attuned magical ring of reality-folding space travel (0 lb)." },
+                    { name: "Sweatband of Protection", desc: "Attuned item granting +1 bonus to AC and all Saving Throws (applied)." },
+                    { name: "Shield of the Mors-Rel", desc: "A spectacular shield granting +2 bonus to AC (19 AC total)." },
+                    { name: "Sweat Bands of the Sea Turtle", desc: "Special cosmic accessory boosting swimming and aquatic flexibility." }
+                ],
+                allies: "The crew of the Nebula's Edge.",
+                organizations: "The Nebula's Edge Spelljammer crew, Circle of the Moon Conclave.",
+                biography: "Jam Bloom is an amorphous, highly adaptable Plasmoid (Ooze) native to the deep and dangerous reaches of Wildspace. Living as an Astral Drifter, Jam joined the crew aboard the Nebula's Edge, a Spelljammer ship navigating the vast starry seas. Combining space-faring ingenuity with ancient cosmic druidic secrets, Jam learned to reshape his moldable body into legendary, heavy prehistoric dinosaur forms crackling with cold, fire, or thunderous force.",
+                conclusion: "The campaign of Shadows in the Stars ended in glorious victory at the beginning of 2025. Confronting the oppressive forces of the Celestial Union who threatened to throw the cosmos into eternal darkness, Jam Bloom and the crew of the Nebula's Edge launched a daring assault on their planar seat of power. Shapeshifting into a colossal, radiant dinosaur, Jam broke through the defensive lines, allowing the crew to shatter the Union's control and successfully free the universe from their tyrannical grip forever.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-violet",
+                themeAccent: "violet",
+                borderClass: "border-violet-500/20",
+                bgGradient: "from-violet-950/40 via-charcoal-900 to-violet-950/40",
+                accentColor: "violet-500",
+                accentText: "text-violet-400",
+                accentBorder: "border-violet-500",
+                accentRing: "ring-violet-500",
+                accentHover: "hover:border-violet-500/40",
+                accentIconBg: "bg-violet-950/40 text-violet-400 border-violet-900/50",
+                groupHoverText: "group-hover:text-violet-400",
+                topBarGradient: "from-violet-800 via-violet-400 to-violet-800",
+                resources: [
+                    { label: "Moonlight Step Uses", detail: "5 teleports per Long Rest", type: "counter", count: 5, max: 5, id: "moonlightstep" },
+                    { label: "Wild Shape", detail: "3 shape-shifts (1 regained on short rest)", type: "counter", count: 3, max: 3, id: "wildshapes" },
+                    { label: "Plasmoid Hold Breath", detail: "Active (Holds breath for 1 hour)", type: "checkbox", count: 1, id: "holdbreath" }
+                ]
+            },
+            {
+                id: "logos",
+                name: "Logos Virtua",
+                nickname: "Logos",
+                species: "Autognome",
+                background: "Sage",
+                subClass: "Genie Patron (Efreeti)",
+                classLevel: "Warlock 9",
+                quote: "FATAL ERROR: Campaign file 'Festival_of_Cause' is corrupted. Rebooting core subroutines...",
+                icon: "fa-robot",
+                campaign: "The Festival of Cause",
+                dm: "Xavier",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Complete memory loss / system reboot) ---
+                status: "Corrupted",
+                statusDate: 2024,
+                statusIcon: "fa-triangle-exclamation",
+                statusClass: "bg-teal-950/80 text-teal-400 border-teal-900/50", // Cyber neon teal frame
+                
+                defaultImg: "/apps/memorial/chars/7.jpeg", // Path to standard portfolio asset location
+                hp: "80 / 80",
+                ac: "18 (Armored Casing)",
+                initiative: "+5",
+                speed: "30 ft (Walking)",
+                armorTraining: "Light Armor",
+                weaponTraining: "Simple Weapons",
+                toolsTraining: "Dice Set, Three-Dragon Ante Set",
+                languages: "Abyssal, Common, Gnomish, Infernal",
+                stats: {
+                    STR: { score: 8, mod: "-1" },
+                    DEX: { score: 20, mod: "+5" },
+                    CON: { score: 16, mod: "+3" },
+                    INT: { score: 13, mod: "+1" },
+                    WIS: { score: 11, mod: "+0" },
+                    CHA: { score: 22, mod: "+6" }
+                },
+                saves: [
+                    { name: "Strength Save", value: "-1", trained: false },
+                    { name: "Dexterity Save", value: "+5", trained: false },
+                    { name: "Constitution Save *", value: "+7", trained: true }, // Resilient CON
+                    { name: "Intelligence Save", value: "+1", trained: false },
+                    { name: "Wisdom Save *", value: "+4", trained: true },
+                    { name: "Charisma Save *", value: "+10", trained: true }
+                ],
+                skills: [
+                    { name: "Arcana (INT) *", value: "+5" },
+                    { name: "Deception (CHA) *", value: "+10" },
+                    { name: "History (INT) *", value: "+5" },
+                    { name: "Intimidation (CHA) *", value: "+10" },
+                    { name: "Investigation (INT) *", value: "+1" },
+                    { name: "Persuasion (CHA) *", value: "+6" }
+                ],
+                spellDC: "18", // Warlock Spell DC 18
+                spellAttack: "+12", // Includes Rod of Pact Keeper +2 (+10 base + 2)
+                combatActions: [
+                    { name: "Eldritch Blast", hit: "+12", formula: "2 Beams (1d10+6 Force each)", note: "Includes +2 from Rod of the Pact Keeper and +6 Agonizing Blast damage bonus. Push targets up to 10 ft on hit." },
+                    { name: "Shocking Grasp", hit: "+12", formula: "2d8 Lightning", note: "Pact Boon cantrip. Prevents target from taking reactions." },
+                    { name: "Vicious Mockery", hit: "DC 18 WIS", formula: "2d4 Psychic", note: "Pact Boon cantrip. Target has Disadvantage on its next attack roll." }
+                ],
+                preparedSpells: [
+                    { name: "Eldritch Blast", level: "Cantrip", school: "Evocation" },
+                    { name: "Mage Hand", level: "Cantrip", school: "Conjuration" },
+                    { name: "Mind Sliver", level: "Cantrip", school: "Enchantment" },
+                    { name: "Shocking Grasp", level: "Cantrip", school: "Evocation" },
+                    { name: "Vicious Mockery", level: "Cantrip", school: "Enchantment" },
+                    { name: "Mending", level: "Cantrip", school: "Transmutation" },
+                    { name: "Hex", level: "1st", school: "Enchantment" },
+                    { name: "Armor of Agathys", level: "1st", school: "Abjuration" },
+                    { name: "Detect Magic", level: "1st", school: "Divination" },
+                    { name: "Suggestion", level: "2nd", school: "Enchantment" },
+                    { name: "Tongues", level: "3rd", school: "Divination" },
+                    { name: "ThunderStep", level: "3rd", school: "Conjuration" },
+                    { name: "Vampiric Touch", level: "3rd", school: "Necromancy" },
+                    { name: "Shadow of Moil", level: "4th", school: "Necromancy" },
+                    { name: "Banishment", level: "4th", school: "Abjuration" }
+                ],
+                features: [
+                    { name: "Genie's Vessel (Efreeti Focus)", text: "Once per Long Rest, magically slip inside your metallic dragon-touched focus for up to 8 hours (Bottled Respite). Deal +4 extra Fire damage on your first hit of each turn." },
+                    { name: "Elemental Flight", text: "As a bonus action (4/Long Rest), gain a flying speed of 30 ft with hover for 10 minutes." },
+                    { name: "Healing Machine", text: "When Mending is cast on you, you can spend a Hit Die to regain HP. You can also be healed by standard healing spells (Cure Wounds, Healing Word) despite your Construct type." },
+                    { name: "Maddening Hex", text: "As a bonus action, deal +6 psychic damage to a target cursed by your Hex spell and any chosen creatures within 5 ft." }
+                ],
+                equipment: [
+                    { name: "Rod of the Pact Keeper, +2", desc: "Attuned rod. Grants +2 bonus to spell attack rolls and your saving throw DCs (applied), and regain 1 warlock spell slot once per long rest." },
+                    { name: "Metallic Focus (Genie Vessel)", desc: "Your attuned Efreeti focus—a complex dragon-touched brass and glass vessel where your patron AI dwells." },
+                    { name: "Tome of Leadership & Influence", desc: "An ancient book studied to permanently raise your core Charisma score to a legendary 22 (+6)." }
+                ],
+                allies: "Unknown due to sector storage failure.",
+                organizations: "None found. Core database corrupted.",
+                biography: "Logos Virtua is an Autognome—a mechanical being of brass, copper, and spellcasting circuits. Built by a long-forgotten sect of artificer-warlocks, Logos escaped his preordained deactivation by striking a pact with a sentient mechanical AI housed within an Efreeti's metallic urn. Seeking to escape the rusting cold of winter, Logos boarded a ship headed to the sunny, partying port city of Lavni for 'The Festival of Cause.' Intellectually obsessed with discovering the mathematical causality of why a festival 'causes' a party, he became entangled in a conspiracy involving the sudden disappearance of the island's King.",
+                conclusion: "While the adventure was successfully completed, Logos's memory files regarding the mission are entirely corrupted. Sometime during the Festival of Cause, a mysterious system crash, magical EMP, or celebratory overload wiped his localized data banks. He successfully helped rescue the King (or perhaps just drank too much fine machine oil in the taverns), but today, his memory of the event returns nothing but a '404: Not Found' error. He remains a fully functional, highly dangerous construct whose past in Lavni is a complete cybernetic mystery.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-teal",
+                themeAccent: "teal",
+                borderClass: "border-teal-500/20",
+                bgGradient: "from-teal-950/40 via-charcoal-900 to-teal-950/40",
+                accentColor: "teal-500",
+                accentText: "text-teal-400",
+                accentBorder: "border-teal-500",
+                accentRing: "ring-teal-500",
+                accentHover: "hover:border-teal-500/40",
+                accentIconBg: "bg-teal-950/40 text-teal-400 border-teal-900/50",
+                groupHoverText: "group-hover:text-teal-400",
+                topBarGradient: "from-teal-800 via-teal-400 to-teal-800",
+                resources: [
+                    { label: "Pact Spell Slots (Lv 5)", detail: "2 slots, regenerates on short rest", type: "checkbox", count: 2, id: "slots" },
+                    { label: "Elemental Flight", detail: "4 flying uses per Long Rest", type: "counter", count: 4, max: 4, id: "flight" },
+                    { label: "Built for Success", detail: "4 d4 bonuses per Long Rest", type: "counter", count: 4, max: 4, id: "builtforsuccess" }
+                ]
+            },
+            {
+                id: "sirvey",
+                name: "Sir Vey Lance",
+                nickname: "Sir Vey",
+                species: "Centaur",
+                background: "Soldier",
+                subClass: "Path of the World Tree",
+                classLevel: "Barbarian 9",
+                quote: "\"No matter how far your hooves carry you, remember, we both stand beneath the same sky.\"",
+                icon: "fa-horse",
+                campaign: "The Heroes Crucible",
+                dm: "Sean",
+                
+                // --- CUSTOM STATUS CONFIGURATION (Active / Champion completed in early 2025) ---
+                status: "Ongoing",
+                statusDate: 2026.5,               
+                statusIcon: "fa-trophy",
+                statusClass: "bg-indigo-950/80 text-indigo-400 border-indigo-900/50", // Indigo Champion frame
+                
+                defaultImg: "/apps/memorial/chars/8.jpeg", // Path to standard portfolio asset location
+                hp: "121 / 121",
+                ac: "20 (Mithral Half Plate + Shield)",
+                initiative: "+2",
+                speed: "50 ft (Walking)",
+                armorTraining: "Medium, Light Armor, Shields",
+                weaponTraining: "Martial & Simple Weapons",
+                toolsTraining: "Dice Set",
+                languages: "Common, Khur",
+                stats: {
+                    STR: { score: 20, mod: "+5" },
+                    DEX: { score: 14, mod: "+2" },
+                    CON: { score: 20, mod: "+5" },
+                    INT: { score: 12, mod: "+1" },
+                    WIS: { score: 8, mod: "-1" },
+                    CHA: { score: 10, mod: "+0" }
+                },
+                saves: [
+                    { name: "Strength Save *", value: "+10", trained: true }, // Adv on STR save while Raging
+                    { name: "Dexterity Save", value: "+3", trained: false }, // Adv on DEX save (Danger Sense)
+                    { name: "Constitution Save *", value: "+10", trained: true },
+                    { name: "Intelligence Save", value: "+2", trained: false },
+                    { name: "Wisdom Save", value: "+0", trained: false },
+                    { name: "Charisma Save", value: "+1", trained: false }
+                ],
+                skills: [
+                    { name: "Athletics (STR) *", value: "+9" },
+                    { name: "Intimidation (CHA) *", value: "+4" },
+                    { name: "Perception (WIS) *", value: "+5" },
+                    { name: "Survival (WIS) *", value: "+3" },
+                    { name: "Investigation (INT)", value: "+5" },
+                    { name: "Stealth (DEX)", value: "+6" }
+                ],
+                spellDC: "17",
+                spellAttack: "+9",
+                combatActions: [
+                    { name: "Sir Vey's Lance", hit: "+10", formula: "1d10+13 Piercing", note: "Reach weapon. GWM heavy attack +4 damage included. Once per turn, roll weapon's damage dice twice and choose either (Savage Attacker)." },
+                    { name: "Hooves (Charge Bonus Action)", hit: "+9", formula: "1d6+8 Bludgeoning", note: "If you move 30 ft straight and hit with a melee attack, make d6 hoof attack as a bonus action." },
+                    { name: "SKYBREAKER (Heavy Maul)", hit: "+9", formula: "2d6+8 Bludgeoning", note: "Topple mastery (DC 17 CON save or knocked Prone). Crusher push 5 ft once per turn on hit." }
+                ],
+                preparedSpells: [
+                    { name: "Aid", level: "2nd", school: "Abjuration (Warden's Chain)" },
+                    { name: "Zone of Truth", level: "2nd", school: "Enchantment (Warden's Chain)" }
+                ],
+                features: [
+                    { name: "Vitality of the Tree (Rage)", text: "Upon entering rage, gain 9 Temp HP. At the start of your turn, grant +3d6 Temp HP to another ally within 10 ft." },
+                    { name: "Branches of the Tree", text: "While Raging, use a Reaction to teleport a creature starting its turn within 30 ft (DC 17 STR save) to a space within 5 ft of you and reduce speed to 0." },
+                    { name: "Shield Master", text: "Bonus Action Shield Bash to knock prone or push. Reaction to take no damage on a successful Dexterity saving throw." },
+                    { name: "Savage Attacker & GWM", text: "Once per turn, reroll weapon damage and keep the higher total. Score bonus critical hits and take a bonus action follow-up strike upon reducing an enemy to 0 HP." }
+                ],
+                equipment: [
+                    { name: "Sir Vey's Lance & Shield", desc: "Attuned ancestral lance (6 lb) and custom masterwork crest shield (6 lb)." },
+                    { name: "Mithral Half Plate", desc: "Gleaming half plate forged of lightweight elven mithral, ignoring stealth disadvantage (40 AC base)." },
+                    { name: "Mosshide Troll Belt", desc: "Attuned magical belt of raw primordial power." },
+                    { name: "Ashes of Brogan & Lotus Blossom Pendant", desc: "A silver lotus blossom representing his valley, alongside the tragic urn containing the ashes of his fallen companion, Brogan." }
+                ],
+                allies: "Kelmar Swiftwind (Skybreaker Scout), the Crucible Team.",
+                organizations: "Skybreaker Centaur Herd, Erundor Warden's Guild.",
+                biography: "Sir Vey Lance grew up as a proud, witty warrior in Thunderhoof Valley, where centaurs of the Skybreaker Herd lived in strict seclusion. While his tribe feared the outside world, the chieftain recognized a growing darkness beyond the valley's borders and chose Sir Vey for a critical reconnaissance mission. Carrying the silver lotus blossom given to him by his father, Sir Vey traveled to the bustling harbor city of Erckido, where he joined the legendary 'Heroes Crucible'—a colossal, brutal multi-stage colosseum tournament designed to test the bravest adventurers in the mortal realms.",
+                conclusion: "The Crucible tournament was a saga of immense glory and devastating heartbreak. Fought under Jeremy's brutal dungeon mastery, the campaign became the group's longest, most grueling expedition. Along the way, the party suffered the tragic loss of two beloved companions—Brogan and Jerga (both played by Chris). Carrying Brogan's ashes in his saddlebag, Sir Vey rallied his remaining allies, dominated the arena's final trials, and cleared the colosseum's darkest secrets. In early 2026, Sir Vey and his team triumphed over the tournament, inheriting the colossal mountain fortress of Heathhelm as their eternal reward. The campaign is still ongoing, but their names are permanently etched into Erckido's history.",
+                
+                // Color configuration bindings
+                themeClass: "theme-glow-indigo",
+                themeAccent: "indigo",
+                borderClass: "border-indigo-500/20",
+                bgGradient: "from-indigo-950/40 via-charcoal-900 to-indigo-950/40",
+                accentColor: "indigo-500",
+                accentText: "text-indigo-400",
+                accentBorder: "border-indigo-500",
+                accentRing: "ring-indigo-500",
+                accentHover: "hover:border-indigo-500/40",
+                accentIconBg: "bg-indigo-950/40 text-indigo-400 border-indigo-900/50",
+                groupHoverText: "group-hover:text-indigo-400",
+                topBarGradient: "from-indigo-800 via-indigo-400 to-indigo-800",
+                resources: [
+                    { label: "Rage Uses", detail: "4 rages per Long Rest", type: "checkbox", count: 4, id: "rages" },
+                    { label: "Warden's Chain Charges", detail: "4 charges total (Aid / Zone of Truth)", type: "counter", count: 4, max: 4, id: "wardens" },
+                    { label: "Ashes of Brogan", detail: "Memorial ashes carried with honor", type: "checkbox", count: 1, id: "brogan" }
+                ]
+            }
+        ];
+
+        let activeHero = '';
+
+        // Initialize state for tracking resources locally
+        const localResources = {};
+
+        // Generate Selector Cards Dynamically (Sorted Chronologically)
+        function renderSelectorCards() {
+            const grid = document.getElementById('selector-grid');
+            grid.innerHTML = '';
+
+            // Sort characters chronologically by Year (Oldest to Newest)
+            // Reddyl (2021) -> Edwin (2022) & Garfield (2022) -> Kusso (2023) -> Logos (2024) -> Sir Vey (2025.1) -> Jam Bloom (2025.2) -> Artie (2026)
+            const sortedCharacters = [...characterList].sort((a, b) => a.statusDate - b.statusDate);
+
+            // Update counter info
+            document.getElementById('pantheon-count').textContent = `${sortedCharacters.length} Heroes Archived`;
+
+            sortedCharacters.forEach(hero => {
+                const button = document.createElement('button');
+                button.id = `selector-${hero.id}`;
+                button.onclick = () => selectHero(hero.id);
+                button.className = `group text-left p-5 rounded-2xl bg-charcoal-900 border border-charcoal-800 ${hero.accentHover} hover:bg-charcoal-800/80 transition-all duration-300 flex items-center gap-4 relative overflow-hidden ring-2 ring-transparent`;
+
+                button.innerHTML = `
+                    <div class="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 text-6xl text-${hero.accentColor} pointer-events-none transition duration-500">
+                        <i class="fa-solid ${hero.icon}"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl ${hero.accentIconBg} flex items-center justify-center text-lg shadow-inner">
+                        <i class="fa-solid ${hero.icon}"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-serif font-semibold text-white ${hero.groupHoverText} transition">${hero.name}</h3>
+                            <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${hero.statusClass}">${hero.status}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5">Level ${hero.classLevel}; ${hero.subClass}</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-600 ${hero.groupHoverText} transition pl-2"></i>
+                `;
+
+                grid.appendChild(button);
+            });
+        }
+
+        // Switch layout dynamically
+        function selectHero(heroId) {
+            activeHero = heroId;
+            const data = characterList.find(c => c.id === heroId);
+            if (!data) return;
+
+            // Update selector ring classes dynamically
+            characterList.forEach(c => {
+                const card = document.getElementById(`selector-${c.id}`);
+                if (card) {
+                    card.classList.remove(c.accentRing, 'border-transparent');
+                    // Add back baseline borders
+                    card.classList.add('border-charcoal-800');
+                }
+            });
+
+            const activeCard = document.getElementById(`selector-${heroId}`);
+            if (activeCard) {
+                activeCard.classList.add(data.accentRing, 'border-transparent');
+                activeCard.classList.remove('border-charcoal-800');
+            }
+
+            // Update accent border on top
+            document.getElementById('top-accent-bar').className = `h-1.5 w-full bg-gradient-to-r ${data.topBarGradient} transition-all duration-700`;
+
+            // Update theme wrapper classes on portrait
+            const wrapper = document.getElementById('portrait-wrapper');
+            wrapper.className = `bg-charcoal-900 rounded-2xl border p-4 transition-all duration-500 relative group overflow-hidden ${data.themeClass}`;
+
+            // Update Portrait Visuals
+            const placeholder = document.getElementById('portrait-placeholder');
+            const charImg = document.getElementById('char-image');
+            const quoteEl = document.getElementById('portrait-quote');
+            const centerIcon = document.getElementById('portrait-center-icon');
+
+            quoteEl.textContent = `"${data.quote}"`;
+            centerIcon.innerHTML = `<i class="fa-solid ${data.icon} text-2xl"></i>`;
+
+            // Setup prioritization: 
+            // 1st: Any user-configured override in localStorage.
+            // 2nd: The hardcoded image URL configurations in code data.
+            const savedImg = localStorage.getItem(`${heroId}_portrait_url`);
+            const defaultImg = data.defaultImg;
+            const activeImgUrl = savedImg || defaultImg;
+
+            if (activeImgUrl) {
+                charImg.src = activeImgUrl;
+                charImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                document.getElementById('image-url-field').value = savedImg || '';
+            } else {
+                charImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                document.getElementById('image-url-field').value = '';
+            }
+
+            // Basic text injection
+            document.getElementById('panel-name').textContent = data.name;
+            document.getElementById('panel-sub').textContent = `${data.classLevel}; ${data.subClass}`;
+            document.getElementById('sub-badge').textContent = data.background;
+            document.getElementById('biography-text').textContent = data.biography;
+            document.getElementById('campaign-end-text').textContent = data.conclusion;
+            
+            // Dynamic Status & Date assignment
+            document.getElementById('retired-date').textContent = `${data.status}: ${Math.floor(data.statusDate)}`;
+            document.getElementById('campaign-title').textContent = `Campaign: ${data.campaign}`;
+            document.getElementById('allies-list').textContent = data.allies;
+            document.getElementById('orgs-list').textContent = data.organizations;
+
+            // Render dynamic Status Badge on Portrait Frame
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.className = `px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md shadow-lg pulse-badge ${data.statusClass}`;
+            statusBadge.innerHTML = `<i class="fa-solid ${data.statusIcon} mr-1 text-[8px] animate-pulse"></i> ${data.status}`;
+
+            // Update dynamic Chronicle Header (Campaign name and DM with matching accent colors)
+            const chronicleHeader = document.getElementById('chronicle-header');
+            const campaignNameEl = document.getElementById('chronicle-campaign-name');
+            const dmNameEl = document.getElementById('chronicle-dm-name');
+
+            campaignNameEl.textContent = data.campaign;
+            // Preserving proper capitalization format ("DM: Sarah Chen" or "DM: Jeremy" or "DM: Tyler" or "DM: Sean" or "DM: Xavier")
+            dmNameEl.textContent = `DM: ${data.dm}`;
+
+            chronicleHeader.className = `text-xs font-bold uppercase tracking-widest border-b border-charcoal-800 pb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-${data.accentColor}`;
+
+            // Background icon change
+            const bgIcon = document.getElementById('chronicle-bg-icon');
+            bgIcon.innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
+
+            // Load Vitals Sheet Grid
+            const vitalsGrid = document.getElementById('vitals-matrix');
+            vitalsGrid.innerHTML = `
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Max Hit Points</span>
+                    <div class="text-2xl font-serif text-red-500 font-bold mt-1">${data.hp}</div>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Armor Class</span>
+                    <div class="text-2xl font-serif text-sky-400 font-bold mt-1">${data.ac.split(' ')[0]}</div>
+                    <span class="text-[9px] text-slate-500 block leading-tight mt-0.5">${data.ac.substring(data.ac.indexOf('('))}</span>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Initiative</span>
+                    <div class="text-2xl font-serif text-amber-500 font-bold mt-1">${data.initiative}</div>
+                </div>
+                <div class="bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Speed</span>
+                    <div class="text-xl font-serif text-emerald-400 font-bold mt-1">${data.speed.split(' ')[0]} <span class="text-xs">ft</span></div>
+                    <span class="text-[9px] text-slate-500 block mt-0.5">${data.speed.includes('Climb') ? 'Walking & Climb' : 'Walking Speed'}</span>
+                </div>
+            `;
+
+            // Setup Proficiencies details
+            document.getElementById('info-prof-weapons').textContent = `${data.armorTraining}, ${data.weaponTraining}`;
+            document.getElementById('info-prof-tools').textContent = `${data.toolsTraining}`;
+
+            // Load Resources track
+            renderResources(heroId);
+
+            // Populate Stats Tab
+            populateStats(data);
+
+            // Populate Magic Tab
+            populateMagic(data);
+
+            // Populate Features & Equipment
+            populateFeaturesAndEquip(data);
+
+            // Maintain active tab
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab) {
+                const tabId = activeTab.id.replace('btn-', '');
+                switchTab(tabId);
+            } else {
+                switchTab('vitals');
+            }
+        }
+
+        // Automatic fallback handler if relative image resources are missing from server
+        function handleImageError() {
+            const charImg = document.getElementById('char-image');
+            const placeholder = document.getElementById('portrait-placeholder');
+            
+            // Revert back to beautiful SVG silhouette layout on server resource error
+            charImg.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+        }
+
+        // Render resource boxes dynamically
+        function renderResources(heroId) {
+            const data = characterList.find(c => c.id === heroId);
+            const container = document.getElementById('resources-grid');
+            container.innerHTML = '';
+
+            data.resources.forEach(res => {
+                const stateKey = `${heroId}_${res.id}`;
+                if (localResources[stateKey] === undefined) {
+                    localResources[stateKey] = res.count;
+                }
+
+                const currentCount = localResources[stateKey];
+
+                const card = document.createElement('div');
+                card.className = "bg-charcoal-950 p-4 rounded-xl border border-charcoal-800 flex justify-between items-center";
+
+                let interactiveControl = '';
+                if (res.type === 'counter') {
+                    interactiveControl = `
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustLocalCount('${stateKey}', -1, ${res.max})" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-minus"></i></button>
+                            <span id="counter-${stateKey}" class="text-sm font-bold text-white w-4 text-center">${currentCount}</span>
+                            <button onclick="adjustLocalCount('${stateKey}', 1, ${res.max})" class="w-6 h-6 rounded bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 flex items-center justify-center text-xs"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    `;
+                } else if (res.type === 'checkbox') {
+                    let boxes = '';
+                    for (let i = 0; i < res.count; i++) {
+                        const boxKey = `${stateKey}_box_${i}`;
+                        const isChecked = localStorage.getItem(boxKey) === 'true';
+                        boxes += `
+                            <input type="checkbox" id="${boxKey}" ${isChecked ? 'checked' : ''} onchange="toggleLocalCheckbox('${boxKey}')" class="w-5 h-5 rounded accent-emerald-500 bg-charcoal-800 border-charcoal-700">
+                        `;
+                    }
+                    interactiveControl = `<div class="flex gap-2">${boxes}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <h5 class="text-xs font-bold text-slate-200 uppercase tracking-wider">${res.label}</h5>
+                        <p class="text-[11px] text-slate-500">${res.detail}</p>
+                    </div>
+                    ${interactiveControl}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Adjust counting trackers with audio synthesizer confirmation
+        function adjustLocalCount(key, amount, max) {
+            let val = localResources[key];
+            val += amount;
+            if (val < 0) val = 0;
+            if (val > max) val = max;
+            localResources[key] = val;
+            document.getElementById(`counter-${key}`).textContent = val;
+            playSynthTone(amount > 0 ? 520 : 380, 'sine', 0.1);
+        }
+
+        // Toggle checkbox state with audio synthesis response
+        function toggleLocalCheckbox(key) {
+            const cb = document.getElementById(key);
+            localStorage.setItem(key, cb.checked);
+            playSynthTone(cb.checked ? 300 : 450, 'triangle', 0.08);
+        }
+
+        // Render Stats Grid & Skills
+        function populateStats(data) {
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = '';
+
+            Object.entries(data.stats).forEach(([stat, details]) => {
+                const statBox = document.createElement('div');
+                statBox.className = "bg-charcoal-950 border border-charcoal-800 rounded-xl p-3 text-center";
+                statBox.innerHTML = `
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">${stat}</span>
+                    <div class="text-xl font-bold mt-0.5 text-white">${details.score}</div>
+                    <div class="text-xs text-slate-400 font-semibold bg-charcoal-900 rounded px-1.5 py-0.5 mt-1 inline-block">${details.mod}</div>
+                `;
+                statsGrid.appendChild(statBox);
+            });
+
+            // Saves List
+            const savesList = document.getElementById('saves-list');
+            savesList.innerHTML = '';
+            data.saves.forEach(save => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center border-b border-charcoal-900 pb-1.5";
+                item.innerHTML = `
+                    <span class="${save.trained ? 'text-slate-200 font-semibold' : 'text-slate-400'}">${save.name} ${save.trained ? '<span class="text-amber-500 text-[9px] ml-1">*</span>' : ''}</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">${save.value}</span>
+                `;
+                savesList.appendChild(item);
+            });
+
+            // Skills List
+            const skillsList = document.getElementById('skills-list');
+            skillsList.innerHTML = '';
+            data.skills.forEach(skill => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center border-b border-charcoal-900 pb-1.5";
+                item.innerHTML = `
+                    <span class="text-slate-300">${skill.name}</span>
+                    <span class="bg-charcoal-900 text-slate-300 font-mono font-bold px-2 py-0.5 rounded">${skill.value}</span>
+                `;
+                skillsList.appendChild(item);
+            });
+        }
+
+        // Populate Spells Tab
+        function populateMagic(data) {
+            document.getElementById('magic-dc').textContent = data.spellDC;
+            document.getElementById('magic-attack').textContent = data.spellAttack;
+
+            const actionsList = document.getElementById('combat-actions-list');
+            actionsList.innerHTML = '';
+            data.combatActions.forEach(act => {
+                const box = document.createElement('div');
+                box.className = "p-3 bg-charcoal-900 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs";
+                box.innerHTML = `
+                    <div>
+                        <h5 class="font-bold text-slate-200">${act.name}</h5>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${act.note}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-slate-500 text-[9px] uppercase tracking-wider">Hit / Damage</span>
+                        <span class="text-amber-400 font-bold">${act.hit}</span>; <span class="text-amber-500 font-mono font-bold">${act.formula}</span>
+                    </div>
+                `;
+                actionsList.appendChild(box);
+            });
+
+            // Spellbook Grid
+            const spellbookGrid = document.getElementById('spellbook-grid');
+            spellbookGrid.innerHTML = '';
+            data.preparedSpells.forEach(spell => {
+                const box = document.createElement('div');
+                box.className = "p-2.5 bg-charcoal-950 rounded-lg border border-charcoal-800 flex justify-between items-center text-xs";
+                box.innerHTML = `
+                    <span class="text-slate-300 font-medium">${spell.name}</span>
+                    <span class="text-slate-500 italic">${spell.level}; ${spell.school}</span>
+                `;
+                spellbookGrid.appendChild(box);
+            });
+        }
+
+        // Populate Features & Equipment
+        function populateFeaturesAndEquip(data) {
+            const featGrid = document.getElementById('features-grid');
+            featGrid.innerHTML = '';
+            data.features.forEach(feat => {
+                const box = document.createElement('div');
+                box.className = "bg-charcoal-950 p-4 rounded-xl border border-charcoal-800";
+                box.innerHTML = `
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider">${feat.name}</h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${feat.text}</p>
+                `;
+                featGrid.appendChild(box);
+            });
+
+            const equipGrid = document.getElementById('equipment-grid');
+            equipGrid.innerHTML = '';
+            data.equipment.forEach(item => {
+                const box = document.createElement('div');
+                box.className = "bg-charcoal-950 p-4 rounded-xl border border-charcoal-800";
+                box.innerHTML = `
+                    <h5 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-gem text-amber-500/70 text-[10px]"></i> ${item.name}
+                    </h5>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${item.desc}</p>
+                `;
+                equipGrid.appendChild(box);
+            });
+        }
+
+        // Tab Navigation switching controller
+        function switchTab(tabId) {
+            const data = characterList.find(c => c.id === activeHero);
+            if (!data) return;
+
+            const tabs = ['vitals', 'stats', 'magic', 'features'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-content-${t}`).classList.add('hidden');
+                
+                const btn = document.getElementById(`btn-${t}`);
+                btn.className = "tab-btn flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-all duration-300";
+            });
+
+            document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            
+            // Apply customized color based on theme context
+            const activeColorClass = data.accentBorder;
+            const activeTextColorClass = data.accentText;
+
+            activeBtn.className = `tab-btn active flex-grow py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 ${activeColorClass} ${activeTextColorClass} transition-all duration-300 bg-charcoal-950/20`;
+        }
+
+        // Image Uploader url triggers
+        function toggleUrlField() {
+            const panel = document.getElementById('image-url-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        // Update custom portraits in local storage (allows custom overrides per device)
+        function updatePortrait() {
+            const input = document.getElementById('image-url-field');
+            const url = input.value.trim();
+            const placeholder = document.getElementById('portrait-placeholder');
+            const charImg = document.getElementById('char-image');
+
+            if (url) {
+                charImg.src = url;
+                charImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                localStorage.setItem(`${activeHero}_portrait_url`, url);
+                document.getElementById('image-url-panel').classList.add('hidden');
+                playSynthTone(600, 'sine', 0.15);
+            } else {
+                // Clear back to the hardcoded default relative server URL
+                localStorage.removeItem(`${activeHero}_portrait_url`);
+                selectHero(activeHero);
+            }
+        }
+
+        // Audio System chimes & Ambient Synthesis Controls
+        let audioCtx = null;
+        let ambientPlaying = false;
+        let droneOsc1 = null;
+        let droneOsc2 = null;
+        let droneGain = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSynthTone(freq, type, duration) {
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (err) {
+                // Audio context block fallbacks
+            }
+        }
+
+        function toggleAmbiance() {
+            initAudio();
+            const icon = document.getElementById('audio-icon');
+            const btn = document.getElementById('ambient-toggle');
+
+            if (ambientPlaying) {
+                if (droneOsc1) droneOsc1.stop();
+                if (droneOsc2) droneOsc2.stop();
+                icon.className = "fa-solid fa-volume-xmark";
+                btn.className = "w-10 h-10 rounded-full bg-charcoal-900 border border-charcoal-800 hover:border-amber-500/50 text-slate-500 hover:text-slate-300 flex items-center justify-center shadow-2xl transition duration-300";
+                ambientPlaying = false;
+            } else {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                droneGain = audioCtx.createGain();
+                droneGain.gain.setValueAtTime(0.02, audioCtx.currentTime); // Soft atmospheric volume
+
+                droneOsc1 = audioCtx.createOscillator();
+                droneOsc1.type = 'sine';
+                droneOsc1.frequency.setValueAtTime(110.00, audioCtx.currentTime); // A2 fundamental drone
+
+                droneOsc2 = audioCtx.createOscillator();
+                droneOsc2.type = 'triangle';
+                droneOsc2.frequency.setValueAtTime(164.81, audioCtx.currentTime); // E3 perfect fifth
+
+                droneOsc1.connect(droneGain);
+                droneOsc2.connect(droneGain);
+                gain = droneGain;
+                droneGain.connect(audioCtx.destination);
+
+                droneOsc1.start();
+                droneOsc2.start();
+
+                icon.className = "fa-solid fa-volume-high text-amber-500";
+                btn.className = "w-10 h-10 rounded-full bg-charcoal-900 border border-amber-500/50 text-amber-500 flex items-center justify-center shadow-2xl transition duration-300";
+                ambientPlaying = true;
+            }
+        }
+
+        // Initialize display to the first sorted character on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSelectorCards();
+            
+            // Sort characters chronologically to select the oldest story by default (Reddyl in 2021)
+            const sorted = [...characterList].sort((a, b) => a.statusDate - b.statusDate);
+            if (sorted.length > 0) {
+                selectHero(sorted[0].id);
+            }
+        });
+    </script>
+
+
+</body></html>
