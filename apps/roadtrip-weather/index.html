@@ -81,13 +81,18 @@
   .chart-container canvas { width: 100% !important; }
 
   .timeline { margin-top: 10px; }
-  .timeline-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .timeline-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .timeline-item:last-child { border-bottom: none; }
-  .timeline-time { font-size: 0.85rem; font-weight: 600; min-width: 70px; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
-  .timeline-loc { font-size: 0.8rem; color: var(--text-dim); min-width: 100px; }
-  .timeline-temp { font-size: 1rem; font-weight: 700; min-width: 55px; }
-  .timeline-cond { font-size: 0.85rem; flex: 1; }
-  .timeline-wind { font-size: 0.75rem; color: var(--text-dim); min-width: 70px; text-align: right; }
+  .timeline-time { font-size: 0.8rem; font-weight: 600; min-width: 55px; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
+  .timeline-loc { font-size: 0.75rem; color: var(--text-dim); min-width: 40px; }
+  .timeline-temp { font-size: 0.9rem; font-weight: 700; min-width: 45px; }
+  .timeline-cond { font-size: 0.75rem; flex: 1; }
+  .timeline-wind { font-size: 0.7rem; color: var(--text-dim); min-width: 60px; text-align: right; line-height: 1.3; }
+  .timeline-sun { font-size: 0.9rem; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
+  .stat-card .value { font-size: 1.1rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
+  .stat-card .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-top: 2px; font-weight: 600; }
 
   .loading { text-align: center; padding: 40px; color: var(--text-dim); }
   .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
@@ -114,6 +119,17 @@
     .form-section.collapsed .field-row,
     .form-section.collapsed .btn { display: none; }
     .results-section { padding: 12px 16px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .stat-card { padding: 10px; }
+    .stat-card .value { font-size: 1rem; }
+    .stat-card .label { font-size: 0.6rem; }
+    .timeline-item { gap: 6px; padding: 4px 0; }
+    .timeline-time { font-size: 0.75rem; min-width: 48px; }
+    .timeline-loc { font-size: 0.7rem; min-width: 32px; }
+    .timeline-temp { font-size: 0.85rem; min-width: 36px; }
+    .timeline-cond { font-size: 0.7rem; }
+    .timeline-wind { font-size: 0.65rem; min-width: 50px; }
+    .timeline-sun { font-size: 0.8rem; }
     .geo-dropdown div { font-size: 16px; }
   }
 </style>
@@ -123,7 +139,7 @@
   <header>
     <h1><span>&#9928;</span> Road Trip Weather</h1>
     <div style="flex:1"></div>
-    <button id="darkToggle" class="btn" style="padding:6px 12px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:2px">&#9790; Dark</button>
+    <button id="settingsBtn" class="btn" style="padding:6px 12px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:2px">&#9881; Settings</button>
   </header>
 
   <div class="sidebar">
@@ -153,7 +169,7 @@
           <option value="20">20 mph</option><option value="25">25 mph</option><option value="30">30 mph</option>
           <option value="35">35 mph</option><option value="40">40 mph</option><option value="45">45 mph</option>
           <option value="50">50 mph</option><option value="55">55 mph</option><option value="60">60 mph</option>
-          <option value="65" selected>65 mph</option><option value="70">70 mph</option><option value="75">75 mph</option>
+          <option value="65">65 mph</option><option value="70">70 mph</option><option value="75" selected>75 mph</option>
           <option value="80">80 mph</option><option value="85">85 mph</option><option value="90">90 mph</option>
           <option value="95">95 mph</option><option value="100">100 mph</option>
         </select>
@@ -169,31 +185,105 @@
     </div>
 
     <div style="padding:12px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--text-dim)">
-      Powered by <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--accent);text-decoration:none">OpenStreetMap</a> + <a href="https://open-meteo.com" target="_blank" style="color:var(--accent);text-decoration:none">Open-Meteo</a>
+      Powered by <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--accent);text-decoration:none">OpenStreetMap</a> + <a href="https://openweathermap.org" target="_blank" style="color:var(--accent);text-decoration:none">OpenWeatherMap</a>
     </div>
   </div>
 
   <div id="map"></div>
 </div>
 
+<!-- ── Settings Modal ────────────────────────────────────────────── -->
+<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;width:90%;height:90%;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,0.4);position:relative;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+      <h3 style="font-size:1.05rem;font-weight:600">&#9881; Settings</h3>
+      <button id="settingsClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-dim);padding:4px 8px">&times;</button>
+    </div>
+    <!-- Content -->
+    <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px">
+      <!-- Wind Speed Unit -->
+      <div>
+        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Wind Speed Unit</label>
+        <div style="display:flex;gap:8px">
+          <button class="wind-unit-btn btn" data-unit="kmh" style="width:auto;padding:8px 16px;background:var(--accent);color:#fff;border-radius:2px;font-size:0.85rem">km/h</button>
+          <button class="wind-unit-btn btn" data-unit="mph" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:2px;font-size:0.85rem">mph</button>
+          <button class="wind-unit-btn btn" data-unit="ms" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:2px;font-size:0.85rem">m/s</button>
+        </div>
+      </div>
+      <!-- API Key (BYOK) -->
+      <div>
+        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">API Key (BYOK)</label>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px">If the default key is rate-limited, create your own free key at <a href="https://home.openweathermap.org/api_keys" target="_blank" style="color:var(--accent)">home.openweathermap.org/api_keys</a>. 60 calls/min, no daily cap.</p>
+        <input type="text" id="settingsKeyInput" placeholder="Paste your API key here" style="width:100%;padding:10px 12px;font-size:16px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);outline:none;box-sizing:border-box">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="settingsKeyClear" class="btn" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--danger)">Clear Key</button>
+          <button id="settingsKeySave" class="btn btn-primary" style="width:auto;padding:8px 16px">Save Key</button>
+        </div>
+      </div>
+      <!-- Dark Mode -->
+      <div>
+        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Theme</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button id="darkToggle" class="btn" style="width:auto;padding:8px 20px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:2px;font-size:0.85rem">🌙 Dark Mode</button>
+          <span id="darkModeStatus" style="font-size:0.8rem;color:var(--text-dim)"></span>
+        </div>
+      </div>
+      <!-- Weather Map Overlay -->
+      <div>
+        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Map Overlay</label>
+        <select id="overlaySelect" style="width:100%;padding:10px 12px;font-size:16px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);outline:none;cursor:pointer">
+          <option value="none">None</option>
+          <option value="clouds">Clouds</option>
+          <option value="precipitation">Precipitation</option>
+          <option value="temp">Temperature</option>
+          <option value="wind">Wind</option>
+          <option value="pressure">Pressure</option>
+          <option value="visibility">Visibility</option>
+        </select>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:0.8rem;color:var(--text-dim);min-width:60px">Opacity</span>
+          <input type="range" id="overlayOpacity" min="10" max="100" value="60" style="flex:1;accent-color:var(--accent);cursor:pointer">
+          <span id="overlayOpacityVal" style="font-size:0.8rem;color:var(--text-dim);min-width:32px;text-align:right">60%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── State ──────────────────────────────────────────────────────────
 let map, routeLayer, markers = [];
-const GEO_URL = 'https://geocoding-api.open-meteo.com/v1/search';
-const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+let OWM_USER_KEY = localStorage.getItem('owmUserKey') || null;
+let OWM_DEFAULT_KEY = '2c372e81868c63672c739d9f1fa71485';
+let OWM_KEY = OWM_USER_KEY || OWM_DEFAULT_KEY;
+let WIND_UNIT = localStorage.getItem('windUnit') || 'kmh';
+let WEATHER_OVERLAY = localStorage.getItem('weatherOverlay') || 'clouds';
+let weatherOverlayLayer = null;
+let overlayRefreshTimer = null;
+const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+const FORECAST_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
 
-const WMO = {
-  0:'☀️ Clear',1:'🌤 Mostly clear',2:'⛅ Partly cloudy',3:'☁️ Overcast',
-  45:'🌫 Foggy',48:'🌫 Rime fog',51:'🌧 Light drizzle',53:'🌧 Drizzle',55:'🌧 Heavy drizzle',
-  61:'🌦 Slight rain',63:'🌧 Moderate rain',65:'🌧 Heavy rain',
-  71:'🌨 Slight snow',73:'🌨 Moderate snow',75:'🌨 Heavy snow',
-  80:'🌦 Rain showers',81:'🌧 Moderate showers',82:'🌧 Violent showers',
-  85:'🌨 Snow showers',86:'🌨 Heavy snow showers',
-  95:'⛈ Thunderstorm',96:'⛈ T-storm + hail',99:'⛈ T-storm + heavy hail'
+const OWM_CONDITIONS = {
+  200:'⛈ Thunderstorm + light rain',201:'⛈ Thunderstorm + rain',202:'⛈ Thunderstorm + heavy rain',
+  210:'⛈ Light thunderstorm',211:'⛈ Thunderstorm',212:'⛈ Heavy thunderstorm',
+  221:'⛈ Ragged thunderstorm',230:'⛈ Thunderstorm + light drizzle',231:'⛈ Thunderstorm + drizzle',232:'⛈ Thunderstorm + heavy drizzle',
+  300:'🌧 Light drizzle',301:'🌧 Drizzle',302:'🌧 Heavy drizzle',
+  310:'🌧 Light drizzle rain',311:'🌧 Drizzle rain',312:'🌧 Heavy drizzle rain',
+  313:'🌧 Shower rain + drizzle',314:'🌧 Heavy shower rain + drizzle',
+  321:'🌧 Shower drizzle',
+  500:'🌧 Light rain',501:'🌧 Moderate rain',502:'🌧 Heavy rain',503:'🌧 Very heavy rain',504:'🌧 Extreme rain',
+  511:'🌧 Freezing rain',520:'🌧 Light shower rain',521:'🌧 Shower rain',522:'🌧 Heavy shower rain',531:'🌧 Ragged shower rain',
+  600:'🌨 Light snow',601:'🌨 Snow',602:'🌨 Heavy snow',
+  611:'🌨 Sleet',612:'🌨 Light shower sleet',613:'🌨 Shower sleet',
+  615:'🌨 Light rain + snow',616:'🌨 Rain + snow',
+  620:'🌨 Light shower snow',621:'🌨 Shower snow',622:'🌨 Heavy shower snow',
+  701:'🌫 Mist',711:'🌫 Smoke',721:'🌫 Haze',731:'🌫 Dust',741:'🌫 Fog',751:'🌫 Sand',761:'🌫 Dust',762:'🌫 Ash',771:'🌫 Squall',781:'🌫 Tornado',
+  800:'☀️ Clear',801:'🌤 Few clouds',802:'⛅ Scattered clouds',803:'☁️ Broken clouds',804:'☁️ Overcast clouds'
 };
 
-function wmo(c) { return WMO[c] || `Unknown (${c})`; }
+function owmCond(id) { return OWM_CONDITIONS[id] || `Unknown (${id})`; }
 
 // ── Map ────────────────────────────────────────────────────────────
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
@@ -227,9 +317,11 @@ let geoTimer = null;
 const GEO_DEBOUNCE = 300;
 
 async function geocodeSearch(query) {
-  const url = `${GEO_URL}?name=${encodeURIComponent(query)}&count=5&language=en&format=json`;
+  const url = `${GEO_URL}?q=${encodeURIComponent(query)}&limit=5&appid=${OWM_KEY}`;
   const data = await fetch(url).then(r => r.json());
-  return data.results || [];
+  // Filter to North America only: US, MX, CA
+  const allowed = new Set(['US', 'MX', 'CA']);
+  return (data || []).filter(r => allowed.has(r.country));
 }
 
 function showGeoDropdown(inputEl, results, onSelect) {
@@ -243,7 +335,7 @@ function showGeoDropdown(inputEl, results, onSelect) {
 
   results.forEach(r => {
     const opt = document.createElement('div');
-    const label = `${r.name}${r.admin1 ? ', ' + r.admin1 : ''}${r.country ? ', ' + r.country : ''}`;
+    const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
     opt.textContent = label;
     opt.style.cssText = 'padding:9px 12px;font-size:16px;cursor:pointer;border-bottom:1px solid var(--border);';
     opt.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
@@ -251,14 +343,14 @@ function showGeoDropdown(inputEl, results, onSelect) {
       e.preventDefault();
       inputEl.value = label;
       dropdown.remove();
-      onSelect({ name: label, lat: r.latitude, lon: r.longitude, tz: r.timezone || 'auto' });
+      onSelect({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
     });
     opt.addEventListener('mouseenter', () => { opt.style.background = 'var(--bg)'; });
-    opt.addEventListener('mouseleave', () => { opt.style.background = '#fff'; });
+    opt.addEventListener('mouseleave', () => { opt.style.background = ''; });
     opt.addEventListener('click', () => {
       inputEl.value = label;
       dropdown.remove();
-      onSelect({ name: label, lat: r.latitude, lon: r.longitude, tz: r.timezone || 'auto' });
+      onSelect({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
     });
     dropdown.appendChild(opt);
   });
@@ -314,32 +406,48 @@ async function getRoute(start, end) {
 
 // ── Weather ────────────────────────────────────────────────────────
 async function getForecast(lat, lon, tz) {
-  const hourly = ['temperature_2m','apparent_temperature','precipitation_probability','precipitation','weather_code','wind_speed_10m','wind_gusts_10m','visibility','cloud_cover'];
-  const url = `${FORECAST_URL}?latitude=${lat}&longitude=${lon}&hourly=${hourly.join(',')}&timezone=${encodeURIComponent(tz)}&forecast_days=3`;
-  return fetch(url).then(r => r.json());
+  const url = `${FORECAST_URL}?lat=${lat}&lon=${lon}&units=imperial&appid=${OWM_KEY}`;
+  const data = await fetch(url).then(r => r.json());
+  // OWM returns 5-day / 3-hour steps as list[]. Normalize to a hourly-like structure.
+  // We'll interpolate between 3-hour points to approximate hourly for the chart,
+  // but for the timeline we pick the nearest 3-hour step.
+  const steps = data.list.map(s => ({
+    time: new Date(s.dt * 1000),
+    dt: s.dt,
+    tempF: s.main.temp,
+    feelsF: s.main.feels_like,
+    rain: Math.round((s.pop || 0) * 100),
+    wind: WIND_UNIT === 'mph' ? s.wind.speed : WIND_UNIT === 'ms' ? s.wind.speed * 0.447 : s.wind.speed * 2.237,
+    gust: WIND_UNIT === 'mph' ? (s.wind.gust || s.wind.speed) : WIND_UNIT === 'ms' ? (s.wind.gust || s.wind.speed) * 0.447 : (s.wind.gust || s.wind.speed) * 2.237,
+    code: s.weather[0].id,
+    cond: owmCond(s.weather[0].id),
+    vis: (s.visibility || 10000) / 1000,  // m to km
+    cloud: s.clouds.all,
+    rain3h: (s.rain?.['3h'] || 0) * 0.03937,  // mm to inches
+    snow3h: (s.snow?.['3h'] || 0) * 0.03937
+  }));
+  return { steps, city: data.city };
 }
 
-function pickHourly(wx, targetDate) {
-  const times = wx.hourly.time;
+function pickHourly(steps, targetDate) {
   let best = 0, bestDt = Infinity;
-  for (let i = 0; i < times.length; i++) {
-    const d = new Date(times[i]);
-    const dt = Math.abs(d - targetDate);
+  for (let i = 0; i < steps.length; i++) {
+    const dt = Math.abs(steps[i].time - targetDate);
     if (dt < bestDt) { bestDt = dt; best = i; }
   }
   if (bestDt > 3600000) return null; // >1h off
-  const h = wx.hourly;
+  const s = steps[best];
   return {
-    time: times[best],
-    tempF: h.temperature_2m[best] * 9/5 + 32,
-    feelsF: h.apparent_temperature[best] * 9/5 + 32,
-    rain: h.precipitation_probability[best],
-    wind: h.wind_speed_10m[best],
-    gust: h.wind_gusts_10m[best],
-    code: h.weather_code[best],
-    cond: wmo(h.weather_code[best]),
-    vis: h.visibility[best],
-    cloud: h.cloud_cover[best]
+    time: s.time,
+    tempF: s.tempF,
+    feelsF: s.feelsF,
+    rain: s.rain,
+    wind: s.wind,
+    gust: s.gust,
+    code: s.code,
+    cond: s.cond,
+    vis: s.vis,
+    cloud: s.cloud
   };
 }
 
@@ -351,10 +459,18 @@ async function planTrip() {
   const endVal = document.getElementById('endInput').value.trim();
   const date = document.getElementById('dateInput').value;
   const time = document.getElementById('timeInput').value;
-  const speed = parseFloat(document.getElementById('speedInput').value) || 65;
+  const speed = parseFloat(document.getElementById('speedInput').value) || 75;
 
   if (!startVal || !endVal || !date || !time) {
     showError('Please fill in all fields.');
+    return;
+  }
+  let depart = new Date(`${date}T${time}`);
+  if (depart.getTime() < Date.now() - 60000) {
+    depart = new Date();
+  }
+  if (!OWM_USER_KEY && OWM_DEFAULT_KEY === '__DEFAULT_KEY__') {
+    showError('No default API key set. Click "Settings" in the header to enter your own.');
     return;
   }
 
@@ -391,21 +507,21 @@ async function planTrip() {
       forecasts.push(fc);
     }
 
-    // Step 5: Build timeline
+    // Step 5: Build timeline (OWM gives 3-hour steps, so we interpolate for smoother charts)
     const depart = new Date(`${date}T${time}`);
-    const segmentH = route.durationMin / 60 / (waypoints.length - 1);
+    const totalHours = route.durationMin / 60;
     const timeline = [];
-    for (let h = 0; h * segmentH <= route.durationMin / 60 + 0.5; h++) {
-      const arrival = new Date(depart.getTime() + h * segmentH * 3600000);
-      const frac = Math.min((h * segmentH) / (route.durationMin / 60), 1);
+    for (let m = 60; m <= totalHours * 60 + 30; m += 60) {
+      const arrival = new Date(depart.getTime() + m * 60000);
+      const frac = Math.min(m / 60 / totalHours, 1);
       const wpIdx = Math.min(Math.floor(frac * (waypoints.length - 1)), waypoints.length - 1);
-      const wx = pickHourly(forecasts[wpIdx], arrival);
-      timeline.push({ hour: h, arrival, frac, wx, wpIdx });
+      const wx = pickHourly(forecasts[wpIdx].steps, arrival);
+      timeline.push({ hour: m / 60, arrival, frac, wx, wpIdx });
     }
 
     // Step 6: Render
     renderMap(start, end, route, waypoints);
-    renderResults(start, end, route, timeline, depart, speed);
+    renderResults(start, end, route, timeline, depart, speed, forecasts);
     renderChart(timeline);
 
   } catch (err) {
@@ -419,6 +535,69 @@ async function planTrip() {
       if (map) setTimeout(() => map.invalidateSize(), 100);
     }
   }
+}
+
+// ── Weather Map Overlay ────────────────────────────────────────────
+const OVERLAY_LAYERS = {
+  clouds: { name: 'Clouds', layer: 'clouds_new', opacity: 0.6 },
+  precipitation: { name: 'Precipitation', layer: 'precipitation_new', opacity: 0.7 },
+  temp: { name: 'Temperature', layer: 'temp_new', opacity: 0.5 },
+  wind: { name: 'Wind', layer: 'wind_new', opacity: 0.5 },
+  pressure: { name: 'Pressure', layer: 'pressure_new', opacity: 0.5 },
+  visibility: { name: 'Visibility', layer: 'visibility_new', opacity: 0.6 }
+};
+
+function setWeatherOverlay(type) {
+  // Remove existing overlay
+  if (weatherOverlayLayer) {
+    map.removeLayer(weatherOverlayLayer);
+    weatherOverlayLayer = null;
+  }
+  // Clear existing refresh timer
+  if (overlayRefreshTimer) {
+    clearInterval(overlayRefreshTimer);
+    overlayRefreshTimer = null;
+  }
+  // If "none" selected, just return
+  if (type === 'none' || !OVERLAY_LAYERS[type]) {
+    WEATHER_OVERLAY = type;
+    localStorage.setItem('weatherOverlay', type);
+    return;
+  }
+  // Use saved per-layer opacity or fall back to default
+  const savedOpacities = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
+  const opacity = savedOpacities[type] ?? OVERLAY_LAYERS[type].opacity;
+  // Add overlay tile layer
+  const info = OVERLAY_LAYERS[type];
+  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
+  weatherOverlayLayer = L.tileLayer(url, {
+    opacity: opacity,
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
+  }).addTo(map);
+  // Bring overlay to front (above base tiles, below route)
+  if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
+  WEATHER_OVERLAY = type;
+  localStorage.setItem('weatherOverlay', type);
+  // Set up 10-minute refresh
+  overlayRefreshTimer = setInterval(refreshWeatherOverlay, 600000);
+}
+
+function refreshWeatherOverlay() {
+  if (WEATHER_OVERLAY === 'none' || !OVERLAY_LAYERS[WEATHER_OVERLAY]) return;
+  if (weatherOverlayLayer) {
+    map.removeLayer(weatherOverlayLayer);
+  }
+  const info = OVERLAY_LAYERS[WEATHER_OVERLAY];
+  const savedOpacities = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
+  const opacity = savedOpacities[WEATHER_OVERLAY] ?? info.opacity;
+  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
+  weatherOverlayLayer = L.tileLayer(url, {
+    opacity: opacity,
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
+  }).addTo(map);
+  if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
 }
 
 // ── Map Rendering ──────────────────────────────────────────────────
@@ -441,10 +620,16 @@ function renderMap(start, end, route, waypoints) {
   }
 
   map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
+
+  // Re-add overlay if active (it persists through renderMap, but just in case)
+  if (weatherOverlayLayer && !map.hasLayer(weatherOverlayLayer) && WEATHER_OVERLAY !== 'none') {
+    weatherOverlayLayer.addTo(map);
+    if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
+  }
 }
 
 // ── Results Rendering ──────────────────────────────────────────────
-function renderResults(start, end, route, timeline, depart, speed) {
+function renderResults(start, end, route, timeline, depart, speed, forecasts) {
   const dist = route.distanceMi;
   const dur = route.durationMin;
   const eta = new Date(depart.getTime() + dur * 60000);
@@ -454,25 +639,34 @@ function renderResults(start, end, route, timeline, depart, speed) {
       <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
       <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+      <div class="stat-card"><div class="value">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     </div>
 
-    <h2 style="margin-top:20px">Weather Timeline</h2>
     <div class="timeline">`;
 
+  // Build all entries into an array, then sort by trip progress (frac)
+  const allEntries = [];
+
+  // Build timeline weather entries
   for (const t of timeline) {
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const locStr = t.frac < 0.15 ? start.name.split(',')[0] : t.frac > 0.85 ? end.name.split(',')[0] : `${Math.round(t.frac*100)}%`;
-    html += `
+    const fracStr = `${Math.round(t.frac*100)}%`;
+    allEntries.push({
+      frac: t.frac,
+      html: `
       <div class="timeline-item">
         <span class="timeline-time">${timeStr}</span>
-        <span class="timeline-loc">${locStr}</span>
+        <span class="timeline-loc">${fracStr}</span>
         <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
         <span class="timeline-cond">${t.wx.cond}</span>
-        <span class="timeline-wind">${t.wx.wind.toFixed(0)} km/h ${t.wx.rain}%</span>
-      </div>`;
+        <span class="timeline-wind">${t.wx.wind.toFixed(0)} ${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'}<br>${t.wx.rain}%</span>
+      </div>`
+    });
   }
+
+  allEntries.sort((a, b) => a.frac - b.frac);
+  html += allEntries.map(e => e.html).join('');
 
   html += `</div>`;
   document.getElementById('resultsContent').innerHTML = html;
@@ -525,7 +719,7 @@ function renderChart(timeline) {
           yAxisID: 'y1'
         },
         {
-          label: 'Wind (km/h)',
+          label: `Wind (${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'})`,
           data: wind,
           borderColor: '#e65100',
           borderDash: [4, 4],
@@ -559,7 +753,150 @@ function showError(msg) {
   document.getElementById('resultsContent').innerHTML = `<div class="error">${msg}</div>`;
 }
 
+// ── Weather Overlay UI ─────────────────────────────────────────────
+const overlaySelect = document.getElementById('overlaySelect');
+const overlayOpacity = document.getElementById('overlayOpacity');
+const overlayOpacityVal = document.getElementById('overlayOpacityVal');
+
+function getSavedOpacity(layer) {
+  const prefs = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
+  return prefs[layer] ?? OVERLAY_LAYERS[layer]?.opacity ?? 0.6;
+}
+
+function updateOverlaySelect() {
+  overlaySelect.value = WEATHER_OVERLAY;
+  const opacity = getSavedOpacity(WEATHER_OVERLAY);
+  overlayOpacity.value = Math.round(opacity * 100);
+  overlayOpacityVal.textContent = overlayOpacity.value + '%';
+}
+
+overlaySelect.addEventListener('change', () => {
+  const newLayer = overlaySelect.value;
+  setWeatherOverlay(newLayer);
+  const opacity = getSavedOpacity(newLayer);
+  overlayOpacity.value = Math.round(opacity * 100);
+  overlayOpacityVal.textContent = overlayOpacity.value + '%';
+});
+
+overlayOpacity.addEventListener('input', () => {
+  const val = parseInt(overlayOpacity.value);
+  overlayOpacityVal.textContent = val + '%';
+  const layer = WEATHER_OVERLAY;
+  if (layer !== 'none') {
+    if (weatherOverlayLayer) {
+      weatherOverlayLayer.setOpacity(val / 100);
+    }
+    const prefs = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
+    prefs[layer] = val / 100;
+    localStorage.setItem('overlayOpacities', JSON.stringify(prefs));
+  }
+});
+
+// ── Settings Modal ─────────────────────────────────────────────────
+const settingsModal = document.getElementById('settingsModal');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsClose = document.getElementById('settingsClose');
+const settingsKeyInput = document.getElementById('settingsKeyInput');
+const settingsKeySave = document.getElementById('settingsKeySave');
+const settingsKeyClear = document.getElementById('settingsKeyClear');
+const darkToggle = document.getElementById('darkToggle');
+const darkModeStatus = document.getElementById('darkModeStatus');
+
+function openSettings() {
+  settingsKeyInput.value = OWM_USER_KEY || '';
+  updateWindUnitButtons();
+  updateDarkModeUI();
+  updateOverlaySelect();
+  settingsModal.style.display = 'flex';
+}
+
+function closeSettings() {
+  settingsModal.style.display = 'none';
+}
+
+function saveSettingsKey() {
+  const val = settingsKeyInput.value.trim();
+  if (val) {
+    OWM_USER_KEY = val;
+    OWM_KEY = val;
+    localStorage.setItem('owmUserKey', val);
+    // Refresh overlay with new API key
+    if (WEATHER_OVERLAY !== 'none') {
+      setWeatherOverlay(WEATHER_OVERLAY);
+    }
+  }
+  closeSettings();
+}
+
+function clearSettingsKey() {
+  OWM_USER_KEY = null;
+  OWM_KEY = OWM_DEFAULT_KEY;
+  localStorage.removeItem('owmUserKey');
+  // Refresh overlay with new API key
+  if (WEATHER_OVERLAY !== 'none') {
+    setWeatherOverlay(WEATHER_OVERLAY);
+  }
+  closeSettings();
+}
+
+function setWindUnit(unit) {
+  WIND_UNIT = unit;
+  localStorage.setItem('windUnit', unit);
+  updateWindUnitButtons();
+}
+
+function updateWindUnitButtons() {
+  document.querySelectorAll('.wind-unit-btn').forEach(btn => {
+    const isActive = btn.dataset.unit === WIND_UNIT;
+    btn.style.background = isActive ? 'var(--accent)' : 'var(--bg)';
+    btn.style.color = isActive ? '#fff' : 'var(--text)';
+    btn.style.border = isActive ? 'none' : '1px solid var(--border)';
+  });
+}
+
+function updateDarkModeUI() {
+  const isDark = document.body.classList.contains('dark');
+  darkModeStatus.textContent = isDark ? 'Dark' : 'Light';
+}
+
+function setDarkMode(on) {
+  document.body.classList.toggle('dark', on);
+  darkToggle.innerHTML = on ? '☀ Light' : '🌙 Dark Mode';
+  darkModeStatus.textContent = on ? 'Dark' : 'Light';
+  if (on) {
+    tileLayer.setUrl(DARK_TILES);
+  } else {
+    tileLayer.setUrl(LIGHT_TILES);
+  }
+  if (map) setTimeout(() => map.invalidateSize(), 50);
+  localStorage.setItem('darkMode', on ? '1' : '0');
+  document.cookie = `darkMode=${on ? '1' : '0'};path=/;max-age=31536000`;
+}
+
+settingsBtn.addEventListener('click', openSettings);
+settingsClose.addEventListener('click', closeSettings);
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) closeSettings();
+});
+settingsKeySave.addEventListener('click', saveSettingsKey);
+settingsKeyClear.addEventListener('click', clearSettingsKey);
+settingsKeyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') saveSettingsKey();
+  if (e.key === 'Escape') closeSettings();
+});
+
+document.querySelectorAll('.wind-unit-btn').forEach(btn => {
+  btn.addEventListener('click', () => setWindUnit(btn.dataset.unit));
+});
+
+darkToggle.addEventListener('click', () => {
+  const isDark = document.body.classList.contains('dark');
+  setDarkMode(!isDark);
+});
+
 // ── Init ───────────────────────────────────────────────────────────
+// OWM_USER_KEY and OWM_KEY are already initialized from localStorage at declaration
+
 const today = new Date();
 const yyyy = today.getFullYear();
 const mm = String(today.getMonth()+1).padStart(2,'0');
@@ -569,42 +906,73 @@ const hh = String(today.getHours()).padStart(2,'0');
 const min = String(today.getMinutes()).padStart(2,'0');
 document.getElementById('timeInput').value = `${hh}:${min}`;
 
-// Auto-detect user location for start field
+// Initialize weather overlay (default: clouds)
+setWeatherOverlay(WEATHER_OVERLAY);
+
+// ── Geolocation ───────────────────────────────────────────────────
 async function reverseGeocode(lat, lon) {
-  const url = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&format=json`;
+  const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OWM_KEY}`;
   const data = await fetch(url).then(r => r.json());
-  if (data.results && data.results.length > 0) {
-    const r = data.results[0];
-    return `${r.name}${r.admin1 ? ', ' + r.admin1 : ''}${r.country ? ', ' + r.country : ''}`.replace(/, ,/g, ',');
+  if (data && data.length > 0) {
+    const r = data[0];
+    return `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`.replace(/, ,/g, ',');
   }
   return null;
 }
 
-if ('geolocation' in navigator && 'ontouchstart' in window) {
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude, longitude } = pos.coords;
-      let label = null;
-      try {
-        label = await reverseGeocode(latitude, longitude);
-      } catch (e) { /* fallback to coords */ }
-      const displayLabel = label || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
-      const input = document.getElementById('startInput');
-      input.value = displayLabel;
-      input._setCachedResult({
-        name: displayLabel,
-        lat: latitude,
-        lon: longitude,
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone
-      });
-      input.style.borderColor = 'var(--accent2)';
-      setTimeout(() => { input.style.borderColor = ''; }, 1500);
-      fitMapToLocation(latitude, longitude, 9);
-    },
-    () => { /* permission denied — user types manually */ },
-    { timeout: 8000, maximumAge: 600000 }
-  );
+function applyLocation(latitude, longitude) {
+  let label = null;
+  reverseGeocode(latitude, longitude).then(label => {
+    const displayLabel = label || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    const input = document.getElementById('startInput');
+    input.value = displayLabel;
+    input._setCachedResult({
+      name: displayLabel,
+      lat: latitude,
+      lon: longitude,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+    input.style.borderColor = 'var(--accent2)';
+    setTimeout(() => { input.style.borderColor = ''; }, 1500);
+    fitMapToLocation(latitude, longitude, 9);
+  }).catch(() => {
+    const displayLabel = `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    const input = document.getElementById('startInput');
+    input.value = displayLabel;
+    input._setCachedResult({
+      name: displayLabel,
+      lat: latitude,
+      lon: longitude,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+    input.style.borderColor = 'var(--accent2)';
+    setTimeout(() => { input.style.borderColor = ''; }, 1500);
+    fitMapToLocation(latitude, longitude, 9);
+  });
 }
+
+// Try Android bridge first (APK/WebView), then fallback to browser geolocation
+function requestLocation() {
+  if (window.AndroidBridge && window.AndroidBridge.getLocation) {
+    // Android WebView injects this interface
+    window.AndroidBridge.getLocation();
+    return;
+  }
+  if ('geolocation' in navigator && 'ontouchstart' in window) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => applyLocation(pos.coords.latitude, pos.coords.longitude),
+      () => { /* permission denied — user types manually */ },
+      { timeout: 8000, maximumAge: 600000, enableHighAccuracy: true }
+    );
+  }
+}
+
+// Called from Android when location is ready
+function onAndroidLocation(lat, lon) {
+  applyLocation(lat, lon);
+}
+
+requestLocation();
 
 // Mobile form collapse toggle
 const formSection = document.querySelector('.form-section');
@@ -631,28 +999,18 @@ document.querySelectorAll('input, select, textarea').forEach(el => {
   });
 });
 
-// Dark mode toggle
-const darkToggle = document.getElementById('darkToggle');
-function setDarkMode(on) {
-  document.body.classList.toggle('dark', on);
-  darkToggle.innerHTML = on ? '☀ Light' : '&#9790; Dark';
-  if (on) {
+// Restore dark mode from localStorage (or cookie fallback)
+const darkLS = localStorage.getItem('darkMode');
+if (darkLS === '1') {
+  document.body.classList.add('dark');
+  tileLayer.setUrl(DARK_TILES);
+} else {
+  const darkCookie = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('darkMode='));
+  if (darkCookie && darkCookie.split('=')[1] === '1') {
+    document.body.classList.add('dark');
     tileLayer.setUrl(DARK_TILES);
-  } else {
-    tileLayer.setUrl(LIGHT_TILES);
   }
-  if (map) setTimeout(() => map.invalidateSize(), 50);
-  document.cookie = `darkMode=${on ? '1' : '0'};path=/;max-age=31536000`;
 }
-// Restore preference
-const darkCookie = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('darkMode='));
-if (darkCookie && darkCookie.split('=')[1] === '1') {
-  setDarkMode(true);
-}
-darkToggle.addEventListener('click', () => {
-  const isDark = document.body.classList.contains('dark');
-  setDarkMode(!isDark);
-});
 </script>
 </body>
 </html>
