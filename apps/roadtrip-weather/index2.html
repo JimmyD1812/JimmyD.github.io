@@ -166,6 +166,10 @@
           <input type="time" id="timeInput" value="08:00">
         </div>
       </div>
+      <div class="field">
+        <label>Avg Speed (from road data)</label>
+        <div id="speedDisplay" style="padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:16px;color:var(--text);font-family:'SF Mono','Fira Code',monospace">—</div>
+      </div>
       <button class="btn btn-primary" id="goBtn" onclick="planTrip()">Plan Trip</button>
     </div>
 
@@ -514,21 +518,20 @@ async function getRoadMetadata(route) {
     const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out geom body;`;
 
     try {
+      console.log('Overpass query:', query);
       const resp = await fetch(OVERPASS_URL, {
         method: 'POST',
         body: query
       });
-      if (!resp.ok) {
-        alert(`Overpass API returned ${resp.status}: ${resp.statusText}\n\nThe road speed/surface data could not be fetched. The app will fall back to default speed.`);
-        continue;
-      }
+      console.log('Overpass response status:', resp.status);
       const data = await resp.json();
+      console.log('Elements returned:', data.elements ? data.elements.length : 0);
       if (!data.elements || data.elements.length === 0) {
         alert(`Overpass returned no data for a route segment.\n\nBBox: ${bbox}\n\nThe app will fall back to default speed.`);
         continue;
       }
 
-      // With out geom body, each way has .geometry with coordinates
+      // With out geom body, each way has .geometry with [lat, lon] pairs
       let waysWithTags = 0;
       for (const e of data.elements) {
         if (e.type !== 'way' || !e.geometry) continue;
@@ -552,13 +555,18 @@ async function getRoadMetadata(route) {
           const cnt = geom.length;
           if (cnt === 0) continue;
           allWays.push({ center: [slat / cnt, slon / cnt], highway: tags.highway, maxspeed: tags.maxspeed, surface: tags.surface || null });
+        } else {
+          console.log('Unknown geometry format:', JSON.stringify(geom[0]));
         }
       }
+      console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
     }
     catch (err) {
       alert(`Overpass API request failed:\n${err.message}\n\nThe road speed/surface data could not be fetched. The app will fall back to default speed.`);
     }
   }
+
+  console.log('Total allWays collected:', allWays.length);
 
   if (allWays.length === 0) {
     alert(`Could not find any road speed/surface data along your route.\n\nThis may be because:\n• The route is in an area without OpenStreetMap coverage\n• The Overpass API is rate-limited or unavailable\n• The route is too long\n\nThe app will fall back to the default speed of 75 mph.`);
@@ -934,8 +942,8 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
     <div class="stats-grid">
       <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
-      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value" style="font-size:1.1rem">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div>${speedSub}${surfaceSub}</div>
+      <div class="stat-card"><div class="value">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     </div>
 
     <div id="departureSliderContainer" style="display:none;margin-bottom:16px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
@@ -1005,8 +1013,8 @@ function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta
     statsGrid.innerHTML = `
       <div class="stat-card"><div class="value">${route.distanceMi.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(route.durationMin/60)}h ${Math.round(route.durationMin%60)}m</div><div class="label">Drive Time</div></div>
-      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value" style="font-size:1.1rem">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div>${speedSub}${surfaceSub}</div>
+      <div class="stat-card"><div class="value">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     `;
   }
 
