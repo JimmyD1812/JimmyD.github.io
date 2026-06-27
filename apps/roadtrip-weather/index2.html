@@ -14,9 +14,9 @@
     --bg: #faf8f5;
     --surface: #ffffff;
     --border: #e2ddd6;
-    --text: #2c2824;
-    --text-dim: #7a736b;
-    --accent: #b45309;
+	--text: #1e293b;     
+	--text-dim: #64748b;
+    --accent: #1376a6;
     --accent2: #2e7d32;
     --warn: #e65100;
     --danger: #c62828;
@@ -25,9 +25,9 @@
     --bg: #1a1a1a;
     --surface: #242424;
     --border: #3a3a3a;
-    --text: #e8e4df;
-    --text-dim: #9a948c;
-    --accent: #d97706;
+	--text: #f1f5f9;     
+	--text-dim: #94a3b8;
+    --accent: #38bdf8;
     --accent2: #4ade80;
     --warn: #f97316;
     --danger: #ef4444;
@@ -66,7 +66,7 @@
     font-weight: 600; cursor: pointer; transition: background 0.15s;
   }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #92400e; }
+  .btn-primary:hover { background: #0f5d84; }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .results-section { flex: 1; padding: 20px; overflow-y: auto; }
@@ -521,7 +521,7 @@ async function getRoadMetadata(route) {
   const allWays = [];
   for (const [sMinLat, sMinLon, sMaxLat, sMaxLon] of strips) {
     const bbox = `${sMinLat},${sMinLon},${sMaxLat},${sMaxLon}`;
-    const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out geom body;`;
+    const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out tags center;`;
 
     try {
       console.log('Overpass query:', query);
@@ -533,7 +533,6 @@ async function getRoadMetadata(route) {
       const data = await resp.json();
       console.log('Elements returned:', data.elements ? data.elements.length : 0);
       if (!data.elements || data.elements.length === 0) {
-        alert(`Overpass returned no data for a route segment.\n\nBBox: ${bbox}\n\nThe app will fall back to default speed.`);
         continue;
       }
 
@@ -568,14 +567,13 @@ async function getRoadMetadata(route) {
       console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
     }
     catch (err) {
-      alert(`Overpass API request failed:\n${err.message}\n\nThe road speed/surface data could not be fetched. The app will fall back to default speed.`);
+      console.warn('Overpass API request failed:', err.message);
     }
   }
 
   console.log('Total allWays collected:', allWays.length);
 
   if (allWays.length === 0) {
-    alert(`Could not find any road speed/surface data along your route.\n\nThis may be because:\n• The route is in an area without OpenStreetMap coverage\n• The Overpass API is rate-limited or unavailable\n• The route is too long\n\nThe app will fall back to the default speed of 75 mph.`);
     return { avgSpeed: null, surfaces: [], segmentCount: 0 };
   }
 
@@ -684,7 +682,7 @@ function initDepartureSlider() {
     _currentTimeline = timeline;
     const start = { name: document.getElementById('startInput').value };
     const end = { name: document.getElementById('endInput').value };
-    const speed = roadMeta?.avgSpeed || null;
+    const speed = roadMeta?.avgSpeed || 75;
     renderTimelineList(start, end, route, timeline, shiftedDepart, speed, roadMeta);
     renderChart(timeline);
   };
@@ -800,8 +798,8 @@ async function planTrip() {
     // Store for departure slider (no re-fetch needed)
     _tripData = { forecasts, waypoints, route, totalHours: route.durationMin / 60, roadMeta };
 
-    // Speed from OSM data — use actual avg, no fallback to 75
-    const speed = roadMeta?.avgSpeed || null;
+    // Speed from OSM data — fall back to 75 mph if unavailable
+    const speed = roadMeta?.avgSpeed || 75;
 
     // Step 5: Build timeline — one entry per hour, including start (m=0)
     const depart = new Date(`${date}T${time}`);
@@ -897,7 +895,7 @@ function renderMap(start, end, route, waypoints, timeline) {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 
-  routeLayer = L.polyline(route.coords, { color: '#b45309', weight: 4, opacity: 0.8 }).addTo(map);
+  routeLayer = L.polyline(route.coords, { color: 'var(--accent)', weight: 4, opacity: 0.8 }).addTo(map);
 
   // Timeline-driven markers: one dot per timeline entry, at route coords
   const totalEntries = timeline.length;
@@ -947,7 +945,7 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
     <div class="stats-grid">
       <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
-      <div class="stat-card"><div class="value">${speed ? speed + ' mph' : '—'}</div><div class="label">Avg Speed</div></div>
+      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
       <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     </div>
 
@@ -1009,7 +1007,7 @@ function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta
     statsGrid.innerHTML = `
       <div class="stat-card"><div class="value">${route.distanceMi.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(route.durationMin/60)}h ${Math.round(route.durationMin%60)}m</div><div class="label">Drive Time</div></div>
-      <div class="stat-card"><div class="value">${speed ? speed + ' mph' : '—'}</div><div class="label">Avg Speed</div></div>
+      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
       <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     `;
   }
@@ -1091,7 +1089,7 @@ function renderChart(timeline) {
         {
           label: `Wind (${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'})`,
           data: wind,
-          borderColor: '#e65100',
+          borderColor: '#1376a6',
           borderDash: [4, 4],
           tension: 0.3,
           pointRadius: 0,
