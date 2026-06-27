@@ -573,6 +573,12 @@ async function getRoadMetadata(route) {
           surface: tags.surface || null 
         });
       }
+      console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
+    }
+    catch (err) {
+      console.warn('Overpass API request failed:', err.message);
+    }
+  }
 
   console.log('Total allWays collected:', allWays.length);
 
