@@ -518,11 +518,13 @@ async function getRoadMetadata(route) {
     const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out body;`;
 
     try {
+      console.log('Overpass query:', query);
       const resp = await fetch(OVERPASS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `data=${encodeURIComponent(query)}`
       });
+      console.log('Overpass response status:', resp.status);
       if (!resp.ok) {
         alert(`Overpass API returned ${resp.status}: ${resp.statusText}\n\nThe road speed/surface data could not be fetched. The app will fall back to default speed.`);
         continue;
