@@ -146,7 +146,7 @@
     <div class="form-section">
       <h2 id="formToggle">Trip Details</h2>
       <div class="field">
-        <label>Start Location <a href="#" id="findMe" style="font-size:13px;color:var(--accent);white-space:nowrap;text-decoration:none">📍 Find Me</a></label>
+        <label style="display:flex;justify-content:space-between;align-items:center;width:100%">Start Location <a href="#" id="findMe" style="font-size:13px;color:var(--accent);white-space:nowrap;text-decoration:none">📍 Find Me</a></label>
         <input type="text" id="startInput" placeholder="Denver, CO">
       </div>
       <div class="field">
@@ -317,17 +317,6 @@ let geoTimer = null;
 const GEO_DEBOUNCE = 300;
 
 async function geocodeSearch(query) {
-  // Auto-detect US zip code (5 digits or ZIP+4)
-  const zipMatch = query.match(/^(\d{5}(-\d{4})?)$/);
-  if (zipMatch) {
-    // Use the zip-specific endpoint
-    const url = `https://api.openweathermap.org/geo/1.0/zip?zip=${zipMatch[1]},US&appid=${OWM_KEY}`;
-    const data = await fetch(url).then(r => r.json());
-    if (data && data.lat) {
-      return [{ name: data.name || 'Unknown', lat: data.lat, lon: data.lon, country: 'US', state: '' }];
-    }
-    return [];
-  }
   const url = `${GEO_URL}?q=${encodeURIComponent(query)}&limit=5&appid=${OWM_KEY}`;
   const data = await fetch(url).then(r => r.json());
   // Filter to North America only: US, MX, CA
@@ -383,8 +372,6 @@ function setupGeoInput(inputEl) {
     const val = inputEl.value.trim();
     if (val.length < 2) { hideGeoDropdown(inputEl); return; }
     geoTimer = setTimeout(async () => {
-      // Suppress dropdown for zip codes — they geocode directly on Plan Trip
-      if (val.match(/^\d{5}(-\d{4})?$/)) return;
       const results = await geocodeSearch(val);
       showGeoDropdown(inputEl, results, (r) => { cachedResult = r; });
     }, GEO_DEBOUNCE);
@@ -452,20 +439,6 @@ document.getElementById('findMe').addEventListener('click', async function(e) {
 async function geocode(inputEl) {
   const cached = inputEl._getCachedResult();
   if (cached) return cached;
-  // If user typed a zip code (5 digits or ZIP+4), geocode directly without requiring dropdown selection
-  const val = inputEl.value.trim();
-  const zipMatch = val.match(/^\d{5}(-\d{4})?$/);
-  if (zipMatch) {
-    const results = await geocodeSearch(val);
-    if (results.length > 0) {
-      const r = results[0];
-      const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
-      inputEl.value = label;
-      const result = { name: label, lat: r.lat, lon: r.lon, tz: 'auto' };
-      inputEl._setCachedResult(result);
-      return result;
-    }
-  }
   throw new Error(`Please select a location from the dropdown for "${inputEl.placeholder}".`);
 }
 
@@ -514,7 +487,7 @@ function pickHourly(steps, targetDate) {
     const dt = Math.abs(steps[i].time - targetDate);
     if (dt < bestDt) { bestDt = dt; best = i; }
   }
-  if (bestDt > 7200000) return null; // >2h off
+  if (bestDt > 3600000) return null; // >1h off
   const s = steps[best];
   return {
     time: s.time,
@@ -586,32 +559,20 @@ async function planTrip() {
       forecasts.push(fc);
     }
 
-    // Step 5: Build timeline — one entry per hour, including start (m=0)
+    // Step 5: Build timeline (OWM gives 3-hour steps, so we interpolate for smoother charts)
     const depart = new Date(`${date}T${time}`);
     const totalHours = route.durationMin / 60;
     const timeline = [];
-    // Include m=0 (start), then every hour, plus ensure end is included
-    const times = [0];
-    for (let m = 60; m < totalHours * 60; m += 60) times.push(m);
-    if (times[times.length - 1] < totalHours * 60) times.push(totalHours * 60);
-    for (const m of times) {
+    for (let m = 60; m <= totalHours * 60 + 30; m += 60) {
       const arrival = new Date(depart.getTime() + m * 60000);
-      const frac = totalHours > 0 ? Math.min(m / 60 / totalHours, 1) : 0;
-      // Find route coordinate at this fraction
-      const coordIdx = Math.min(Math.round(frac * (route.coords.length - 1)), route.coords.length - 1);
-      const latlng = route.coords[coordIdx];
-      // Find nearest waypoint index for weather lookup
-      let wpIdx = 0, minDist = Infinity;
-      for (let w = 0; w < waypoints.length; w++) {
-        const d = Math.abs(waypoints[w].lat - latlng[0]) + Math.abs(waypoints[w].lon - latlng[1]);
-        if (d < minDist) { minDist = d; wpIdx = w; }
-      }
+      const frac = Math.min(m / 60 / totalHours, 1);
+      const wpIdx = Math.min(Math.floor(frac * (waypoints.length - 1)), waypoints.length - 1);
       const wx = pickHourly(forecasts[wpIdx].steps, arrival);
-      timeline.push({ hour: m / 60, arrival, frac, wx, wpIdx, lat: latlng[0], lon: latlng[1] });
+      timeline.push({ hour: m / 60, arrival, frac, wx, wpIdx });
     }
 
     // Step 6: Render
-    renderMap(start, end, route, waypoints, timeline);
+    renderMap(start, end, route, waypoints);
     renderResults(start, end, route, timeline, depart, speed, forecasts);
     renderChart(timeline);
 
@@ -692,31 +653,23 @@ function refreshWeatherOverlay() {
 }
 
 // ── Map Rendering ──────────────────────────────────────────────────
-function renderMap(start, end, route, waypoints, timeline) {
+function renderMap(start, end, route, waypoints) {
   if (routeLayer) map.removeLayer(routeLayer);
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 
   routeLayer = L.polyline(route.coords, { color: '#b45309', weight: 4, opacity: 0.8 }).addTo(map);
 
-  // Timeline-driven markers: one dot per timeline entry, at route coords
-  const totalEntries = timeline.length;
-  timeline.forEach((t, i) => {
-    const isFirst = i === 0;
-    const isLast = i === totalEntries - 1;
-    const color = isFirst ? '#2e7d32' : isLast ? '#c62828' : '#b45309';
-    const radius = isFirst || isLast ? 8 : 5;
-    const marker = L.circleMarker([t.lat, t.lon], {
-      radius,
-      fillColor: color,
-      color: '#fff',
-      weight: isFirst || isLast ? 2 : 1.5,
-      fillOpacity: 1
-    }).addTo(map);
-    if (isFirst) marker.bindPopup(start.name);
-    if (isLast) marker.bindPopup(end.name);
-    markers.push(marker);
-  });
+  const startPt = route.coords[0];
+  const endPt = route.coords[route.coords.length - 1];
+  markers.push(L.circleMarker(startPt, { radius: 8, fillColor: '#2e7d32', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup(start.name));
+  markers.push(L.circleMarker(endPt, { radius: 8, fillColor: '#c62828', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup(end.name));
+
+  // Add waypoint markers
+  for (let i = 1; i < waypoints.length - 1; i++) {
+    const wp = waypoints[i];
+    markers.push(L.circleMarker([wp.lat, wp.lon], { radius: 5, fillColor: '#b45309', color: '#fff', weight: 1.5, fillOpacity: 0.8 }).addTo(map));
+  }
 
   map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
 
