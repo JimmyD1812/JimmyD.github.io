@@ -515,7 +515,7 @@ async function getRoadMetadata(route) {
   const allWays = [];
   for (const [sMinLat, sMinLon, sMaxLat, sMaxLon] of strips) {
     const bbox = `${sMinLat},${sMinLon},${sMaxLat},${sMaxLon}`;
-    const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out body;`;
+    const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out geom body;`;
 
     try {
       console.log('Overpass query:', query);
@@ -531,26 +531,19 @@ async function getRoadMetadata(route) {
         continue;
       }
 
-      // Build node lookup
-      const nodes = {};
-      for (const e of data.elements) {
-        if (e.type === 'node') nodes[e.id] = [e.lat, e.lon];
-      }
+      // With out geom body, each way has .geometry with [lat, lon] pairs
       let waysWithTags = 0;
-      let nodesFound = 0;
-      let nodesMissing = 0;
       for (const e of data.elements) {
-        if (e.type !== 'way' || !e.nodes) continue;
+        if (e.type !== 'way' || !e.geometry) continue;
         const tags = e.tags || {};
         if (!tags.maxspeed && !tags.surface) continue;
         waysWithTags++;
-        let slat = 0, slon = 0, cnt = 0;
-        for (const nid of e.nodes) {
-          const n = nodes[nid];
-          if (n) { slat += n[0]; slon += n[1]; cnt++; }
-          else { nodesMissing++; }
+        // Compute center from geometry
+        let slat = 0, slon = 0;
+        for (const [lat, lon] of e.geometry) {
+          slat += lat; slon += lon;
         }
-        if (cnt > 0) { nodesFound++; }
+        const cnt = e.geometry.length;
         if (cnt === 0) continue;
         allWays.push({
           center: [slat / cnt, slon / cnt],
@@ -559,7 +552,6 @@ async function getRoadMetadata(route) {
           surface: tags.surface || null
         });
       }
-      console.log(`Nodes in lookup: ${Object.keys(nodes).length}, ways with tags: ${waysWithTags}, ways with coords: ${nodesFound}, missing node refs: ${nodesMissing}`);
       console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
     }
     catch (err) {
