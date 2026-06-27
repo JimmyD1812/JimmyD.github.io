@@ -286,6 +286,422 @@ const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 const FORECAST_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
 
+// ── Traffic Congestion Zones ────────────────────────────────────────
+const CONGESTION_ZONES = [
+  // ==========================================
+  // UNITED STATES
+  // ==========================================
+{
+    name: "New York Tri-State Area",
+    minLat: 40.50, maxLat: 41.00, minLon: -74.25, maxLon: -73.70,
+    delayMinutes: 50
+  },
+  {
+    name: "Los Angeles Basin",
+    minLat: 33.70, maxLat: 34.30, minLon: -118.60, maxLon: -118.10,
+    delayMinutes: 45
+  },
+  {
+    name: "Chicagoland",
+    minLat: 41.60, maxLat: 42.15, minLon: -88.15, maxLon: -87.50,
+    delayMinutes: 35
+  },
+  {
+    name: "Dallas-Fort Worth Metroplex",
+    minLat: 32.55, maxLat: 33.15, minLon: -97.45, maxLon: -96.55,
+    delayMinutes: 30
+  },
+  {
+    name: "Greater Houston",
+    minLat: 29.50, maxLat: 30.10, minLon: -95.75, maxLon: -95.10,
+    delayMinutes: 30
+  },
+  {
+    name: "Washington DC DMV Area",
+    minLat: 38.75, maxLat: 39.15, minLon: -77.25, maxLon: -76.85,
+    delayMinutes: 35
+  },
+  {
+    name: "Philadelphia Metro",
+    minLat: 39.80, maxLat: 40.15, minLon: -75.35, maxLon: -74.95,
+    delayMinutes: 25
+  },
+  {
+    name: "Miami South Florida Metro",
+    minLat: 25.50, maxLat: 26.35, minLon: -80.40, maxLon: -80.10,
+    delayMinutes: 35
+  },
+  {
+    name: "Atlanta Metro",
+    minLat: 33.55, maxLat: 34.10, minLon: -84.60, maxLon: -84.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Boston Greater Area",
+    minLat: 42.20, maxLat: 42.50, minLon: -71.25, maxLon: -70.95,
+    delayMinutes: 35
+  },
+  {
+    name: "Phoenix Valley of the Sun",
+    minLat: 33.25, maxLat: 33.75, minLon: -112.35, maxLon: -111.75,
+    delayMinutes: 25
+  },
+  {
+    name: "San Francisco Bay Area",
+    minLat: 37.30, maxLat: 38.00, minLon: -122.60, maxLon: -121.90,
+    delayMinutes: 40
+  },
+  {
+    name: "Riverside-San Bernardino (Inland Empire)",
+    minLat: 33.70, maxLat: 34.15, minLon: -117.65, maxLon: -117.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Detroit Metro",
+    minLat: 42.15, maxLat: 42.65, minLon: -83.35, maxLon: -82.90,
+    delayMinutes: 20
+  },
+  {
+    name: "Seattle Puget Sound",
+    minLat: 47.40, maxLat: 47.80, minLon: -122.45, maxLon: -122.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Minneapolis-St. Paul Twin Cities",
+    minLat: 44.75, maxLat: 45.15, minLon: -93.50, maxLon: -92.95,
+    delayMinutes: 20
+  },
+  {
+    name: "San Diego Metro",
+    minLat: 32.55, maxLat: 33.10, minLon: -117.30, maxLon: -116.90,
+    delayMinutes: 25
+  },
+  {
+    name: "Tampa Bay Area",
+    minLat: 27.60, maxLat: 28.20, minLon: -82.80, maxLon: -82.30,
+    delayMinutes: 25
+  },
+  {
+    name: "Denver Metro",
+    minLat: 39.50, maxLat: 39.90, minLon: -105.15, maxLon: -104.70,
+    delayMinutes: 25
+  },
+  {
+    name: "Baltimore Metro",
+    minLat: 39.15, maxLat: 39.40, minLon: -76.75, maxLon: -76.50,
+    delayMinutes: 25
+  },
+  {
+    name: "St. Louis Metro Area",
+    minLat: 38.45, maxLat: 38.85, minLon: -90.55, maxLon: -90.15,
+    delayMinutes: 20
+  },
+  {
+    name: "Orlando Metro",
+    minLat: 28.35, maxLat: 28.65, minLon: -81.55, maxLon: -81.20,
+    delayMinutes: 25
+  },
+  {
+    name: "Charlotte Metro",
+    minLat: 35.05, maxLat: 35.40, minLon: -81.00, maxLon: -80.65,
+    delayMinutes: 20
+  },
+  {
+    name: "San Antonio Metro",
+    minLat: 29.30, maxLat: 29.65, minLon: -98.70, maxLon: -98.30,
+    delayMinutes: 20
+  },
+  {
+    name: "Portland Metro",
+    minLat: 45.40, maxLat: 45.65, minLon: -122.85, maxLon: -122.45,
+    delayMinutes: 25
+  },
+  {
+    name: "Sacramento Metro",
+    minLat: 38.45, maxLat: 38.75, minLon: -121.60, maxLon: -121.30,
+    delayMinutes: 20
+  },
+  {
+    name: "Pittsburgh Metro",
+    minLat: 40.30, maxLat: 40.55, minLon: -80.15, maxLon: -79.85,
+    delayMinutes: 20
+  },
+  {
+    name: "Austin Metro",
+    minLat: 30.15, maxLat: 30.50, minLon: -97.90, maxLon: -97.60,
+    delayMinutes: 25
+  },
+  {
+    name: "Las Vegas Valley",
+    minLat: 35.95, maxLat: 36.30, minLon: -115.35, maxLon: -115.00,
+    delayMinutes: 20
+  },
+  {
+    name: "Cincinnati Metro Area",
+    minLat: 39.00, maxLat: 39.25, minLon: -84.65, maxLon: -84.35,
+    delayMinutes: 15
+  },
+  {
+    name: "Kansas City Metro",
+    minLat: 38.85, maxLat: 39.25, minLon: -94.75, maxLon: -94.40,
+    delayMinutes: 15
+  },
+  {
+    name: "Columbus Metro",
+    minLat: 39.85, maxLat: 40.15, minLon: -83.15, maxLon: -82.80,
+    delayMinutes: 15
+  },
+  {
+    name: "Indianapolis Metro",
+    minLat: 39.65, maxLat: 39.95, minLon: -86.30, maxLon: -85.95,
+    delayMinutes: 15
+  },
+  {
+    name: "Cleveland Metro",
+    minLat: 41.35, maxLat: 41.60, minLon: -81.85, maxLon: -81.50,
+    delayMinutes: 15
+  },
+  {
+    name: "Nashville Metro Area",
+    minLat: 35.95, maxLat: 36.30, minLon: -86.90, maxLon: -86.60,
+    delayMinutes: 20
+  },
+  {
+    name: "Virginia Beach-Norfolk Hampton Roads",
+    minLat: 36.65, maxLat: 37.00, minLon: -76.50, maxLon: -75.95,
+    delayMinutes: 15
+  },
+  {
+    name: "Providence Metro (Rhode Island)",
+    minLat: 41.70, maxLat: 41.95, minLon: -71.55, maxLon: -71.30,
+    delayMinutes: 15
+  },
+  {
+    name: "Milwaukee Metro",
+    minLat: 42.90, maxLat: 43.15, minLon: -88.10, maxLon: -87.85,
+    delayMinutes: 15
+  },
+  {
+    name: "Jacksonville Metro",
+    minLat: 30.15, maxLat: 30.45, minLon: -81.80, maxLon: -81.50,
+    delayMinutes: 15
+  },
+  {
+    name: "Oklahoma City Metro",
+    minLat: 35.35, maxLat: 35.65, minLon: -97.65, maxLon: -97.35,
+    delayMinutes: 15
+  },
+  {
+    name: "Raleigh-Durham Research Triangle",
+    minLat: 35.65, maxLat: 36.05, minLon: -79.05, maxLon: -78.50,
+    delayMinutes: 20
+  },
+  {
+    name: "Memphis Metro Area",
+    minLat: 34.95, maxLat: 35.25, minLon: -90.15, maxLon: -89.80,
+    delayMinutes: 15
+  },
+  {
+    name: "Richmond Metro",
+    minLat: 37.40, maxLat: 37.65, minLon: -77.60, maxLon: -77.30,
+    delayMinutes: 15
+  },
+  {
+    name: "Greater New Orleans",
+    minLat: 29.85, maxLat: 30.10, minLon: -90.25, maxLon: -89.90,
+    delayMinutes: 15
+  },
+  {
+    name: "Louisville Metro",
+    minLat: 38.10, maxLat: 38.35, minLon: -85.85, maxLon: -85.55,
+    delayMinutes: 15
+  },
+  {
+    name: "Salt Lake City",
+    minLat: 40.50, maxLat: 40.85, minLon: -112.05, maxLon: -111.80,
+    delayMinutes: 20
+  },
+  {
+    name: "Hartford Metro",
+    minLat: 41.65, maxLat: 41.90, minLon: -72.80, maxLon: -72.55,
+    delayMinutes: 15
+  },
+  {
+    name: "Buffalo Metro",
+    minLat: 42.80, maxLat: 43.05, minLon: -78.95, maxLon: -78.70,
+    delayMinutes: 15
+  },
+  {
+    name: "Birmingham Metro",
+    minLat: 33.35, maxLat: 33.65, minLon: -86.95, maxLon: -86.65,
+    delayMinutes: 10
+  },
+  {
+    name: "Rochester Metro",
+    minLat: 43.05, maxLat: 43.30, minLon: -77.75, maxLon: -77.45,
+    delayMinutes: 10
+  },
+  {
+    name: "Grand Rapids Metro",
+    minLat: 42.85, maxLat: 43.10, minLon: -85.75, maxLon: -85.50,
+    delayMinutes: 10
+  },
+  {
+    name: "Tucson Metro",
+    minLat: 32.10, maxLat: 32.35, minLon: -111.05, maxLon: -110.75,
+    delayMinutes: 15
+  },
+  {
+    name: "Honolulu Urban Core (Oahu)",
+    minLat: 21.25, maxLat: 21.40, minLon: -158.05, maxLon: -157.75,
+    delayMinutes: 25
+  },
+  {
+    name: "Tulsa Metro",
+    minLat: 35.95, maxLat: 36.25, minLon: -96.05, maxLon: -95.75,
+    delayMinutes: 10
+  },
+  {
+    name: "Fresno Metro",
+    minLat: 36.65, maxLat: 36.85, minLon: -119.90, maxLon: -119.65,
+    delayMinutes: 15
+  },
+  {
+    name: "Omaha Metro",
+    minLat: 41.15, maxLat: 41.35, minLon: -96.15, maxLon: -95.85,
+    delayMinutes: 10
+  },
+  {
+    name: "Albuquerque Metro",
+    minLat: 34.95, maxLat: 35.25, minLon: -106.75, maxLon: -106.45,
+    delayMinutes: 15
+  },
+
+  // ==========================================
+  // CANADA
+  // ==========================================
+  {
+    name: "Greater Toronto Area",
+    minLat: 43.55, maxLat: 43.90, minLon: -79.65, maxLon: -79.15,
+    delayMinutes: 40
+  },
+  {
+    name: "Greater Montreal",
+    minLat: 45.40, maxLat: 45.70, minLon: -73.95, maxLon: -73.45,
+    delayMinutes: 30
+  },
+  {
+    name: "Metro Vancouver",
+    minLat: 49.10, maxLat: 49.35, minLon: -123.25, maxLon: -122.70,
+    delayMinutes: 35
+  },
+  {
+    name: "Calgary Region",
+    minLat: 50.85, maxLat: 51.20, minLon: -114.25, maxLon: -113.90,
+    delayMinutes: 15
+  },
+  {
+    name: "Edmonton Metropolitan Region",
+    minLat: 53.40, maxLat: 53.65, minLon: -113.70, maxLon: -113.30,
+    delayMinutes: 15
+  },
+  {
+    name: "Ottawa-Gatineau",
+    minLat: 45.30, maxLat: 45.50, minLon: -75.90, maxLon: -75.55,
+    delayMinutes: 20
+  },
+
+  // ==========================================
+  // MEXICO
+  // ==========================================
+  {
+    name: "Greater Mexico City (CDMX)",
+    minLat: 19.15, maxLat: 19.65, minLon: -99.40, maxLon: -98.90,
+    delayMinutes: 55
+  },
+  {
+    name: "Greater Guadalajara",
+    minLat: 20.55, maxLat: 20.80, minLon: -103.50, maxLon: -103.20,
+    delayMinutes: 30
+  },
+  {
+    name: "Monterrey Metropolitan Area",
+    minLat: 25.55, maxLat: 25.85, minLon: -100.45, maxLon: -100.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Puebla Metro",
+    minLat: 18.95, maxLat: 19.15, minLon: -98.30, maxLon: -98.10,
+    delayMinutes: 25
+  },
+  {
+    name: "Toluca Metro",
+    minLat: 19.20, maxLat: 19.40, minLon: -99.75, maxLon: -99.50,
+    delayMinutes: 20
+  },
+  {
+    name: "Tijuana Metro",
+    minLat: 32.40, maxLat: 32.55, minLon: -117.15, maxLon: -116.80,
+    delayMinutes: 25
+  },
+  {
+    name: "León Metro",
+    minLat: 21.05, maxLat: 21.20, minLon: -101.75, maxLon: -101.55,
+    delayMinutes: 20
+  },
+  {
+    name: "Querétaro Metro",
+    minLat: 20.50, maxLat: 20.70, minLon: -100.50, maxLon: -100.30,
+    delayMinutes: 20
+  },
+  {
+    name: "Juárez Metro",
+    minLat: 31.60, maxLat: 31.75, minLon: -106.55, maxLon: -106.35,
+    delayMinutes: 20
+  }
+];
+
+// Approximate UTC offset from longitude for CONUS/MX/CA traffic zone lookups.
+// Avoids API calls — good enough for rush hour window checks.
+// Covers: AKST/AKDT, PST/PDT, MST/MDT, CST/CDT, EST/EDT, AST
+function approxUtcOffset(lon) {
+  if (lon >= -170) return -9;   // Alaska
+  if (lon >= -127) return -8;   // Pacific (PST/PDT blended)
+  if (lon >= -110) return -7;   // Mountain
+  if (lon >=  -93) return -6;   // Central
+  if (lon >=  -68) return -5;   // Eastern
+  if (lon >=  -58) return -4;   // Atlantic (Maritime CAN)
+  return -5; // fallback Eastern
+}
+
+function calculateTrafficDelay(lat, lon, arrivalDateUTC) {
+  // Convert to local time at the checkpoint's coordinates
+  const utcMs = arrivalDateUTC.getTime();
+  const localMs = utcMs + (approxUtcOffset(lon) * 3600000);
+  const localDate = new Date(localMs);  // ms value has offset baked in, read as UTC
+  const hour = localDate.getUTCHours();
+  const minute = localDate.getUTCMinutes();
+  const timeAsDecimal = hour + (minute / 60);
+  const day = localDate.getUTCDay();
+
+  // Weekend traffic patterns are fundamentally different; skip weekday rush hour logic
+  if (day === 0 || day === 6) return { delay: 0, zone: null };
+
+  // Define standard commuter rush windows (6:30-9:30 AM and 3:00-7:00 PM)
+  const isRushHour = (timeAsDecimal >= 6.5 && timeAsDecimal <= 9.5) || (timeAsDecimal >= 15 && timeAsDecimal <= 19);
+
+  if (!isRushHour) return { delay: 0, zone: null };
+
+  // Check if coordinates reside within a defined congestion zone
+  for (const zone of CONGESTION_ZONES) {
+    if (lat >= zone.minLat && lat <= zone.maxLat && lon >= zone.minLon && lon <= zone.maxLon) {
+      return { delay: zone.delayMinutes, zone: zone.name };
+    }
+  }
+
+  return { delay: 0, zone: null };
+}
+
 const OWM_CONDITIONS = {
   200:'⛈ Thunderstorm + light rain',201:'⛈ Thunderstorm + rain',202:'⛈ Thunderstorm + heavy rain',
   210:'⛈ Light thunderstorm',211:'⛈ Thunderstorm',212:'⛈ Heavy thunderstorm',
@@ -625,12 +1041,26 @@ function buildTimeline(depart, totalHours, waypoints, forecasts, route) {
   const times = [0];
   for (let m = 60; m < totalHours * 60; m += 60) times.push(m);
   if (times[times.length - 1] < totalHours * 60) times.push(totalHours * 60);
+
+  let cumulativeDelayMinutes = 0;
+
   for (const m of times) {
-    const arrival = new Date(depart.getTime() + m * 60000);
+    // Base arrival time adjusted by any delays picked up earlier in the drive
+    let arrival = new Date(depart.getTime() + (m + cumulativeDelayMinutes) * 60000);
+
     const frac = totalHours > 0 ? Math.min(m / 60 / totalHours, 1) : 0;
     // Find route coordinate at this fraction
     const coordIdx = Math.min(Math.round(frac * (route.coords.length - 1)), route.coords.length - 1);
     const latlng = route.coords[coordIdx];
+
+    // Check for new traffic delays at this checkpoint
+    const traffic = calculateTrafficDelay(latlng[0], latlng[1], arrival);
+    if (traffic.delay > 0) {
+      cumulativeDelayMinutes += traffic.delay;
+      // Recalculate arrival time for this specific point to show the delay immediately
+      arrival = new Date(depart.getTime() + (m + cumulativeDelayMinutes) * 60000);
+    }
+
     // Find nearest waypoint index for weather lookup
     let wpIdx = 0, minDist = Infinity;
     for (let w = 0; w < waypoints.length; w++) {
@@ -638,8 +1068,23 @@ function buildTimeline(depart, totalHours, waypoints, forecasts, route) {
       if (d < minDist) { minDist = d; wpIdx = w; }
     }
     const wx = pickHourly(forecasts[wpIdx].steps, arrival);
-    timeline.push({ hour: m / 60, arrival, frac, wx, wpIdx, lat: latlng[0], lon: latlng[1] });
+
+    timeline.push({
+      hour: (m + cumulativeDelayMinutes) / 60,
+      arrival,
+      frac,
+      wx,
+      wpIdx,
+      lat: latlng[0],
+      lon: latlng[1],
+      trafficZone: traffic.zone,
+      trafficDelay: traffic.delay
+    });
   }
+
+  // Update total duration stored in the global state so ETA updates accurately
+  route.durationMinWithTraffic = (totalHours * 60) + cumulativeDelayMinutes;
+
   return timeline;
 }
 
@@ -940,7 +1385,7 @@ function renderMap(start, end, route, waypoints, timeline) {
 // ── Results Rendering ──────────────────────────────────────────────
 function renderResults(start, end, route, timeline, depart, speed, forecasts, roadMeta) {
   const dist = route.distanceMi;
-  const dur = route.durationMin;
+  const dur = route.durationMinWithTraffic || route.durationMin;
   const eta = new Date(depart.getTime() + dur * 60000);
 
   let warningHtml = '';
@@ -949,7 +1394,7 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
       <div class="warning-badge">
         <span>⚠️</span>
         <div>
-          <strong>Long Route Warning:</strong> Because this trip exceeds 450 miles, speed-limit data accuracy may drop. Localized weather arrival times will be estimated using standard baseline speeds.
+          <strong>Long Route Warning:</strong> Because this trip exceeds 450 miles, accuracy of estimated time to waypoints may drop.
         </div>
       </div>
     `;
@@ -959,7 +1404,7 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
 	${warningHtml}
     <div class="stats-grid">
       <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
-      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
+      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m${route.durationMinWithTraffic ? ' <span style="font-size:0.7rem;color:var(--warn)">(+'+Math.round(route.durationMinWithTraffic - route.durationMin)+'m traffic)</span>' : ''}</div><div class="label">Drive Time</div></div>
       <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
       <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     </div>
@@ -991,6 +1436,7 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const fracStr = `${Math.round(t.frac*100)}%`;
+    const trafficBadge = t.trafficZone ? `<span style="font-size:0.65rem;background:var(--warn);color:#fff;padding:1px 5px;border-radius:2px;margin-left:4px;white-space:nowrap">&#128663; ${t.trafficZone} +${t.trafficDelay}m</span>` : '';
     allEntries.push({
       frac: t.frac,
       idx: i,
@@ -999,7 +1445,7 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
         <span class="timeline-time">${timeStr}</span>
         <span class="timeline-loc">${fracStr}</span>
         <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
-        <span class="timeline-cond">${t.wx.cond}</span>
+        <span class="timeline-cond">${t.wx.cond}${trafficBadge}</span>
         <span class="timeline-wind">${t.wx.wind.toFixed(0)} ${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'}<br>${t.wx.rain}%</span>
       </div>`
     });
@@ -1014,14 +1460,15 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
 
 // ── Timeline List (slider-safe, doesn't touch slider DOM) ─────────
 function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta) {
-  const eta = new Date(depart.getTime() + route.durationMin * 60000);
+  const dur = route.durationMinWithTraffic || route.durationMin;
+  const eta = new Date(depart.getTime() + dur * 60000);
 
   // Update stats grid (ETA changes with departure shift)
   const statsGrid = document.querySelector('.stats-grid');
   if (statsGrid) {
     statsGrid.innerHTML = `
       <div class="stat-card"><div class="value">${route.distanceMi.toFixed(0)} mi</div><div class="label">Distance</div></div>
-      <div class="stat-card"><div class="value">${Math.floor(route.durationMin/60)}h ${Math.round(route.durationMin%60)}m</div><div class="label">Drive Time</div></div>
+      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m${route.durationMinWithTraffic ? ' <span style="font-size:0.7rem;color:var(--warn)">(+'+Math.round(route.durationMinWithTraffic - route.durationMin)+'m traffic)</span>' : ''}</div><div class="label">Drive Time</div></div>
       <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
       <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     `;
@@ -1034,6 +1481,7 @@ function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const fracStr = `${Math.round(t.frac*100)}%`;
+    const trafficBadge = t.trafficZone ? `<span style="font-size:0.65rem;background:var(--warn);color:#fff;padding:1px 5px;border-radius:2px;margin-left:4px;white-space:nowrap">&#128663; ${t.trafficZone} +${t.trafficDelay}m</span>` : '';
     allEntries.push({
       frac: t.frac,
       idx: i,
@@ -1042,7 +1490,7 @@ function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta
         <span class="timeline-time">${timeStr}</span>
         <span class="timeline-loc">${fracStr}</span>
         <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
-        <span class="timeline-cond">${t.wx.cond}</span>
+        <span class="timeline-cond">${t.wx.cond}${trafficBadge}</span>
         <span class="timeline-wind">${t.wx.wind.toFixed(0)} ${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'}<br>${t.wx.rain}%</span>
       </div>`
     });
