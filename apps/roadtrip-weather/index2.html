@@ -919,22 +919,12 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
   const dur = route.durationMin;
   const eta = new Date(depart.getTime() + dur * 60000);
 
-  // Build surface types string (exclude "unknown")
-  let surfaceStr = '';
-  if (roadMeta && roadMeta.surfaces && roadMeta.surfaces.length > 0) {
-    surfaceStr = roadMeta.surfaces
-      .filter(s => s.type !== 'unknown')
-      .map(s => s.type)
-      .join(', ');
-  }
-
   let html = `
     <div class="stats-grid">
       <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
       <div class="stat-card"><div class="value">${speed ? speed + ' mph' : '—'}</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
-      <div class="stat-card" style="grid-column:1/-1"><div class="value" style="font-size:0.85rem">${surfaceStr || '—'}</div><div class="label">Road Surfaces</div></div>
+      <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     </div>
 
     <div id="departureSliderContainer" style="display:none;margin-bottom:16px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
@@ -987,15 +977,6 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
 function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta) {
   const eta = new Date(depart.getTime() + route.durationMin * 60000);
 
-  // Build surface types string (exclude "unknown")
-  let surfaceStr = '';
-  if (roadMeta && roadMeta.surfaces && roadMeta.surfaces.length > 0) {
-    surfaceStr = roadMeta.surfaces
-      .filter(s => s.type !== 'unknown')
-      .map(s => s.type)
-      .join(', ');
-  }
-
   // Update stats grid (ETA changes with departure shift)
   const statsGrid = document.querySelector('.stats-grid');
   if (statsGrid) {
@@ -1003,8 +984,7 @@ function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta
       <div class="stat-card"><div class="value">${route.distanceMi.toFixed(0)} mi</div><div class="label">Distance</div></div>
       <div class="stat-card"><div class="value">${Math.floor(route.durationMin/60)}h ${Math.round(route.durationMin%60)}m</div><div class="label">Drive Time</div></div>
       <div class="stat-card"><div class="value">${speed ? speed + ' mph' : '—'}</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
-      <div class="stat-card" style="grid-column:1/-1"><div class="value" style="font-size:0.85rem">${surfaceStr || '—'}</div><div class="label">Road Surfaces</div></div>
+      <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
     `;
   }
 
