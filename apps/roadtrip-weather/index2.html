@@ -89,6 +89,16 @@
   .timeline-cond { font-size: 0.7rem; flex: 1; }
   .timeline-wind { font-size: 0.65rem; color: var(--text-dim); min-width: 55px; text-align: right; line-height: 1.3; }
   .timeline-sun { font-size: 0.85rem; }
+  .timeline-item.highlight {
+    background: rgba(180, 83, 9, 0.12);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+    padding-left: 8px;
+    margin-left: -8px;
+  }
+  .dark .timeline-item.highlight {
+    background: rgba(217, 119, 6, 0.18);
+  }
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
   .stat-card .value { font-size: 1rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
@@ -661,6 +671,9 @@ function initDepartureSlider() {
     const offsetMin = parseInt(this.value);
     label.textContent = (offsetMin >= 0 ? '+' : '') + offsetMin + ' min';
 
+    // Clear any highlight since timeline is being rebuilt
+    document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
+
     // Rebuild timeline with shifted departure — no API calls needed
     const originalDepart = new Date(document.getElementById('dateInput').value + 'T' + document.getElementById('timeInput').value);
     const shiftedDepart = new Date(originalDepart.getTime() + offsetMin * 60000);
@@ -749,6 +762,7 @@ async function planTrip() {
   const goBtn = document.getElementById('goBtn');
   goBtn.disabled = true;
   goBtn.textContent = 'Planning...';
+  document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
   showLoading('Geocoding locations...');
 
   try {
@@ -901,6 +915,16 @@ function renderMap(start, end, route, waypoints, timeline) {
     }).addTo(map);
     if (isFirst) marker.bindPopup(start.name);
     if (isLast) marker.bindPopup(end.name);
+    marker.on('click', () => {
+      // Remove any existing highlight
+      document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
+      // Highlight the corresponding timeline item
+      const target = document.querySelector(`.timeline-item[data-idx="${i}"]`);
+      if (target) {
+        target.classList.add('highlight');
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
     markers.push(marker);
   });
 
@@ -949,14 +973,16 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
   const allEntries = [];
 
   // Build timeline weather entries
-  for (const t of timeline) {
+  for (let i = 0; i < timeline.length; i++) {
+    const t = timeline[i];
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const fracStr = `${Math.round(t.frac*100)}%`;
     allEntries.push({
       frac: t.frac,
+      idx: i,
       html: `
-      <div class="timeline-item">
+      <div class="timeline-item" data-idx="${i}">
         <span class="timeline-time">${timeStr}</span>
         <span class="timeline-loc">${fracStr}</span>
         <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
@@ -990,14 +1016,16 @@ function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta
 
   // Build timeline entries
   const allEntries = [];
-  for (const t of timeline) {
+  for (let i = 0; i < timeline.length; i++) {
+    const t = timeline[i];
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const fracStr = `${Math.round(t.frac*100)}%`;
     allEntries.push({
       frac: t.frac,
+      idx: i,
       html: `
-      <div class="timeline-item">
+      <div class="timeline-item" data-idx="${i}">
         <span class="timeline-time">${timeStr}</span>
         <span class="timeline-loc">${fracStr}</span>
         <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
