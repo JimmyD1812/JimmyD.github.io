@@ -538,19 +538,26 @@ async function getRoadMetadata(route) {
         const tags = e.tags || {};
         if (!tags.maxspeed && !tags.surface) continue;
         waysWithTags++;
-        // Compute center from geometry
+        // Compute center from geometry (format: [[lat,lon], ...] or [{lat,lon}, ...])
         let slat = 0, slon = 0;
-        for (const [lat, lon] of e.geometry) {
-          slat += lat; slon += lon;
+        const geom = e.geometry;
+        if (geom.length === 0) continue;
+        // Detect format
+        if (Array.isArray(geom[0])) {
+          // [[lat,lon], ...]
+          for (const [lat, lon] of geom) { slat += lat; slon += lon; }
+          const cnt = geom.length;
+          if (cnt === 0) continue;
+          allWays.push({ center: [slat / cnt, slon / cnt], highway: tags.highway, maxspeed: tags.maxspeed, surface: tags.surface || null });
+        } else if (geom[0].lat !== undefined) {
+          // [{lat, lon}, ...]
+          for (const pt of geom) { slat += pt.lat; slon += pt.lon; }
+          const cnt = geom.length;
+          if (cnt === 0) continue;
+          allWays.push({ center: [slat / cnt, slon / cnt], highway: tags.highway, maxspeed: tags.maxspeed, surface: tags.surface || null });
+        } else {
+          console.log('Unknown geometry format:', JSON.stringify(geom[0]));
         }
-        const cnt = e.geometry.length;
-        if (cnt === 0) continue;
-        allWays.push({
-          center: [slat / cnt, slon / cnt],
-          highway: tags.highway,
-          maxspeed: tags.maxspeed,
-          surface: tags.surface || null
-        });
       }
       console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
     }
