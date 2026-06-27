@@ -537,6 +537,8 @@ async function getRoadMetadata(route) {
         if (e.type === 'node') nodes[e.id] = [e.lat, e.lon];
       }
       let waysWithTags = 0;
+      let nodesFound = 0;
+      let nodesMissing = 0;
       for (const e of data.elements) {
         if (e.type !== 'way' || !e.nodes) continue;
         const tags = e.tags || {};
@@ -546,7 +548,9 @@ async function getRoadMetadata(route) {
         for (const nid of e.nodes) {
           const n = nodes[nid];
           if (n) { slat += n[0]; slon += n[1]; cnt++; }
+          else { nodesMissing++; }
         }
+        if (cnt > 0) { nodesFound++; }
         if (cnt === 0) continue;
         allWays.push({
           center: [slat / cnt, slon / cnt],
@@ -555,6 +559,7 @@ async function getRoadMetadata(route) {
           surface: tags.surface || null
         });
       }
+      console.log(`Nodes in lookup: ${Object.keys(nodes).length}, ways with tags: ${waysWithTags}, ways with coords: ${nodesFound}, missing node refs: ${nodesMissing}`);
       console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
     }
     catch (err) {
