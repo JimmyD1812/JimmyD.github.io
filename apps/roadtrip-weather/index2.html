@@ -521,7 +521,7 @@ async function getRoadMetadata(route) {
   const allWays = [];
   for (const [sMinLat, sMinLon, sMaxLat, sMaxLon] of strips) {
     const bbox = `${sMinLat},${sMinLon},${sMaxLat},${sMaxLon}`;
-    const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out geom body;`;
+    const query = `[out:json][timeout:15];(way["highway"]["maxspeed"](${bbox});way["highway"]["surface"](${bbox}););out tags center;`;
 
     try {
       console.log('Overpass query:', query);
