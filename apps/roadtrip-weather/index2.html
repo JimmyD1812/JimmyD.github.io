@@ -14,9 +14,9 @@
     --bg: #faf8f5;
     --surface: #ffffff;
     --border: #e2ddd6;
-    --text: #2c2824;
-    --text-dim: #7a736b;
-    --accent: #b45309;
+	--text: #1e293b;     
+	--text-dim: #64748b;
+    --accent: #1376a6;
     --accent2: #2e7d32;
     --warn: #e65100;
     --danger: #c62828;
@@ -25,22 +25,49 @@
     --bg: #1a1a1a;
     --surface: #242424;
     --border: #3a3a3a;
-    --text: #e8e4df;
-    --text-dim: #9a948c;
-    --accent: #d97706;
+	--text: #f1f5f9;     
+	--text-dim: #94a3b8;
+    --accent: #38bdf8;
     --accent2: #4ade80;
     --warn: #f97316;
     --danger: #ef4444;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body::after {
+      content: '↻ Rotate to portrait';
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface); color: var(--text-dim);
+      font-size: 1.2rem; font-weight: 600;
+    }
+    .app, #settingsModal { display: none !important; }
+  }
 
   .app { display: grid; grid-template-columns: 420px 1fr; grid-template-rows: auto 1fr; height: 100vh; gap: 0; }
 
   header { grid-column: 1 / -1; background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 1.15rem; font-weight: 700; color: var(--text); white-space: nowrap; }
+  header h1 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 1.05rem; font-weight: 700; color: var(--text); white-space: nowrap; }
   header h1 span { color: var(--accent); }
 
+  .warning-badge {
+	background: rgba(230, 81, 0, 0.08);
+	border: 1px solid var(--warn);
+	color: var(--warn);
+	border-radius: 4px;
+	padding: 10px 14px;
+	font-size: 0.8rem;
+	line-height: 1.4;
+	margin-bottom: 16px;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	}
+	.dark .warning-badge {
+	background: rgba(249, 115, 22, 0.12);
+	}
+	
   .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
 
   .form-section { padding: 20px; border-bottom: 1px solid var(--border); }
@@ -48,7 +75,7 @@
   .form-section h2.clickable { background: rgba(0,0,0,0.04); margin: -8px -12px 8px; padding: 8px 12px; border-radius: 3px; }
 
   .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 5px; font-weight: 500; }
+  .field label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; font-weight: 500; }
   .field input, .field select {
     width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border);
     border-radius: 2px; color: var(--text); font-size: 16px; outline: none; transition: border-color 0.15s;
@@ -62,15 +89,15 @@
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   .btn {
-    width: 100%; padding: 11px; border: none; border-radius: 2px; font-size: 0.9rem;
+    width: 100%; padding: 10px; border: none; border-radius: 2px; font-size: 0.85rem;
     font-weight: 600; cursor: pointer; transition: background 0.15s;
   }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #92400e; }
+  .btn-primary:hover { background: #0f5d84; }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .results-section { flex: 1; padding: 20px; overflow-y: auto; }
-  .results-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
+  .results-section h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
 
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
   .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 14px; }
@@ -83,16 +110,26 @@
   .timeline { margin-top: 10px; }
   .timeline-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
   .timeline-item:last-child { border-bottom: none; }
-  .timeline-time { font-size: 0.8rem; font-weight: 600; min-width: 55px; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
-  .timeline-loc { font-size: 0.75rem; color: var(--text-dim); min-width: 40px; }
-  .timeline-temp { font-size: 0.9rem; font-weight: 700; min-width: 45px; }
-  .timeline-cond { font-size: 0.75rem; flex: 1; }
-  .timeline-wind { font-size: 0.7rem; color: var(--text-dim); min-width: 60px; text-align: right; line-height: 1.3; }
-  .timeline-sun { font-size: 0.9rem; }
+  .timeline-time { font-size: 0.75rem; font-weight: 600; min-width: 50px; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
+  .timeline-loc { font-size: 0.7rem; color: var(--text-dim); min-width: 36px; }
+  .timeline-temp { font-size: 0.85rem; font-weight: 700; min-width: 42px; }
+  .timeline-cond { font-size: 0.7rem; flex: 1; }
+  .timeline-wind { font-size: 0.65rem; color: var(--text-dim); min-width: 55px; text-align: right; line-height: 1.3; }
+  .timeline-sun { font-size: 0.85rem; }
+  .timeline-item.highlight {
+    background: rgba(180, 83, 9, 0.12);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+    padding-left: 8px;
+    margin-left: -8px;
+  }
+  .dark .timeline-item.highlight {
+    background: rgba(217, 119, 6, 0.18);
+  }
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
-  .stat-card .value { font-size: 1.1rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
-  .stat-card .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-top: 2px; font-weight: 600; }
+  .stat-card .value { font-size: 1rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
+  .stat-card .label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-top: 2px; font-weight: 600; }
 
   .loading { text-align: center; padding: 40px; color: var(--text-dim); }
   .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
@@ -106,30 +143,33 @@
   .waypoint-marker.start { background: var(--accent2); width: 16px; height: 16px; }
   .waypoint-marker.end { background: var(--danger); width: 16px; height: 16px; }
 
+  /* Form collapse — works on all sizes */
+  .form-section h2 { cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .form-section h2::after { content: '▾'; font-size: 0.65rem; transition: transform 0.2s; }
+  .form-section.collapsed h2::after { transform: rotate(-90deg); }
+  .form-section.collapsed .field,
+  .form-section.collapsed .field-row,
+  .form-section.collapsed .btn { display: none; }
+
   @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; grid-template-rows: auto 30vh 1fr; }
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
     #map { grid-row: 2; }
     .sidebar { grid-row: 3; }
     .form-section { padding: 12px 16px; }
-    .form-section h2 { margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 3px; }
-    .form-section h2::after { content: '▾'; font-size: 0.65rem; transition: transform 0.2s; }
-    .form-section.collapsed h2::after { transform: rotate(-90deg); }
-    .form-section.collapsed .field,
-    .form-section.collapsed .field-row,
-    .form-section.collapsed .btn { display: none; }
+    .form-section h2 { margin-bottom: 8px; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 3px; }
     .results-section { padding: 12px 16px; }
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .stat-card { padding: 10px; }
-    .stat-card .value { font-size: 1rem; }
-    .stat-card .label { font-size: 0.6rem; }
+    .stat-card { padding: 8px; }
+    .stat-card .value { font-size: 0.95rem; }
+    .stat-card .label { font-size: 0.55rem; }
     .timeline-item { gap: 6px; padding: 4px 0; }
-    .timeline-time { font-size: 0.75rem; min-width: 48px; }
-    .timeline-loc { font-size: 0.7rem; min-width: 32px; }
-    .timeline-temp { font-size: 0.85rem; min-width: 36px; }
-    .timeline-cond { font-size: 0.7rem; }
-    .timeline-wind { font-size: 0.65rem; min-width: 50px; }
-    .timeline-sun { font-size: 0.8rem; }
+    .timeline-time { font-size: 0.7rem; min-width: 44px; }
+    .timeline-loc { font-size: 0.65rem; min-width: 30px; }
+    .timeline-temp { font-size: 0.8rem; min-width: 34px; }
+    .timeline-cond { font-size: 0.65rem; }
+    .timeline-wind { font-size: 0.6rem; min-width: 48px; }
+    .timeline-sun { font-size: 0.75rem; }
     .geo-dropdown div { font-size: 16px; }
   }
 </style>
@@ -146,7 +186,7 @@
     <div class="form-section">
       <h2 id="formToggle">Trip Details</h2>
       <div class="field">
-        <label style="display:flex;justify-content:space-between;align-items:center;width:100%">Start Location <a href="#" id="findMe" style="font-size:13px;color:var(--accent);white-space:nowrap;text-decoration:none">📍 Find Me</a></label>
+        <label>Start Location <a href="#" id="findMe" style="font-size:13px;color:var(--accent);white-space:nowrap;text-decoration:none">📍 Find Me</a></label>
         <input type="text" id="startInput" placeholder="Denver, CO">
       </div>
       <div class="field">
@@ -163,17 +203,6 @@
           <input type="time" id="timeInput" value="08:00">
         </div>
       </div>
-      <div class="field">
-        <label>Avg Speed (mph)</label>
-        <select id="speedInput">
-          <option value="20">20 mph</option><option value="25">25 mph</option><option value="30">30 mph</option>
-          <option value="35">35 mph</option><option value="40">40 mph</option><option value="45">45 mph</option>
-          <option value="50">50 mph</option><option value="55">55 mph</option><option value="60">60 mph</option>
-          <option value="65">65 mph</option><option value="70">70 mph</option><option value="75" selected>75 mph</option>
-          <option value="80">80 mph</option><option value="85">85 mph</option><option value="90">90 mph</option>
-          <option value="95">95 mph</option><option value="100">100 mph</option>
-        </select>
-      </div>
       <button class="btn btn-primary" id="goBtn" onclick="planTrip()">Plan Trip</button>
     </div>
 
@@ -184,8 +213,8 @@
       </div>
     </div>
 
-    <div style="padding:12px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--text-dim)">
-      Powered by <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--accent);text-decoration:none">OpenStreetMap</a> + <a href="https://openweathermap.org" target="_blank" style="color:var(--accent);text-decoration:none">OpenWeatherMap</a>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);font-size:10px;color:var(--text-dim)">
+      Powered by <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--accent);text-decoration:none">&copy; OpenStreetMap</a> + <a href="https://openweathermap.org" target="_blank" style="color:var(--accent);text-decoration:none">&copy; OpenWeatherMap</a> + <a href="https://leafletjs.com" target="_blank" style="color:var(--accent);text-decoration:none">&copy; Leaflet</a> + <a href="https://carto.com/" target="_blank" style="color:var(--accent);text-decoration:none">&copy; CARTO</a>
     </div>
   </div>
 
@@ -204,7 +233,7 @@
     <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px">
       <!-- Wind Speed Unit -->
       <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Wind Speed Unit</label>
+        <label style="font-size:0.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Wind Speed Unit</label>
         <div style="display:flex;gap:8px">
           <button class="wind-unit-btn btn" data-unit="kmh" style="width:auto;padding:8px 16px;background:var(--accent);color:#fff;border-radius:2px;font-size:0.85rem">km/h</button>
           <button class="wind-unit-btn btn" data-unit="mph" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:2px;font-size:0.85rem">mph</button>
@@ -213,8 +242,8 @@
       </div>
       <!-- API Key (BYOK) -->
       <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">API Key (BYOK)</label>
-        <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px">If the default key is rate-limited, create your own free key at <a href="https://home.openweathermap.org/api_keys" target="_blank" style="color:var(--accent)">home.openweathermap.org/api_keys</a>. 60 calls/min, no daily cap.</p>
+        <label style="font-size:0.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">API Key (BYOK)</label>
+        <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:8px">If the default key is rate-limited, create your own free key at <a href="https://home.openweathermap.org/api_keys" target="_blank" style="color:var(--accent)">home.openweathermap.org/api_keys</a>. 60 calls/min, no daily cap.</p>
         <input type="text" id="settingsKeyInput" placeholder="Paste your API key here" style="width:100%;padding:10px 12px;font-size:16px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);outline:none;box-sizing:border-box">
         <div style="display:flex;gap:8px;margin-top:8px">
           <button id="settingsKeyClear" class="btn" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--danger)">Clear Key</button>
@@ -223,7 +252,7 @@
       </div>
       <!-- Dark Mode -->
       <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Theme</label>
+        <label style="font-size:0.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Theme</label>
         <div style="display:flex;align-items:center;gap:12px">
           <button id="darkToggle" class="btn" style="width:auto;padding:8px 20px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:2px;font-size:0.85rem">🌙 Dark Mode</button>
           <span id="darkModeStatus" style="font-size:0.8rem;color:var(--text-dim)"></span>
@@ -231,7 +260,7 @@
       </div>
       <!-- Weather Map Overlay -->
       <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Map Overlay</label>
+        <label style="font-size:0.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Map Overlay</label>
         <select id="overlaySelect" style="width:100%;padding:10px 12px;font-size:16px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);outline:none;cursor:pointer">
           <option value="none">None</option>
           <option value="clouds">Clouds</option>
@@ -261,9 +290,427 @@ let WIND_UNIT = localStorage.getItem('windUnit') || 'kmh';
 let WEATHER_OVERLAY = localStorage.getItem('weatherOverlay') || 'clouds';
 let weatherOverlayLayer = null;
 let overlayRefreshTimer = null;
+let _tripData = null; // stored forecasts + route for departure slider
+let _currentTimeline = null; // current timeline (updated by slider)
 const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 const FORECAST_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
+
+// ── Traffic Congestion Zones ────────────────────────────────────────
+const CONGESTION_ZONES = [
+  // ==========================================
+  // UNITED STATES
+  // ==========================================
+{
+    name: "New York Tri-State Area",
+    minLat: 40.50, maxLat: 41.00, minLon: -74.25, maxLon: -73.70,
+    delayMinutes: 50
+  },
+  {
+    name: "Los Angeles Basin",
+    minLat: 33.70, maxLat: 34.30, minLon: -118.60, maxLon: -118.10,
+    delayMinutes: 45
+  },
+  {
+    name: "Chicagoland",
+    minLat: 41.60, maxLat: 42.15, minLon: -88.15, maxLon: -87.50,
+    delayMinutes: 35
+  },
+  {
+    name: "Dallas-Fort Worth Metroplex",
+    minLat: 32.55, maxLat: 33.15, minLon: -97.45, maxLon: -96.55,
+    delayMinutes: 30
+  },
+  {
+    name: "Greater Houston",
+    minLat: 29.50, maxLat: 30.10, minLon: -95.75, maxLon: -95.10,
+    delayMinutes: 30
+  },
+  {
+    name: "Washington DC DMV Area",
+    minLat: 38.75, maxLat: 39.15, minLon: -77.25, maxLon: -76.85,
+    delayMinutes: 35
+  },
+  {
+    name: "Philadelphia Metro",
+    minLat: 39.80, maxLat: 40.15, minLon: -75.35, maxLon: -74.95,
+    delayMinutes: 25
+  },
+  {
+    name: "Miami South Florida Metro",
+    minLat: 25.50, maxLat: 26.35, minLon: -80.40, maxLon: -80.10,
+    delayMinutes: 35
+  },
+  {
+    name: "Atlanta Metro",
+    minLat: 33.55, maxLat: 34.10, minLon: -84.60, maxLon: -84.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Boston Greater Area",
+    minLat: 42.20, maxLat: 42.50, minLon: -71.25, maxLon: -70.95,
+    delayMinutes: 35
+  },
+  {
+    name: "Phoenix Valley of the Sun",
+    minLat: 33.25, maxLat: 33.75, minLon: -112.35, maxLon: -111.75,
+    delayMinutes: 25
+  },
+  {
+    name: "San Francisco Bay Area",
+    minLat: 37.30, maxLat: 38.00, minLon: -122.60, maxLon: -121.90,
+    delayMinutes: 40
+  },
+  {
+    name: "Riverside-San Bernardino (Inland Empire)",
+    minLat: 33.70, maxLat: 34.15, minLon: -117.65, maxLon: -117.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Detroit Metro",
+    minLat: 42.15, maxLat: 42.65, minLon: -83.35, maxLon: -82.90,
+    delayMinutes: 20
+  },
+  {
+    name: "Seattle Puget Sound",
+    minLat: 47.40, maxLat: 47.80, minLon: -122.45, maxLon: -122.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Minneapolis-St. Paul Twin Cities",
+    minLat: 44.75, maxLat: 45.15, minLon: -93.50, maxLon: -92.95,
+    delayMinutes: 20
+  },
+  {
+    name: "San Diego Metro",
+    minLat: 32.55, maxLat: 33.10, minLon: -117.30, maxLon: -116.90,
+    delayMinutes: 25
+  },
+  {
+    name: "Tampa Bay Area",
+    minLat: 27.60, maxLat: 28.20, minLon: -82.80, maxLon: -82.30,
+    delayMinutes: 25
+  },
+  {
+    name: "Denver Metro",
+    minLat: 39.50, maxLat: 39.90, minLon: -105.15, maxLon: -104.70,
+    delayMinutes: 25
+  },
+  {
+    name: "Baltimore Metro",
+    minLat: 39.15, maxLat: 39.40, minLon: -76.75, maxLon: -76.50,
+    delayMinutes: 25
+  },
+  {
+    name: "St. Louis Metro Area",
+    minLat: 38.45, maxLat: 38.85, minLon: -90.55, maxLon: -90.15,
+    delayMinutes: 20
+  },
+  {
+    name: "Orlando Metro",
+    minLat: 28.35, maxLat: 28.65, minLon: -81.55, maxLon: -81.20,
+    delayMinutes: 25
+  },
+  {
+    name: "Charlotte Metro",
+    minLat: 35.05, maxLat: 35.40, minLon: -81.00, maxLon: -80.65,
+    delayMinutes: 20
+  },
+  {
+    name: "San Antonio Metro",
+    minLat: 29.30, maxLat: 29.65, minLon: -98.70, maxLon: -98.30,
+    delayMinutes: 20
+  },
+  {
+    name: "Portland Metro",
+    minLat: 45.40, maxLat: 45.65, minLon: -122.85, maxLon: -122.45,
+    delayMinutes: 25
+  },
+  {
+    name: "Sacramento Metro",
+    minLat: 38.45, maxLat: 38.75, minLon: -121.60, maxLon: -121.30,
+    delayMinutes: 20
+  },
+  {
+    name: "Pittsburgh Metro",
+    minLat: 40.30, maxLat: 40.55, minLon: -80.15, maxLon: -79.85,
+    delayMinutes: 20
+  },
+  {
+    name: "Austin Metro",
+    minLat: 30.15, maxLat: 30.50, minLon: -97.90, maxLon: -97.60,
+    delayMinutes: 25
+  },
+  {
+    name: "Las Vegas Valley",
+    minLat: 35.95, maxLat: 36.30, minLon: -115.35, maxLon: -115.00,
+    delayMinutes: 20
+  },
+  {
+    name: "Cincinnati Metro Area",
+    minLat: 39.00, maxLat: 39.25, minLon: -84.65, maxLon: -84.35,
+    delayMinutes: 15
+  },
+  {
+    name: "Kansas City Metro",
+    minLat: 38.85, maxLat: 39.25, minLon: -94.75, maxLon: -94.40,
+    delayMinutes: 15
+  },
+  {
+    name: "Columbus Metro",
+    minLat: 39.85, maxLat: 40.15, minLon: -83.15, maxLon: -82.80,
+    delayMinutes: 15
+  },
+  {
+    name: "Indianapolis Metro",
+    minLat: 39.65, maxLat: 39.95, minLon: -86.30, maxLon: -85.95,
+    delayMinutes: 15
+  },
+  {
+    name: "Cleveland Metro",
+    minLat: 41.35, maxLat: 41.60, minLon: -81.85, maxLon: -81.50,
+    delayMinutes: 15
+  },
+  {
+    name: "Nashville Metro Area",
+    minLat: 35.95, maxLat: 36.30, minLon: -86.90, maxLon: -86.60,
+    delayMinutes: 20
+  },
+  {
+    name: "Virginia Beach-Norfolk Hampton Roads",
+    minLat: 36.65, maxLat: 37.00, minLon: -76.50, maxLon: -75.95,
+    delayMinutes: 15
+  },
+  {
+    name: "Providence Metro (Rhode Island)",
+    minLat: 41.70, maxLat: 41.95, minLon: -71.55, maxLon: -71.30,
+    delayMinutes: 15
+  },
+  {
+    name: "Milwaukee Metro",
+    minLat: 42.90, maxLat: 43.15, minLon: -88.10, maxLon: -87.85,
+    delayMinutes: 15
+  },
+  {
+    name: "Jacksonville Metro",
+    minLat: 30.15, maxLat: 30.45, minLon: -81.80, maxLon: -81.50,
+    delayMinutes: 15
+  },
+  {
+    name: "Oklahoma City Metro",
+    minLat: 35.35, maxLat: 35.65, minLon: -97.65, maxLon: -97.35,
+    delayMinutes: 15
+  },
+  {
+    name: "Raleigh-Durham Research Triangle",
+    minLat: 35.65, maxLat: 36.05, minLon: -79.05, maxLon: -78.50,
+    delayMinutes: 20
+  },
+  {
+    name: "Memphis Metro Area",
+    minLat: 34.95, maxLat: 35.25, minLon: -90.15, maxLon: -89.80,
+    delayMinutes: 15
+  },
+  {
+    name: "Richmond Metro",
+    minLat: 37.40, maxLat: 37.65, minLon: -77.60, maxLon: -77.30,
+    delayMinutes: 15
+  },
+  {
+    name: "Greater New Orleans",
+    minLat: 29.85, maxLat: 30.10, minLon: -90.25, maxLon: -89.90,
+    delayMinutes: 15
+  },
+  {
+    name: "Louisville Metro",
+    minLat: 38.10, maxLat: 38.35, minLon: -85.85, maxLon: -85.55,
+    delayMinutes: 15
+  },
+  {
+    name: "Salt Lake City",
+    minLat: 40.50, maxLat: 40.85, minLon: -112.05, maxLon: -111.80,
+    delayMinutes: 20
+  },
+  {
+    name: "Hartford Metro",
+    minLat: 41.65, maxLat: 41.90, minLon: -72.80, maxLon: -72.55,
+    delayMinutes: 15
+  },
+  {
+    name: "Buffalo Metro",
+    minLat: 42.80, maxLat: 43.05, minLon: -78.95, maxLon: -78.70,
+    delayMinutes: 15
+  },
+  {
+    name: "Birmingham Metro",
+    minLat: 33.35, maxLat: 33.65, minLon: -86.95, maxLon: -86.65,
+    delayMinutes: 10
+  },
+  {
+    name: "Rochester Metro",
+    minLat: 43.05, maxLat: 43.30, minLon: -77.75, maxLon: -77.45,
+    delayMinutes: 10
+  },
+  {
+    name: "Grand Rapids Metro",
+    minLat: 42.85, maxLat: 43.10, minLon: -85.75, maxLon: -85.50,
+    delayMinutes: 10
+  },
+  {
+    name: "Tucson Metro",
+    minLat: 32.10, maxLat: 32.35, minLon: -111.05, maxLon: -110.75,
+    delayMinutes: 15
+  },
+  {
+    name: "Honolulu Urban Core (Oahu)",
+    minLat: 21.25, maxLat: 21.40, minLon: -158.05, maxLon: -157.75,
+    delayMinutes: 25
+  },
+  {
+    name: "Tulsa Metro",
+    minLat: 35.95, maxLat: 36.25, minLon: -96.05, maxLon: -95.75,
+    delayMinutes: 10
+  },
+  {
+    name: "Fresno Metro",
+    minLat: 36.65, maxLat: 36.85, minLon: -119.90, maxLon: -119.65,
+    delayMinutes: 15
+  },
+  {
+    name: "Omaha Metro",
+    minLat: 41.15, maxLat: 41.35, minLon: -96.15, maxLon: -95.85,
+    delayMinutes: 10
+  },
+  {
+    name: "Albuquerque Metro",
+    minLat: 34.95, maxLat: 35.25, minLon: -106.75, maxLon: -106.45,
+    delayMinutes: 15
+  },
+
+  // ==========================================
+  // CANADA
+  // ==========================================
+  {
+    name: "Greater Toronto Area",
+    minLat: 43.55, maxLat: 43.90, minLon: -79.65, maxLon: -79.15,
+    delayMinutes: 40
+  },
+  {
+    name: "Greater Montreal",
+    minLat: 45.40, maxLat: 45.70, minLon: -73.95, maxLon: -73.45,
+    delayMinutes: 30
+  },
+  {
+    name: "Metro Vancouver",
+    minLat: 49.10, maxLat: 49.35, minLon: -123.25, maxLon: -122.70,
+    delayMinutes: 35
+  },
+  {
+    name: "Calgary Region",
+    minLat: 50.85, maxLat: 51.20, minLon: -114.25, maxLon: -113.90,
+    delayMinutes: 15
+  },
+  {
+    name: "Edmonton Metropolitan Region",
+    minLat: 53.40, maxLat: 53.65, minLon: -113.70, maxLon: -113.30,
+    delayMinutes: 15
+  },
+  {
+    name: "Ottawa-Gatineau",
+    minLat: 45.30, maxLat: 45.50, minLon: -75.90, maxLon: -75.55,
+    delayMinutes: 20
+  },
+
+  // ==========================================
+  // MEXICO
+  // ==========================================
+  {
+    name: "Greater Mexico City (CDMX)",
+    minLat: 19.15, maxLat: 19.65, minLon: -99.40, maxLon: -98.90,
+    delayMinutes: 55
+  },
+  {
+    name: "Greater Guadalajara",
+    minLat: 20.55, maxLat: 20.80, minLon: -103.50, maxLon: -103.20,
+    delayMinutes: 30
+  },
+  {
+    name: "Monterrey Metropolitan Area",
+    minLat: 25.55, maxLat: 25.85, minLon: -100.45, maxLon: -100.15,
+    delayMinutes: 30
+  },
+  {
+    name: "Puebla Metro",
+    minLat: 18.95, maxLat: 19.15, minLon: -98.30, maxLon: -98.10,
+    delayMinutes: 25
+  },
+  {
+    name: "Toluca Metro",
+    minLat: 19.20, maxLat: 19.40, minLon: -99.75, maxLon: -99.50,
+    delayMinutes: 20
+  },
+  {
+    name: "Tijuana Metro",
+    minLat: 32.40, maxLat: 32.55, minLon: -117.15, maxLon: -116.80,
+    delayMinutes: 25
+  },
+  {
+    name: "León Metro",
+    minLat: 21.05, maxLat: 21.20, minLon: -101.75, maxLon: -101.55,
+    delayMinutes: 20
+  },
+  {
+    name: "Querétaro Metro",
+    minLat: 20.50, maxLat: 20.70, minLon: -100.50, maxLon: -100.30,
+    delayMinutes: 20
+  },
+  {
+    name: "Juárez Metro",
+    minLat: 31.60, maxLat: 31.75, minLon: -106.55, maxLon: -106.35,
+    delayMinutes: 20
+  }
+];
+
+// Approximate UTC offset from longitude for CONUS/MX/CA traffic zone lookups.
+// Avoids API calls — good enough for rush hour window checks.
+// Covers: AKST/AKDT, PST/PDT, MST/MDT, CST/CDT, EST/EDT, AST
+function approxUtcOffset(lon) {
+  if (lon >= -170) return -9;   // Alaska
+  if (lon >= -127) return -8;   // Pacific (PST/PDT blended)
+  if (lon >= -110) return -7;   // Mountain
+  if (lon >=  -93) return -6;   // Central
+  if (lon >=  -68) return -5;   // Eastern
+  if (lon >=  -58) return -4;   // Atlantic (Maritime CAN)
+  return -5; // fallback Eastern
+}
+
+function calculateTrafficDelay(lat, lon, arrivalDateUTC) {
+  // Convert to local time at the checkpoint's coordinates
+  const utcMs = arrivalDateUTC.getTime();
+  const localMs = utcMs + (approxUtcOffset(lon) * 3600000);
+  const localDate = new Date(localMs);  // ms value has offset baked in, read as UTC
+  const hour = localDate.getUTCHours();
+  const minute = localDate.getUTCMinutes();
+  const timeAsDecimal = hour + (minute / 60);
+  const day = localDate.getUTCDay();
+
+  // Weekend traffic patterns are fundamentally different; skip weekday rush hour logic
+  if (day === 0 || day === 6) return { delay: 0, zone: null };
+
+  // Define standard commuter rush windows (6:30-9:30 AM and 3:00-7:00 PM)
+  const isRushHour = (timeAsDecimal >= 6.5 && timeAsDecimal <= 9.5) || (timeAsDecimal >= 15 && timeAsDecimal <= 19);
+
+  if (!isRushHour) return { delay: 0, zone: null };
+
+  // Check if coordinates reside within a defined congestion zone
+  for (const zone of CONGESTION_ZONES) {
+    if (lat >= zone.minLat && lat <= zone.maxLat && lon >= zone.minLon && lon <= zone.maxLon) {
+      return { delay: zone.delayMinutes, zone: zone.name };
+    }
+  }
+
+  return { delay: 0, zone: null };
+}
 
 const OWM_CONDITIONS = {
   200:'⛈ Thunderstorm + light rain',201:'⛈ Thunderstorm + rain',202:'⛈ Thunderstorm + heavy rain',
@@ -289,9 +736,8 @@ function owmCond(id) { return OWM_CONDITIONS[id] || `Unknown (${id})`; }
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
-map = L.map('map', { dragging: true, touchZoom: true }).setView([39.5, -105.5], 7);
+map = L.map('map', { dragging: true, touchZoom: true, attributionControl: false }).setView([39.5, -105.5], 7);
 let tileLayer = L.tileLayer(LIGHT_TILES, {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
   maxZoom: 19
 }).addTo(map);
 
@@ -317,6 +763,17 @@ let geoTimer = null;
 const GEO_DEBOUNCE = 300;
 
 async function geocodeSearch(query) {
+  // Auto-detect US zip code (5 digits or ZIP+4)
+  const zipMatch = query.match(/^(\d{5}(-\d{4})?)$/);
+  if (zipMatch) {
+    // Use the zip-specific endpoint
+    const url = `https://api.openweathermap.org/geo/1.0/zip?zip=${zipMatch[1]},US&appid=${OWM_KEY}`;
+    const data = await fetch(url).then(r => r.json());
+    if (data && data.lat) {
+      return [{ name: data.name || 'Unknown', lat: data.lat, lon: data.lon, country: 'US', state: '' }];
+    }
+    return [];
+  }
   const url = `${GEO_URL}?q=${encodeURIComponent(query)}&limit=5&appid=${OWM_KEY}`;
   const data = await fetch(url).then(r => r.json());
   // Filter to North America only: US, MX, CA
@@ -372,6 +829,8 @@ function setupGeoInput(inputEl) {
     const val = inputEl.value.trim();
     if (val.length < 2) { hideGeoDropdown(inputEl); return; }
     geoTimer = setTimeout(async () => {
+      // Suppress dropdown for zip codes — they geocode directly on Plan Trip
+      if (val.match(/^\d{5}(-\d{4})?$/)) return;
       const results = await geocodeSearch(val);
       showGeoDropdown(inputEl, results, (r) => { cachedResult = r; });
     }, GEO_DEBOUNCE);
@@ -439,6 +898,20 @@ document.getElementById('findMe').addEventListener('click', async function(e) {
 async function geocode(inputEl) {
   const cached = inputEl._getCachedResult();
   if (cached) return cached;
+  // If user typed a zip code (5 digits or ZIP+4), geocode directly without requiring dropdown selection
+  const val = inputEl.value.trim();
+  const zipMatch = val.match(/^\d{5}(-\d{4})?$/);
+  if (zipMatch) {
+    const results = await geocodeSearch(val);
+    if (results.length > 0) {
+      const r = results[0];
+      const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
+      inputEl.value = label;
+      const result = { name: label, lat: r.lat, lon: r.lon, tz: 'auto' };
+      inputEl._setCachedResult(result);
+      return result;
+    }
+  }
   throw new Error(`Please select a location from the dropdown for "${inputEl.placeholder}".`);
 }
 
@@ -453,6 +926,218 @@ async function getRoute(start, end) {
     distanceMi: route.distance / 1609.34,
     durationMin: route.duration / 60,
     coords
+  };
+}
+
+// ── Overpass: Road Metadata ────────────────────────────────────────
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+
+async function getRoadMetadata(route) {
+  if (!route || !route.coords || route.coords.length === 0) return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+  
+  if (route.distanceMi > 450) {
+    console.warn('[OSM] Route too long for stable Overpass processing. Defaulting early.');
+    return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+  }
+  
+  // 1. Sample the route coordinates so we don't exceed URL/query limits
+  // Taking every ~10th or ~20th point is plenty for speed limit sampling
+  const sampleRate = Math.max(1, Math.floor(route.coords.length / 30));
+  const sampledPoints = [];
+  
+  for (let i = 0; i < route.coords.length; i += sampleRate) {
+    sampledPoints.push(route.coords[i]);
+  }
+  // Ensure the destination is included
+  if (sampledPoints[sampledPoints.length - 1] !== route.coords[route.coords.length - 1]) {
+    sampledPoints.push(route.coords[route.coords.length - 1]);
+  }
+
+// 2. Generate the Overpass "around" geometry string: lat1,lon1,lat2,lon2...
+  // Commas must separate every latitude and longitude value cleanly
+  const polylineString = sampledPoints
+    .map(([lat, lon]) => `${Number(lat).toFixed(5)},${Number(lon).toFixed(5)}`)
+    .join(',');
+
+  // 3. Build a precision query. 500 meters buffer around the exact line string.
+  const query = `[out:json][timeout:10];
+    way(around:500,${polylineString})["highway"~"motorway|trunk|primary|secondary|tertiary"]["maxspeed"];
+    out tags center;`;
+
+  const allWays = [];
+
+  try {
+    console.log('Optimized Overpass Around Query executed');
+    const resp = await fetch(OVERPASS_URL, {
+      method: 'POST',
+      body: query
+    });
+    
+    if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+    const data = await resp.json();
+
+    if (data.elements) {
+      for (const e of data.elements) {
+        if (e.type !== 'way') continue;
+        const tags = e.tags || {};
+        let centerLat = e.center ? e.center.lat : null;
+        let centerLon = e.center ? e.center.lon : null;
+
+        if (centerLat && centerLon) {
+          allWays.push({
+            center: [centerLat, centerLon],
+            highway: tags.highway,
+            maxspeed: tags.maxspeed,
+            surface: tags.surface || null
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Precision Overpass API request failed:', err.message);
+    return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+  }
+
+  if (allWays.length === 0) {
+    return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+  }
+
+  // 4. Match closest sampled route points to the returned road metadata
+  const segmentSpeeds = [];
+  const surfaceTypes = {};
+
+  for (const [lat, lon] of sampledPoints) {
+    let bestDist = Infinity, bestWay = null;
+    for (const w of allWays) {
+      const d = Math.abs(w.center[0] - lat) + Math.abs(w.center[1] - lon);
+      if (d < bestDist) { bestDist = d; bestWay = w; }
+    }
+    // Only match if within a reasonable distance (~2km coordinate delta max)
+    if (bestWay && bestDist < 0.02) {
+      let mph = null;
+      const ms = bestWay.maxspeed;
+      if (ms) {
+        const mphMatch = ms.match(/(\d+(?:\.\d+)?)\s*mph/i);
+        const kmhMatch = ms.match(/(\d+(?:\.\d+)?)\s*km\/h/i);
+        const numMatch = ms.match(/^(\d+(?:\.\d+)?)$/);
+        if (mphMatch) mph = parseFloat(mphMatch[1]);
+        else if (kmhMatch) mph = parseFloat(kmhMatch[1]) * 0.621371;
+        else if (numMatch) mph = parseFloat(numMatch[1]);
+      }
+      if (mph) segmentSpeeds.push(mph);
+      if (bestWay.surface) {
+        const surf = bestWay.surface;
+        surfaceTypes[surf] = (surfaceTypes[surf] || 0) + 1;
+      }
+    }
+  }
+
+  let avgSpeed = null;
+  if (segmentSpeeds.length > 0) {
+    avgSpeed = Math.round(segmentSpeeds.reduce((a, b) => a + b, 0) / segmentSpeeds.length);
+  }
+
+  const surfaces = Object.entries(surfaceTypes)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => ({ type, pct: Math.round((count / segmentSpeeds.length) * 100) }));
+
+  return { avgSpeed, surfaces, segmentCount: segmentSpeeds.length };
+}
+
+function buildTimeline(depart, totalHours, waypoints, forecasts, route) {
+  const timeline = [];
+  // Include m=0 (start), then every hour, plus ensure end is included
+  const times = [0];
+  for (let m = 60; m < totalHours * 60; m += 60) times.push(m);
+  if (times[times.length - 1] < totalHours * 60) times.push(totalHours * 60);
+
+  let cumulativeDelayMinutes = 0;
+
+  for (const m of times) {
+    // Base arrival time adjusted by any delays picked up earlier in the drive
+    let arrival = new Date(depart.getTime() + (m + cumulativeDelayMinutes) * 60000);
+
+    const frac = totalHours > 0 ? Math.min(m / 60 / totalHours, 1) : 0;
+    // Find route coordinate at this fraction
+    const coordIdx = Math.min(Math.round(frac * (route.coords.length - 1)), route.coords.length - 1);
+    const latlng = route.coords[coordIdx];
+
+    // Check for new traffic delays at this checkpoint
+    const traffic = calculateTrafficDelay(latlng[0], latlng[1], arrival);
+    if (traffic.delay > 0) {
+      cumulativeDelayMinutes += traffic.delay;
+      // Recalculate arrival time for this specific point to show the delay immediately
+      arrival = new Date(depart.getTime() + (m + cumulativeDelayMinutes) * 60000);
+    }
+
+    // Find nearest waypoint index for weather lookup
+    let wpIdx = 0, minDist = Infinity;
+    for (let w = 0; w < waypoints.length; w++) {
+      const d = Math.abs(waypoints[w].lat - latlng[0]) + Math.abs(waypoints[w].lon - latlng[1]);
+      if (d < minDist) { minDist = d; wpIdx = w; }
+    }
+    const wx = pickHourly(forecasts[wpIdx].steps, arrival);
+
+    timeline.push({
+      hour: (m + cumulativeDelayMinutes) / 60,
+      arrival,
+      frac,
+      wx,
+      wpIdx,
+      lat: latlng[0],
+      lon: latlng[1],
+      trafficZone: traffic.zone,
+      trafficDelay: traffic.delay
+    });
+  }
+
+  // Update total duration stored in the global state so ETA updates accurately
+  route.durationMinWithTraffic = (totalHours * 60) + cumulativeDelayMinutes;
+
+  return timeline;
+}
+
+// ── Departure Time Slider ──────────────────────────────────────────
+function initDepartureSlider() {
+  const container = document.getElementById('departureSliderContainer');
+  if (!container || !_tripData) return;
+
+  // Only show slider if we have stored data
+  container.style.display = 'block';
+
+  const slider = document.getElementById('departureSlider');
+  const label = document.getElementById('departureSliderLabel');
+
+  // Slider: -120 to +120 minutes, step 15
+  slider.min = -120;
+  slider.max = 120;
+  slider.step = 15;
+  slider.value = 0;
+
+  label.textContent = '±0 min';
+
+  // Use change event (fires on release) instead of input to avoid
+  // re-rendering destroying the slider mid-drag
+  slider.onchange = function() {
+    const offsetMin = parseInt(this.value);
+    label.textContent = (offsetMin >= 0 ? '+' : '') + offsetMin + ' min';
+
+    // Clear any highlight since timeline is being rebuilt
+    document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
+
+    // Rebuild timeline with shifted departure — no API calls needed
+    const originalDepart = new Date(document.getElementById('dateInput').value + 'T' + document.getElementById('timeInput').value);
+    const shiftedDepart = new Date(originalDepart.getTime() + offsetMin * 60000);
+    const { forecasts, waypoints, route, totalHours, roadMeta } = _tripData;
+    const timeline = buildTimeline(shiftedDepart, totalHours, waypoints, forecasts, route);
+
+    // Update timeline + chart only (not full re-render that destroys slider)
+    _currentTimeline = timeline;
+    const start = { name: document.getElementById('startInput').value };
+    const end = { name: document.getElementById('endInput').value };
+    const speed = roadMeta?.avgSpeed || 75;
+    renderTimelineList(start, end, route, timeline, shiftedDepart, speed, roadMeta);
+    renderChart(timeline);
   };
 }
 
@@ -487,7 +1172,7 @@ function pickHourly(steps, targetDate) {
     const dt = Math.abs(steps[i].time - targetDate);
     if (dt < bestDt) { bestDt = dt; best = i; }
   }
-  if (bestDt > 3600000) return null; // >1h off
+  if (bestDt > 7200000) return null; // >2h off
   const s = steps[best];
   return {
     time: s.time,
@@ -511,7 +1196,6 @@ async function planTrip() {
   const endVal = document.getElementById('endInput').value.trim();
   const date = document.getElementById('dateInput').value;
   const time = document.getElementById('timeInput').value;
-  const speed = parseFloat(document.getElementById('speedInput').value) || 75;
 
   if (!startVal || !endVal || !date || !time) {
     showError('Please fill in all fields.');
@@ -529,6 +1213,7 @@ async function planTrip() {
   const goBtn = document.getElementById('goBtn');
   goBtn.disabled = true;
   goBtn.textContent = 'Planning...';
+  document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
   showLoading('Geocoding locations...');
 
   try {
@@ -559,22 +1244,25 @@ async function planTrip() {
       forecasts.push(fc);
     }
 
-    // Step 5: Build timeline (OWM gives 3-hour steps, so we interpolate for smoother charts)
-    const depart = new Date(`${date}T${time}`);
+    // Step 4b: Fetch road metadata from Overpass (speed limits, surface)
+    showLoading('Fetching road info...');
+    const roadMeta = await getRoadMetadata(route);
+
+    // Store for departure slider (no re-fetch needed)
+    _tripData = { forecasts, waypoints, route, totalHours: route.durationMin / 60, roadMeta };
+
+    // Speed from OSM data — fall back to 75 mph if unavailable
+    const speed = roadMeta?.avgSpeed || 75;
+
+    // Step 5: Build timeline — one entry per hour, including start (m=0)
     const totalHours = route.durationMin / 60;
-    const timeline = [];
-    for (let m = 60; m <= totalHours * 60 + 30; m += 60) {
-      const arrival = new Date(depart.getTime() + m * 60000);
-      const frac = Math.min(m / 60 / totalHours, 1);
-      const wpIdx = Math.min(Math.floor(frac * (waypoints.length - 1)), waypoints.length - 1);
-      const wx = pickHourly(forecasts[wpIdx].steps, arrival);
-      timeline.push({ hour: m / 60, arrival, frac, wx, wpIdx });
-    }
+    const timeline = buildTimeline(depart, totalHours, waypoints, forecasts, route);
 
     // Step 6: Render
-    renderMap(start, end, route, waypoints);
-    renderResults(start, end, route, timeline, depart, speed, forecasts);
+    renderMap(start, end, route, waypoints, timeline);
+    renderResults(start, end, route, timeline, depart, speed, forecasts, roadMeta);
     renderChart(timeline);
+    initDepartureSlider();
 
   } catch (err) {
     showError(err.message);
@@ -582,10 +1270,12 @@ async function planTrip() {
   } finally {
     goBtn.disabled = false;
     goBtn.textContent = 'Plan Trip';
-    if (window.innerWidth <= 900) {
-      document.querySelector('.form-section').classList.add('collapsed');
-      if (map) setTimeout(() => map.invalidateSize(), 100);
-    }
+    
+    // Smooth container shift ensuring display bounds remain uninhibited
+    const fSection = document.querySelector('.form-section');
+    if (fSection) fSection.classList.add('collapsed');
+    
+    if (map) setTimeout(() => map.invalidateSize(), 100);
   }
 }
 
@@ -598,6 +1288,21 @@ const OVERLAY_LAYERS = {
   pressure: { name: 'Pressure', layer: 'pressure_new', opacity: 0.5 },
   visibility: { name: 'Visibility', layer: 'visibility_new', opacity: 0.6 }
 };
+
+function createOverlayLayer(type, opacity) {
+  const info = OVERLAY_LAYERS[type];
+  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
+  const layer = L.tileLayer(url, {
+    opacity: opacity,
+    maxZoom: 19
+  }).addTo(map);
+  // Tint overlay tiles for better visibility on light map background
+  if (!document.body.classList.contains('dark')) {
+    const container = layer.getContainer();
+    if (container) container.style.filter = 'saturate(1.4) contrast(1.2)';
+  }
+  return layer;
+}
 
 function setWeatherOverlay(type) {
   // Remove existing overlay
@@ -619,14 +1324,7 @@ function setWeatherOverlay(type) {
   // Use saved per-layer opacity or fall back to default
   const savedOpacities = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
   const opacity = savedOpacities[type] ?? OVERLAY_LAYERS[type].opacity;
-  // Add overlay tile layer
-  const info = OVERLAY_LAYERS[type];
-  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
-  weatherOverlayLayer = L.tileLayer(url, {
-    opacity: opacity,
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
-  }).addTo(map);
+  weatherOverlayLayer = createOverlayLayer(type, opacity);
   // Bring overlay to front (above base tiles, below route)
   if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
   WEATHER_OVERLAY = type;
@@ -640,36 +1338,48 @@ function refreshWeatherOverlay() {
   if (weatherOverlayLayer) {
     map.removeLayer(weatherOverlayLayer);
   }
-  const info = OVERLAY_LAYERS[WEATHER_OVERLAY];
   const savedOpacities = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
-  const opacity = savedOpacities[WEATHER_OVERLAY] ?? info.opacity;
-  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
-  weatherOverlayLayer = L.tileLayer(url, {
-    opacity: opacity,
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
-  }).addTo(map);
+  const opacity = savedOpacities[WEATHER_OVERLAY] ?? OVERLAY_LAYERS[WEATHER_OVERLAY].opacity;
+  weatherOverlayLayer = createOverlayLayer(WEATHER_OVERLAY, opacity);
   if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
 }
 
 // ── Map Rendering ──────────────────────────────────────────────────
-function renderMap(start, end, route, waypoints) {
+function renderMap(start, end, route, waypoints, timeline) {
   if (routeLayer) map.removeLayer(routeLayer);
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 
-  routeLayer = L.polyline(route.coords, { color: '#b45309', weight: 4, opacity: 0.8 }).addTo(map);
+  routeLayer = L.polyline(route.coords, { color: 'var(--accent)', weight: 4, opacity: 0.8 }).addTo(map);
 
-  const startPt = route.coords[0];
-  const endPt = route.coords[route.coords.length - 1];
-  markers.push(L.circleMarker(startPt, { radius: 8, fillColor: '#2e7d32', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup(start.name));
-  markers.push(L.circleMarker(endPt, { radius: 8, fillColor: '#c62828', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup(end.name));
-
-  // Add waypoint markers
-  for (let i = 1; i < waypoints.length - 1; i++) {
-    const wp = waypoints[i];
-    markers.push(L.circleMarker([wp.lat, wp.lon], { radius: 5, fillColor: '#b45309', color: '#fff', weight: 1.5, fillOpacity: 0.8 }).addTo(map));
-  }
+  // Timeline-driven markers: one dot per timeline entry, at route coords
+  const totalEntries = timeline.length;
+  timeline.forEach((t, i) => {
+    const isFirst = i === 0;
+    const isLast = i === totalEntries - 1;
+    const color = isFirst ? '#2e7d32' : isLast ? '#c62828' : '#b45309';
+    const radius = isFirst || isLast ? 8 : 5;
+    const marker = L.circleMarker([t.lat, t.lon], {
+      radius,
+      fillColor: color,
+      color: '#fff',
+      weight: isFirst || isLast ? 2 : 1.5,
+      fillOpacity: 1
+    }).addTo(map);
+    if (isFirst) marker.bindPopup(start.name);
+    if (isLast) marker.bindPopup(end.name);
+    marker.on('click', () => {
+      // Remove any existing highlight
+      document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
+      // Highlight the corresponding timeline item
+      const target = document.querySelector(`.timeline-item[data-idx="${i}"]`);
+      if (target) {
+        target.classList.add('highlight');
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+    markers.push(marker);
+  });
 
   map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
 
@@ -681,17 +1391,46 @@ function renderMap(start, end, route, waypoints) {
 }
 
 // ── Results Rendering ──────────────────────────────────────────────
-function renderResults(start, end, route, timeline, depart, speed, forecasts) {
+function renderResults(start, end, route, timeline, depart, speed, forecasts, roadMeta) {
   const dist = route.distanceMi;
-  const dur = route.durationMin;
+  const dur = route.durationMinWithTraffic || route.durationMin;
   const eta = new Date(depart.getTime() + dur * 60000);
 
+  let warningHtml = '';
+  if (dist > 450) {
+    warningHtml = `
+      <div class="warning-badge">
+        <span>⚠️</span>
+        <div>
+          <strong>Long Route Warning:</strong> Because this trip exceeds 450 miles, accuracy of estimated time to waypoints may drop.
+        </div>
+      </div>
+    `;
+  }
+
   let html = `
+	${warningHtml}
     <div class="stats-grid">
       <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
-      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
+      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m${route.durationMinWithTraffic ? ' <span style="font-size:0.7rem;color:var(--warn)">(+'+Math.round(route.durationMinWithTraffic - route.durationMin)+'m traffic)</span>' : ''}</div><div class="label">Drive Time</div></div>
       <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+      <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+    </div>
+
+    <div id="departureSliderContainer" style="display:none;margin-bottom:16px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Departure Time</label>
+        <span id="departureSliderLabel" style="font-size:0.85rem;font-weight:600;color:var(--accent);font-family:'SF Mono','Fira Code',monospace">±0 min</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:0.75rem;color:var(--text-dim);min-width:32px;text-align:right">−120</span>
+        <input type="range" id="departureSlider" min="-120" max="120" step="15" value="0" style="flex:1;accent-color:var(--accent);cursor:pointer">
+        <span style="font-size:0.75rem;color:var(--text-dim);min-width:32px">+120</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:0.65rem;color:var(--text-dim)">2h earlier</span>
+        <span style="font-size:0.65rem;color:var(--text-dim)">2h later</span>
+      </div>
     </div>
 
     <div class="timeline">`;
@@ -700,18 +1439,21 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts) {
   const allEntries = [];
 
   // Build timeline weather entries
-  for (const t of timeline) {
+  for (let i = 0; i < timeline.length; i++) {
+    const t = timeline[i];
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const fracStr = `${Math.round(t.frac*100)}%`;
+    const trafficBadge = t.trafficZone ? `<span style="font-size:0.65rem;background:var(--warn);color:#fff;padding:1px 5px;border-radius:2px;margin-left:4px;white-space:nowrap">&#128663; ${t.trafficZone} +${t.trafficDelay}m</span>` : '';
     allEntries.push({
       frac: t.frac,
+      idx: i,
       html: `
-      <div class="timeline-item">
+      <div class="timeline-item" data-idx="${i}">
         <span class="timeline-time">${timeStr}</span>
         <span class="timeline-loc">${fracStr}</span>
         <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
-        <span class="timeline-cond">${t.wx.cond}</span>
+        <span class="timeline-cond">${t.wx.cond}${trafficBadge}</span>
         <span class="timeline-wind">${t.wx.wind.toFixed(0)} ${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'}<br>${t.wx.rain}%</span>
       </div>`
     });
@@ -722,6 +1464,51 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts) {
 
   html += `</div>`;
   document.getElementById('resultsContent').innerHTML = html;
+}
+
+// ── Timeline List (slider-safe, doesn't touch slider DOM) ─────────
+function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta) {
+  const dur = route.durationMinWithTraffic || route.durationMin;
+  const eta = new Date(depart.getTime() + dur * 60000);
+
+  // Update stats grid (ETA changes with departure shift)
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    statsGrid.innerHTML = `
+      <div class="stat-card"><div class="value">${route.distanceMi.toFixed(0)} mi</div><div class="label">Distance</div></div>
+      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m${route.durationMinWithTraffic ? ' <span style="font-size:0.7rem;color:var(--warn)">(+'+Math.round(route.durationMinWithTraffic - route.durationMin)+'m traffic)</span>' : ''}</div><div class="label">Drive Time</div></div>
+      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
+      <div class="stat-card"><div class="value" style="font-size:1rem">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+    `;
+  }
+
+  // Build timeline entries
+  const allEntries = [];
+  for (let i = 0; i < timeline.length; i++) {
+    const t = timeline[i];
+    if (!t.wx) continue;
+    const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const fracStr = `${Math.round(t.frac*100)}%`;
+    const trafficBadge = t.trafficZone ? `<span style="font-size:0.65rem;background:var(--warn);color:#fff;padding:1px 5px;border-radius:2px;margin-left:4px;white-space:nowrap">&#128663; ${t.trafficZone} +${t.trafficDelay}m</span>` : '';
+    allEntries.push({
+      frac: t.frac,
+      idx: i,
+      html: `
+      <div class="timeline-item" data-idx="${i}">
+        <span class="timeline-time">${timeStr}</span>
+        <span class="timeline-loc">${fracStr}</span>
+        <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
+        <span class="timeline-cond">${t.wx.cond}${trafficBadge}</span>
+        <span class="timeline-wind">${t.wx.wind.toFixed(0)} ${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'}<br>${t.wx.rain}%</span>
+      </div>`
+    });
+  }
+  allEntries.sort((a, b) => a.frac - b.frac);
+
+  const timelineEl = document.querySelector('.results-section .timeline');
+  if (timelineEl) {
+    timelineEl.innerHTML = allEntries.map(e => e.html).join('');
+  }
 }
 
 // ── Chart ──────────────────────────────────────────────────────────
@@ -738,7 +1525,7 @@ function renderChart(timeline) {
   ctx.id = 'weatherChart';
   const container = document.createElement('div');
   container.className = 'chart-container';
-  container.innerHTML = '<h2 style="margin-bottom:12px">Temperature & Rain</h2>';
+  container.innerHTML = '<h2 style="margin-bottom:12px">Temperature & Precipitation</h2>';
   container.appendChild(ctx);
 
   // Insert chart at top of results (before timeline)
@@ -762,7 +1549,7 @@ function renderChart(timeline) {
           yAxisID: 'y'
         },
         {
-          label: 'Rain %',
+          label: 'Precip %',
           data: rain,
           borderColor: '#2e7d32',
           backgroundColor: 'rgba(46,125,50,0.08)',
@@ -773,7 +1560,7 @@ function renderChart(timeline) {
         {
           label: `Wind (${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'})`,
           data: wind,
-          borderColor: '#e65100',
+          borderColor: '#1376a6',
           borderDash: [4, 4],
           tension: 0.3,
           pointRadius: 0,
@@ -791,7 +1578,7 @@ function renderChart(timeline) {
       scales: {
         x: { ticks: { color: '#7a736b', font: { size: 10 } }, grid: { color: 'rgba(226,221,214,0.5)' } },
         y: { type: 'linear', position: 'left', ticks: { color: '#b45309', font: { size: 10 }, callback: v => v + '°' }, grid: { color: 'rgba(226,221,214,0.5)' }, title: { display: true, text: 'Temp °F', color: '#b45309', font: { size: 11 } } },
-        y1: { type: 'linear', position: 'right', min: 0, max: 100, ticks: { color: '#2e7d32', font: { size: 10 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Rain %', color: '#2e7d32', font: { size: 11 } } }
+        y1: { type: 'linear', position: 'right', min: 0, max: 100, ticks: { color: '#2e7d32', font: { size: 10 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Precip %', color: '#2e7d32', font: { size: 11 } } }
       }
     }
   });
