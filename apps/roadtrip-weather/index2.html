@@ -944,12 +944,12 @@ function renderResults(start, end, route, timeline, depart, speed, forecasts, ro
   const eta = new Date(depart.getTime() + dur * 60000);
 
   let warningHtml = '';
-  if (dist > 400) {
+  if (dist > 450) {
     warningHtml = `
       <div class="warning-badge">
         <span>⚠️</span>
         <div>
-          <strong>Long Route Warning:</strong> Because this trip exceeds 400 miles, speed-limit data accuracy may drop. Localized weather arrival times will be estimated using standard baseline speeds.
+          <strong>Long Route Warning:</strong> Because this trip exceeds 450 miles, speed-limit data accuracy may drop. Localized weather arrival times will be estimated using standard baseline speeds.
         </div>
       </div>
     `;
