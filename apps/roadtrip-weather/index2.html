@@ -506,16 +506,15 @@ async function getRoadMetadata(route) {
     sampledPoints.push(route.coords[route.coords.length - 1]);
   }
 
-// 2. Generate the Overpass "around" geometry string: lat1 lon1 lat2 lon2...
+// 2. Generate the Overpass "around" geometry string: lat1,lon1,lat2,lon2...
+  // Commas must separate every latitude and longitude value cleanly
   const polylineString = sampledPoints
-    .map(([lat, lon]) => `${Number(lat).toFixed(5)} ${Number(lon).toFixed(5)}`)
-    .join(' ')
-    .trim();
+    .map(([lat, lon]) => `${Number(lat).toFixed(5)},${Number(lon).toFixed(5)}`)
+    .join(',');
 
-
-  // 3. Build a precision query. 500 meters buffer around the exact line.
+  // 3. Build a precision query. 500 meters buffer around the exact line string.
   const query = `[out:json][timeout:10];
-    way(around:500, ${polylineString})["highway"~"motorway|trunk|primary|secondary|tertiary"]["maxspeed"];
+    way(around:500,${polylineString})["highway"~"motorway|trunk|primary|secondary|tertiary"]["maxspeed"];
     out tags center;`;
 
   const allWays = [];
