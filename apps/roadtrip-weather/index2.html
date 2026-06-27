@@ -525,11 +525,8 @@ async function getRoadMetadata(route) {
         body: `data=${encodeURIComponent(query)}`
       });
       console.log('Overpass response status:', resp.status);
-      if (!resp.ok) {
-        alert(`Overpass API returned ${resp.status}: ${resp.statusText}\n\nThe road speed/surface data could not be fetched. The app will fall back to default speed.`);
-        continue;
-      }
       const data = await resp.json();
+      console.log('Elements returned:', data.elements ? data.elements.length : 0);
       if (!data.elements || data.elements.length === 0) {
         alert(`Overpass returned no data for a route segment.\n\nBBox: ${bbox}\n\nThe app will fall back to default speed.`);
         continue;
@@ -559,11 +556,14 @@ async function getRoadMetadata(route) {
           surface: tags.surface || null
         });
       }
+      console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
     }
     catch (err) {
       alert(`Overpass API request failed:\n${err.message}\n\nThe road speed/surface data could not be fetched. The app will fall back to default speed.`);
     }
   }
+
+  console.log('Total allWays collected:', allWays.length);
 
   if (allWays.length === 0) {
     alert(`Could not find any road speed/surface data along your route.\n\nThis may be because:\n• The route is in an area without OpenStreetMap coverage\n• The Overpass API is rate-limited or unavailable\n• The route is too long\n\nThe app will fall back to the default speed of 75 mph.`);
