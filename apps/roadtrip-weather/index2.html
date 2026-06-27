@@ -521,8 +521,7 @@ async function getRoadMetadata(route) {
       console.log('Overpass query:', query);
       const resp = await fetch(OVERPASS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `data=${encodeURIComponent(query)}`
+        body: query
       });
       console.log('Overpass response status:', resp.status);
       const data = await resp.json();
