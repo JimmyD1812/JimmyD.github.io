@@ -536,40 +536,43 @@ async function getRoadMetadata(route) {
         continue;
       }
 
-      // With out geom body, each way has .geometry with [lat, lon] pairs
+	// Processes the elements returned using 'out tags center'
       let waysWithTags = 0;
       for (const e of data.elements) {
-        if (e.type !== 'way' || !e.geometry) continue;
+        if (e.type !== 'way') continue;
         const tags = e.tags || {};
         if (!tags.maxspeed && !tags.surface) continue;
-        waysWithTags++;
-        // Compute center from geometry (format: [[lat,lon], ...] or [{lat,lon}, ...])
-        let slat = 0, slon = 0;
-        const geom = e.geometry;
-        if (geom.length === 0) continue;
-        // Detect format
-        if (Array.isArray(geom[0])) {
-          // [[lat,lon], ...]
-          for (const [lat, lon] of geom) { slat += lat; slon += lon; }
-          const cnt = geom.length;
-          if (cnt === 0) continue;
-          allWays.push({ center: [slat / cnt, slon / cnt], highway: tags.highway, maxspeed: tags.maxspeed, surface: tags.surface || null });
-        } else if (geom[0].lat !== undefined) {
-          // [{lat, lon}, ...]
-          for (const pt of geom) { slat += pt.lat; slon += pt.lon; }
-          const cnt = geom.length;
-          if (cnt === 0) continue;
-          allWays.push({ center: [slat / cnt, slon / cnt], highway: tags.highway, maxspeed: tags.maxspeed, surface: tags.surface || null });
-        } else {
-          console.log('Unknown geometry format:', JSON.stringify(geom[0]));
+        
+        // Extract center coordinates provided by 'out tags center'
+        let centerLat = null, centerLon = null;
+        if (e.center && e.center.lat !== undefined) {
+          centerLat = e.center.lat;
+          centerLon = e.center.lon;
+        } else if (e.lat !== undefined && e.lon !== undefined) {
+          centerLat = e.lat;
+          centerLon = e.lon;
+        } else if (e.geometry && e.geometry.length > 0) {
+          // Fallback just in case geom body is ever used again
+          const geom = e.geometry;
+          if (Array.isArray(geom[0])) {
+            centerLat = geom.reduce((sum, pt) => sum + pt[0], 0) / geom.length;
+            centerLon = geom.reduce((sum, pt) => sum + pt[1], 0) / geom.length;
+          } else {
+            centerLat = geom.reduce((sum, pt) => sum + pt.lat, 0) / geom.length;
+            centerLon = geom.reduce((sum, pt) => sum + pt.lon, 0) / geom.length;
+          }
         }
+
+        if (centerLat === null || centerLon === null) continue;
+
+        waysWithTags++;
+        allWays.push({ 
+          center: [centerLat, centerLon], 
+          highway: tags.highway, 
+          maxspeed: tags.maxspeed, 
+          surface: tags.surface || null 
+        });
       }
-      console.log(`Strip ${bbox}: ${waysWithTags} ways with tags, ${allWays.length} total collected`);
-    }
-    catch (err) {
-      console.warn('Overpass API request failed:', err.message);
-    }
-  }
 
   console.log('Total allWays collected:', allWays.length);
 
