@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TCGplayer vs Mana Pool Inventory Sync Engine</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- PapaParse CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom scrollbar for dark mode tables */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased">
+
+  <!-- Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <i data-lucide="layers" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-none text-slate-100">MTG Inventory Sync</h1>
+          <p class="text-xs text-slate-400 mt-1">TCGplayer ↔ Mana Pool Discrepancy Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="openIgnoredModalBtn" class="inline-flex items-center px-3 py-1.5 border border-slate-700 hover:border-slate-600 rounded-lg text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700/80 transition">
+          <i data-lucide="eye-off" class="w-4 h-4 mr-2 text-slate-400"></i>
+          Ignored List (<span id="ignoredCountBadge">0</span>)
+        </button>
+        <button id="resetAppBtn" class="inline-flex items-center px-3 py-1.5 border border-red-900/40 hover:border-red-800 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i>
+          Reset Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+
+    <!-- Upload Section -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- TCGplayer Dropzone -->
+      <div id="tcgDropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/80 bg-slate-900/50 hover:bg-slate-900/80 rounded-xl p-6 transition duration-200 cursor-pointer text-center relative group flex flex-col justify-center items-center min-h-[180px]">
+        <input type="file" id="tcgFileInput" accept=".csv" class="hidden" />
+        <div id="tcgEmptyState" class="space-y-3">
+          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-indigo-950 group-hover:text-indigo-400 text-slate-400 flex items-center justify-center mx-auto transition">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-200">Upload TCGplayer Export CSV</p>
+            <p class="text-xs text-slate-400 mt-1">Drag and drop file or click to browse</p>
+          </div>
+        </div>
+        <div id="tcgLoadedState" class="hidden space-y-2 text-left w-full">
+          <div class="flex items-center justify-between bg-indigo-950/40 border border-indigo-800/50 rounded-lg p-3">
+            <div class="flex items-center space-x-3 overflow-hidden">
+              <i data-lucide="file-check-2" class="w-6 h-6 text-indigo-400 shrink-0"></i>
+              <div class="truncate">
+                <p id="tcgFileName" class="text-sm font-medium text-indigo-200 truncate">tcgplayer.csv</p>
+                <p id="tcgFileMeta" class="text-xs text-slate-400">0 rows parsed</p>
+              </div>
+            </div>
+            <button id="removeTcgBtn" class="text-slate-400 hover:text-red-400 p-1 transition" title="Remove file">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mana Pool Dropzone -->
+      <div id="manaDropzone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500/80 bg-slate-900/50 hover:bg-slate-900/80 rounded-xl p-6 transition duration-200 cursor-pointer text-center relative group flex flex-col justify-center items-center min-h-[180px]">
+        <input type="file" id="manaFileInput" accept=".csv" class="hidden" />
+        <div id="manaEmptyState" class="space-y-3">
+          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-cyan-950 group-hover:text-cyan-400 text-slate-400 flex items-center justify-center mx-auto transition">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-200">Upload Mana Pool Export CSV</p>
+            <p class="text-xs text-slate-400 mt-1">Drag and drop file or click to browse</p>
+          </div>
+        </div>
+        <div id="manaLoadedState" class="hidden space-y-2 text-left w-full">
+          <div class="flex items-center justify-between bg-cyan-950/40 border border-cyan-800/50 rounded-lg p-3">
+            <div class="flex items-center space-x-3 overflow-hidden">
+              <i data-lucide="file-check-2" class="w-6 h-6 text-cyan-400 shrink-0"></i>
+              <div class="truncate">
+                <p id="manaFileName" class="text-sm font-medium text-cyan-200 truncate">manapool.csv</p>
+                <p id="manaFileMeta" class="text-xs text-slate-400">0 rows parsed</p>
+              </div>
+            </div>
+            <button id="removeManaBtn" class="text-slate-400 hover:text-red-400 p-1 transition" title="Remove file">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls & Settings Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="flex items-center space-x-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="filterNonMtgToggle" class="sr-only peer" checked>
+          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+          <span class="ml-3 text-sm font-medium text-slate-300">Magic: The Gathering Only</span>
+        </label>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button id="exportManaPoolUpdatesBtn" disabled class="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-lg transition shadow-sm">
+          <i data-lucide="download" class="w-4 h-4 mr-2 text-cyan-400"></i>
+          Export Mana Pool Fix CSV
+        </button>
+        <button id="exportTcgUpdatesBtn" disabled class="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-lg transition shadow-sm">
+          <i data-lucide="download" class="w-4 h-4 mr-2 text-indigo-400"></i>
+          Export TCGplayer Fix CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Items</span>
+          <i data-lucide="boxes" class="w-4 h-4 text-slate-400"></i>
+        </div>
+        <p id="kpiTotalItems" class="text-2xl font-bold text-slate-100 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-amber-400/90 uppercase tracking-wider">Qty Mismatch</span>
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+        </div>
+        <p id="kpiQtyMismatch" class="text-2xl font-bold text-amber-400 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-cyan-400/90 uppercase tracking-wider">Missing Mana Pool</span>
+          <i data-lucide="file-minus-2" class="w-4 h-4 text-cyan-400"></i>
+        </div>
+        <p id="kpiMissingMana" class="text-2xl font-bold text-cyan-400 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-indigo-400/90 uppercase tracking-wider">Missing TCGplayer</span>
+          <i data-lucide="file-minus-2" class="w-4 h-4 text-indigo-400"></i>
+        </div>
+        <p id="kpiMissingTcg" class="text-2xl font-bold text-indigo-400 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 col-span-2 md:col-span-1">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ignored Items</span>
+          <i data-lucide="eye-off" class="w-4 h-4 text-slate-400"></i>
+        </div>
+        <p id="kpiTotalIgnored" class="text-2xl font-bold text-slate-400 mt-2">0</p>
+      </div>
+    </section>
+
+    <!-- Discrepancy Table Section -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col flex-1 shadow-xl">
+      
+      <!-- Table Header Filters & Search -->
+      <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/80">
+        
+        <!-- Filter Tabs -->
+        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 w-full md:w-auto overflow-x-auto">
+          <button data-filter="all" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-200 bg-slate-800 shadow transition whitespace-nowrap">
+            All Discrepancies (<span id="countAll">0</span>)
+          </button>
+          <button data-filter="mismatch" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+            Qty Mismatch (<span id="countMismatch">0</span>)
+          </button>
+          <button data-filter="missing_mana" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+            Missing Mana Pool (<span id="countMissingMana">0</span>)
+          </button>
+          <button data-filter="missing_tcg" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
+            Missing TCGplayer (<span id="countMissingTcg">0</span>)
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full md:w-72">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="tableSearchInput" placeholder="Search card name or set..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:border-indigo-500 transition">
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="overflow-x-auto flex-1">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-semibold tracking-wider uppercase">
+              <th class="py-3 px-4">Card Name</th>
+              <th class="py-3 px-4">Set</th>
+              <th class="py-3 px-4">Num</th>
+              <th class="py-3 px-4">Cond / Finish</th>
+              <th class="py-3 px-4 text-center">TCG Qty</th>
+              <th class="py-3 px-4 text-center">Mana Qty</th>
+              <th class="py-3 px-4 text-center">Delta</th>
+              <th class="py-3 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="discrepancyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+            <!-- Table rows populated dynamically -->
+            <tr>
+              <td colspan="8" class="py-12 text-center text-slate-500">
+                <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 stroke-1"></i>
+                Upload both TCGplayer and Mana Pool CSV exports to run discrepancy check.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal: Ignored Items Management -->
+  <div id="ignoredModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="eye-off" class="w-5 h-5 text-indigo-400"></i>
+          <h2 class="font-bold text-slate-100">Ignored Cards Engine Rules</h2>
+        </div>
+        <button id="closeIgnoredModalBtn" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="p-4 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400">
+        <span>Cards in this list will be ignored during discrepancy checks.</span>
+        <button id="clearAllIgnoredBtn" class="text-red-400 hover:text-red-300 font-medium">Clear All</button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1">
+        <ul id="ignoredListItems" class="space-y-2 text-xs divide-y divide-slate-800">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 text-right">
+        <button id="doneIgnoredModalBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- STATE MANAGEMENT ---
+    const STATE = {
+      tcgRaw: [],
+      manaRaw: [],
+      tcgMap: new Map(),
+      manaMap: new Map(),
+      discrepancies: [],
+      filteredDiscrepancies: [],
+      ignoredKeys: new Set(JSON.parse(localStorage.getItem('mtg_ignored_keys') || '[]')),
+      currentFilter: 'all',
+      searchQuery: '',
+      filterMTGOnly: true
+    };
+
+    // --- DOM ELEMENTS ---
+    const DOM = {
+      tcgDropzone: document.getElementById('tcgDropzone'),
+      tcgFileInput: document.getElementById('tcgFileInput'),
+      tcgEmptyState: document.getElementById('tcgEmptyState'),
+      tcgLoadedState: document.getElementById('tcgLoadedState'),
+      tcgFileName: document.getElementById('tcgFileName'),
+      tcgFileMeta: document.getElementById('tcgFileMeta'),
+      removeTcgBtn: document.getElementById('removeTcgBtn'),
+
+      manaDropzone: document.getElementById('manaDropzone'),
+      manaFileInput: document.getElementById('manaFileInput'),
+      manaEmptyState: document.getElementById('manaEmptyState'),
+      manaLoadedState: document.getElementById('manaLoadedState'),
+      manaFileName: document.getElementById('manaFileName'),
+      manaFileMeta: document.getElementById('manaFileMeta'),
+      removeManaBtn: document.getElementById('removeManaBtn'),
+
+      filterNonMtgToggle: document.getElementById('filterNonMtgToggle'),
+      exportManaPoolUpdatesBtn: document.getElementById('exportManaPoolUpdatesBtn'),
+      exportTcgUpdatesBtn: document.getElementById('exportTcgUpdatesBtn'),
+
+      kpiTotalItems: document.getElementById('kpiTotalItems'),
+      kpiQtyMismatch: document.getElementById('kpiQtyMismatch'),
+      kpiMissingMana: document.getElementById('kpiMissingMana'),
+      kpiMissingTcg: document.getElementById('kpiMissingTcg'),
+      kpiTotalIgnored: document.getElementById('kpiTotalIgnored'),
+
+      tableBody: document.getElementById('discrepancyTableBody'),
+      searchInput: document.getElementById('tableSearchInput'),
+      filterTabs: document.querySelectorAll('.filter-tab'),
+
+      countAll: document.getElementById('countAll'),
+      countMismatch: document.getElementById('countMismatch'),
+      countMissingMana: document.getElementById('countMissingMana'),
+      countMissingTcg: document.getElementById('countMissingTcg'),
+
+      ignoredModal: document.getElementById('ignoredModal'),
+      openIgnoredModalBtn: document.getElementById('openIgnoredModalBtn'),
+      closeIgnoredModalBtn: document.getElementById('closeIgnoredModalBtn'),
+      doneIgnoredModalBtn: document.getElementById('doneIgnoredModalBtn'),
+      ignoredListItems: document.getElementById('ignoredListItems'),
+      ignoredCountBadge: document.getElementById('ignoredCountBadge'),
+      clearAllIgnoredBtn: document.getElementById('clearAllIgnoredBtn'),
+      resetAppBtn: document.getElementById('resetAppBtn')
+    };
+
+    // --- NORMALIZATION HELPER FUNCTIONS ---
+    function normalizeCardName(name) {
+      if (!name) return '';
+      return name
+        .toLowerCase()
+        .replace(/\(.*\)/g, '') // Remove parenthetical notes
+        .replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
+    }
+
+    function normalizeCollectorNumber(num) {
+      if (!num) return '';
+      let clean = String(num).trim().toLowerCase();
+      // If number is like "114/204", strip total count extension
+      if (clean.includes('/')) {
+        clean = clean.split('/')[0];
+      }
+      return clean.replace(/^0+/, ''); // strip leading zeros
+    }
+
+    function normalizeCondition(cond) {
+      if (!cond) return 'NM';
+      const c = cond.toUpperCase().trim();
+      if (c.includes('NEAR MINT') || c === 'NM') return 'NM';
+      if (c.includes('LIGHTLY PLAYED') || c === 'LP') return 'LP';
+      if (c.includes('MODERATELY PLAYED') || c === 'MP') return 'MP';
+      if (c.includes('HEAVILY PLAYED') || c === 'HP') return 'HP';
+      if (c.includes('DAMAGED') || c === 'DMG') return 'DMG';
+      return 'NM';
+    }
+
+    function makeCompositeKey(name, number, condition, finish = 'NF') {
+      const normName = normalizeCardName(name);
+      const normNum = normalizeCollectorNumber(number);
+      const normCond = normalizeCondition(condition);
+      return `${normName}||${normNum}||${normCond}||${finish}`;
+    }
+
+    // --- FILE PARSING ENGINE ---
+    function initFileUploads() {
+      // TCGplayer Upload Setup
+      DOM.tcgDropzone.addEventListener('click', () => DOM.tcgFileInput.click());
+      DOM.tcgFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'tcg'));
+      setupDragAndDrop(DOM.tcgDropzone, (file) => handleFileSelect(file, 'tcg'));
+
+      // Mana Pool Upload Setup
+      DOM.manaDropzone.addEventListener('click', () => DOM.manaFileInput.click());
+      DOM.manaFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'mana'));
+      setupDragAndDrop(DOM.manaDropzone, (file) => handleFileSelect(file, 'mana'));
+
+      DOM.removeTcgBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        STATE.tcgRaw = [];
+        STATE.tcgMap.clear();
+        DOM.tcgFileInput.value = '';
+        DOM.tcgEmptyState.classList.remove('hidden');
+        DOM.tcgLoadedState.classList.add('hidden');
+        runDiffEngine();
+      });
+
+      DOM.removeManaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        STATE.manaRaw = [];
+        STATE.manaMap.clear();
+        DOM.manaFileInput.value = '';
+        DOM.manaEmptyState.classList.remove('hidden');
+        DOM.manaLoadedState.classList.add('hidden');
+        runDiffEngine();
+      });
+    }
+
+    function setupDragAndDrop(element, onDrop) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        element.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          element.classList.add('border-indigo-500', 'bg-slate-900');
+        });
+      });
+      ['dragleave', 'drop'].forEach(eventName => {
+        element.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          element.classList.remove('border-indigo-500', 'bg-slate-900');
+        });
+      });
+      element.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.csv')) {
+          onDrop(file);
+        }
+      });
+    }
+
+    function handleFileSelect(file, type) {
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (type === 'tcg') {
+            STATE.tcgRaw = results.data;
+            DOM.tcgFileName.textContent = file.name;
+            DOM.tcgFileMeta.textContent = `${results.data.length.toLocaleString()} items parsed`;
+            DOM.tcgEmptyState.classList.add('hidden');
+            DOM.tcgLoadedState.classList.remove('hidden');
+          } else {
+            STATE.manaRaw = results.data;
+            DOM.manaFileName.textContent = file.name;
+            DOM.manaFileMeta.textContent = `${results.data.length.toLocaleString()} items parsed`;
+            DOM.manaEmptyState.classList.add('hidden');
+            DOM.manaLoadedState.classList.remove('hidden');
+          }
+          runDiffEngine();
+        }
+      });
+    }
+
+    // --- COMPOSITE INDEX & DIFF ENGINE ---
+    function runDiffEngine() {
+      STATE.tcgMap.clear();
+      STATE.manaMap.clear();
+      STATE.discrepancies = [];
+
+      // 1. Index TCGplayer Items
+      STATE.tcgRaw.forEach(row => {
+        const productLine = row['Product Line'] || '';
+        if (STATE.filterMTGOnly && productLine !== 'Magic: The Gathering') return;
+
+        const name = row['Product Name'] || '';
+        const number = row['Number'] || '';
+        const condition = row['Condition'] || 'Near Mint';
+        const qty = parseInt(row['Total Quantity'] || '0', 10);
+        // TCGplayer doesn't explicitly pass finish code in same schema, infer NF/FO if needed
+        const finish = 'NF';
+
+        const key = makeCompositeKey(name, number, condition, finish);
+        
+        if (STATE.tcgMap.has(key)) {
+          const existing = STATE.tcgMap.get(key);
+          existing.qty += qty;
+        } else {
+          STATE.tcgMap.set(key, {
+            key,
+            name,
+            set: row['Set Name'] || '',
+            number,
+            condition: normalizeCondition(condition),
+            qty,
+            raw: row
+          });
+        }
+      });
+
+      // 2. Index Mana Pool Items
+      STATE.manaRaw.forEach(row => {
+        const productType = row['product_type'] || '';
+        if (STATE.filterMTGOnly && productType !== 'mtg_single') return;
+
+        const name = row['name'] || '';
+        const number = row['number'] || '';
+        const condition = row['condition'] || 'NM';
+        const finish = (row['finish'] || 'NF').toUpperCase();
+        const qty = parseInt(row['quantity'] || '0', 10);
+
+        const key = makeCompositeKey(name, number, condition, finish);
+
+        if (STATE.manaMap.has(key)) {
+          const existing = STATE.manaMap.get(key);
+          existing.qty += qty;
+        } else {
+          STATE.manaMap.set(key, {
+            key,
+            name,
+            set: row['set'] || '',
+            number,
+            condition: normalizeCondition(condition),
+            qty,
+            finish,
+            raw: row
+          });
+        }
+      });
+
+      // 3. Compute Differences Across Sets
+      const allKeys = new Set([...STATE.tcgMap.keys()], [...STATE.manaMap.keys()]);
+
+      allKeys.forEach(key => {
+        if (STATE.ignoredKeys.has(key)) return; // Skip ignored items
+
+        const tcgItem = STATE.tcgMap.get(key);
+        const manaItem = STATE.manaMap.get(key);
+
+        const tcgQty = tcgItem ? tcgItem.qty : 0;
+        const manaQty = manaItem ? manaItem.qty : 0;
+
+        let status = null;
+
+        if (tcgQty > 0 && manaQty === 0) {
+          status = 'missing_mana';
+        } else if (manaQty > 0 && tcgQty === 0) {
+          status = 'missing_tcg';
+        } else if (tcgQty !== manaQty) {
+          status = 'mismatch';
+        }
+
+        if (status) {
+          const name = tcgItem ? tcgItem.name : manaItem.name;
+          const set = tcgItem ? tcgItem.set : manaItem.set;
+          const number = tcgItem ? tcgItem.number : manaItem.number;
+          const condition = tcgItem ? tcgItem.condition : manaItem.condition;
+
+          STATE.discrepancies.push({
+            key,
+            status,
+            name,
+            set,
+            number,
+            condition,
+            tcgQty,
+            manaQty,
+            delta: tcgQty - manaQty,
+            tcgItem,
+            manaItem
+          });
+        }
+      });
+
+      updateUI();
+    }
+
+    // --- UI RENDER & FILTER ENGINE ---
+    function updateUI() {
+      updateKPIs();
+      renderTable();
+      updateIgnoredModal();
+      
+      const hasData = STATE.discrepancies.length > 0;
+      DOM.exportManaPoolUpdatesBtn.disabled = !hasData;
+      DOM.exportTcgUpdatesBtn.disabled = !hasData;
+
+      lucide.createIcons();
+    }
+
+    function updateKPIs() {
+      const totalParsed = STATE.tcgMap.size + STATE.manaMap.size;
+      const mismatch = STATE.discrepancies.filter(d => d.status === 'mismatch').length;
+      const missingMana = STATE.discrepancies.filter(d => d.status === 'missing_mana').length;
+      const missingTcg = STATE.discrepancies.filter(d => d.status === 'missing_tcg').length;
+
+      DOM.kpiTotalItems.textContent = totalParsed.toLocaleString();
+      DOM.kpiQtyMismatch.textContent = mismatch.toLocaleString();
+      DOM.kpiMissingMana.textContent = missingMana.toLocaleString();
+      DOM.kpiMissingTcg.textContent = missingTcg.toLocaleString();
+      DOM.kpiTotalIgnored.textContent = STATE.ignoredKeys.size.toLocaleString();
+
+      DOM.countAll.textContent = STATE.discrepancies.length;
+      DOM.countMismatch.textContent = mismatch;
+      DOM.countMissingMana.textContent = missingMana;
+      DOM.countMissingTcg.textContent = missingTcg;
+      DOM.ignoredCountBadge.textContent = STATE.ignoredKeys.size;
+    }
+
+    function renderTable() {
+      // Apply Tab Filter & Search
+      STATE.filteredDiscrepancies = STATE.discrepancies.filter(item => {
+        const matchesFilter = (STATE.currentFilter === 'all') || (item.status === STATE.currentFilter);
+        const query = STATE.searchQuery.toLowerCase();
+        const matchesSearch = !query || 
+          item.name.toLowerCase().includes(query) || 
+          item.set.toLowerCase().includes(query) ||
+          item.number.toLowerCase().includes(query);
+        return matchesFilter && matchesSearch;
+      });
+
+      if (STATE.filteredDiscrepancies.length === 0) {
+        DOM.tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-500">
+              <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-slate-600 stroke-1"></i>
+              No discrepancies found matching current filters.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      DOM.tableBody.innerHTML = STATE.filteredDiscrepancies.map(item => {
+        let statusTag = '';
+        if (item.status === 'mismatch') {
+          statusTag = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Qty Mismatch</span>`;
+        } else if (item.status === 'missing_mana') {
+          statusTag = `<span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-semibold">Missing Mana Pool</span>`;
+        } else if (item.status === 'missing_tcg') {
+          statusTag = `<span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-semibold">Missing TCGplayer</span>`;
+        }
+
+        const deltaColor = item.delta > 0 ? 'text-indigo-400' : 'text-cyan-400';
+        const deltaDisplay = item.delta > 0 ? `+${item.delta}` : item.delta;
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition group">
+            <td class="py-3 px-4 font-medium text-slate-100">
+              <div class="flex items-center space-x-2">
+                <span>${escapeHtml(item.name)}</span>
+                ${statusTag}
+              </div>
+            </td>
+            <td class="py-3 px-4 text-slate-400">${escapeHtml(item.set)}</td>
+            <td class="py-3 px-4 font-mono text-slate-400">#${escapeHtml(item.number)}</td>
+            <td class="py-3 px-4 font-semibold text-slate-300">${item.condition}</td>
+            <td class="py-3 px-4 text-center font-mono font-medium ${item.tcgQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.tcgQty}</td>
+            <td class="py-3 px-4 text-center font-mono font-medium ${item.manaQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.manaQty}</td>
+            <td class="py-3 px-4 text-center font-mono font-semibold ${deltaColor}">${deltaDisplay}</td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="ignoreCard('${escapeJsString(item.key)}')" class="inline-flex items-center px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] border border-slate-700 transition">
+                <i data-lucide="eye-off" class="w-3 h-3 mr-1"></i>
+                Ignore
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // --- PERSISTENT IGNORE LIST SYSTEM ---
+    window.ignoreCard = function(key) {
+      STATE.ignoredKeys.add(key);
+      saveIgnoredKeys();
+      runDiffEngine();
+    };
+
+    window.unignoreCard = function(key) {
+      STATE.ignoredKeys.delete(key);
+      saveIgnoredKeys();
+      runDiffEngine();
+    };
+
+    function saveIgnoredKeys() {
+      localStorage.setItem('mtg_ignored_keys', JSON.stringify([...STATE.ignoredKeys]));
+    }
+
+    function updateIgnoredModal() {
+      if (STATE.ignoredKeys.size === 0) {
+        DOM.ignoredListItems.innerHTML = `<li class="py-4 text-center text-slate-500">No cards currently ignored.</li>`;
+        return;
+      }
+
+      DOM.ignoredListItems.innerHTML = Array.from(STATE.ignoredKeys).map(key => {
+        const parts = key.split('||');
+        const name = parts[0] || key;
+        const num = parts[1] ? `#${parts[1]}` : '';
+        const cond = parts[2] || '';
+
+        return `
+          <li class="flex items-center justify-between py-2 px-1">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-slate-200 capitalize">${escapeHtml(name)}</span>
+              <span class="text-slate-500">${num}</span>
+              <span class="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${cond}</span>
+            </div>
+            <button onclick="unignoreCard('${escapeJsString(key)}')" class="text-slate-400 hover:text-red-400 text-xs flex items-center">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1"></i> Remove
+            </button>
+          </li>
+        `;
+      }).join('');
+    }
+
+    // --- CSV EXPORT GENERATION ENGINE ---
+    function exportManaPoolAdjustments() {
+      // Generates CSV formatted for Mana Pool import to sync to TCGplayer counts
+      const exportRows = [];
+
+      STATE.discrepancies.forEach(item => {
+        // We sync Mana Pool to match TCGplayer's quantity
+        const targetQty = item.tcgQty;
+        
+        if (item.manaItem && item.manaItem.raw) {
+          const row = { ...item.manaItem.raw };
+          row['quantity'] = targetQty;
+          exportRows.push(row);
+        } else if (item.tcgItem) {
+          // Construct new Mana Pool row from TCGplayer data
+          exportRows.push({
+            'product_type': 'mtg_single',
+            'name': item.name,
+            'set': item.set,
+            'number': item.number,
+            'condition': item.condition,
+            'finish': 'NF',
+            'quantity': targetQty
+          });
+        }
+      });
+
+      downloadCSV(exportRows, `mana_pool_updates_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+
+    function exportTcgplayerAdjustments() {
+      // Generates CSV formatted for TCGplayer import to sync to Mana Pool counts
+      const exportRows = [];
+
+      STATE.discrepancies.forEach(item => {
+        const targetQty = item.manaQty;
+
+        if (item.tcgItem && item.tcgItem.raw) {
+          const row = { ...item.tcgItem.raw };
+          row['Total Quantity'] = targetQty;
+          exportRows.push(row);
+        } else if (item.manaItem) {
+          // Construct new TCGplayer row from Mana Pool data
+          exportRows.push({
+            'Product Line': 'Magic: The Gathering',
+            'Product Name': item.name,
+            'Set Name': item.set,
+            'Number': item.number,
+            'Condition': item.condition === 'NM' ? 'Near Mint' : item.condition,
+            'Total Quantity': targetQty
+          });
+        }
+      });
+
+      downloadCSV(exportRows, `tcgplayer_updates_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+
+    function downloadCSV(data, filename) {
+      if (!data || data.length === 0) return;
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // --- EVENT LISTENERS & INITIALIZATION ---
+    function init() {
+      initFileUploads();
+
+      // Search & Filters
+      DOM.searchInput.addEventListener('input', (e) => {
+        STATE.searchQuery = e.target.value;
+        renderTable();
+      });
+
+      DOM.filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          DOM.filterTabs.forEach(t => {
+            t.classList.remove('bg-slate-800', 'text-slate-200', 'shadow');
+            t.classList.add('text-slate-400');
+          });
+          tab.classList.add('bg-slate-800', 'text-slate-200', 'shadow');
+          tab.classList.remove('text-slate-400');
+
+          STATE.currentFilter = tab.getAttribute('data-filter');
+          renderTable();
+        });
+      });
+
+      DOM.filterNonMtgToggle.addEventListener('change', (e) => {
+        STATE.filterMTGOnly = e.target.checked;
+        runDiffEngine();
+      });
+
+      // Modals
+      DOM.openIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.remove('hidden'));
+      DOM.closeIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.add('hidden'));
+      DOM.doneIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.add('hidden'));
+
+      DOM.clearAllIgnoredBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all ignored rules?')) {
+          STATE.ignoredKeys.clear();
+          saveIgnoredKeys();
+          runDiffEngine();
+        }
+      });
+
+      DOM.resetAppBtn.addEventListener('click', () => {
+        if (confirm('Reset uploaded files and active diff view?')) {
+          DOM.removeTcgBtn.click();
+          DOM.removeManaBtn.click();
+        }
+      });
+
+      // Export Buttons
+      DOM.exportManaPoolUpdatesBtn.addEventListener('click', exportManaPoolAdjustments);
+      DOM.exportTcgUpdatesBtn.addEventListener('click', exportTcgplayerAdjustments);
+
+      // Icons
+      lucide.createIcons();
+    }
+
+    // Helper functions for string escaping
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function escapeJsString(str) {
+      return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
