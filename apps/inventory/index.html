@@ -357,17 +357,23 @@
       resetAppBtn: document.getElementById('resetAppBtn')
     };
 
+    // Unicode accent stripper (e.g. "Undómiel" -> "Undomiel")
+    function stripAccents(str) {
+      return str.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    }
+    
     // --- NORMALIZATION HELPER FUNCTIONS ---
     function normalizeCardName(name) {
       if (!name) return '';
+      let s = stripAccents(String(name));
       
-      // Strip everything after '//' or '/' for split/adventure cards (e.g. "Front // Back" -> "Front")
-      let cleanName = name.split('/')[0].trim();
-    
-      return cleanName
-        .toLowerCase()
-        .replace(/\(.*\)/g, '') // Remove parenthetical notes
-        .replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
+      // Strip treatments, special finishes, and variants in parens or trailing hyphens
+      s = s.replace(/\s*\((b|surge foil|foil|etched foil|borderless|showcase|full art|extended art|retro frame|textless|anime)\)/gi, '');
+      s = s.replace(/\s*-\s*(Full Art|Showcase|Extended Art|Borderless|Retro Frame|JP Alternate Art|Anime).*$/gi, '');
+      s = s.replace(/\(.*\)/g, ''); // Remove remaining parens
+      s = s.split('/')[0].trim();   // Keep front-face of split/adventure cards
+      
+      return s.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
 
@@ -386,12 +392,15 @@
 
     function normalizeCollectorNumber(num) {
       if (!num) return '';
-      let clean = String(num).trim().toLowerCase();
-      // If number is like "114/204", strip total count extension
-      if (clean.includes('/')) {
-        clean = clean.split('/')[0];
+      let s = String(num).trim().toLowerCase();
+      
+      s = s.replace(/†/g, '');                  // Strip dagger symbols (MKM)
+      s = s.replace(/^[a-z0-9]{2,5}-/g, '');    // Strip set prefixes (e.g. "chk-103" -> "103")
+      if (s.includes('/')) {
+        s = s.split('/')[0].trim();             // Strip total count ("079/274" -> "079")
       }
-      return clean.replace(/^0+/, ''); // strip leading zeros
+      s = s.replace(/^0+/, '');                 // Strip leading zeros ("079" -> "79")
+      return s.replace(/[^a-z0-9]/g, '');
     }
 
     function normalizeCondition(cond) {
@@ -405,6 +414,14 @@
       return 'NM';
     }
 
+    function getTcgFinish(row) {
+      const cond = String(row['Condition'] || '').toLowerCase();
+      // Only assign ET if condition explicitly mentions etched
+      if (cond.includes('etched')) return 'ET';
+      if (cond.includes('foil')) return 'FO';
+      return 'NF';
+    }
+    
     function makeCompositeKey(name, number, condition, finish = 'NF') {
       const normName = normalizeCardName(name);
       const normNum = normalizeCollectorNumber(number);
@@ -607,6 +624,55 @@
             manaItem
           });
         }
+        // Secondary Fallback Pass: Match unindexed items with missing collector numbers
+const unmatchedTcgKeys = new Set(
+  Array.from(STATE.tcgMap.keys()).filter(k => !STATE.manaMap.has(k))
+);
+const unmatchedManaKeys = new Set(
+  Array.from(STATE.manaMap.keys()).filter(k => !STATE.tcgMap.has(k))
+);
+
+unmatchedTcgKeys.forEach(tcgKey => {
+  const tcgItem = STATE.tcgMap.get(tcgKey);
+  const [tName, tNum, tCond, tFinish] = tcgKey.split('||');
+
+  // If TCGplayer collector number is missing/empty
+  if (!tNum) {
+    for (const manaKey of unmatchedManaKeys) {
+      const manaItem = STATE.manaMap.get(manaKey);
+      const [mName, mNum, mCond, mFinish] = manaKey.split('||');
+
+      if (tName === mName && tCond === mCond && tFinish === mFinish) {
+        // Form a synthetic match key
+        const syntheticKey = `${tName}||fallback||${tCond}||${tFinish}`;
+        
+        // Remove from single-sided discrepancy consideration
+        STATE.tcgMap.delete(tcgKey);
+        STATE.manaMap.delete(manaKey);
+        unmatchedManaKeys.delete(manaKey);
+
+        // Calculate delta & store matched item
+        const delta = tcgItem.qty - manaItem.qty;
+        if (delta !== 0) {
+          STATE.discrepancies.push({
+            key: syntheticKey,
+            status: 'mismatch',
+            name: tcgItem.name,
+            set: tcgItem.set,
+            number: `${tcgItem.number || 'N/A'} / ${manaItem.number}`,
+            condition: tcgItem.condition,
+            finish: tcgItem.finish,
+            tcgQty: tcgItem.qty,
+            manaQty: manaItem.qty,
+            delta,
+            tcgItem,
+            manaItem
+          });
+        }
+        break;
+      }
+    }
+  }
       });
 
       updateUI();
