@@ -142,11 +142,17 @@
 
     <!-- Controls & Settings Bar -->
     <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-4">
-      <div class="flex items-center space-x-3">
+      <div class="flex flex-wrap items-center gap-6">
         <label class="relative inline-flex items-center cursor-pointer">
           <input type="checkbox" id="filterNonMtgToggle" class="sr-only peer" checked>
           <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
           <span class="ml-3 text-sm font-medium text-slate-300">Magic: The Gathering Only</span>
+        </label>
+
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="filterTokensToggle" class="sr-only peer">
+          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+          <span class="ml-3 text-sm font-medium text-slate-300">Ignore Tokens</span>
         </label>
       </div>
 
@@ -307,7 +313,8 @@
       ignoredKeys: new Set(JSON.parse(localStorage.getItem('mtg_ignored_keys') || '[]')),
       currentFilter: 'all',
       searchQuery: '',
-      filterMTGOnly: true
+      filterMTGOnly: true,
+      filterTokens: false
     };
 
     // --- DOM ELEMENTS ---
@@ -329,6 +336,7 @@
       removeManaBtn: document.getElementById('removeManaBtn'),
 
       filterNonMtgToggle: document.getElementById('filterNonMtgToggle'),
+      filterTokensToggle: document.getElementById('filterTokensToggle'),
       exportManaPoolUpdatesBtn: document.getElementById('exportManaPoolUpdatesBtn'),
       exportTcgUpdatesBtn: document.getElementById('exportTcgUpdatesBtn'),
 
@@ -502,7 +510,11 @@
         const productLine = (row['Product Line'] || row['Category Name'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
         
-        const name = row['Product Name'] || '';
+        const rawName = row['Product Name'] || '';
+        
+        // Token Filter Check BEFORE string split or card name cut off
+        if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
+
         const number = row['Number'] || '';
         const rawCondition = row['Condition'] || 'Near Mint';
         const qty = parseInt(row['Total Quantity'] || '0', 10);
@@ -514,7 +526,7 @@
         const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
         const condition = normalizeCondition(cleanConditionStr);
         
-        const key = makeCompositeKey(name, number, condition, finish);
+        const key = makeCompositeKey(rawName, number, condition, finish);
         
         if (STATE.tcgMap.has(key)) {
           const existing = STATE.tcgMap.get(key);
@@ -522,7 +534,7 @@
         } else {
           STATE.tcgMap.set(key, {
             key,
-            name,
+            name: rawName,
             set: row['Set Name'] || '',
             number,
             condition,
@@ -538,13 +550,17 @@
         const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg')) return;
         
-        const name = row['name'] || '';
+        const rawName = row['name'] || '';
+
+        // Token Filter Check BEFORE string split or card name cut off
+        if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
+
         const number = row['number'] || '';
         const condition = row['condition'] || 'NM';
         const finish = (row['finish'] || 'NF').toUpperCase();
         const qty = parseInt(row['quantity'] || '0', 10);
 
-        const key = makeCompositeKey(name, number, condition, finish);
+        const key = makeCompositeKey(rawName, number, condition, finish);
 
         if (STATE.manaMap.has(key)) {
           const existing = STATE.manaMap.get(key);
@@ -552,7 +568,7 @@
         } else {
           STATE.manaMap.set(key, {
             key,
-            name,
+            name: rawName,
             set: row['set'] || '',
             number,
             condition: normalizeCondition(condition),
@@ -886,6 +902,11 @@
 
       DOM.filterNonMtgToggle.addEventListener('change', (e) => {
         STATE.filterMTGOnly = e.target.checked;
+        runDiffEngine();
+      });
+
+      DOM.filterTokensToggle.addEventListener('change', (e) => {
+        STATE.filterTokens = e.target.checked;
         runDiffEngine();
       });
 
