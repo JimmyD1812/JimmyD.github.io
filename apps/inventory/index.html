@@ -242,7 +242,8 @@
               <th class="py-3 px-4">Card Name</th>
               <th class="py-3 px-4">Set</th>
               <th class="py-3 px-4">Num</th>
-              <th class="py-3 px-4">Cond / Finish</th>
+              <th class="py-3 px-4">Cond</th>
+              <th class="py-3 px-4 text-center">Finish</th>
               <th class="py-3 px-4 text-center">TCG Qty</th>
               <th class="py-3 px-4 text-center">Mana Qty</th>
               <th class="py-3 px-4 text-center">Delta</th>
@@ -359,7 +360,11 @@
     // --- NORMALIZATION HELPER FUNCTIONS ---
     function normalizeCardName(name) {
       if (!name) return '';
-      return name
+      
+      // Strip everything after '//' or '/' for split/adventure cards (e.g. "Front // Back" -> "Front")
+      let cleanName = name.split('/')[0].trim();
+    
+      return cleanName
         .toLowerCase()
         .replace(/\(.*\)/g, '') // Remove parenthetical notes
         .replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
@@ -590,10 +595,11 @@
           STATE.discrepancies.push({
             key,
             status,
-            name,
-            set,
-            number,
-            condition,
+            name: tcgItem ? tcgItem.name : manaItem.name,
+            set: tcgItem ? tcgItem.set : manaItem.set,
+            number: tcgItem ? tcgItem.number : manaItem.number,
+            condition: tcgItem ? tcgItem.condition : manaItem.condition,
+            finish: tcgItem ? tcgItem.finish : (manaItem ? manaItem.finish : 'NF'),
             tcgQty,
             manaQty,
             delta: tcgQty - manaQty,
@@ -674,7 +680,11 @@
 
         const deltaColor = item.delta > 0 ? 'text-indigo-400' : 'text-cyan-400';
         const deltaDisplay = item.delta > 0 ? `+${item.delta}` : item.delta;
-
+        const finishBadge = item.finish === 'FO' 
+          ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">FO</span>`
+          : item.finish === 'ET'
+          ? `<span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold">ET</span>`
+          : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium">NF</span>`;
         return `
           <tr class="hover:bg-slate-800/40 transition group">
             <td class="py-3 px-4 font-medium text-slate-100">
@@ -686,12 +696,12 @@
             <td class="py-3 px-4 text-slate-400">${escapeHtml(item.set)}</td>
             <td class="py-3 px-4 font-mono text-slate-400">#${escapeHtml(item.number)}</td>
             <td class="py-3 px-4 font-semibold text-slate-300">${item.condition}</td>
+            <td class="py-3 px-4 text-center">${finishBadge}</td>
             <td class="py-3 px-4 text-center font-mono font-medium ${item.tcgQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.tcgQty}</td>
             <td class="py-3 px-4 text-center font-mono font-medium ${item.manaQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.manaQty}</td>
             <td class="py-3 px-4 text-center font-mono font-semibold ${deltaColor}">${deltaDisplay}</td>
             <td class="hidden py-3 px-4 text-right">
               <button onclick="ignoreCard('${escapeJsString(item.key)}')" class="inline-flex items-center px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] border border-slate-700 transition">
-                <i data-lucide="eye-off" class="w-3 h-3 mr-1"></i>
                 Ignore
               </button>
             </td>
