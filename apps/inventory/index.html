@@ -480,8 +480,8 @@
 
       // 1. Index TCGplayer Items
       STATE.tcgRaw.forEach(row => {
-        const productLine = row['Product Line'] || '';
-        if (STATE.filterMTGOnly && productLine !== 'Magic: The Gathering') return;
+        const productLine = (row['Product Line'] || row['Category Name'] || row['Product Line Name'] || '').toLowerCase().trim();
+        if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
 
         const name = row['Product Name'] || '';
         const number = row['Number'] || '';
@@ -510,9 +510,9 @@
 
       // 2. Index Mana Pool Items
       STATE.manaRaw.forEach(row => {
-        const productType = row['product_type'] || '';
-        if (STATE.filterMTGOnly && productType !== 'mtg_single') return;
-
+        const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
+        if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg')) return;
+        
         const name = row['name'] || '';
         const number = row['number'] || '';
         const condition = row['condition'] || 'NM';
