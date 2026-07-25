@@ -480,16 +480,22 @@
 
       // 1. Index TCGplayer Items
       STATE.tcgRaw.forEach(row => {
-        const productLine = (row['Product Line'] || row['Category Name'] || row['Product Line Name'] || '').toLowerCase().trim();
+        const productLine = (row['Product Line'] || row['Category Name'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
-
+      
         const name = row['Product Name'] || '';
         const number = row['Number'] || '';
-        const condition = row['Condition'] || 'Near Mint';
+        const rawCondition = row['Condition'] || 'Near Mint';
         const qty = parseInt(row['Total Quantity'] || '0', 10);
-        // TCGplayer doesn't explicitly pass finish code in same schema, infer NF/FO if needed
-        const finish = 'NF';
-
+      
+        // Detect foil finish directly from TCGplayer's Condition string
+        const isFoil = rawCondition.toLowerCase().includes('foil');
+        const finish = isFoil ? 'FO' : 'NF';
+      
+        // Normalize condition name by removing 'Foil'
+        const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
+        const condition = normalizeCondition(cleanConditionStr);
+      
         const key = makeCompositeKey(name, number, condition, finish);
         
         if (STATE.tcgMap.has(key)) {
@@ -501,7 +507,8 @@
             name,
             set: row['Set Name'] || '',
             number,
-            condition: normalizeCondition(condition),
+            condition,
+            finish,
             qty,
             raw: row
           });
