@@ -365,38 +365,7 @@
         .replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
     }
 
-    // Load saved keys or default to empty array
-    function loadSavedIgnoredKeys() {
-      try {
-        const saved = localStorage.getItem('mtg_ignored_keys');
-        return saved ? new Set(JSON.parse(saved)) : new Set();
-      } catch (e) {
-        console.error('Failed to load ignored keys from localStorage:', e);
-        return new Set();
-      }
-    }
-    
-    const STATE = {
-      tcgRaw: [],
-      manaRaw: [],
-      tcgMap: new Map(),
-      manaMap: new Map(),
-      discrepancies: [],
-      filteredDiscrepancies: [],
-      ignoredKeys: loadSavedIgnoredKeys(), // <-- Loaded on page initialization
-      currentFilter: 'all',
-      searchQuery: '',
-      filterMTGOnly: true
-    };
 
-    function saveIgnoredKeys() {
-      try {
-        const keysArray = Array.from(STATE.ignoredKeys);
-        localStorage.setItem('mtg_ignored_keys', JSON.stringify(keysArray));
-      } catch (e) {
-        console.error('Failed to save ignored keys to localStorage:', e);
-      }
-    }
     
     window.ignoreCard = function(key) {
       STATE.ignoredKeys.add(key);
@@ -848,10 +817,6 @@
     // --- EVENT LISTENERS & INITIALIZATION ---
     function init() {
       initFileUploads();
-
-      // Load persistent counts immediately on render
-      //updateKPIs();
-      //updateIgnoredModal();
 
       // Search & Filters
       DOM.searchInput.addEventListener('input', (e) => {
