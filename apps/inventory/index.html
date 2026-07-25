@@ -164,7 +164,7 @@
 
     <!-- Summary KPI Cards -->
     <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="hidden bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Items</span>
           <i data-lucide="boxes" class="w-4 h-4 text-slate-400"></i>
@@ -196,7 +196,7 @@
         <p id="kpiMissingTcg" class="text-2xl font-bold text-indigo-400 mt-2">0</p>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 col-span-2 md:col-span-1">
+      <div class="hidden bg-slate-900 border border-slate-800 rounded-xl p-4">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ignored Items</span>
           <i data-lucide="eye-off" class="w-4 h-4 text-slate-400"></i>
@@ -357,15 +357,15 @@
       resetAppBtn: document.getElementById('resetAppBtn')
     };
 
-    // Unicode accent stripper (e.g. "Undómiel" -> "Undomiel")
-    function stripAccents(str) {
-      return str.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-    }
-    
     // --- NORMALIZATION HELPER FUNCTIONS ---
+    function stripAccents(str) {
+      if (!str) return '';
+      return String(str).normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    }
+
     function normalizeCardName(name) {
       if (!name) return '';
-      let s = stripAccents(String(name));
+      let s = stripAccents(name);
       
       // Strip treatments, special finishes, and variants in parens or trailing hyphens
       s = s.replace(/\s*\((b|surge foil|foil|etched foil|borderless|showcase|full art|extended art|retro frame|textless|anime)\)/gi, '');
@@ -375,20 +375,6 @@
       
       return s.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
-
-
-    
-    window.ignoreCard = function(key) {
-      STATE.ignoredKeys.add(key);
-      saveIgnoredKeys();
-      runDiffEngine();
-    };
-    
-    window.unignoreCard = function(key) {
-      STATE.ignoredKeys.delete(key);
-      saveIgnoredKeys();
-      runDiffEngine();
-    };
 
     function normalizeCollectorNumber(num) {
       if (!num) return '';
@@ -416,7 +402,6 @@
 
     function getTcgFinish(row) {
       const cond = String(row['Condition'] || '').toLowerCase();
-      // Only assign ET if condition explicitly mentions etched
       if (cond.includes('etched')) return 'ET';
       if (cond.includes('foil')) return 'FO';
       return 'NF';
@@ -431,12 +416,10 @@
 
     // --- FILE PARSING ENGINE ---
     function initFileUploads() {
-      // TCGplayer Upload Setup
       DOM.tcgDropzone.addEventListener('click', () => DOM.tcgFileInput.click());
       DOM.tcgFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'tcg'));
       setupDragAndDrop(DOM.tcgDropzone, (file) => handleFileSelect(file, 'tcg'));
 
-      // Mana Pool Upload Setup
       DOM.manaDropzone.addEventListener('click', () => DOM.manaFileInput.click());
       DOM.manaFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'mana'));
       setupDragAndDrop(DOM.manaDropzone, (file) => handleFileSelect(file, 'mana'));
@@ -518,20 +501,19 @@
       STATE.tcgRaw.forEach(row => {
         const productLine = (row['Product Line'] || row['Category Name'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
-      
+        
         const name = row['Product Name'] || '';
         const number = row['Number'] || '';
         const rawCondition = row['Condition'] || 'Near Mint';
         const qty = parseInt(row['Total Quantity'] || '0', 10);
-      
-        // Detect foil finish directly from TCGplayer's Condition string
-        const isFoil = rawCondition.toLowerCase().includes('foil');
-        const finish = isFoil ? 'FO' : 'NF';
-      
-        // Normalize condition name by removing 'Foil'
+        
+        // Detect finish using clean TCG finish helper
+        const finish = getTcgFinish(row);
+        
+        // Normalize condition name
         const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
         const condition = normalizeCondition(cleanConditionStr);
-      
+        
         const key = makeCompositeKey(name, number, condition, finish);
         
         if (STATE.tcgMap.has(key)) {
@@ -581,8 +563,8 @@
         }
       });
 
-      // 3. Compute Differences Across Sets
-      const allKeys = new Set([...STATE.tcgMap.keys()], [...STATE.manaMap.keys()]);
+      // 3. Compute Primary Differences Across Sets
+      const allKeys = new Set([...STATE.tcgMap.keys(), ...STATE.manaMap.keys()]);
 
       allKeys.forEach(key => {
         if (STATE.ignoredKeys.has(key)) return; // Skip ignored items
@@ -604,11 +586,6 @@
         }
 
         if (status) {
-          const name = tcgItem ? tcgItem.name : manaItem.name;
-          const set = tcgItem ? tcgItem.set : manaItem.set;
-          const number = tcgItem ? tcgItem.number : manaItem.number;
-          const condition = tcgItem ? tcgItem.condition : manaItem.condition;
-
           STATE.discrepancies.push({
             key,
             status,
@@ -624,55 +601,54 @@
             manaItem
           });
         }
-        // Secondary Fallback Pass: Match unindexed items with missing collector numbers
-const unmatchedTcgKeys = new Set(
-  Array.from(STATE.tcgMap.keys()).filter(k => !STATE.manaMap.has(k))
-);
-const unmatchedManaKeys = new Set(
-  Array.from(STATE.manaMap.keys()).filter(k => !STATE.tcgMap.has(k))
-);
+      });
 
-unmatchedTcgKeys.forEach(tcgKey => {
-  const tcgItem = STATE.tcgMap.get(tcgKey);
-  const [tName, tNum, tCond, tFinish] = tcgKey.split('||');
+      // 4. Secondary Fallback Pass: Match unindexed items with missing collector numbers (e.g. Mystery Booster 2 / The List)
+      const unmatchedTcgKeys = new Set(
+        Array.from(STATE.tcgMap.keys()).filter(k => !STATE.manaMap.has(k))
+      );
+      const unmatchedManaKeys = new Set(
+        Array.from(STATE.manaMap.keys()).filter(k => !STATE.tcgMap.has(k))
+      );
 
-  // If TCGplayer collector number is missing/empty
-  if (!tNum) {
-    for (const manaKey of unmatchedManaKeys) {
-      const manaItem = STATE.manaMap.get(manaKey);
-      const [mName, mNum, mCond, mFinish] = manaKey.split('||');
+      unmatchedTcgKeys.forEach(tcgKey => {
+        const tcgItem = STATE.tcgMap.get(tcgKey);
+        const [tName, tNum, tCond, tFinish] = tcgKey.split('||');
 
-      if (tName === mName && tCond === mCond && tFinish === mFinish) {
-        // Form a synthetic match key
-        const syntheticKey = `${tName}||fallback||${tCond}||${tFinish}`;
-        
-        // Remove from single-sided discrepancy consideration
-        STATE.tcgMap.delete(tcgKey);
-        STATE.manaMap.delete(manaKey);
-        unmatchedManaKeys.delete(manaKey);
+        if (!tNum) { // Collector number missing on TCG side
+          for (const manaKey of unmatchedManaKeys) {
+            const manaItem = STATE.manaMap.get(manaKey);
+            const [mName, mNum, mCond, mFinish] = manaKey.split('||');
 
-        // Calculate delta & store matched item
-        const delta = tcgItem.qty - manaItem.qty;
-        if (delta !== 0) {
-          STATE.discrepancies.push({
-            key: syntheticKey,
-            status: 'mismatch',
-            name: tcgItem.name,
-            set: tcgItem.set,
-            number: `${tcgItem.number || 'N/A'} / ${manaItem.number}`,
-            condition: tcgItem.condition,
-            finish: tcgItem.finish,
-            tcgQty: tcgItem.qty,
-            manaQty: manaItem.qty,
-            delta,
-            tcgItem,
-            manaItem
-          });
+            if (tName === mName && tCond === mCond && tFinish === mFinish) {
+              // Remove original single-sided entries from discrepancies array
+              STATE.discrepancies = STATE.discrepancies.filter(
+                d => d.key !== tcgKey && d.key !== manaKey
+              );
+
+              unmatchedManaKeys.delete(manaKey);
+
+              const delta = tcgItem.qty - manaItem.qty;
+              if (delta !== 0) {
+                STATE.discrepancies.push({
+                  key: `${tName}||fallback||${tCond}||${tFinish}`,
+                  status: 'mismatch',
+                  name: tcgItem.name,
+                  set: tcgItem.set,
+                  number: `${tcgItem.number || 'N/A'} / #${manaItem.number}`,
+                  condition: tcgItem.condition,
+                  finish: tcgItem.finish,
+                  tcgQty: tcgItem.qty,
+                  manaQty: manaItem.qty,
+                  delta,
+                  tcgItem,
+                  manaItem
+                });
+              }
+              break;
+            }
+          }
         }
-        break;
-      }
-    }
-  }
       });
 
       updateUI();
@@ -711,7 +687,6 @@ unmatchedTcgKeys.forEach(tcgKey => {
     }
 
     function renderTable() {
-      // Apply Tab Filter & Search
       STATE.filteredDiscrepancies = STATE.discrepancies.filter(item => {
         const matchesFilter = (STATE.currentFilter === 'all') || (item.status === STATE.currentFilter);
         const query = STATE.searchQuery.toLowerCase();
@@ -751,6 +726,7 @@ unmatchedTcgKeys.forEach(tcgKey => {
           : item.finish === 'ET'
           ? `<span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold">ET</span>`
           : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium">NF</span>`;
+
         return `
           <tr class="hover:bg-slate-800/40 transition group">
             <td class="py-3 px-4 font-medium text-slate-100">
@@ -822,11 +798,9 @@ unmatchedTcgKeys.forEach(tcgKey => {
 
     // --- CSV EXPORT GENERATION ENGINE ---
     function exportManaPoolAdjustments() {
-      // Generates CSV formatted for Mana Pool import to sync to TCGplayer counts
       const exportRows = [];
 
       STATE.discrepancies.forEach(item => {
-        // We sync Mana Pool to match TCGplayer's quantity
         const targetQty = item.tcgQty;
         
         if (item.manaItem && item.manaItem.raw) {
@@ -834,14 +808,13 @@ unmatchedTcgKeys.forEach(tcgKey => {
           row['quantity'] = targetQty;
           exportRows.push(row);
         } else if (item.tcgItem) {
-          // Construct new Mana Pool row from TCGplayer data
           exportRows.push({
             'product_type': 'mtg_single',
             'name': item.name,
             'set': item.set,
             'number': item.number,
             'condition': item.condition,
-            'finish': 'NF',
+            'finish': item.finish || 'NF',
             'quantity': targetQty
           });
         }
@@ -851,7 +824,6 @@ unmatchedTcgKeys.forEach(tcgKey => {
     }
 
     function exportTcgplayerAdjustments() {
-      // Generates CSV formatted for TCGplayer import to sync to Mana Pool counts
       const exportRows = [];
 
       STATE.discrepancies.forEach(item => {
@@ -862,7 +834,6 @@ unmatchedTcgKeys.forEach(tcgKey => {
           row['Total Quantity'] = targetQty;
           exportRows.push(row);
         } else if (item.manaItem) {
-          // Construct new TCGplayer row from Mana Pool data
           exportRows.push({
             'Product Line': 'Magic: The Gathering',
             'Product Name': item.name,
@@ -894,7 +865,6 @@ unmatchedTcgKeys.forEach(tcgKey => {
     function init() {
       initFileUploads();
 
-      // Search & Filters
       DOM.searchInput.addEventListener('input', (e) => {
         STATE.searchQuery = e.target.value;
         renderTable();
@@ -919,7 +889,6 @@ unmatchedTcgKeys.forEach(tcgKey => {
         runDiffEngine();
       });
 
-      // Modals
       DOM.openIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.remove('hidden'));
       DOM.closeIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.add('hidden'));
       DOM.doneIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.add('hidden'));
@@ -939,15 +908,12 @@ unmatchedTcgKeys.forEach(tcgKey => {
         }
       });
 
-      // Export Buttons
       DOM.exportManaPoolUpdatesBtn.addEventListener('click', exportManaPoolAdjustments);
       DOM.exportTcgUpdatesBtn.addEventListener('click', exportTcgplayerAdjustments);
 
-      // Icons
       lucide.createIcons();
     }
 
-    // Helper functions for string escaping
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
