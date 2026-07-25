@@ -169,10 +169,10 @@
     </div>
 
     <!-- Summary KPI Cards -->
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Items</span>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Items Loaded</span>
           <i data-lucide="boxes" class="w-4 h-4 text-slate-400"></i>
         </div>
         <p id="kpiTotalItems" class="text-2xl font-bold text-slate-100 mt-2">0</p>
@@ -180,26 +180,10 @@
 
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-amber-400/90 uppercase tracking-wider">Qty Mismatch</span>
+          <span class="text-xs font-semibold text-amber-400/90 uppercase tracking-wider">Quantity Discrepancies</span>
           <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
         </div>
         <p id="kpiQtyMismatch" class="text-2xl font-bold text-amber-400 mt-2">0</p>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-cyan-400/90 uppercase tracking-wider">Missing Mana Pool</span>
-          <i data-lucide="file-minus-2" class="w-4 h-4 text-cyan-400"></i>
-        </div>
-        <p id="kpiMissingMana" class="text-2xl font-bold text-cyan-400 mt-2">0</p>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-indigo-400/90 uppercase tracking-wider">Missing TCGplayer</span>
-          <i data-lucide="file-minus-2" class="w-4 h-4 text-indigo-400"></i>
-        </div>
-        <p id="kpiMissingTcg" class="text-2xl font-bold text-indigo-400 mt-2">0</p>
       </div>
 
       <div class="hidden bg-slate-900 border border-slate-800 rounded-xl p-4">
@@ -217,20 +201,10 @@
       <!-- Table Header Filters & Search -->
       <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/80">
         
-        <!-- Filter Tabs -->
-        <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 w-full md:w-auto overflow-x-auto">
-          <button data-filter="all" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-200 bg-slate-800 shadow transition whitespace-nowrap">
-            All Discrepancies (<span id="countAll">0</span>)
-          </button>
-          <button data-filter="mismatch" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-            Qty Mismatch (<span id="countMismatch">0</span>)
-          </button>
-          <button data-filter="missing_mana" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-            Missing Mana Pool (<span id="countMissingMana">0</span>)
-          </button>
-          <button data-filter="missing_tcg" class="filter-tab px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition whitespace-nowrap">
-            Missing TCGplayer (<span id="countMissingTcg">0</span>)
-          </button>
+        <!-- Filter Info Label -->
+        <div class="flex items-center bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-semibold text-slate-300">
+          <i data-lucide="alert-circle" class="w-4 h-4 mr-2 text-amber-400"></i>
+          Discrepancy Report (<span id="countMismatch">0</span>)
         </div>
 
         <!-- Search Input -->
@@ -252,7 +226,7 @@
               <th class="py-3 px-4 text-center">Finish</th>
               <th class="py-3 px-4 text-center">TCG Qty</th>
               <th class="py-3 px-4 text-center">Mana Qty</th>
-              <th class="py-3 px-4 text-center">Delta</th>
+              <th class="py-3 px-4 text-center">Absolute Delta</th>
               <th class="hidden py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
@@ -311,7 +285,6 @@
       discrepancies: [],
       filteredDiscrepancies: [],
       ignoredKeys: new Set(JSON.parse(localStorage.getItem('mtg_ignored_keys') || '[]')),
-      currentFilter: 'all',
       searchQuery: '',
       filterMTGOnly: true,
       filterTokens: false
@@ -342,18 +315,12 @@
 
       kpiTotalItems: document.getElementById('kpiTotalItems'),
       kpiQtyMismatch: document.getElementById('kpiQtyMismatch'),
-      kpiMissingMana: document.getElementById('kpiMissingMana'),
-      kpiMissingTcg: document.getElementById('kpiMissingTcg'),
       kpiTotalIgnored: document.getElementById('kpiTotalIgnored'),
 
       tableBody: document.getElementById('discrepancyTableBody'),
       searchInput: document.getElementById('tableSearchInput'),
-      filterTabs: document.querySelectorAll('.filter-tab'),
 
-      countAll: document.getElementById('countAll'),
       countMismatch: document.getElementById('countMismatch'),
-      countMissingMana: document.getElementById('countMissingMana'),
-      countMissingTcg: document.getElementById('countMissingTcg'),
 
       ignoredModal: document.getElementById('ignoredModal'),
       openIgnoredModalBtn: document.getElementById('openIgnoredModalBtn'),
@@ -511,18 +478,13 @@
         if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
         
         const rawName = row['Product Name'] || '';
-        
-        // Token Filter Check BEFORE string split or card name cut off
         if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
 
         const number = row['Number'] || '';
         const rawCondition = row['Condition'] || 'Near Mint';
         const qty = parseInt(row['Total Quantity'] || '0', 10);
         
-        // Detect finish using clean TCG finish helper
         const finish = getTcgFinish(row);
-        
-        // Normalize condition name
         const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
         const condition = normalizeCondition(cleanConditionStr);
         
@@ -551,8 +513,6 @@
         if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg')) return;
         
         const rawName = row['name'] || '';
-
-        // Token Filter Check BEFORE string split or card name cut off
         if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
 
         const number = row['number'] || '';
@@ -583,7 +543,7 @@
       const allKeys = new Set([...STATE.tcgMap.keys(), ...STATE.manaMap.keys()]);
 
       allKeys.forEach(key => {
-        if (STATE.ignoredKeys.has(key)) return; // Skip ignored items
+        if (STATE.ignoredKeys.has(key)) return;
 
         const tcgItem = STATE.tcgMap.get(key);
         const manaItem = STATE.manaMap.get(key);
@@ -591,20 +551,10 @@
         const tcgQty = tcgItem ? tcgItem.qty : 0;
         const manaQty = manaItem ? manaItem.qty : 0;
 
-        let status = null;
-
-        if (tcgQty > 0 && manaQty === 0) {
-          status = 'missing_mana';
-        } else if (manaQty > 0 && tcgQty === 0) {
-          status = 'missing_tcg';
-        } else if (tcgQty !== manaQty) {
-          status = 'mismatch';
-        }
-
-        if (status) {
+        if (tcgQty !== manaQty) {
           STATE.discrepancies.push({
             key,
-            status,
+            status: 'mismatch',
             name: tcgItem ? tcgItem.name : manaItem.name,
             set: tcgItem ? tcgItem.set : manaItem.set,
             number: tcgItem ? tcgItem.number : manaItem.number,
@@ -612,7 +562,7 @@
             finish: tcgItem ? tcgItem.finish : (manaItem ? manaItem.finish : 'NF'),
             tcgQty,
             manaQty,
-            delta: tcgQty - manaQty,
+            delta: Math.abs(tcgQty - manaQty), // ABSOLUTE DELTA
             tcgItem,
             manaItem
           });
@@ -631,21 +581,20 @@
         const tcgItem = STATE.tcgMap.get(tcgKey);
         const [tName, tNum, tCond, tFinish] = tcgKey.split('||');
 
-        if (!tNum) { // Collector number missing on TCG side
+        if (!tNum) {
           for (const manaKey of unmatchedManaKeys) {
             const manaItem = STATE.manaMap.get(manaKey);
             const [mName, mNum, mCond, mFinish] = manaKey.split('||');
 
             if (tName === mName && tCond === mCond && tFinish === mFinish) {
-              // Remove original single-sided entries from discrepancies array
               STATE.discrepancies = STATE.discrepancies.filter(
                 d => d.key !== tcgKey && d.key !== manaKey
               );
 
               unmatchedManaKeys.delete(manaKey);
 
-              const delta = tcgItem.qty - manaItem.qty;
-              if (delta !== 0) {
+              const absoluteDelta = Math.abs(tcgItem.qty - manaItem.qty);
+              if (absoluteDelta !== 0) {
                 STATE.discrepancies.push({
                   key: `${tName}||fallback||${tCond}||${tFinish}`,
                   status: 'mismatch',
@@ -656,7 +605,7 @@
                   finish: tcgItem.finish,
                   tcgQty: tcgItem.qty,
                   manaQty: manaItem.qty,
-                  delta,
+                  delta: absoluteDelta, // ABSOLUTE DELTA
                   tcgItem,
                   manaItem
                 });
@@ -685,32 +634,23 @@
 
     function updateKPIs() {
       const totalParsed = STATE.tcgMap.size + STATE.manaMap.size;
-      const mismatch = STATE.discrepancies.filter(d => d.status === 'mismatch').length;
-      const missingMana = STATE.discrepancies.filter(d => d.status === 'missing_mana').length;
-      const missingTcg = STATE.discrepancies.filter(d => d.status === 'missing_tcg').length;
+      const mismatch = STATE.discrepancies.length;
 
       DOM.kpiTotalItems.textContent = totalParsed.toLocaleString();
       DOM.kpiQtyMismatch.textContent = mismatch.toLocaleString();
-      DOM.kpiMissingMana.textContent = missingMana.toLocaleString();
-      DOM.kpiMissingTcg.textContent = missingTcg.toLocaleString();
       DOM.kpiTotalIgnored.textContent = STATE.ignoredKeys.size.toLocaleString();
 
-      DOM.countAll.textContent = STATE.discrepancies.length;
       DOM.countMismatch.textContent = mismatch;
-      DOM.countMissingMana.textContent = missingMana;
-      DOM.countMissingTcg.textContent = missingTcg;
       DOM.ignoredCountBadge.textContent = STATE.ignoredKeys.size;
     }
 
     function renderTable() {
       STATE.filteredDiscrepancies = STATE.discrepancies.filter(item => {
-        const matchesFilter = (STATE.currentFilter === 'all') || (item.status === STATE.currentFilter);
         const query = STATE.searchQuery.toLowerCase();
-        const matchesSearch = !query || 
+        return !query || 
           item.name.toLowerCase().includes(query) || 
           item.set.toLowerCase().includes(query) ||
           item.number.toLowerCase().includes(query);
-        return matchesFilter && matchesSearch;
       });
 
       if (STATE.filteredDiscrepancies.length === 0) {
@@ -726,17 +666,7 @@
       }
 
       DOM.tableBody.innerHTML = STATE.filteredDiscrepancies.map(item => {
-        let statusTag = '';
-        if (item.status === 'mismatch') {
-          statusTag = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Qty Mismatch</span>`;
-        } else if (item.status === 'missing_mana') {
-          statusTag = `<span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-semibold">Missing Mana Pool</span>`;
-        } else if (item.status === 'missing_tcg') {
-          statusTag = `<span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-semibold">Missing TCGplayer</span>`;
-        }
-
-        const deltaColor = item.delta > 0 ? 'text-indigo-400' : 'text-cyan-400';
-        const deltaDisplay = item.delta > 0 ? `+${item.delta}` : item.delta;
+        const statusTag = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Qty Mismatch</span>`;
         const finishBadge = item.finish === 'FO' 
           ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">FO</span>`
           : item.finish === 'ET'
@@ -757,7 +687,7 @@
             <td class="py-3 px-4 text-center">${finishBadge}</td>
             <td class="py-3 px-4 text-center font-mono font-medium ${item.tcgQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.tcgQty}</td>
             <td class="py-3 px-4 text-center font-mono font-medium ${item.manaQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.manaQty}</td>
-            <td class="py-3 px-4 text-center font-mono font-semibold ${deltaColor}">${deltaDisplay}</td>
+            <td class="py-3 px-4 text-center font-mono font-semibold text-amber-400">${item.delta}</td>
             <td class="hidden py-3 px-4 text-right">
               <button onclick="ignoreCard('${escapeJsString(item.key)}')" class="inline-flex items-center px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] border border-slate-700 transition">
                 Ignore
@@ -884,20 +814,6 @@
       DOM.searchInput.addEventListener('input', (e) => {
         STATE.searchQuery = e.target.value;
         renderTable();
-      });
-
-      DOM.filterTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          DOM.filterTabs.forEach(t => {
-            t.classList.remove('bg-slate-800', 'text-slate-200', 'shadow');
-            t.classList.add('text-slate-400');
-          });
-          tab.classList.add('bg-slate-800', 'text-slate-200', 'shadow');
-          tab.classList.remove('text-slate-400');
-
-          STATE.currentFilter = tab.getAttribute('data-filter');
-          renderTable();
-        });
       });
 
       DOM.filterNonMtgToggle.addEventListener('change', (e) => {
