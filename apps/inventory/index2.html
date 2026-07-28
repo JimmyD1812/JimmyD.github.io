@@ -75,6 +75,10 @@
         </div>
       </div>
       <div class="flex items-center space-x-3">
+        <span id="apiStatusBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+          Scryfall API Active
+        </span>
         <button id="resetAppBtn" class="inline-flex items-center px-3 py-1.5 border border-red-900/40 hover:border-red-800 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 transition">
           <i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i>
           Reset Data
@@ -299,6 +303,7 @@
       manaRaw: [],
       inventory: [],
       filteredInventory: [],
+      scryfallSetsMap: new Map(), // Dynamic Set Code -> Set Name Mapping
       searchQuery: '',
       activeViewTab: 'all', // 'all', 'qtyMismatch', 'priceMismatch'
       filterMTGOnly: true,
@@ -348,11 +353,14 @@
       countQtyMismatch: document.getElementById('countQtyMismatch'),
       countPriceMismatch: document.getElementById('countPriceMismatch'),
 
+      apiStatusBadge: document.getElementById('apiStatusBadge'),
       resetAppBtn: document.getElementById('resetAppBtn')
     };
 
-    // --- SET ALIAS MAPPER ---
-    const SET_ALIASES = {
+    // --- BUILT-IN SET ALIAS MAPPER ---
+    const BUILTIN_SET_ALIASES = {
+      'otj': 'outlawsofthunderjunction',
+      'outlawsofthunderjunction': 'outlawsofthunderjunction',
       'plst': 'thelist',
       'thelistreprints': 'thelist',
       'thelist': 'thelist',
@@ -373,10 +381,57 @@
       'foundationsjumpstart': 'foundationsjumpstart',
       'mh3': 'modernhorizons3',
       'modernhorizons3': 'modernhorizons3',
+      'blb': 'bloomburrow',
+      'bloomburrow': 'bloomburrow',
+      'dsk': 'duskmournhouseofhorror',
+      'duskmournhouseofhorror': 'duskmournhouseofhorror',
       'ltc': 'commanderthelordoftherings',
       'lordoftheringscommander': 'commanderthelordoftherings',
       'ltr': 'thelordoftherings'
     };
+
+    // --- DYNAMIC SCRYFALL SET API FETCH & CACHE ---
+    async function initScryfallSetCache() {
+      try {
+        const cached = localStorage.getItem('scryfall_set_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          Object.entries(parsed).forEach(([k, v]) => STATE.scryfallSetsMap.set(k, v));
+        }
+      } catch (e) {
+        console.warn('LocalStorage read failed', e);
+      }
+
+      try {
+        const response = await fetch('https://api.scryfall.com/sets');
+        if (response.ok) {
+          const json = await response.json();
+          const cacheObj = {};
+          if (json && Array.isArray(json.data)) {
+            json.data.forEach(setObj => {
+              const code = (setObj.code || '').toLowerCase().trim();
+              const cleanName = stripAccents(setObj.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              if (code && cleanName) {
+                STATE.scryfallSetsMap.set(code, cleanName);
+                STATE.scryfallSetsMap.set(cleanName, cleanName);
+                cacheObj[code] = cleanName;
+                cacheObj[cleanName] = cleanName;
+              }
+            });
+            localStorage.setItem('scryfall_set_cache', JSON.stringify(cacheObj));
+            DOM.apiStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Scryfall Synced (${json.data.length} Sets)`;
+            DOM.apiStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-950/40 text-emerald-300 border border-emerald-800/50";
+            
+            if (STATE.tcgRaw.length > 0 || STATE.manaRaw.length > 0) {
+              runInventoryEngine();
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Scryfall API fetch skipped or offline mode', err);
+        DOM.apiStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400 mr-1.5"></span> Standalone Mode`;
+      }
+    }
 
     // --- NORMALIZATION ALGORITHMS ---
     function stripAccents(str) {
@@ -410,12 +465,20 @@
       return clean;
     }
 
+    // Normalizes set names via Scryfall API dynamic cache & built-in alias dictionary
     function normalizeSetName(setName) {
       if (!setName) return '';
       let clean = stripAccents(setName).toLowerCase().trim();
       clean = clean.replace(/^(magic:\s*the\s*gathering\s*-\s*|commander:\s*)/g, '');
       clean = clean.replace(/[^a-z0-9]/g, '');
-      return SET_ALIASES[clean] || clean;
+      
+      // 1. Check Scryfall API dynamic map first
+      if (STATE.scryfallSetsMap.has(clean)) {
+        return STATE.scryfallSetsMap.get(clean);
+      }
+      
+      // 2. Check built-in set aliases
+      return BUILTIN_SET_ALIASES[clean] || clean;
     }
 
     function normalizeCondition(cond) {
@@ -1140,6 +1203,7 @@
     // --- EVENT LISTENERS & INITIALIZATION ---
     function init() {
       initFileUploads();
+      initScryfallSetCache();
 
       DOM.searchInput.addEventListener('input', (e) => {
         STATE.searchQuery = e.target.value;
