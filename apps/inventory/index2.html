@@ -160,6 +160,12 @@
           <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
           <span class="ml-3 text-sm font-medium text-slate-300">Ignore Tokens</span>
         </label>
+
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="hideZeroStockToggle" class="sr-only peer" checked>
+          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+          <span class="ml-3 text-sm font-medium text-slate-300">Hide 0 Stock Items</span>
+        </label>
       </div>
 
       <div class="flex items-center space-x-3">
@@ -297,6 +303,7 @@
       activeViewTab: 'all', // 'all', 'qtyMismatch', 'priceMismatch'
       filterMTGOnly: true,
       filterTokens: false,
+      hideZeroStock: true,
       sortColumn: 'name',
       sortDirection: 'asc'
     };
@@ -321,6 +328,7 @@
 
       filterNonMtgToggle: document.getElementById('filterNonMtgToggle'),
       filterTokensToggle: document.getElementById('filterTokensToggle'),
+      hideZeroStockToggle: document.getElementById('hideZeroStockToggle'),
       exportManaPoolUpdatesBtn: document.getElementById('exportManaPoolUpdatesBtn'),
       exportTcgUpdatesBtn: document.getElementById('exportTcgUpdatesBtn'),
 
@@ -348,7 +356,6 @@
       return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    // Normalizes card name; optional stripParentheses removes treatment descriptions like (Extended Art), (Retro Frame), (Foil), etc.
     function normalizeCardName(name, stripParentheses = false) {
       if (!name) return '';
       let clean = stripAccents(name).toLowerCase();
@@ -359,23 +366,33 @@
       return clean.replace(/[^a-z0-9]/g, ''); // Strip all punctuation & spaces
     }
 
-    // Normalizes collector numbers (e.g., '114/204' -> '114', '#0114' -> '114', '114a' -> '114a')
+    // Normalizes collector numbers (e.g. '114/204' -> '114', '#PCY-1' -> '1', '#MBS-1' -> '1')
     function normalizeCollectorNumber(num) {
       if (!num) return '';
       let clean = String(num).trim().toLowerCase();
       clean = clean.replace(/^[#★\s]+/, '');
       clean = clean.replace(/[★\s]+$/, '');
       clean = clean.replace(/\/.*$/, ''); // Remove denominator / set size
+      
+      // If format is SET-NUMBER (e.g. PCY-1, MBS-1, C14-12), extract the number portion after hyphen
+      if (/^[a-z0-9]{2,5}-\d+[a-z]?$/i.test(clean)) {
+        clean = clean.replace(/^[a-z0-9]{2,5}-/i, '');
+      }
+
       clean = clean.replace(/^0+/, ''); // Remove leading zeros
       return clean;
     }
 
-    // Normalizes set names by stripping common prefixes and punctuation
+    // Normalizes set names by mapping aliases like PLST -> thelist
     function normalizeSetName(setName) {
       if (!setName) return '';
-      let clean = stripAccents(setName).toLowerCase();
+      let clean = stripAccents(setName).toLowerCase().trim();
       clean = clean.replace(/^(magic:\s*the\s*gathering\s*-\s*|commander:\s*)/g, '');
-      return clean.replace(/[^a-z0-9]/g, '');
+      clean = clean.replace(/[^a-z0-9]/g, '');
+      if (clean === 'plst' || clean === 'thelistreprints' || clean === 'list' || clean === 'thelist') {
+        return 'thelist';
+      }
+      return clean;
     }
 
     function normalizeCondition(cond) {
@@ -641,8 +658,7 @@
         }
       });
 
-      // PASS 3: Collector Number & Normalized Set Name Match
-      // Handles cases where card names vary slightly, but collector number and set match
+      // PASS 3: Collector Number & Normalized Set Name Match (Handles 'The List Reprints' vs 'PLST' e.g. #1/143 vs #PCY-1)
       tcgProcessed.forEach(tcgItem => {
         if (!tcgItem.matched && tcgItem.cleanNum) {
           const matchIndex = manaProcessed.findIndex(mItem => 
@@ -674,7 +690,8 @@
         const tcgPrice = tcgItem.price;
         const manaPrice = manaItem.price;
 
-        const qtyMismatch = bothStoresLoaded ? (tcgQty !== manaQty) : false;
+        // Qty mismatch ONLY if both stores are loaded, quantities differ, and at least one store has stock > 0
+        const qtyMismatch = (bothStoresLoaded && tcgQty !== manaQty && (tcgQty > 0 || manaQty > 0));
         const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
           ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
           : false;
@@ -694,14 +711,14 @@
           manaItem,
           qtyMismatch,
           priceMismatch,
-          delta: Math.abs(tcgQty - manaQty)
+          delta: (tcgQty === 0 && manaQty === 0) ? 0 : Math.abs(tcgQty - manaQty)
         });
       });
 
       // Add Unmatched TCG Items
       tcgProcessed.forEach(tcgItem => {
         if (!tcgItem.matched) {
-          const qtyMismatch = bothStoresLoaded; // Qty is 0 on Mana Pool side
+          const qtyMismatch = bothStoresLoaded && tcgItem.qty > 0; // True ONLY if stock exists
           STATE.inventory.push({
             key: tcgItem.k1,
             name: tcgItem.name,
@@ -725,7 +742,7 @@
       // Add Unmatched Mana Pool Items
       manaProcessed.forEach(manaItem => {
         if (!manaItem.matched) {
-          const qtyMismatch = bothStoresLoaded; // Qty is 0 on TCG side
+          const qtyMismatch = bothStoresLoaded && manaItem.qty > 0; // True ONLY if stock exists
           STATE.inventory.push({
             key: manaItem.k1,
             name: manaItem.name,
@@ -791,8 +808,8 @@
 
       // Recalculate mismatches
       const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
-      item.qtyMismatch = bothStoresLoaded ? (item.tcgQty !== item.manaQty) : false;
-      item.delta = Math.abs(item.tcgQty - item.manaQty);
+      item.qtyMismatch = (bothStoresLoaded && item.tcgQty !== item.manaQty && (item.tcgQty > 0 || item.manaQty > 0));
+      item.delta = (item.tcgQty === 0 && item.manaQty === 0) ? 0 : Math.abs(item.tcgQty - item.manaQty);
 
       updateUI();
     };
@@ -836,10 +853,15 @@
     }
 
     function updateKPIs() {
-      const totalCards = STATE.inventory.length;
-      const qtyMismatchCount = STATE.inventory.filter(i => i.qtyMismatch).length;
-      const priceMismatchCount = STATE.inventory.filter(i => i.priceMismatch).length;
-      const matchedCount = STATE.inventory.filter(i => !i.qtyMismatch && !i.priceMismatch).length;
+      // Exclude 0/0 items if hideZeroStock is enabled
+      const visibleInventory = STATE.hideZeroStock 
+        ? STATE.inventory.filter(i => i.tcgQty > 0 || i.manaQty > 0)
+        : STATE.inventory;
+
+      const totalCards = visibleInventory.length;
+      const qtyMismatchCount = visibleInventory.filter(i => i.qtyMismatch).length;
+      const priceMismatchCount = visibleInventory.filter(i => i.priceMismatch).length;
+      const matchedCount = visibleInventory.filter(i => !i.qtyMismatch && !i.priceMismatch).length;
 
       DOM.kpiTotalItems.textContent = totalCards.toLocaleString();
       DOM.kpiQtyMismatch.textContent = qtyMismatchCount.toLocaleString();
@@ -852,8 +874,12 @@
     }
 
     function renderTable() {
-      // 1. Filter by Search Query & Tab
+      // 1. Filter by Search Query, Tab, and 0 Stock Toggle
       STATE.filteredInventory = STATE.inventory.filter(item => {
+        if (STATE.hideZeroStock && item.tcgQty === 0 && item.manaQty === 0) {
+          return false;
+        }
+
         const query = STATE.searchQuery.toLowerCase().trim();
         const matchesQuery = !query || 
           item.name.toLowerCase().includes(query) || 
@@ -1082,6 +1108,11 @@
       DOM.filterTokensToggle.addEventListener('change', (e) => {
         STATE.filterTokens = e.target.checked;
         runInventoryEngine();
+      });
+
+      DOM.hideZeroStockToggle.addEventListener('change', (e) => {
+        STATE.hideZeroStock = e.target.checked;
+        updateUI();
       });
 
       // View Tab Controls
