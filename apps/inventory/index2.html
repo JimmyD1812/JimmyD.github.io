@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TCGplayer vs Mana Pool Inventory Sync & Management Engine</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- PapaParse CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom scrollbar for dark mode tables */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Hide number input spinners */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased">
+
+  <!-- Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <i data-lucide="layers" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-none text-slate-100">MTG Inventory Sync & Manager</h1>
+          <p class="text-xs text-slate-400 mt-1">TCGplayer ↔ Mana Pool Unified Inventory Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="resetAppBtn" class="inline-flex items-center px-3 py-1.5 border border-red-900/40 hover:border-red-800 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i>
+          Reset Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+
+    <!-- Upload Section -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- TCGplayer Dropzone -->
+      <div id="tcgDropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/80 bg-slate-900/50 hover:bg-slate-900/80 rounded-xl p-6 transition duration-200 cursor-pointer text-center relative group flex flex-col justify-center items-center min-h-[160px]">
+        <input type="file" id="tcgFileInput" accept=".csv" class="hidden" />
+        <div id="tcgEmptyState" class="space-y-3">
+          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-indigo-950 group-hover:text-indigo-400 text-slate-400 flex items-center justify-center mx-auto transition">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-200">Upload TCGplayer Export CSV</p>
+            <p class="text-xs text-slate-400 mt-1">Drag and drop file or click to browse</p>
+          </div>
+        </div>
+        <div id="tcgLoadedState" class="hidden space-y-2 text-left w-full">
+          <div class="flex items-center justify-between bg-indigo-950/40 border border-indigo-800/50 rounded-lg p-3">
+            <div class="flex items-center space-x-3 overflow-hidden">
+              <i data-lucide="file-check-2" class="w-6 h-6 text-indigo-400 shrink-0"></i>
+              <div class="truncate">
+                <p id="tcgFileName" class="text-sm font-medium text-indigo-200 truncate">tcgplayer.csv</p>
+                <p id="tcgFileMeta" class="text-xs text-slate-400">0 rows parsed</p>
+              </div>
+            </div>
+            <button id="removeTcgBtn" class="text-slate-400 hover:text-red-400 p-1 transition" title="Remove file">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mana Pool Dropzone -->
+      <div id="manaDropzone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500/80 bg-slate-900/50 hover:bg-slate-900/80 rounded-xl p-6 transition duration-200 cursor-pointer text-center relative group flex flex-col justify-center items-center min-h-[160px]">
+        <input type="file" id="manaFileInput" accept=".csv" class="hidden" />
+        <div id="manaEmptyState" class="space-y-3">
+          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-cyan-950 group-hover:text-cyan-400 text-slate-400 flex items-center justify-center mx-auto transition">
+            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-200">Upload Mana Pool Export CSV</p>
+            <p class="text-xs text-slate-400 mt-1">Drag and drop file or click to browse</p>
+          </div>
+        </div>
+        <div id="manaLoadedState" class="hidden space-y-2 text-left w-full">
+          <div class="flex items-center justify-between bg-cyan-950/40 border border-cyan-800/50 rounded-lg p-3">
+            <div class="flex items-center space-x-3 overflow-hidden">
+              <i data-lucide="file-check-2" class="w-6 h-6 text-cyan-400 shrink-0"></i>
+              <div class="truncate">
+                <p id="manaFileName" class="text-sm font-medium text-cyan-200 truncate">manapool.csv</p>
+                <p id="manaFileMeta" class="text-xs text-slate-400">0 rows parsed</p>
+              </div>
+            </div>
+            <button id="removeManaBtn" class="text-slate-400 hover:text-red-400 p-1 transition" title="Remove file">
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls & Settings Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="flex flex-wrap items-center gap-6">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="filterNonMtgToggle" class="sr-only peer" checked>
+          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+          <span class="ml-3 text-sm font-medium text-slate-300">Magic: The Gathering Only</span>
+        </label>
+
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="filterTokensToggle" class="sr-only peer">
+          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+          <span class="ml-3 text-sm font-medium text-slate-300">Ignore Tokens</span>
+        </label>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <button id="exportManaPoolUpdatesBtn" disabled class="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-lg transition shadow-sm">
+          <i data-lucide="download" class="w-4 h-4 mr-2 text-cyan-400"></i>
+          Export Mana Pool Fix CSV
+        </button>
+        <button id="exportTcgUpdatesBtn" disabled class="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-lg transition shadow-sm">
+          <i data-lucide="download" class="w-4 h-4 mr-2 text-indigo-400"></i>
+          Export TCGplayer Fix CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Unique Cards</span>
+          <i data-lucide="boxes" class="w-4 h-4 text-slate-400"></i>
+        </div>
+        <p id="kpiTotalItems" class="text-2xl font-bold text-slate-100 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Qty Mismatches</span>
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+        </div>
+        <p id="kpiQtyMismatch" class="text-2xl font-bold text-amber-400 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider">Price Mismatches</span>
+          <i data-lucide="dollar-sign" class="w-4 h-4 text-rose-400"></i>
+        </div>
+        <p id="kpiPriceMismatch" class="text-2xl font-bold text-rose-400 mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Fully Matched</span>
+          <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+        <p id="kpiMatchedItems" class="text-2xl font-bold text-emerald-400 mt-2">0</p>
+      </div>
+    </section>
+
+    <!-- Table Section -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col flex-1 shadow-xl">
+      
+      <!-- Table Header Controls & Search -->
+      <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/80">
+        
+        <!-- Filter Tabs -->
+        <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+          <button id="viewTabAll" class="px-3 py-1.5 rounded-md font-medium text-slate-100 bg-slate-800 transition">
+            All Cards (<span id="countAll">0</span>)
+          </button>
+          <button id="viewTabQtyMismatch" class="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-amber-400 transition">
+            Qty Mismatches (<span id="countQtyMismatch">0</span>)
+          </button>
+          <button id="viewTabPriceMismatch" class="px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-rose-400 transition">
+            Price Mismatches (<span id="countPriceMismatch">0</span>)
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full md:w-72">
+          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="tableSearchInput" placeholder="Search card name or set..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:border-indigo-500 transition">
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="overflow-x-auto flex-1">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-semibold tracking-wider uppercase select-none">
+              <th onclick="handleSort('name')" class="py-3 px-4 cursor-pointer hover:text-indigo-400 transition">
+                Card Name <span id="sort_icon_name" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('set')" class="py-3 px-4 cursor-pointer hover:text-indigo-400 transition">
+                Set <span id="sort_icon_set" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('number')" class="py-3 px-4 cursor-pointer hover:text-indigo-400 transition">
+                Num <span id="sort_icon_number" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('condition')" class="py-3 px-4 cursor-pointer hover:text-indigo-400 transition">
+                Cond <span id="sort_icon_condition" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('finish')" class="py-3 px-4 text-center cursor-pointer hover:text-indigo-400 transition">
+                Finish <span id="sort_icon_finish" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('tcgQty')" class="py-3 px-4 text-center cursor-pointer hover:text-indigo-400 transition">
+                TCG Qty <span id="sort_icon_tcgQty" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('manaQty')" class="py-3 px-4 text-center cursor-pointer hover:text-indigo-400 transition">
+                Mana Qty <span id="sort_icon_manaQty" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('tcgPrice')" class="py-3 px-4 text-center cursor-pointer hover:text-indigo-400 transition">
+                TCG Price <span id="sort_icon_tcgPrice" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('manaPrice')" class="py-3 px-4 text-center cursor-pointer hover:text-indigo-400 transition">
+                Mana Price <span id="sort_icon_manaPrice" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+              <th onclick="handleSort('status')" class="py-3 px-4 text-center cursor-pointer hover:text-indigo-400 transition">
+                Status / Delta <span id="sort_icon_status" class="ml-0.5 text-[10px]">↕</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="discrepancyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+            <tr>
+              <td colspan="10" class="py-12 text-center text-slate-500">
+                <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 stroke-1"></i>
+                Upload TCGplayer or Mana Pool CSV export to view and manage inventory.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // --- STATE MANAGEMENT ---
+    const STATE = {
+      tcgRaw: [],
+      manaRaw: [],
+      tcgMap: new Map(),
+      manaMap: new Map(),
+      inventory: [],
+      filteredInventory: [],
+      searchQuery: '',
+      activeViewTab: 'all', // 'all', 'qtyMismatch', 'priceMismatch'
+      filterMTGOnly: true,
+      filterTokens: false,
+      sortColumn: 'name',
+      sortDirection: 'asc'
+    };
+
+    // --- DOM ELEMENTS ---
+    const DOM = {
+      tcgDropzone: document.getElementById('tcgDropzone'),
+      tcgFileInput: document.getElementById('tcgFileInput'),
+      tcgEmptyState: document.getElementById('tcgEmptyState'),
+      tcgLoadedState: document.getElementById('tcgLoadedState'),
+      tcgFileName: document.getElementById('tcgFileName'),
+      tcgFileMeta: document.getElementById('tcgFileMeta'),
+      removeTcgBtn: document.getElementById('removeTcgBtn'),
+
+      manaDropzone: document.getElementById('manaDropzone'),
+      manaFileInput: document.getElementById('manaFileInput'),
+      manaEmptyState: document.getElementById('manaEmptyState'),
+      manaLoadedState: document.getElementById('manaLoadedState'),
+      manaFileName: document.getElementById('manaFileName'),
+      manaFileMeta: document.getElementById('manaFileMeta'),
+      removeManaBtn: document.getElementById('removeManaBtn'),
+
+      filterNonMtgToggle: document.getElementById('filterNonMtgToggle'),
+      filterTokensToggle: document.getElementById('filterTokensToggle'),
+      exportManaPoolUpdatesBtn: document.getElementById('exportManaPoolUpdatesBtn'),
+      exportTcgUpdatesBtn: document.getElementById('exportTcgUpdatesBtn'),
+
+      kpiTotalItems: document.getElementById('kpiTotalItems'),
+      kpiQtyMismatch: document.getElementById('kpiQtyMismatch'),
+      kpiPriceMismatch: document.getElementById('kpiPriceMismatch'),
+      kpiMatchedItems: document.getElementById('kpiMatchedItems'),
+
+      tableBody: document.getElementById('discrepancyTableBody'),
+      searchInput: document.getElementById('tableSearchInput'),
+
+      viewTabAll: document.getElementById('viewTabAll'),
+      viewTabQtyMismatch: document.getElementById('viewTabQtyMismatch'),
+      viewTabPriceMismatch: document.getElementById('viewTabPriceMismatch'),
+
+      countAll: document.getElementById('countAll'),
+      countQtyMismatch: document.getElementById('countQtyMismatch'),
+      countPriceMismatch: document.getElementById('countPriceMismatch'),
+
+      resetAppBtn: document.getElementById('resetAppBtn')
+    };
+
+    // --- NORMALIZATION HELPER FUNCTIONS ---
+    function stripAccents(str) {
+      return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function normalizeCardName(name) {
+      let clean = stripAccents(name || '').toLowerCase();
+      clean = clean.replace(/\/\/.*/, ''); // take front name for split cards
+      clean = clean.replace(/[^a-z0-9]/g, '');
+      return clean;
+    }
+
+    function normalizeCollectorNumber(num) {
+      if (!num) return '';
+      let clean = String(num).trim().toLowerCase();
+      clean = clean.replace(/^#/, '');
+      clean = clean.replace(/\/.*$/, ''); // take string before '/' if format is 114/204
+      clean = clean.replace(/^0+/, ''); // strip leading zeros
+      return clean;
+    }
+
+    function normalizeCondition(cond) {
+      const c = (cond || '').toLowerCase().trim();
+      if (c.includes('near mint') || c === 'nm') return 'NM';
+      if (c.includes('lightly played') || c === 'lp') return 'LP';
+      if (c.includes('moderately played') || c === 'mp') return 'MP';
+      if (c.includes('heavily played') || c === 'hp') return 'HP';
+      if (c.includes('damaged') || c === 'dmg') return 'DMG';
+      return 'NM';
+    }
+
+    function normalizeFinish(finish) {
+      const f = (finish || '').toLowerCase().trim();
+      if (f === 'fo' || f === 'foil') return 'FO';
+      if (f === 'et' || f === 'etched') return 'ET';
+      return 'NF';
+    }
+
+    function getTcgFinish(row) {
+      const cond = (row['Condition'] || row['condition'] || '').toLowerCase();
+      const title = (row['Title'] || row['title'] || '').toLowerCase();
+      const rarity = (row['Rarity'] || row['rarity'] || '').toLowerCase();
+      const finishCol = (row['Finish'] || row['finish'] || '').toLowerCase();
+      if (cond.includes('etched') || title.includes('etched') || finishCol.includes('etched')) return 'ET';
+      if (cond.includes('foil') || title.includes('foil') || rarity.includes('foil') || finishCol.includes('foil')) return 'FO';
+      return 'NF';
+    }
+
+    function parsePrice(val) {
+      if (val === undefined || val === null || val === '') return null;
+      const str = String(val).replace(/[^0-9.]/g, '');
+      const num = parseFloat(str);
+      return isNaN(num) ? null : num;
+    }
+
+    function makeCompositeKey(name, number, condition, finish = 'NF') {
+      const cleanName = normalizeCardName(name);
+      const cleanNum = normalizeCollectorNumber(number);
+      const cleanCond = normalizeCondition(condition);
+      const cleanFinish = normalizeFinish(finish);
+      return `${cleanName}||${cleanNum}||${cleanCond}||${cleanFinish}`;
+    }
+
+    // --- FILE UPLOAD HANDLERS ---
+    function initFileUploads() {
+      setupDragAndDrop(DOM.tcgDropzone, (file) => handleFileSelect(file, 'tcg'));
+      setupDragAndDrop(DOM.manaDropzone, (file) => handleFileSelect(file, 'mana'));
+
+      DOM.tcgFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFileSelect(e.target.files[0], 'tcg');
+      });
+      DOM.manaFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) handleFileSelect(e.target.files[0], 'mana');
+      });
+
+      DOM.removeTcgBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        STATE.tcgRaw = [];
+        DOM.tcgFileInput.value = '';
+        DOM.tcgLoadedState.classList.add('hidden');
+        DOM.tcgEmptyState.classList.remove('hidden');
+        runInventoryEngine();
+      });
+
+      DOM.removeManaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        STATE.manaRaw = [];
+        DOM.manaFileInput.value = '';
+        DOM.manaLoadedState.classList.add('hidden');
+        DOM.manaEmptyState.classList.remove('hidden');
+        runInventoryEngine();
+      });
+    }
+
+    function setupDragAndDrop(element, onDrop) {
+      element.addEventListener('click', () => {
+        const input = element.querySelector('input[type="file"]');
+        if (input) input.click();
+      });
+
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        element.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        element.addEventListener(eventName, () => {
+          element.classList.add('border-indigo-500', 'bg-slate-900');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        element.addEventListener(eventName, () => {
+          element.classList.remove('border-indigo-500', 'bg-slate-900');
+        });
+      });
+
+      element.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0 && files[0].name.endsWith('.csv')) {
+          onDrop(files[0]);
+        }
+      });
+    }
+
+    function handleFileSelect(file, type) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (type === 'tcg') {
+            STATE.tcgRaw = results.data;
+            DOM.tcgFileName.textContent = file.name;
+            DOM.tcgFileMeta.textContent = `${results.data.length.toLocaleString()} rows parsed`;
+            DOM.tcgEmptyState.classList.add('hidden');
+            DOM.tcgLoadedState.classList.remove('hidden');
+          } else {
+            STATE.manaRaw = results.data;
+            DOM.manaFileName.textContent = file.name;
+            DOM.manaFileMeta.textContent = `${results.data.length.toLocaleString()} rows parsed`;
+            DOM.manaEmptyState.classList.add('hidden');
+            DOM.manaLoadedState.classList.remove('hidden');
+          }
+          runInventoryEngine();
+        }
+      });
+    }
+
+    // --- MAIN INVENTORY ENGINE ---
+    function runInventoryEngine() {
+      STATE.tcgMap.clear();
+      STATE.manaMap.clear();
+      STATE.inventory = [];
+
+      // 1. Index TCGplayer Items
+      STATE.tcgRaw.forEach(row => {
+        const productLine = (row['Product Line'] || row['Category Name'] || row['product_line'] || '').toLowerCase().trim();
+        if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
+        
+        const rawName = row['Product Name'] || row['product_name'] || row['Name'] || row['name'] || '';
+        if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
+
+        const number = row['Number'] || row['number'] || '';
+        const rawCondition = row['Condition'] || row['condition'] || 'Near Mint';
+        const qty = parseInt(row['Total Quantity'] || row['total_quantity'] || row['Quantity'] || row['quantity'] || '0', 10);
+        
+        // Extract Price (specifically 'TCG Marketplace Price' or fallback)
+        const priceVal = row['TCG Marketplace Price'] !== undefined ? row['TCG Marketplace Price'] 
+                       : row['tcg_marketplace_price'] !== undefined ? row['tcg_marketplace_price']
+                       : row['TCG Market Price'] !== undefined ? row['TCG Market Price']
+                       : row['TCG Low Price'] !== undefined ? row['TCG Low Price']
+                       : row['Price'] || row['price'] || null;
+        const price = parsePrice(priceVal);
+
+        const finish = getTcgFinish(row);
+        const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
+        const condition = normalizeCondition(cleanConditionStr);
+        
+        const key = makeCompositeKey(rawName, number, condition, finish);
+        
+        if (STATE.tcgMap.has(key)) {
+          const existing = STATE.tcgMap.get(key);
+          existing.qty += qty;
+          if (existing.price === null) existing.price = price;
+        } else {
+          STATE.tcgMap.set(key, {
+            key,
+            name: rawName,
+            set: row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '',
+            number,
+            condition,
+            finish,
+            qty,
+            price,
+            raw: row
+          });
+        }
+      });
+
+      // 2. Index Mana Pool Items
+      STATE.manaRaw.forEach(row => {
+        const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
+        if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg') && !productType.includes('magic')) return;
+        
+        const rawName = row['name'] || row['Name'] || row['Product Name'] || '';
+        if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
+
+        const number = row['number'] || row['Number'] || '';
+        const condition = row['condition'] || row['Condition'] || 'NM';
+        const finish = normalizeFinish(row['finish'] || row['Finish'] || 'NF');
+        const qty = parseInt(row['quantity'] || row['Quantity'] || '0', 10);
+
+        // Extract Price (specifically 'price')
+        const priceVal = row['price'] !== undefined ? row['price'] : row['Price'] || row['PRICE'] || null;
+        const price = parsePrice(priceVal);
+
+        const key = makeCompositeKey(rawName, number, condition, finish);
+
+        if (STATE.manaMap.has(key)) {
+          const existing = STATE.manaMap.get(key);
+          existing.qty += qty;
+          if (existing.price === null) existing.price = price;
+        } else {
+          STATE.manaMap.set(key, {
+            key,
+            name: rawName,
+            set: row['set'] || row['Set'] || row['Set Name'] || '',
+            number,
+            condition: normalizeCondition(condition),
+            finish,
+            qty,
+            price,
+            raw: row
+          });
+        }
+      });
+
+      // 3. Combine Into Inventory
+      const allKeys = new Set([...STATE.tcgMap.keys(), ...STATE.manaMap.keys()]);
+      const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
+
+      allKeys.forEach(key => {
+        const tcgItem = STATE.tcgMap.get(key);
+        const manaItem = STATE.manaMap.get(key);
+
+        const tcgQty = tcgItem ? tcgItem.qty : 0;
+        const manaQty = manaItem ? manaItem.qty : 0;
+
+        const tcgPrice = tcgItem ? tcgItem.price : null;
+        const manaPrice = manaItem ? manaItem.price : null;
+
+        // Mismatch conditions
+        const qtyMismatch = bothStoresLoaded ? (tcgQty !== manaQty) : false;
+        const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
+          ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
+          : false;
+
+        STATE.inventory.push({
+          key,
+          name: tcgItem ? tcgItem.name : manaItem.name,
+          set: tcgItem ? tcgItem.set : manaItem.set,
+          number: tcgItem ? tcgItem.number : (manaItem ? manaItem.number : ''),
+          condition: tcgItem ? tcgItem.condition : (manaItem ? manaItem.condition : 'NM'),
+          finish: tcgItem ? tcgItem.finish : (manaItem ? manaItem.finish : 'NF'),
+          tcgQty,
+          manaQty,
+          tcgPrice,
+          manaPrice,
+          tcgItem,
+          manaItem,
+          qtyMismatch,
+          priceMismatch,
+          delta: Math.abs(tcgQty - manaQty)
+        });
+      });
+
+      updateUI();
+    }
+
+    // --- INTERACTIVE QUANTITY EDITING ---
+    window.changeQty = function(key, store, delta) {
+      const item = STATE.inventory.find(i => i.key === key);
+      if (!item) return;
+
+      if (store === 'tcg') {
+        const newQty = Math.max(0, item.tcgQty + delta);
+        setQty(key, 'tcg', newQty);
+      } else if (store === 'mana') {
+        const newQty = Math.max(0, item.manaQty + delta);
+        setQty(key, 'mana', newQty);
+      }
+    };
+
+    window.setQty = function(key, store, value) {
+      const item = STATE.inventory.find(i => i.key === key);
+      if (!item) return;
+
+      const newQty = Math.max(0, parseInt(value || '0', 10));
+
+      if (store === 'tcg') {
+        item.tcgQty = newQty;
+        if (item.tcgItem) {
+          item.tcgItem.qty = newQty;
+          if (item.tcgItem.raw) {
+            if (item.tcgItem.raw['Total Quantity'] !== undefined) item.tcgItem.raw['Total Quantity'] = newQty;
+            else if (item.tcgItem.raw['quantity'] !== undefined) item.tcgItem.raw['quantity'] = newQty;
+          }
+        }
+      } else if (store === 'mana') {
+        item.manaQty = newQty;
+        if (item.manaItem) {
+          item.manaItem.qty = newQty;
+          if (item.manaItem.raw) {
+            if (item.manaItem.raw['quantity'] !== undefined) item.manaItem.raw['quantity'] = newQty;
+            else if (item.manaItem.raw['Total Quantity'] !== undefined) item.manaItem.raw['Total Quantity'] = newQty;
+          }
+        }
+      }
+
+      // Recalculate mismatches
+      const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
+      item.qtyMismatch = bothStoresLoaded ? (item.tcgQty !== item.manaQty) : false;
+      item.delta = Math.abs(item.tcgQty - item.manaQty);
+
+      updateUI();
+    };
+
+    // --- SORTING ENGINE ---
+    window.handleSort = function(colKey) {
+      if (STATE.sortColumn === colKey) {
+        STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        STATE.sortColumn = colKey;
+        STATE.sortDirection = 'asc';
+      }
+      renderTable();
+    };
+
+    function updateSortIcons() {
+      const cols = ['name', 'set', 'number', 'condition', 'finish', 'tcgQty', 'manaQty', 'tcgPrice', 'manaPrice', 'status'];
+      cols.forEach(col => {
+        const el = document.getElementById(`sort_icon_${col}`);
+        if (!el) return;
+        if (STATE.sortColumn === col) {
+          el.innerHTML = STATE.sortDirection === 'asc' ? '▲' : '▼';
+          el.className = 'ml-0.5 text-indigo-400 font-bold text-[10px]';
+        } else {
+          el.innerHTML = '↕';
+          el.className = 'ml-0.5 text-slate-600 text-[10px]';
+        }
+      });
+    }
+
+    // --- UI RENDER ENGINE ---
+    function updateUI() {
+      updateKPIs();
+      renderTable();
+      
+      const hasData = STATE.inventory.length > 0;
+      DOM.exportManaPoolUpdatesBtn.disabled = !hasData;
+      DOM.exportTcgUpdatesBtn.disabled = !hasData;
+
+      lucide.createIcons();
+    }
+
+    function updateKPIs() {
+      const totalCards = STATE.inventory.length;
+      const qtyMismatchCount = STATE.inventory.filter(i => i.qtyMismatch).length;
+      const priceMismatchCount = STATE.inventory.filter(i => i.priceMismatch).length;
+      const matchedCount = STATE.inventory.filter(i => !i.qtyMismatch && !i.priceMismatch).length;
+
+      DOM.kpiTotalItems.textContent = totalCards.toLocaleString();
+      DOM.kpiQtyMismatch.textContent = qtyMismatchCount.toLocaleString();
+      DOM.kpiPriceMismatch.textContent = priceMismatchCount.toLocaleString();
+      DOM.kpiMatchedItems.textContent = matchedCount.toLocaleString();
+
+      DOM.countAll.textContent = totalCards;
+      DOM.countQtyMismatch.textContent = qtyMismatchCount;
+      DOM.countPriceMismatch.textContent = priceMismatchCount;
+    }
+
+    function renderTable() {
+      // 1. Filter by Search Query & Tab
+      STATE.filteredInventory = STATE.inventory.filter(item => {
+        const query = STATE.searchQuery.toLowerCase().trim();
+        const matchesQuery = !query || 
+          item.name.toLowerCase().includes(query) || 
+          item.set.toLowerCase().includes(query) ||
+          item.number.toLowerCase().includes(query);
+
+        if (!matchesQuery) return false;
+
+        if (STATE.activeViewTab === 'qtyMismatch') return item.qtyMismatch;
+        if (STATE.activeViewTab === 'priceMismatch') return item.priceMismatch;
+        return true;
+      });
+
+      // 2. Sort Items
+      STATE.filteredInventory.sort((a, b) => {
+        let valA, valB;
+
+        if (STATE.sortColumn === 'status') {
+          valA = a.qtyMismatch ? 2 : (a.priceMismatch ? 1 : 0);
+          valB = b.qtyMismatch ? 2 : (b.priceMismatch ? 1 : 0);
+        } else {
+          valA = a[STATE.sortColumn];
+          valB = b[STATE.sortColumn];
+        }
+
+        if (valA === null || valA === undefined) valA = '';
+        if (valB === null || valB === undefined) valB = '';
+
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return STATE.sortDirection === 'asc' ? valA - valB : valB - valA;
+        }
+
+        if (STATE.sortColumn === 'number') {
+          const numA = parseInt(valA, 10) || 0;
+          const numB = parseInt(valB, 10) || 0;
+          if (numA !== numB) {
+            return STATE.sortDirection === 'asc' ? numA - numB : numB - numA;
+          }
+        }
+
+        const strA = String(valA).toLowerCase();
+        const strB = String(valB).toLowerCase();
+        if (strA < strB) return STATE.sortDirection === 'asc' ? -1 : 1;
+        if (strA > strB) return STATE.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      updateSortIcons();
+
+      if (STATE.filteredInventory.length === 0) {
+        DOM.tableBody.innerHTML = `
+          <tr>
+            <td colspan="10" class="py-12 text-center text-slate-500">
+              <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-slate-600 stroke-1"></i>
+              No cards found matching current filters.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      DOM.tableBody.innerHTML = STATE.filteredInventory.map(item => {
+        let statusBadges = '';
+        if (item.qtyMismatch) {
+          statusBadges += `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Qty Mismatch</span> `;
+        }
+        if (item.priceMismatch) {
+          statusBadges += `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold">Price Mismatch</span> `;
+        }
+        if (!item.qtyMismatch && !item.priceMismatch) {
+          statusBadges = `<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-medium">In Sync</span>`;
+        }
+
+        const finishBadge = item.finish === 'FO' 
+          ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">FO</span>`
+          : item.finish === 'ET'
+          ? `<span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold">ET</span>`
+          : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium">NF</span>`;
+
+        const tcgPriceStr = item.tcgPrice !== null ? `$${item.tcgPrice.toFixed(2)}` : '—';
+        const manaPriceStr = item.manaPrice !== null ? `$${item.manaPrice.toFixed(2)}` : '—';
+
+        let priceDiffStr = '';
+        if (item.priceMismatch && item.tcgPrice !== null && item.manaPrice !== null) {
+          const diff = Math.abs(item.tcgPrice - item.manaPrice);
+          priceDiffStr = `<div class="text-[10px] text-rose-400 font-mono">Δ $${diff.toFixed(2)}</div>`;
+        }
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition group">
+            <td class="py-3 px-4 font-medium text-slate-100">
+              <div class="flex items-center space-x-2">
+                <span>${escapeHtml(item.name)}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-slate-400">${escapeHtml(item.set)}</td>
+            <td class="py-3 px-4 font-mono text-slate-400">#${escapeHtml(item.number)}</td>
+            <td class="py-3 px-4 font-semibold text-slate-300">${item.condition}</td>
+            <td class="py-3 px-4 text-center">${finishBadge}</td>
+            
+            <!-- TCG Qty Control -->
+            <td class="py-3 px-4 text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button onclick="changeQty('${escapeJsString(item.key)}', 'tcg', -1)" class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold transition">-</button>
+                <input type="number" min="0" value="${item.tcgQty}" onchange="setQty('${escapeJsString(item.key)}', 'tcg', this.value)" class="w-12 text-center bg-slate-950 border border-slate-800 rounded text-xs font-mono py-0.5 ${item.tcgQty === 0 ? 'text-slate-600' : 'text-indigo-300 font-bold'} focus:outline-none focus:border-indigo-500 transition">
+                <button onclick="changeQty('${escapeJsString(item.key)}', 'tcg', 1)" class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold transition">+</button>
+              </div>
+            </td>
+
+            <!-- Mana Qty Control -->
+            <td class="py-3 px-4 text-center">
+              <div class="inline-flex items-center space-x-1">
+                <button onclick="changeQty('${escapeJsString(item.key)}', 'mana', -1)" class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold transition">-</button>
+                <input type="number" min="0" value="${item.manaQty}" onchange="setQty('${escapeJsString(item.key)}', 'mana', this.value)" class="w-12 text-center bg-slate-950 border border-slate-800 rounded text-xs font-mono py-0.5 ${item.manaQty === 0 ? 'text-slate-600' : 'text-cyan-300 font-bold'} focus:outline-none focus:border-cyan-500 transition">
+                <button onclick="changeQty('${escapeJsString(item.key)}', 'mana', 1)" class="w-5 h-5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold transition">+</button>
+              </div>
+            </td>
+
+            <!-- TCG Price -->
+            <td class="py-3 px-4 text-center font-mono text-slate-300 font-medium">${tcgPriceStr}</td>
+
+            <!-- Mana Price -->
+            <td class="py-3 px-4 text-center font-mono text-slate-300 font-medium">
+              ${manaPriceStr}
+              ${priceDiffStr}
+            </td>
+
+            <!-- Status / Delta -->
+            <td class="py-3 px-4 text-center">
+              <div class="flex flex-col items-center space-y-0.5">
+                ${statusBadges}
+                ${item.qtyMismatch ? `<span class="text-[10px] text-amber-400 font-mono">Δ ${item.delta}</span>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // --- CSV EXPORT GENERATION ENGINE ---
+    function exportManaPoolAdjustments() {
+      const exportRows = [];
+
+      STATE.inventory.forEach(item => {
+        if (item.manaQty > 0 || (item.manaItem && item.manaItem.raw)) {
+          if (item.manaItem && item.manaItem.raw) {
+            const row = { ...item.manaItem.raw };
+            if (row['quantity'] !== undefined) row['quantity'] = item.manaQty;
+            else if (row['Quantity'] !== undefined) row['Quantity'] = item.manaQty;
+            else row['quantity'] = item.manaQty;
+            exportRows.push(row);
+          } else {
+            exportRows.push({
+              'product_type': 'mtg_single',
+              'name': item.name,
+              'set': item.set,
+              'number': item.number,
+              'condition': item.condition,
+              'finish': item.finish || 'NF',
+              'quantity': item.manaQty,
+              'price': item.tcgPrice ? item.tcgPrice.toFixed(2) : ''
+            });
+          }
+        }
+      });
+
+      downloadCSV(exportRows, `mana_pool_inventory_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+
+    function exportTcgplayerAdjustments() {
+      const exportRows = [];
+
+      STATE.inventory.forEach(item => {
+        if (item.tcgQty > 0 || (item.tcgItem && item.tcgItem.raw)) {
+          if (item.tcgItem && item.tcgItem.raw) {
+            const row = { ...item.tcgItem.raw };
+            if (row['Total Quantity'] !== undefined) row['Total Quantity'] = item.tcgQty;
+            else if (row['total_quantity'] !== undefined) row['total_quantity'] = item.tcgQty;
+            else if (row['Quantity'] !== undefined) row['Quantity'] = item.tcgQty;
+            else row['Total Quantity'] = item.tcgQty;
+            exportRows.push(row);
+          } else {
+            exportRows.push({
+              'Product Line': 'Magic: The Gathering',
+              'Product Name': item.name,
+              'Set Name': item.set,
+              'Number': item.number,
+              'Condition': item.condition === 'NM' ? 'Near Mint' : item.condition,
+              'Total Quantity': item.tcgQty,
+              'TCG Marketplace Price': item.manaPrice ? item.manaPrice.toFixed(2) : ''
+            });
+          }
+        }
+      });
+
+      downloadCSV(exportRows, `tcgplayer_inventory_${new Date().toISOString().slice(0,10)}.csv`);
+    }
+
+    function downloadCSV(data, filename) {
+      if (!data || data.length === 0) return;
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // --- EVENT LISTENERS & INITIALIZATION ---
+    function init() {
+      initFileUploads();
+
+      DOM.searchInput.addEventListener('input', (e) => {
+        STATE.searchQuery = e.target.value;
+        renderTable();
+      });
+
+      DOM.filterNonMtgToggle.addEventListener('change', (e) => {
+        STATE.filterMTGOnly = e.target.checked;
+        runInventoryEngine();
+      });
+
+      DOM.filterTokensToggle.addEventListener('change', (e) => {
+        STATE.filterTokens = e.target.checked;
+        runInventoryEngine();
+      });
+
+      // View Tab Controls
+      DOM.viewTabAll.addEventListener('click', () => setViewTab('all'));
+      DOM.viewTabQtyMismatch.addEventListener('click', () => setViewTab('qtyMismatch'));
+      DOM.viewTabPriceMismatch.addEventListener('click', () => setViewTab('priceMismatch'));
+
+      DOM.resetAppBtn.addEventListener('click', () => {
+        if (confirm('Reset uploaded files and active inventory view?')) {
+          DOM.removeTcgBtn.click();
+          DOM.removeManaBtn.click();
+        }
+      });
+
+      DOM.exportManaPoolUpdatesBtn.addEventListener('click', exportManaPoolAdjustments);
+      DOM.exportTcgUpdatesBtn.addEventListener('click', exportTcgplayerAdjustments);
+
+      lucide.createIcons();
+    }
+
+    function setViewTab(tabName) {
+      STATE.activeViewTab = tabName;
+      
+      [DOM.viewTabAll, DOM.viewTabQtyMismatch, DOM.viewTabPriceMismatch].forEach(tab => {
+        tab.classList.remove('bg-slate-800', 'text-slate-100');
+        tab.classList.add('text-slate-400');
+      });
+
+      if (tabName === 'all') {
+        DOM.viewTabAll.classList.add('bg-slate-800', 'text-slate-100');
+        DOM.viewTabAll.classList.remove('text-slate-400');
+      } else if (tabName === 'qtyMismatch') {
+        DOM.viewTabQtyMismatch.classList.add('bg-slate-800', 'text-slate-100');
+        DOM.viewTabQtyMismatch.classList.remove('text-slate-400');
+      } else if (tabName === 'priceMismatch') {
+        DOM.viewTabPriceMismatch.classList.add('bg-slate-800', 'text-slate-100');
+        DOM.viewTabPriceMismatch.classList.remove('text-slate-400');
+      }
+
+      renderTable();
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function escapeJsString(str) {
+      return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
