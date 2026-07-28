@@ -383,13 +383,12 @@
       return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    // Normalizes card name with option to strip treatment parentheses like (Extended Art), (b), (Retro Frame)
     function normalizeCardName(name, stripParentheses = true) {
       if (!name) return '';
       let clean = stripAccents(name).toLowerCase().trim();
       clean = clean.replace(/\/\/.*/, ''); // Front face for split cards
       if (stripParentheses) {
-        clean = clean.replace(/\([^)]*\)/g, ''); // Strip parenthetical treatment text
+        clean = clean.replace(/\([^)]*\)/g, ''); // Strip parenthetical treatment text like (Borderless), (b), etc.
       }
       return clean.replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
     }
@@ -402,7 +401,7 @@
       clean = clean.replace(/[★†\s]+$/, '');
       clean = clean.replace(/\/.*$/, ''); // Remove denominator
       
-      // If format is SET-NUMBER (e.g. PCY-1, MBS-1, POR-120), extract numeric portion after hyphen
+      // Extract numeric portion if formatted as SET-NUMBER (e.g. PCY-1, MBS-1, POR-120)
       if (/^[a-z0-9]{2,5}-\d+[a-z]?$/i.test(clean)) {
         clean = clean.replace(/^[a-z0-9]{2,5}-/i, '');
       }
@@ -411,7 +410,6 @@
       return clean;
     }
 
-    // Normalizes set names and maps known set codes & aliases
     function normalizeSetName(setName) {
       if (!setName) return '';
       let clean = stripAccents(setName).toLowerCase().trim();
@@ -542,7 +540,7 @@
       });
     }
 
-    // --- NAME-FIRST HIERARCHICAL INVENTORY MATCHING ENGINE ---
+    // --- SET/NUMBER-FIRST PRIORITY MATCHING ENGINE ---
     function runInventoryEngine() {
       STATE.inventory = [];
 
@@ -638,21 +636,43 @@
 
       const matchedPairs = [];
 
-      // PASS 1: NAME + SET + CONDITION + FINISH PRIORITY MATCH (Handles missing/different collector numbers, e.g. The List / MB2)
+      // PASS 1: SET + COLLECTOR NUMBER + CONDITION + FINISH MATCH (PRIMARY)
+      // Strictly pairs exact collector numbers within the same set, ensuring #175 and #319 never cross-match!
+      tcgProcessed.forEach(tcgItem => {
+        if (tcgItem.matched || !tcgItem.cleanNum) return;
+
+        const matchIndex = manaProcessed.findIndex(mItem => {
+          if (mItem.matched || !mItem.cleanNum) return false;
+          
+          const setMatches = (tcgItem.cleanSet === mItem.cleanSet) || 
+                             (tcgItem.cleanSet && mItem.cleanSet && (tcgItem.cleanSet.includes(mItem.cleanSet) || mItem.cleanSet.includes(tcgItem.cleanSet)));
+          const numMatches = (tcgItem.cleanNum === mItem.cleanNum);
+          const condMatches = (tcgItem.condition === mItem.condition);
+          const finishMatches = (tcgItem.finish === mItem.finish);
+
+          return setMatches && numMatches && condMatches && finishMatches;
+        });
+
+        if (matchIndex !== -1) {
+          const manaItem = manaProcessed[matchIndex];
+          tcgItem.matched = true;
+          manaItem.matched = true;
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'set_num_primary' });
+        }
+      });
+
+      // PASS 2: NAME + SET + CONDITION + FINISH MATCH (For missing or unnumbered collector numbers)
       tcgProcessed.forEach(tcgItem => {
         if (tcgItem.matched) return;
 
         const matchIndex = manaProcessed.findIndex(mItem => {
           if (mItem.matched) return false;
           
-          // Match Card Name (Exact or Base Stripped)
           const nameMatches = (tcgItem.normNameBase === mItem.normNameBase) || (tcgItem.normNameExact === mItem.normNameExact);
           if (!nameMatches) return false;
 
-          // Match Condition & Finish
           if (tcgItem.condition !== mItem.condition || tcgItem.finish !== mItem.finish) return false;
 
-          // Match Set Name (Exact, Alias Mapped, or Substring Overlap)
           const setMatches = (tcgItem.cleanSet === mItem.cleanSet) || 
                              (tcgItem.cleanSet && mItem.cleanSet && (tcgItem.cleanSet.includes(mItem.cleanSet) || mItem.cleanSet.includes(tcgItem.cleanSet)));
           
@@ -663,11 +683,11 @@
           const manaItem = manaProcessed[matchIndex];
           tcgItem.matched = true;
           manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_set_priority' });
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_set_secondary' });
         }
       });
 
-      // PASS 2: STRICT COMPOSITE KEY MATCH (Name + Collector Number + Condition + Finish)
+      // PASS 3: BASE NAME + COLLECTOR NUMBER + CONDITION + FINISH FALLBACK
       tcgProcessed.forEach(tcgItem => {
         if (tcgItem.matched) return;
 
@@ -682,27 +702,7 @@
           const manaItem = manaProcessed[matchIndex];
           tcgItem.matched = true;
           manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_num_composite' });
-        }
-      });
-
-      // PASS 3: COLLECTOR NUMBER & NORMALIZED SET FALLBACK
-      tcgProcessed.forEach(tcgItem => {
-        if (tcgItem.matched || !tcgItem.cleanNum) return;
-
-        const matchIndex = manaProcessed.findIndex(mItem => {
-          if (mItem.matched || !mItem.cleanNum) return false;
-          return (mItem.cleanNum === tcgItem.cleanNum) &&
-                 (mItem.condition === tcgItem.condition) &&
-                 (mItem.finish === tcgItem.finish) &&
-                 (mItem.cleanSet === tcgItem.cleanSet || mItem.cleanSet.includes(tcgItem.cleanSet) || tcgItem.cleanSet.includes(mItem.cleanSet));
-        });
-
-        if (matchIndex !== -1) {
-          const manaItem = manaProcessed[matchIndex];
-          tcgItem.matched = true;
-          manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'set_number_fallback' });
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_num_fallback' });
         }
       });
 
@@ -738,14 +738,13 @@
         const tcgPrice = tcgItem.price;
         const manaPrice = manaItem.price;
 
-        // Qty mismatch ONLY if both stores are loaded, quantities differ, and at least one store has stock > 0
         const qtyMismatch = (bothStoresLoaded && tcgQty !== manaQty && (tcgQty > 0 || manaQty > 0));
         const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
           ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
           : false;
 
         STATE.inventory.push({
-          key: `${tcgItem.normNameBase}||${tcgItem.condition}||${tcgItem.finish}`,
+          key: `${tcgItem.normNameBase}||${tcgItem.cleanNum}||${tcgItem.condition}||${tcgItem.finish}`,
           name: tcgItem.name,
           set: tcgItem.set || manaItem.set,
           number: tcgItem.number || manaItem.number,
