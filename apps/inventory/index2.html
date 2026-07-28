@@ -351,19 +351,47 @@
       resetAppBtn: document.getElementById('resetAppBtn')
     };
 
-    // --- ADVANCED MATCHING & NORMALIZATION ALGORITHMS ---
+    // --- SET ALIAS MAPPER ---
+    const SET_ALIASES = {
+      'plst': 'thelist',
+      'thelistreprints': 'thelist',
+      'thelist': 'thelist',
+      'list': 'thelist',
+      'mb1': 'mysterybooster',
+      'mysterybooster': 'mysterybooster',
+      'mb2': 'mysterybooster2',
+      'mysterybooster2': 'mysterybooster2',
+      'mysterybooster2playtestcards': 'mysterybooster2',
+      'mysteryboosterplaytestcards': 'mysterybooster',
+      'mkm': 'murdersatkarlovmanor',
+      'murdersatkarlovmanor': 'murdersatkarlovmanor',
+      'inr': 'innistradremastered',
+      'innistradremastered': 'innistradremastered',
+      'fdn': 'foundations',
+      'foundations': 'foundations',
+      'j25': 'foundationsjumpstart',
+      'foundationsjumpstart': 'foundationsjumpstart',
+      'mh3': 'modernhorizons3',
+      'modernhorizons3': 'modernhorizons3',
+      'ltc': 'commanderthelordoftherings',
+      'lordoftheringscommander': 'commanderthelordoftherings',
+      'ltr': 'thelordoftherings'
+    };
+
+    // --- NORMALIZATION ALGORITHMS ---
     function stripAccents(str) {
       return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    function normalizeCardName(name, stripParentheses = false) {
+    // Normalizes card name with option to strip treatment parentheses like (Extended Art), (b), (Retro Frame)
+    function normalizeCardName(name, stripParentheses = true) {
       if (!name) return '';
-      let clean = stripAccents(name).toLowerCase();
-      clean = clean.replace(/\/\/.*/, ''); // Front face for split/double-faced cards
+      let clean = stripAccents(name).toLowerCase().trim();
+      clean = clean.replace(/\/\/.*/, ''); // Front face for split cards
       if (stripParentheses) {
-        clean = clean.replace(/\([^)]*\)/g, ''); // Strip content in parentheses
+        clean = clean.replace(/\([^)]*\)/g, ''); // Strip parenthetical treatment text
       }
-      return clean.replace(/[^a-z0-9]/g, ''); // Strip all punctuation & spaces
+      return clean.replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
     }
 
     // Normalizes collector numbers (e.g. '114/204' -> '114', '#PCY-1' -> '1', '#MBS-1' -> '1')
@@ -371,28 +399,25 @@
       if (!num) return '';
       let clean = String(num).trim().toLowerCase();
       clean = clean.replace(/^[#★\s]+/, '');
-      clean = clean.replace(/[★\s]+$/, '');
-      clean = clean.replace(/\/.*$/, ''); // Remove denominator / set size
+      clean = clean.replace(/[★†\s]+$/, '');
+      clean = clean.replace(/\/.*$/, ''); // Remove denominator
       
-      // If format is SET-NUMBER (e.g. PCY-1, MBS-1, C14-12), extract the number portion after hyphen
+      // If format is SET-NUMBER (e.g. PCY-1, MBS-1, POR-120), extract numeric portion after hyphen
       if (/^[a-z0-9]{2,5}-\d+[a-z]?$/i.test(clean)) {
         clean = clean.replace(/^[a-z0-9]{2,5}-/i, '');
       }
 
-      clean = clean.replace(/^0+/, ''); // Remove leading zeros
+      clean = clean.replace(/^0+/, ''); // Strip leading zeros
       return clean;
     }
 
-    // Normalizes set names by mapping aliases like PLST -> thelist
+    // Normalizes set names and maps known set codes & aliases
     function normalizeSetName(setName) {
       if (!setName) return '';
       let clean = stripAccents(setName).toLowerCase().trim();
       clean = clean.replace(/^(magic:\s*the\s*gathering\s*-\s*|commander:\s*)/g, '');
       clean = clean.replace(/[^a-z0-9]/g, '');
-      if (clean === 'plst' || clean === 'thelistreprints' || clean === 'list' || clean === 'thelist') {
-        return 'thelist';
-      }
-      return clean;
+      return SET_ALIASES[clean] || clean;
     }
 
     function normalizeCondition(cond) {
@@ -427,14 +452,6 @@
       const str = String(val).replace(/[^0-9.]/g, '');
       const num = parseFloat(str);
       return isNaN(num) ? null : num;
-    }
-
-    function makeCompositeKey(name, number, condition, finish = 'NF', stripParentheses = false) {
-      const cleanName = normalizeCardName(name, stripParentheses);
-      const cleanNum = normalizeCollectorNumber(number);
-      const cleanCond = normalizeCondition(condition);
-      const cleanFinish = normalizeFinish(finish);
-      return `${cleanName}||${cleanNum}||${cleanCond}||${cleanFinish}`;
     }
 
     // --- FILE UPLOAD HANDLERS ---
@@ -525,7 +542,7 @@
       });
     }
 
-    // --- MULTI-PASS MATCHING INVENTORY ENGINE ---
+    // --- NAME-FIRST HIERARCHICAL INVENTORY MATCHING ENGINE ---
     function runInventoryEngine() {
       STATE.inventory = [];
 
@@ -556,18 +573,20 @@
         const condition = normalizeCondition(cleanConditionStr);
         const setName = row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '';
 
-        const k1 = makeCompositeKey(rawName, number, condition, finish, false);
-        const k2 = makeCompositeKey(rawName, number, condition, finish, true); // Stripped parentheses key
+        const normNameExact = normalizeCardName(rawName, false);
+        const normNameBase = normalizeCardName(rawName, true);
+        const cleanSet = normalizeSetName(setName);
+        const cleanNum = normalizeCollectorNumber(number);
 
         tcgProcessed.push({
           id: `tcg_${index}`,
-          k1,
-          k2,
+          normNameExact,
+          normNameBase,
           name: rawName,
           set: setName,
-          cleanSet: normalizeSetName(setName),
+          cleanSet,
           number,
-          cleanNum: normalizeCollectorNumber(number),
+          cleanNum,
           condition,
           finish,
           qty,
@@ -594,18 +613,20 @@
         const price = parsePrice(priceVal);
         const setName = row['set'] || row['Set'] || row['Set Name'] || '';
 
-        const k1 = makeCompositeKey(rawName, number, condition, finish, false);
-        const k2 = makeCompositeKey(rawName, number, condition, finish, true); // Stripped parentheses key
+        const normNameExact = normalizeCardName(rawName, false);
+        const normNameBase = normalizeCardName(rawName, true);
+        const cleanSet = normalizeSetName(setName);
+        const cleanNum = normalizeCollectorNumber(number);
 
         manaProcessed.push({
           id: `mana_${index}`,
-          k1,
-          k2,
+          normNameExact,
+          normNameBase,
           name: rawName,
           set: setName,
-          cleanSet: normalizeSetName(setName),
+          cleanSet,
           number,
-          cleanNum: normalizeCollectorNumber(number),
+          cleanNum,
           condition: normalizeCondition(condition),
           finish,
           qty,
@@ -617,63 +638,90 @@
 
       const matchedPairs = [];
 
-      // PASS 1: Strict Composite Key Match (k1 === k1)
-      const manaMapK1 = new Map();
-      manaProcessed.forEach(item => {
-        if (!manaMapK1.has(item.k1)) manaMapK1.set(item.k1, []);
-        manaMapK1.get(item.k1).push(item);
-      });
-
+      // PASS 1: NAME + SET + CONDITION + FINISH PRIORITY MATCH (Handles missing/different collector numbers, e.g. The List / MB2)
       tcgProcessed.forEach(tcgItem => {
-        if (manaMapK1.has(tcgItem.k1)) {
-          const availableMana = manaMapK1.get(tcgItem.k1).filter(m => !m.matched);
-          if (availableMana.length > 0) {
-            const manaItem = availableMana[0];
-            tcgItem.matched = true;
-            manaItem.matched = true;
-            matchedPairs.push({ tcgItem, manaItem, matchType: 'exact' });
-          }
+        if (tcgItem.matched) return;
+
+        const matchIndex = manaProcessed.findIndex(mItem => {
+          if (mItem.matched) return false;
+          
+          // Match Card Name (Exact or Base Stripped)
+          const nameMatches = (tcgItem.normNameBase === mItem.normNameBase) || (tcgItem.normNameExact === mItem.normNameExact);
+          if (!nameMatches) return false;
+
+          // Match Condition & Finish
+          if (tcgItem.condition !== mItem.condition || tcgItem.finish !== mItem.finish) return false;
+
+          // Match Set Name (Exact, Alias Mapped, or Substring Overlap)
+          const setMatches = (tcgItem.cleanSet === mItem.cleanSet) || 
+                             (tcgItem.cleanSet && mItem.cleanSet && (tcgItem.cleanSet.includes(mItem.cleanSet) || mItem.cleanSet.includes(tcgItem.cleanSet)));
+          
+          return setMatches;
+        });
+
+        if (matchIndex !== -1) {
+          const manaItem = manaProcessed[matchIndex];
+          tcgItem.matched = true;
+          manaItem.matched = true;
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_set_priority' });
         }
       });
 
-      // PASS 2: Stripped Parentheses Match (k2 === k2)
-      // Handles differences like "Sol Ring (Extended Art)" <--> "Sol Ring"
-      const manaMapK2 = new Map();
-      manaProcessed.forEach(item => {
-        if (!item.matched) {
-          if (!manaMapK2.has(item.k2)) manaMapK2.set(item.k2, []);
-          manaMapK2.get(item.k2).push(item);
+      // PASS 2: STRICT COMPOSITE KEY MATCH (Name + Collector Number + Condition + Finish)
+      tcgProcessed.forEach(tcgItem => {
+        if (tcgItem.matched) return;
+
+        const matchIndex = manaProcessed.findIndex(mItem => {
+          if (mItem.matched) return false;
+          const nameMatches = (tcgItem.normNameBase === mItem.normNameBase);
+          const numMatches = tcgItem.cleanNum && mItem.cleanNum && (tcgItem.cleanNum === mItem.cleanNum);
+          return nameMatches && numMatches && (tcgItem.condition === mItem.condition) && (tcgItem.finish === mItem.finish);
+        });
+
+        if (matchIndex !== -1) {
+          const manaItem = manaProcessed[matchIndex];
+          tcgItem.matched = true;
+          manaItem.matched = true;
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_num_composite' });
         }
       });
 
+      // PASS 3: COLLECTOR NUMBER & NORMALIZED SET FALLBACK
       tcgProcessed.forEach(tcgItem => {
-        if (!tcgItem.matched && manaMapK2.has(tcgItem.k2)) {
-          const availableMana = manaMapK2.get(tcgItem.k2).filter(m => !m.matched);
-          if (availableMana.length > 0) {
-            const manaItem = availableMana[0];
-            tcgItem.matched = true;
-            manaItem.matched = true;
-            matchedPairs.push({ tcgItem, manaItem, matchType: 'parentheses_stripped' });
-          }
+        if (tcgItem.matched || !tcgItem.cleanNum) return;
+
+        const matchIndex = manaProcessed.findIndex(mItem => {
+          if (mItem.matched || !mItem.cleanNum) return false;
+          return (mItem.cleanNum === tcgItem.cleanNum) &&
+                 (mItem.condition === tcgItem.condition) &&
+                 (mItem.finish === tcgItem.finish) &&
+                 (mItem.cleanSet === tcgItem.cleanSet || mItem.cleanSet.includes(tcgItem.cleanSet) || tcgItem.cleanSet.includes(mItem.cleanSet));
+        });
+
+        if (matchIndex !== -1) {
+          const manaItem = manaProcessed[matchIndex];
+          tcgItem.matched = true;
+          manaItem.matched = true;
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'set_number_fallback' });
         }
       });
 
-      // PASS 3: Collector Number & Normalized Set Name Match (Handles 'The List Reprints' vs 'PLST' e.g. #1/143 vs #PCY-1)
+      // PASS 4: UNIQUE NAME MATCH ACROSS STORES (Cross-Set Fallback for Unique Cards)
       tcgProcessed.forEach(tcgItem => {
-        if (!tcgItem.matched && tcgItem.cleanNum) {
-          const matchIndex = manaProcessed.findIndex(mItem => 
-            !mItem.matched && 
-            mItem.cleanNum === tcgItem.cleanNum &&
-            mItem.condition === tcgItem.condition &&
-            mItem.finish === tcgItem.finish &&
-            (mItem.cleanSet === tcgItem.cleanSet || mItem.cleanSet.includes(tcgItem.cleanSet) || tcgItem.cleanSet.includes(mItem.cleanSet))
-          );
-          if (matchIndex !== -1) {
-            const manaItem = manaProcessed[matchIndex];
-            tcgItem.matched = true;
-            manaItem.matched = true;
-            matchedPairs.push({ tcgItem, manaItem, matchType: 'set_number_fallback' });
-          }
+        if (tcgItem.matched) return;
+
+        const candidateMatches = manaProcessed.filter(mItem => 
+          !mItem.matched && 
+          mItem.normNameBase === tcgItem.normNameBase &&
+          mItem.condition === tcgItem.condition &&
+          mItem.finish === tcgItem.finish
+        );
+
+        if (candidateMatches.length === 1) {
+          const manaItem = candidateMatches[0];
+          tcgItem.matched = true;
+          manaItem.matched = true;
+          matchedPairs.push({ tcgItem, manaItem, matchType: 'unique_name_fallback' });
         }
       });
 
@@ -697,7 +745,7 @@
           : false;
 
         STATE.inventory.push({
-          key: tcgItem.k1,
+          key: `${tcgItem.normNameBase}||${tcgItem.condition}||${tcgItem.finish}`,
           name: tcgItem.name,
           set: tcgItem.set || manaItem.set,
           number: tcgItem.number || manaItem.number,
@@ -718,9 +766,9 @@
       // Add Unmatched TCG Items
       tcgProcessed.forEach(tcgItem => {
         if (!tcgItem.matched) {
-          const qtyMismatch = bothStoresLoaded && tcgItem.qty > 0; // True ONLY if stock exists
+          const qtyMismatch = bothStoresLoaded && tcgItem.qty > 0;
           STATE.inventory.push({
-            key: tcgItem.k1,
+            key: `${tcgItem.normNameBase}||${tcgItem.condition}||${tcgItem.finish}||tcg_${tcgItem.id}`,
             name: tcgItem.name,
             set: tcgItem.set,
             number: tcgItem.number,
@@ -742,9 +790,9 @@
       // Add Unmatched Mana Pool Items
       manaProcessed.forEach(manaItem => {
         if (!manaItem.matched) {
-          const qtyMismatch = bothStoresLoaded && manaItem.qty > 0; // True ONLY if stock exists
+          const qtyMismatch = bothStoresLoaded && manaItem.qty > 0;
           STATE.inventory.push({
-            key: manaItem.k1,
+            key: `${manaItem.normNameBase}||${manaItem.condition}||${manaItem.finish}||mana_${manaItem.id}`,
             name: manaItem.name,
             set: manaItem.set,
             number: manaItem.number,
@@ -853,7 +901,6 @@
     }
 
     function updateKPIs() {
-      // Exclude 0/0 items if hideZeroStock is enabled
       const visibleInventory = STATE.hideZeroStock 
         ? STATE.inventory.filter(i => i.tcgQty > 0 || i.manaQty > 0)
         : STATE.inventory;
