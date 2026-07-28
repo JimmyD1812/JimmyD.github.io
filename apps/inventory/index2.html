@@ -448,15 +448,16 @@
       return clean.replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
     }
 
-    // Normalizes collector numbers (e.g. '114/204' -> '114', '#PCY-1' -> '1', '#MBS-1' -> '1')
+    // Normalizes collector numbers handling Unicode hyphens (–, —, −), prefixes (SHM-, POR-, PCY-), denominators (55/301 -> 55)
     function normalizeCollectorNumber(num) {
       if (!num) return '';
       let clean = String(num).trim().toLowerCase();
+      clean = clean.replace(/[\u2010-\u2015\u2212]/g, '-'); // Convert Unicode en-dash, em-dash, and minus signs to ASCII hyphen!
       clean = clean.replace(/^[#★\s]+/, '');
       clean = clean.replace(/[★†\s]+$/, '');
       clean = clean.replace(/\/.*$/, ''); // Remove denominator
       
-      // Extract numeric portion if formatted as SET-NUMBER (e.g. PCY-1, MBS-1, POR-120)
+      // Extract numeric portion if formatted as SET-NUMBER (e.g. PCY-1, MBS-1, POR-120, SHM-55)
       if (/^[a-z0-9]{2,5}-\d+[a-z]?$/i.test(clean)) {
         clean = clean.replace(/^[a-z0-9]{2,5}-/i, '');
       }
@@ -470,6 +471,7 @@
       if (!setName) return '';
       let clean = stripAccents(setName).toLowerCase().trim();
       clean = clean.replace(/^(magic:\s*the\s*gathering\s*-\s*|commander:\s*)/g, '');
+      clean = clean.replace(/(reprints|playtestcards|promos|singles)$/g, ''); // Strip common set suffix terms
       clean = clean.replace(/[^a-z0-9]/g, '');
       
       // 1. Check Scryfall API dynamic map first
@@ -700,7 +702,7 @@
       const matchedPairs = [];
 
       // PASS 1: SET + COLLECTOR NUMBER + CONDITION + FINISH MATCH (PRIMARY)
-      // Strictly pairs exact collector numbers within the same set, ensuring #175 and #319 never cross-match!
+      // Handles cases where set names map via Scryfall and collector numbers align (e.g. Aphotic Wisps #55/301 ↔ #SHM-55)
       tcgProcessed.forEach(tcgItem => {
         if (tcgItem.matched || !tcgItem.cleanNum) return;
 
@@ -724,7 +726,7 @@
         }
       });
 
-      // PASS 2: NAME + SET + CONDITION + FINISH MATCH (For missing or unnumbered collector numbers)
+      // PASS 2: NAME + SET + CONDITION + FINISH MATCH (Secondary fallback for missing or unnumbered collector numbers)
       tcgProcessed.forEach(tcgItem => {
         if (tcgItem.matched) return;
 
