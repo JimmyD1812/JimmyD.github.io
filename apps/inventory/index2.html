@@ -291,8 +291,6 @@
     const STATE = {
       tcgRaw: [],
       manaRaw: [],
-      tcgMap: new Map(),
-      manaMap: new Map(),
       inventory: [],
       filteredInventory: [],
       searchQuery: '',
@@ -345,25 +343,39 @@
       resetAppBtn: document.getElementById('resetAppBtn')
     };
 
-    // --- NORMALIZATION HELPER FUNCTIONS ---
+    // --- ADVANCED MATCHING & NORMALIZATION ALGORITHMS ---
     function stripAccents(str) {
       return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    function normalizeCardName(name) {
-      let clean = stripAccents(name || '').toLowerCase();
-      clean = clean.replace(/\/\/.*/, ''); // take front name for split cards
-      clean = clean.replace(/[^a-z0-9]/g, '');
-      return clean;
+    // Normalizes card name; optional stripParentheses removes treatment descriptions like (Extended Art), (Retro Frame), (Foil), etc.
+    function normalizeCardName(name, stripParentheses = false) {
+      if (!name) return '';
+      let clean = stripAccents(name).toLowerCase();
+      clean = clean.replace(/\/\/.*/, ''); // Front face for split/double-faced cards
+      if (stripParentheses) {
+        clean = clean.replace(/\([^)]*\)/g, ''); // Strip content in parentheses
+      }
+      return clean.replace(/[^a-z0-9]/g, ''); // Strip all punctuation & spaces
     }
 
+    // Normalizes collector numbers (e.g., '114/204' -> '114', '#0114' -> '114', '114a' -> '114a')
     function normalizeCollectorNumber(num) {
       if (!num) return '';
       let clean = String(num).trim().toLowerCase();
-      clean = clean.replace(/^#/, '');
-      clean = clean.replace(/\/.*$/, ''); // take string before '/' if format is 114/204
-      clean = clean.replace(/^0+/, ''); // strip leading zeros
+      clean = clean.replace(/^[#★\s]+/, '');
+      clean = clean.replace(/[★\s]+$/, '');
+      clean = clean.replace(/\/.*$/, ''); // Remove denominator / set size
+      clean = clean.replace(/^0+/, ''); // Remove leading zeros
       return clean;
+    }
+
+    // Normalizes set names by stripping common prefixes and punctuation
+    function normalizeSetName(setName) {
+      if (!setName) return '';
+      let clean = stripAccents(setName).toLowerCase();
+      clean = clean.replace(/^(magic:\s*the\s*gathering\s*-\s*|commander:\s*)/g, '');
+      return clean.replace(/[^a-z0-9]/g, '');
     }
 
     function normalizeCondition(cond) {
@@ -400,8 +412,8 @@
       return isNaN(num) ? null : num;
     }
 
-    function makeCompositeKey(name, number, condition, finish = 'NF') {
-      const cleanName = normalizeCardName(name);
+    function makeCompositeKey(name, number, condition, finish = 'NF', stripParentheses = false) {
+      const cleanName = normalizeCardName(name, stripParentheses);
       const cleanNum = normalizeCollectorNumber(number);
       const cleanCond = normalizeCondition(condition);
       const cleanFinish = normalizeFinish(finish);
@@ -496,14 +508,15 @@
       });
     }
 
-    // --- MAIN INVENTORY ENGINE ---
+    // --- MULTI-PASS MATCHING INVENTORY ENGINE ---
     function runInventoryEngine() {
-      STATE.tcgMap.clear();
-      STATE.manaMap.clear();
       STATE.inventory = [];
 
-      // 1. Index TCGplayer Items
-      STATE.tcgRaw.forEach(row => {
+      const tcgProcessed = [];
+      const manaProcessed = [];
+
+      // 1. Process & Normalize TCGplayer Items
+      STATE.tcgRaw.forEach((row, index) => {
         const productLine = (row['Product Line'] || row['Category Name'] || row['product_line'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
         
@@ -514,7 +527,6 @@
         const rawCondition = row['Condition'] || row['condition'] || 'Near Mint';
         const qty = parseInt(row['Total Quantity'] || row['total_quantity'] || row['Quantity'] || row['quantity'] || '0', 10);
         
-        // Extract Price (specifically 'TCG Marketplace Price' or fallback)
         const priceVal = row['TCG Marketplace Price'] !== undefined ? row['TCG Marketplace Price'] 
                        : row['tcg_marketplace_price'] !== undefined ? row['tcg_marketplace_price']
                        : row['TCG Market Price'] !== undefined ? row['TCG Market Price']
@@ -525,30 +537,31 @@
         const finish = getTcgFinish(row);
         const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
         const condition = normalizeCondition(cleanConditionStr);
-        
-        const key = makeCompositeKey(rawName, number, condition, finish);
-        
-        if (STATE.tcgMap.has(key)) {
-          const existing = STATE.tcgMap.get(key);
-          existing.qty += qty;
-          if (existing.price === null) existing.price = price;
-        } else {
-          STATE.tcgMap.set(key, {
-            key,
-            name: rawName,
-            set: row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '',
-            number,
-            condition,
-            finish,
-            qty,
-            price,
-            raw: row
-          });
-        }
+        const setName = row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '';
+
+        const k1 = makeCompositeKey(rawName, number, condition, finish, false);
+        const k2 = makeCompositeKey(rawName, number, condition, finish, true); // Stripped parentheses key
+
+        tcgProcessed.push({
+          id: `tcg_${index}`,
+          k1,
+          k2,
+          name: rawName,
+          set: setName,
+          cleanSet: normalizeSetName(setName),
+          number,
+          cleanNum: normalizeCollectorNumber(number),
+          condition,
+          finish,
+          qty,
+          price,
+          raw: row,
+          matched: false
+        });
       });
 
-      // 2. Index Mana Pool Items
-      STATE.manaRaw.forEach(row => {
+      // 2. Process & Normalize Mana Pool Items
+      STATE.manaRaw.forEach((row, index) => {
         const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg') && !productType.includes('magic')) return;
         
@@ -560,58 +573,119 @@
         const finish = normalizeFinish(row['finish'] || row['Finish'] || 'NF');
         const qty = parseInt(row['quantity'] || row['Quantity'] || '0', 10);
 
-        // Extract Price (specifically 'price')
         const priceVal = row['price'] !== undefined ? row['price'] : row['Price'] || row['PRICE'] || null;
         const price = parsePrice(priceVal);
+        const setName = row['set'] || row['Set'] || row['Set Name'] || '';
 
-        const key = makeCompositeKey(rawName, number, condition, finish);
+        const k1 = makeCompositeKey(rawName, number, condition, finish, false);
+        const k2 = makeCompositeKey(rawName, number, condition, finish, true); // Stripped parentheses key
 
-        if (STATE.manaMap.has(key)) {
-          const existing = STATE.manaMap.get(key);
-          existing.qty += qty;
-          if (existing.price === null) existing.price = price;
-        } else {
-          STATE.manaMap.set(key, {
-            key,
-            name: rawName,
-            set: row['set'] || row['Set'] || row['Set Name'] || '',
-            number,
-            condition: normalizeCondition(condition),
-            finish,
-            qty,
-            price,
-            raw: row
-          });
+        manaProcessed.push({
+          id: `mana_${index}`,
+          k1,
+          k2,
+          name: rawName,
+          set: setName,
+          cleanSet: normalizeSetName(setName),
+          number,
+          cleanNum: normalizeCollectorNumber(number),
+          condition: normalizeCondition(condition),
+          finish,
+          qty,
+          price,
+          raw: row,
+          matched: false
+        });
+      });
+
+      const matchedPairs = [];
+
+      // PASS 1: Strict Composite Key Match (k1 === k1)
+      const manaMapK1 = new Map();
+      manaProcessed.forEach(item => {
+        if (!manaMapK1.has(item.k1)) manaMapK1.set(item.k1, []);
+        manaMapK1.get(item.k1).push(item);
+      });
+
+      tcgProcessed.forEach(tcgItem => {
+        if (manaMapK1.has(tcgItem.k1)) {
+          const availableMana = manaMapK1.get(tcgItem.k1).filter(m => !m.matched);
+          if (availableMana.length > 0) {
+            const manaItem = availableMana[0];
+            tcgItem.matched = true;
+            manaItem.matched = true;
+            matchedPairs.push({ tcgItem, manaItem, matchType: 'exact' });
+          }
         }
       });
 
-      // 3. Combine Into Inventory
-      const allKeys = new Set([...STATE.tcgMap.keys(), ...STATE.manaMap.keys()]);
+      // PASS 2: Stripped Parentheses Match (k2 === k2)
+      // Handles differences like "Sol Ring (Extended Art)" <--> "Sol Ring"
+      const manaMapK2 = new Map();
+      manaProcessed.forEach(item => {
+        if (!item.matched) {
+          if (!manaMapK2.has(item.k2)) manaMapK2.set(item.k2, []);
+          manaMapK2.get(item.k2).push(item);
+        }
+      });
+
+      tcgProcessed.forEach(tcgItem => {
+        if (!tcgItem.matched && manaMapK2.has(tcgItem.k2)) {
+          const availableMana = manaMapK2.get(tcgItem.k2).filter(m => !m.matched);
+          if (availableMana.length > 0) {
+            const manaItem = availableMana[0];
+            tcgItem.matched = true;
+            manaItem.matched = true;
+            matchedPairs.push({ tcgItem, manaItem, matchType: 'parentheses_stripped' });
+          }
+        }
+      });
+
+      // PASS 3: Collector Number & Normalized Set Name Match
+      // Handles cases where card names vary slightly, but collector number and set match
+      tcgProcessed.forEach(tcgItem => {
+        if (!tcgItem.matched && tcgItem.cleanNum) {
+          const matchIndex = manaProcessed.findIndex(mItem => 
+            !mItem.matched && 
+            mItem.cleanNum === tcgItem.cleanNum &&
+            mItem.condition === tcgItem.condition &&
+            mItem.finish === tcgItem.finish &&
+            (mItem.cleanSet === tcgItem.cleanSet || mItem.cleanSet.includes(tcgItem.cleanSet) || tcgItem.cleanSet.includes(mItem.cleanSet))
+          );
+          if (matchIndex !== -1) {
+            const manaItem = manaProcessed[matchIndex];
+            tcgItem.matched = true;
+            manaItem.matched = true;
+            matchedPairs.push({ tcgItem, manaItem, matchType: 'set_number_fallback' });
+          }
+        }
+      });
+
+      // Build Combined Inventory Objects
       const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
 
-      allKeys.forEach(key => {
-        const tcgItem = STATE.tcgMap.get(key);
-        const manaItem = STATE.manaMap.get(key);
+      // Add Matched Items
+      matchedPairs.forEach(pair => {
+        const tcgItem = pair.tcgItem;
+        const manaItem = pair.manaItem;
 
-        const tcgQty = tcgItem ? tcgItem.qty : 0;
-        const manaQty = manaItem ? manaItem.qty : 0;
+        const tcgQty = tcgItem.qty;
+        const manaQty = manaItem.qty;
+        const tcgPrice = tcgItem.price;
+        const manaPrice = manaItem.price;
 
-        const tcgPrice = tcgItem ? tcgItem.price : null;
-        const manaPrice = manaItem ? manaItem.price : null;
-
-        // Mismatch conditions
         const qtyMismatch = bothStoresLoaded ? (tcgQty !== manaQty) : false;
         const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
           ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
           : false;
 
         STATE.inventory.push({
-          key,
-          name: tcgItem ? tcgItem.name : manaItem.name,
-          set: tcgItem ? tcgItem.set : manaItem.set,
-          number: tcgItem ? tcgItem.number : (manaItem ? manaItem.number : ''),
-          condition: tcgItem ? tcgItem.condition : (manaItem ? manaItem.condition : 'NM'),
-          finish: tcgItem ? tcgItem.finish : (manaItem ? manaItem.finish : 'NF'),
+          key: tcgItem.k1,
+          name: tcgItem.name,
+          set: tcgItem.set || manaItem.set,
+          number: tcgItem.number || manaItem.number,
+          condition: tcgItem.condition,
+          finish: tcgItem.finish,
           tcgQty,
           manaQty,
           tcgPrice,
@@ -622,6 +696,54 @@
           priceMismatch,
           delta: Math.abs(tcgQty - manaQty)
         });
+      });
+
+      // Add Unmatched TCG Items
+      tcgProcessed.forEach(tcgItem => {
+        if (!tcgItem.matched) {
+          const qtyMismatch = bothStoresLoaded; // Qty is 0 on Mana Pool side
+          STATE.inventory.push({
+            key: tcgItem.k1,
+            name: tcgItem.name,
+            set: tcgItem.set,
+            number: tcgItem.number,
+            condition: tcgItem.condition,
+            finish: tcgItem.finish,
+            tcgQty: tcgItem.qty,
+            manaQty: 0,
+            tcgPrice: tcgItem.price,
+            manaPrice: null,
+            tcgItem,
+            manaItem: null,
+            qtyMismatch,
+            priceMismatch: false,
+            delta: tcgItem.qty
+          });
+        }
+      });
+
+      // Add Unmatched Mana Pool Items
+      manaProcessed.forEach(manaItem => {
+        if (!manaItem.matched) {
+          const qtyMismatch = bothStoresLoaded; // Qty is 0 on TCG side
+          STATE.inventory.push({
+            key: manaItem.k1,
+            name: manaItem.name,
+            set: manaItem.set,
+            number: manaItem.number,
+            condition: manaItem.condition,
+            finish: manaItem.finish,
+            tcgQty: 0,
+            manaQty: manaItem.qty,
+            tcgPrice: null,
+            manaPrice: manaItem.price,
+            tcgItem: null,
+            manaItem,
+            qtyMismatch,
+            priceMismatch: false,
+            delta: manaItem.qty
+          });
+        }
       });
 
       updateUI();
