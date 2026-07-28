@@ -75,10 +75,6 @@
         </div>
       </div>
       <div class="flex items-center space-x-3">
-        <span id="apiStatusBadge" class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-          Scryfall API Active
-        </span>
         <button id="resetAppBtn" class="inline-flex items-center px-3 py-1.5 border border-red-900/40 hover:border-red-800 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 transition">
           <i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i>
           Reset Data
@@ -301,9 +297,10 @@
     const STATE = {
       tcgRaw: [],
       manaRaw: [],
+      tcgMap: new Map(),
+      manaMap: new Map(),
       inventory: [],
       filteredInventory: [],
-      scryfallSetsMap: new Map(), // Dynamic Set Code -> Set Name Mapping
       searchQuery: '',
       activeViewTab: 'all', // 'all', 'qtyMismatch', 'priceMismatch'
       filterMTGOnly: true,
@@ -353,143 +350,49 @@
       countQtyMismatch: document.getElementById('countQtyMismatch'),
       countPriceMismatch: document.getElementById('countPriceMismatch'),
 
-      apiStatusBadge: document.getElementById('apiStatusBadge'),
       resetAppBtn: document.getElementById('resetAppBtn')
     };
 
-    // --- BUILT-IN SET ALIAS MAPPER ---
-    const BUILTIN_SET_ALIASES = {
-      'otj': 'outlawsofthunderjunction',
-      'outlawsofthunderjunction': 'outlawsofthunderjunction',
-      'plst': 'thelist',
-      'thelistreprints': 'thelist',
-      'thelist': 'thelist',
-      'list': 'thelist',
-      'mb1': 'mysterybooster',
-      'mysterybooster': 'mysterybooster',
-      'mb2': 'mysterybooster2',
-      'mysterybooster2': 'mysterybooster2',
-      'mysterybooster2playtestcards': 'mysterybooster2',
-      'mysteryboosterplaytestcards': 'mysterybooster',
-      'mkm': 'murdersatkarlovmanor',
-      'murdersatkarlovmanor': 'murdersatkarlovmanor',
-      'inr': 'innistradremastered',
-      'innistradremastered': 'innistradremastered',
-      'fdn': 'foundations',
-      'foundations': 'foundations',
-      'j25': 'foundationsjumpstart',
-      'foundationsjumpstart': 'foundationsjumpstart',
-      'mh3': 'modernhorizons3',
-      'modernhorizons3': 'modernhorizons3',
-      'blb': 'bloomburrow',
-      'bloomburrow': 'bloomburrow',
-      'dsk': 'duskmournhouseofhorror',
-      'duskmournhouseofhorror': 'duskmournhouseofhorror',
-      'ltc': 'commanderthelordoftherings',
-      'lordoftheringscommander': 'commanderthelordoftherings',
-      'ltr': 'thelordoftherings'
-    };
-
-    // --- DYNAMIC SCRYFALL SET API FETCH & CACHE ---
-    async function initScryfallSetCache() {
-      try {
-        const cached = localStorage.getItem('scryfall_set_cache');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          Object.entries(parsed).forEach(([k, v]) => STATE.scryfallSetsMap.set(k, v));
-        }
-      } catch (e) {
-        console.warn('LocalStorage read failed', e);
-      }
-
-      try {
-        const response = await fetch('https://api.scryfall.com/sets');
-        if (response.ok) {
-          const json = await response.json();
-          const cacheObj = {};
-          if (json && Array.isArray(json.data)) {
-            json.data.forEach(setObj => {
-              const code = (setObj.code || '').toLowerCase().trim();
-              const cleanName = stripAccents(setObj.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-              if (code && cleanName) {
-                STATE.scryfallSetsMap.set(code, cleanName);
-                STATE.scryfallSetsMap.set(cleanName, cleanName);
-                cacheObj[code] = cleanName;
-                cacheObj[cleanName] = cleanName;
-              }
-            });
-            localStorage.setItem('scryfall_set_cache', JSON.stringify(cacheObj));
-            DOM.apiStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Scryfall Synced (${json.data.length} Sets)`;
-            DOM.apiStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-950/40 text-emerald-300 border border-emerald-800/50";
-            
-            if (STATE.tcgRaw.length > 0 || STATE.manaRaw.length > 0) {
-              runInventoryEngine();
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Scryfall API fetch skipped or offline mode', err);
-        DOM.apiStatusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400 mr-1.5"></span> Standalone Mode`;
-      }
-    }
-
-    // --- NORMALIZATION ALGORITHMS ---
+    // --- NORMALIZATION HELPER FUNCTIONS ---
     function stripAccents(str) {
-      return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (!str) return '';
+      return String(str).normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    function normalizeCardName(name, stripParentheses = true) {
+    function normalizeCardName(name) {
       if (!name) return '';
-      let clean = stripAccents(name).toLowerCase().trim();
-      clean = clean.replace(/\/\/.*/, ''); // Front face for split cards
-      if (stripParentheses) {
-        clean = clean.replace(/\([^)]*\)/g, ''); // Strip parenthetical treatment text like (Borderless), (b), etc.
-      }
-      return clean.replace(/[^a-z0-9]/g, ''); // Strip punctuation & spaces
+      let s = stripAccents(name);
+      
+      // Strip treatments, special finishes, and variants in parens or trailing hyphens
+      s = s.replace(/\s*\((b|surge foil|foil|etched foil|borderless|showcase|full art|extended art|retro frame|textless|anime)\)/gi, '');
+      s = s.replace(/\s*-\s*(Full Art|Showcase|Extended Art|Borderless|Retro Frame|JP Alternate Art|Anime).*$/gi, '');
+      s = s.replace(/\(.*\)/g, ''); // Remove remaining parens
+      s = s.split('/')[0].trim();   // Keep front-face of split/adventure cards
+      
+      return s.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
-    // Normalizes collector numbers handling Unicode hyphens (–, —, −), prefixes (SHM-, POR-, PCY-), denominators (55/301 -> 55)
     function normalizeCollectorNumber(num) {
       if (!num) return '';
-      let clean = String(num).trim().toLowerCase();
-      clean = clean.replace(/[\u2010-\u2015\u2212]/g, '-'); // Convert Unicode en-dash, em-dash, and minus signs to ASCII hyphen!
-      clean = clean.replace(/^[#★\s]+/, '');
-      clean = clean.replace(/[★†\s]+$/, '');
-      clean = clean.replace(/\/.*$/, ''); // Remove denominator
-      
-      // Extract numeric portion if formatted as SET-NUMBER (e.g. PCY-1, MBS-1, POR-120, SHM-55)
-      if (/^[a-z0-9]{2,5}-\d+[a-z]?$/i.test(clean)) {
-        clean = clean.replace(/^[a-z0-9]{2,5}-/i, '');
+      let s = String(num).trim().toLowerCase();
+      s = s.replace(/[\u2010-\u2015\u2212]/g, '-'); // Convert Unicode dashes to ASCII hyphen
+      s = s.replace(/†/g, '');                     // Strip dagger symbols (MKM)
+      s = s.replace(/^[a-z0-9]{2,5}-/g, '');       // Strip set prefixes (e.g. "chk-103", "shm-55" -> "55")
+      if (s.includes('/')) {
+        s = s.split('/')[0].trim();                // Strip total count ("079/274" -> "079")
       }
-
-      clean = clean.replace(/^0+/, ''); // Strip leading zeros
-      return clean;
-    }
-
-    // Normalizes set names via Scryfall API dynamic cache & built-in alias dictionary
-    function normalizeSetName(setName) {
-      if (!setName) return '';
-      let clean = stripAccents(setName).toLowerCase().trim();
-      clean = clean.replace(/^(magic:\s*the\s*gathering\s*-\s*|commander:\s*)/g, '');
-      clean = clean.replace(/(reprints|playtestcards|promos|singles)$/g, ''); // Strip common set suffix terms
-      clean = clean.replace(/[^a-z0-9]/g, '');
-      
-      // 1. Check Scryfall API dynamic map first
-      if (STATE.scryfallSetsMap.has(clean)) {
-        return STATE.scryfallSetsMap.get(clean);
-      }
-      
-      // 2. Check built-in set aliases
-      return BUILTIN_SET_ALIASES[clean] || clean;
+      s = s.replace(/^0+/, '');                    // Strip leading zeros ("079" -> "79")
+      return s.replace(/[^a-z0-9]/g, '');
     }
 
     function normalizeCondition(cond) {
-      const c = (cond || '').toLowerCase().trim();
-      if (c.includes('near mint') || c === 'nm') return 'NM';
-      if (c.includes('lightly played') || c === 'lp') return 'LP';
-      if (c.includes('moderately played') || c === 'mp') return 'MP';
-      if (c.includes('heavily played') || c === 'hp') return 'HP';
-      if (c.includes('damaged') || c === 'dmg') return 'DMG';
+      if (!cond) return 'NM';
+      const c = cond.toUpperCase().trim();
+      if (c.includes('NEAR MINT') || c === 'NM') return 'NM';
+      if (c.includes('LIGHTLY PLAYED') || c === 'LP') return 'LP';
+      if (c.includes('MODERATELY PLAYED') || c === 'MP') return 'MP';
+      if (c.includes('HEAVILY PLAYED') || c === 'HP') return 'HP';
+      if (c.includes('DAMAGED') || c === 'DMG') return 'DMG';
       return 'NM';
     }
 
@@ -501,12 +404,11 @@
     }
 
     function getTcgFinish(row) {
-      const cond = (row['Condition'] || row['condition'] || '').toLowerCase();
-      const title = (row['Title'] || row['title'] || '').toLowerCase();
-      const rarity = (row['Rarity'] || row['rarity'] || '').toLowerCase();
-      const finishCol = (row['Finish'] || row['finish'] || '').toLowerCase();
+      const cond = String(row['Condition'] || '').toLowerCase();
+      const title = String(row['Title'] || '').toLowerCase();
+      const finishCol = String(row['Finish'] || '').toLowerCase();
       if (cond.includes('etched') || title.includes('etched') || finishCol.includes('etched')) return 'ET';
-      if (cond.includes('foil') || title.includes('foil') || rarity.includes('foil') || finishCol.includes('foil')) return 'FO';
+      if (cond.includes('foil') || title.includes('foil') || finishCol.includes('foil')) return 'FO';
       return 'NF';
     }
 
@@ -515,6 +417,13 @@
       const str = String(val).replace(/[^0-9.]/g, '');
       const num = parseFloat(str);
       return isNaN(num) ? null : num;
+    }
+
+    function makeCompositeKey(name, number, condition, finish = 'NF') {
+      const normName = normalizeCardName(name);
+      const normNum = normalizeCollectorNumber(number);
+      const normCond = normalizeCondition(condition);
+      return `${normName}||${normNum}||${normCond}||${finish}`;
     }
 
     // --- FILE UPLOAD HANDLERS ---
@@ -605,15 +514,14 @@
       });
     }
 
-    // --- SET/NUMBER-FIRST PRIORITY MATCHING ENGINE ---
+    // --- COMPOSITE INDEX & MATCHING ENGINE ---
     function runInventoryEngine() {
+      STATE.tcgMap.clear();
+      STATE.manaMap.clear();
       STATE.inventory = [];
 
-      const tcgProcessed = [];
-      const manaProcessed = [];
-
-      // 1. Process & Normalize TCGplayer Items
-      STATE.tcgRaw.forEach((row, index) => {
+      // 1. Index TCGplayer Items
+      STATE.tcgRaw.forEach((row, idx) => {
         const productLine = (row['Product Line'] || row['Category Name'] || row['product_line'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
         
@@ -634,33 +542,32 @@
         const finish = getTcgFinish(row);
         const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
         const condition = normalizeCondition(cleanConditionStr);
-        const setName = row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '';
-
-        const normNameExact = normalizeCardName(rawName, false);
-        const normNameBase = normalizeCardName(rawName, true);
-        const cleanSet = normalizeSetName(setName);
-        const cleanNum = normalizeCollectorNumber(number);
-
-        tcgProcessed.push({
-          id: `tcg_${index}`,
-          normNameExact,
-          normNameBase,
-          name: rawName,
-          set: setName,
-          cleanSet,
-          number,
-          cleanNum,
-          condition,
-          finish,
-          qty,
-          price,
-          raw: row,
-          matched: false
-        });
+        const set = row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '';
+        
+        const key = makeCompositeKey(rawName, number, condition, finish);
+        
+        if (STATE.tcgMap.has(key)) {
+          const existing = STATE.tcgMap.get(key);
+          existing.qty += qty;
+          if (existing.price === null) existing.price = price;
+        } else {
+          STATE.tcgMap.set(key, {
+            id: `tcg_${idx}`,
+            key,
+            name: rawName,
+            set,
+            number,
+            condition,
+            finish,
+            qty,
+            price,
+            raw: row
+          });
+        }
       });
 
-      // 2. Process & Normalize Mana Pool Items
-      STATE.manaRaw.forEach((row, index) => {
+      // 2. Index Mana Pool Items
+      STATE.manaRaw.forEach((row, idx) => {
         const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
         if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg') && !productType.includes('magic')) return;
         
@@ -674,189 +581,144 @@
 
         const priceVal = row['price'] !== undefined ? row['price'] : row['Price'] || row['PRICE'] || null;
         const price = parsePrice(priceVal);
-        const setName = row['set'] || row['Set'] || row['Set Name'] || '';
+        const set = row['set'] || row['Set'] || row['Set Name'] || '';
 
-        const normNameExact = normalizeCardName(rawName, false);
-        const normNameBase = normalizeCardName(rawName, true);
-        const cleanSet = normalizeSetName(setName);
-        const cleanNum = normalizeCollectorNumber(number);
+        const key = makeCompositeKey(rawName, number, condition, finish);
 
-        manaProcessed.push({
-          id: `mana_${index}`,
-          normNameExact,
-          normNameBase,
-          name: rawName,
-          set: setName,
-          cleanSet,
-          number,
-          cleanNum,
-          condition: normalizeCondition(condition),
-          finish,
-          qty,
-          price,
-          raw: row,
-          matched: false
-        });
-      });
-
-      const matchedPairs = [];
-
-      // PASS 1: SET + COLLECTOR NUMBER + CONDITION + FINISH MATCH (PRIMARY)
-      // Handles cases where set names map via Scryfall and collector numbers align (e.g. Aphotic Wisps #55/301 ↔ #SHM-55)
-      tcgProcessed.forEach(tcgItem => {
-        if (tcgItem.matched || !tcgItem.cleanNum) return;
-
-        const matchIndex = manaProcessed.findIndex(mItem => {
-          if (mItem.matched || !mItem.cleanNum) return false;
-          
-          const setMatches = (tcgItem.cleanSet === mItem.cleanSet) || 
-                             (tcgItem.cleanSet && mItem.cleanSet && (tcgItem.cleanSet.includes(mItem.cleanSet) || mItem.cleanSet.includes(tcgItem.cleanSet)));
-          const numMatches = (tcgItem.cleanNum === mItem.cleanNum);
-          const condMatches = (tcgItem.condition === mItem.condition);
-          const finishMatches = (tcgItem.finish === mItem.finish);
-
-          return setMatches && numMatches && condMatches && finishMatches;
-        });
-
-        if (matchIndex !== -1) {
-          const manaItem = manaProcessed[matchIndex];
-          tcgItem.matched = true;
-          manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'set_num_primary' });
-        }
-      });
-
-      // PASS 2: NAME + SET + CONDITION + FINISH MATCH (Secondary fallback for missing or unnumbered collector numbers)
-      tcgProcessed.forEach(tcgItem => {
-        if (tcgItem.matched) return;
-
-        const matchIndex = manaProcessed.findIndex(mItem => {
-          if (mItem.matched) return false;
-          
-          const nameMatches = (tcgItem.normNameBase === mItem.normNameBase) || (tcgItem.normNameExact === mItem.normNameExact);
-          if (!nameMatches) return false;
-
-          if (tcgItem.condition !== mItem.condition || tcgItem.finish !== mItem.finish) return false;
-
-          const setMatches = (tcgItem.cleanSet === mItem.cleanSet) || 
-                             (tcgItem.cleanSet && mItem.cleanSet && (tcgItem.cleanSet.includes(mItem.cleanSet) || mItem.cleanSet.includes(tcgItem.cleanSet)));
-          
-          return setMatches;
-        });
-
-        if (matchIndex !== -1) {
-          const manaItem = manaProcessed[matchIndex];
-          tcgItem.matched = true;
-          manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_set_secondary' });
-        }
-      });
-
-      // PASS 3: BASE NAME + COLLECTOR NUMBER + CONDITION + FINISH FALLBACK
-      tcgProcessed.forEach(tcgItem => {
-        if (tcgItem.matched) return;
-
-        const matchIndex = manaProcessed.findIndex(mItem => {
-          if (mItem.matched) return false;
-          const nameMatches = (tcgItem.normNameBase === mItem.normNameBase);
-          const numMatches = tcgItem.cleanNum && mItem.cleanNum && (tcgItem.cleanNum === mItem.cleanNum);
-          return nameMatches && numMatches && (tcgItem.condition === mItem.condition) && (tcgItem.finish === mItem.finish);
-        });
-
-        if (matchIndex !== -1) {
-          const manaItem = manaProcessed[matchIndex];
-          tcgItem.matched = true;
-          manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'name_num_fallback' });
-        }
-      });
-
-      // PASS 4: UNIQUE NAME MATCH ACROSS STORES (Cross-Set Fallback for Unique Cards)
-      tcgProcessed.forEach(tcgItem => {
-        if (tcgItem.matched) return;
-
-        const candidateMatches = manaProcessed.filter(mItem => 
-          !mItem.matched && 
-          mItem.normNameBase === tcgItem.normNameBase &&
-          mItem.condition === tcgItem.condition &&
-          mItem.finish === tcgItem.finish
-        );
-
-        if (candidateMatches.length === 1) {
-          const manaItem = candidateMatches[0];
-          tcgItem.matched = true;
-          manaItem.matched = true;
-          matchedPairs.push({ tcgItem, manaItem, matchType: 'unique_name_fallback' });
-        }
-      });
-
-      // Build Combined Inventory Objects
-      const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
-
-      // Add Matched Items
-      matchedPairs.forEach(pair => {
-        const tcgItem = pair.tcgItem;
-        const manaItem = pair.manaItem;
-
-        const tcgQty = tcgItem.qty;
-        const manaQty = manaItem.qty;
-        const tcgPrice = tcgItem.price;
-        const manaPrice = manaItem.price;
-
-        const qtyMismatch = (bothStoresLoaded && tcgQty !== manaQty && (tcgQty > 0 || manaQty > 0));
-        const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
-          ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
-          : false;
-
-        STATE.inventory.push({
-          key: `${tcgItem.normNameBase}||${tcgItem.cleanNum}||${tcgItem.condition}||${tcgItem.finish}`,
-          name: tcgItem.name,
-          set: tcgItem.set || manaItem.set,
-          number: tcgItem.number || manaItem.number,
-          condition: tcgItem.condition,
-          finish: tcgItem.finish,
-          tcgQty,
-          manaQty,
-          tcgPrice,
-          manaPrice,
-          tcgItem,
-          manaItem,
-          qtyMismatch,
-          priceMismatch,
-          delta: (tcgQty === 0 && manaQty === 0) ? 0 : Math.abs(tcgQty - manaQty)
-        });
-      });
-
-      // Add Unmatched TCG Items
-      tcgProcessed.forEach(tcgItem => {
-        if (!tcgItem.matched) {
-          const qtyMismatch = bothStoresLoaded && tcgItem.qty > 0;
-          STATE.inventory.push({
-            key: `${tcgItem.normNameBase}||${tcgItem.condition}||${tcgItem.finish}||tcg_${tcgItem.id}`,
-            name: tcgItem.name,
-            set: tcgItem.set,
-            number: tcgItem.number,
-            condition: tcgItem.condition,
-            finish: tcgItem.finish,
-            tcgQty: tcgItem.qty,
-            manaQty: 0,
-            tcgPrice: tcgItem.price,
-            manaPrice: null,
-            tcgItem,
-            manaItem: null,
-            qtyMismatch,
-            priceMismatch: false,
-            delta: tcgItem.qty
+        if (STATE.manaMap.has(key)) {
+          const existing = STATE.manaMap.get(key);
+          existing.qty += qty;
+          if (existing.price === null) existing.price = price;
+        } else {
+          STATE.manaMap.set(key, {
+            id: `mana_${idx}`,
+            key,
+            name: rawName,
+            set,
+            number,
+            condition: normalizeCondition(condition),
+            qty,
+            finish,
+            price,
+            raw: row
           });
         }
       });
 
-      // Add Unmatched Mana Pool Items
-      manaProcessed.forEach(manaItem => {
-        if (!manaItem.matched) {
+      const matchedManaKeys = new Set();
+      const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
+
+      // 3. Exact Composite Key Match Pass
+      STATE.tcgMap.forEach((tcgItem, key) => {
+        const manaItem = STATE.manaMap.get(key);
+
+        if (manaItem) {
+          matchedManaKeys.add(key);
+          const tcgQty = tcgItem.qty;
+          const manaQty = manaItem.qty;
+          const tcgPrice = tcgItem.price;
+          const manaPrice = manaItem.price;
+
+          const qtyMismatch = (bothStoresLoaded && tcgQty !== manaQty && (tcgQty > 0 || manaQty > 0));
+          const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
+            ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
+            : false;
+
+          STATE.inventory.push({
+            key,
+            name: tcgItem.name,
+            set: tcgItem.set || manaItem.set,
+            number: tcgItem.number || manaItem.number,
+            condition: tcgItem.condition,
+            finish: tcgItem.finish,
+            tcgQty,
+            manaQty,
+            tcgPrice,
+            manaPrice,
+            tcgItem,
+            manaItem,
+            qtyMismatch,
+            priceMismatch,
+            delta: (tcgQty === 0 && manaQty === 0) ? 0 : Math.abs(tcgQty - manaQty)
+          });
+        } else {
+          // Secondary Fallback Pass for unnumbered items (e.g., Mystery Booster 2 / The List)
+          const [tName, tNum, tCond, tFinish] = key.split('||');
+          let matchedFallback = null;
+
+          if (!tNum) {
+            for (const [mKey, mItem] of STATE.manaMap.entries()) {
+              if (matchedManaKeys.has(mKey)) continue;
+              const [mName, mNum, mCond, mFinish] = mKey.split('||');
+
+              if (tName === mName && tCond === mCond && tFinish === mFinish) {
+                matchedFallback = { mKey, mItem };
+                break;
+              }
+            }
+          }
+
+          if (matchedFallback) {
+            const { mKey, mItem } = matchedFallback;
+            matchedManaKeys.add(mKey);
+
+            const tcgQty = tcgItem.qty;
+            const manaQty = mItem.qty;
+            const tcgPrice = tcgItem.price;
+            const manaPrice = mItem.price;
+
+            const qtyMismatch = (bothStoresLoaded && tcgQty !== manaQty && (tcgQty > 0 || manaQty > 0));
+            const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0) 
+              ? (Math.abs(tcgPrice - manaPrice) > 0.005) 
+              : false;
+
+            STATE.inventory.push({
+              key,
+              name: tcgItem.name,
+              set: tcgItem.set || mItem.set,
+              number: tcgItem.number || mItem.number,
+              condition: tcgItem.condition,
+              finish: tcgItem.finish,
+              tcgQty,
+              manaQty,
+              tcgPrice,
+              manaPrice,
+              tcgItem,
+              manaItem: mItem,
+              qtyMismatch,
+              priceMismatch,
+              delta: (tcgQty === 0 && manaQty === 0) ? 0 : Math.abs(tcgQty - manaQty)
+            });
+          } else {
+            // Unmatched TCG Item
+            const qtyMismatch = bothStoresLoaded && tcgItem.qty > 0;
+            STATE.inventory.push({
+              key,
+              name: tcgItem.name,
+              set: tcgItem.set,
+              number: tcgItem.number,
+              condition: tcgItem.condition,
+              finish: tcgItem.finish,
+              tcgQty: tcgItem.qty,
+              manaQty: 0,
+              tcgPrice: tcgItem.price,
+              manaPrice: null,
+              tcgItem,
+              manaItem: null,
+              qtyMismatch,
+              priceMismatch: false,
+              delta: tcgItem.qty
+            });
+          }
+        }
+      });
+
+      // 4. Unmatched Mana Pool Items
+      STATE.manaMap.forEach((manaItem, key) => {
+        if (!matchedManaKeys.has(key)) {
           const qtyMismatch = bothStoresLoaded && manaItem.qty > 0;
           STATE.inventory.push({
-            key: `${manaItem.normNameBase}||${manaItem.condition}||${manaItem.finish}||mana_${manaItem.id}`,
+            key,
             name: manaItem.name,
             set: manaItem.set,
             number: manaItem.number,
@@ -1205,7 +1067,6 @@
     // --- EVENT LISTENERS & INITIALIZATION ---
     function init() {
       initFileUploads();
-      initScryfallSetCache();
 
       DOM.searchInput.addEventListener('input', (e) => {
         STATE.searchQuery = e.target.value;
