@@ -562,9 +562,9 @@
         <!-- Left Drawer / Catalog -->
         <div class="sidebar-left">
             <div class="tab-headers">
-                <button class="tab-btn active" onclick="switchTab('tabBuild')"><i class="fa-solid fa-hammer"></i> Build</button>
-                <button class="tab-btn" onclick="switchTab('tabCatalog')"><i class="fa-solid fa-couch"></i> Furniture</button>
-                <button class="tab-btn" onclick="switchTab('tabAnnotate')"><i class="fa-solid fa-ruler-combined"></i> Annotate</button>
+                <button class="tab-btn active" onclick="switchTab('tabBuild', this)"><i class="fa-solid fa-hammer"></i> Build</button>
+                <button class="tab-btn" onclick="switchTab('tabCatalog', this)"><i class="fa-solid fa-couch"></i> Furniture</button>
+                <button class="tab-btn" onclick="switchTab('tabAnnotate', this)"><i class="fa-solid fa-ruler-combined"></i> Annotate</button>
             </div>
 
             <!-- TAB 1: BUILD TOOLS -->
@@ -786,9 +786,11 @@
             isPanning: false,
             panStart: { x: 0, y: 0 },
             
-            // Selection
+            // Selection & Dragging
             selectedObject: null,
             selectedType: null, // 'wall', 'opening', 'furniture', 'room', 'dimension', 'text'
+            isDraggingObject: false,
+            dragOffset: { x: 0, y: 0 },
 
             // Drawing Wall Temp State
             wallStartPoint: null,
@@ -865,9 +867,11 @@
                 canvas2d.height = container.clientHeight;
                 if (renderer3d) {
                     const container3d = document.getElementById('canvas3d-container');
-                    camera3d.aspect = container3d.clientWidth / container3d.clientHeight;
-                    camera3d.updateProjectionMatrix();
-                    renderer3d.setSize(container3d.clientWidth, container3d.clientHeight);
+                    if (container3d.clientWidth > 0 && container3d.clientHeight > 0) {
+                        camera3d.aspect = container3d.clientWidth / container3d.clientHeight;
+                        camera3d.updateProjectionMatrix();
+                        renderer3d.setSize(container3d.clientWidth, container3d.clientHeight);
+                    }
                 }
                 renderAll();
             }
@@ -882,11 +886,11 @@
             scene3d = new THREE.Scene();
             scene3d.background = new THREE.Color(0x1a1a2e);
 
-            camera3d = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera3d = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
             camera3d.position.set(10, 12, 14);
 
             renderer3d = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-            renderer3d.setSize(container.clientWidth, container.clientHeight);
+            renderer3d.setSize(100, 100);
             renderer3d.shadowMap.enabled = true;
             renderer3d.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer3d.domElement);
@@ -1583,6 +1587,8 @@
         }
 
         function onMouseDown2D(e) {
+            if (e.target !== canvas2d) return;
+
             if (e.button === 1 || e.shiftKey) {
                 STATE.isPanning = true;
                 STATE.panStart = { x: e.clientX - STATE.pan2D.x, y: e.clientY - STATE.pan2D.y };
@@ -1614,6 +1620,13 @@
                 }
             } else if (STATE.activeTool === 'select') {
                 selectObjectAt(pt);
+                if (STATE.selectedObject && STATE.selectedType === 'furniture') {
+                    STATE.isDraggingObject = true;
+                    STATE.dragOffset = {
+                        x: pt.x - STATE.selectedObject.x,
+                        y: pt.y - STATE.selectedObject.y
+                    };
+                }
             } else if (STATE.activeTool === 'door' || STATE.activeTool === 'window') {
                 placeOpeningOnWall(pt, STATE.activeTool);
             } else if (STATE.activeTool === 'dimension') {
@@ -1663,6 +1676,13 @@
 
             document.getElementById('coordDisplay').innerText = `X: ${pt.x.toFixed(2)}m, Y: ${pt.y.toFixed(2)}m`;
 
+            if (STATE.isDraggingObject && STATE.selectedObject && STATE.selectedType === 'furniture') {
+                STATE.selectedObject.x = pt.x - STATE.dragOffset.x;
+                STATE.selectedObject.y = pt.y - STATE.dragOffset.y;
+                renderAll();
+                return;
+            }
+
             if (STATE.activeTool === 'wall' && STATE.wallStartPoint) {
                 render2DCanvas();
             }
@@ -1671,6 +1691,10 @@
         function onMouseUp2D(e) {
             if (STATE.isPanning) {
                 STATE.isPanning = false;
+            }
+            if (STATE.isDraggingObject) {
+                STATE.isDraggingObject = false;
+                saveHistory();
             }
         }
 
@@ -1910,12 +1934,14 @@
 
             const def = defaults[type] || { w: 1.0, d: 1.0, h: 1.0, name: type };
 
+            const centerWorld = screenToWorld2D(canvas2d.width / 2, canvas2d.height / 2);
+
             const newItem = {
                 id: 'item_' + Date.now(),
                 type: type,
                 name: def.name,
-                x: 0,
-                y: 0,
+                x: centerWorld.x,
+                y: centerWorld.y,
                 width: def.w,
                 depth: def.d,
                 height: def.h,
@@ -2040,12 +2066,17 @@
         /* ==========================================================================
            UI MODE SWITCHING & TOOL CONTROLS
            ========================================================================== */
-        function switchTab(tabId) {
+        function switchTab(tabId, btnElem) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            event.currentTarget.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+            if (btnElem) {
+                btnElem.classList.add('active');
+            }
+            const content = document.getElementById(tabId);
+            if (content) {
+                content.classList.add('active');
+            }
         }
 
         function setTool(toolName) {
@@ -2079,15 +2110,14 @@
                 container.classList.remove('split-view');
                 container2d.style.display = 'none';
                 container3d.style.display = 'block';
-                rebuild3DScene();
             } else if (mode === 'SPLIT') {
                 document.getElementById('btnViewSplit').classList.add('active');
                 container.classList.add('split-view');
                 container2d.style.display = 'block';
                 container3d.style.display = 'block';
-                rebuild3DScene();
             }
             resizeCanvas();
+            rebuild3DScene();
         }
 
         function toggleGrid() {
@@ -2096,6 +2126,10 @@
             btn.title = `Snap to Grid: ${STATE.gridSnap ? 'ON' : 'OFF'}`;
             btn.style.color = STATE.gridSnap ? 'var(--accent-light)' : 'var(--text-muted)';
             render2DCanvas();
+        }
+
+        function toggleSnap() {
+            toggleGrid();
         }
 
         function switchLevel(val) {
