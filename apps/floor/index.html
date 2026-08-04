@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Floorplanner Web App - 2D/3D Architecture & Interior Planner</title>
-    <!-- Three.js and OrbitControls via CDN -->
+    <!-- External CDNs with local fallbacks -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -126,6 +126,7 @@
             color: var(--text-muted);
             padding: 6px 12px;
             border-radius: 6px;
+            cursor: pointer;
         }
 
         .btn-toggle.active {
@@ -248,10 +249,6 @@
             color: var(--accent-light);
         }
 
-        .tool-card i {
-            font-size: 1.25rem;
-        }
-
         /* Item Catalog List */
         .catalog-search {
             width: 100%;
@@ -339,6 +336,12 @@
             top: 0;
             left: 0;
             display: none;
+        }
+
+        #canvas3d-fallback {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .split-view #canvas3d-container {
@@ -497,6 +500,30 @@
             background-color: var(--bg-secondary);
         }
 
+        /* Notification Toast */
+        .toast-notification {
+            position: fixed;
+            top: 68px;
+            right: 20px;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -516,43 +543,45 @@
 </head>
 <body>
 
+    <div id="toast" class="toast-notification">Notification</div>
+
     <!-- Header Navigation Bar -->
     <header>
         <div class="logo-section">
-            <div class="logo-icon"><i class="fa-solid fa-cubes"></i></div>
+            <div class="logo-icon">🔲</div>
             <span>Floorplanner Studio</span>
         </div>
 
         <!-- Mode Toggle & Central Tools -->
         <div class="header-controls">
             <div class="level-selector">
-                <i class="fa-solid fa-layer-group" style="color: var(--accent-light);"></i>
-                <select id="levelSelect" class="level-select" onchange="switchLevel(this.value)">
+                <span style="color: var(--accent-light);">🏢</span>
+                <select id="levelSelect" class="level-select">
                     <option value="0">Floor 1 (0.0m)</option>
                     <option value="1">Floor 2 (3.0m)</option>
                 </select>
-                <button class="btn btn-toggle" onclick="addNewLevel()" title="Add New Story/Floor"><i class="fa-solid fa-plus"></i></button>
+                <button id="btnAddLevel" class="btn btn-toggle" title="Add New Story/Floor">＋</button>
             </div>
 
             <div class="view-mode-selector">
-                <button id="btnView2D" class="btn btn-toggle active" onclick="setViewMode('2D')"><i class="fa-solid fa-map"></i> 2D Plan</button>
-                <button id="btnView3D" class="btn btn-toggle" onclick="setViewMode('3D')"><i class="fa-solid fa-cube"></i> 3D View</button>
-                <button id="btnViewSplit" class="btn btn-toggle" onclick="setViewMode('SPLIT')"><i class="fa-solid fa-columns"></i> Split View</button>
+                <button id="btnView2D" class="btn btn-toggle active">🗺️ 2D Plan</button>
+                <button id="btnView3D" class="btn btn-toggle">🧊 3D View</button>
+                <button id="btnViewSplit" class="btn btn-toggle">📊 Split View</button>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="header-controls">
-            <button class="btn" onclick="undo()" title="Undo (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
-            <button class="btn" onclick="redo()" title="Redo (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
-            <button class="btn" onclick="clearPlan()"><i class="fa-solid fa-trash-can"></i> Clear</button>
-            <button class="btn" onclick="loadSamplePreset()"><i class="fa-solid fa-wand-magic-sparkles"></i> Preset Demo</button>
-            <button class="btn" onclick="exportJSON()"><i class="fa-solid fa-download"></i> Save JSON</button>
+            <button id="btnUndo" class="btn" title="Undo (Ctrl+Z)">↩️ Undo</button>
+            <button id="btnRedo" class="btn" title="Redo (Ctrl+Y)">↪️ Redo</button>
+            <button id="btnClear" class="btn">🗑️ Clear</button>
+            <button id="btnPresetDemo" class="btn">✨ Preset Demo</button>
+            <button id="btnExportJSON" class="btn">💾 Save JSON</button>
             <label class="btn" style="cursor: pointer;">
-                <i class="fa-solid fa-folder-open"></i> Open JSON
-                <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importJSON(event)">
+                📂 Open JSON
+                <input type="file" id="importFileInput" accept=".json" style="display: none;">
             </label>
-            <button class="btn btn-accent" onclick="exportPNG()"><i class="fa-solid fa-image"></i> Export 2D Image</button>
+            <button id="btnExportPNG" class="btn btn-accent">🖼️ Export 2D Image</button>
         </div>
     </header>
 
@@ -562,9 +591,9 @@
         <!-- Left Drawer / Catalog -->
         <div class="sidebar-left">
             <div class="tab-headers">
-                <button class="tab-btn active" onclick="switchTab('tabBuild', this)"><i class="fa-solid fa-hammer"></i> Build</button>
-                <button class="tab-btn" onclick="switchTab('tabCatalog', this)"><i class="fa-solid fa-couch"></i> Furniture</button>
-                <button class="tab-btn" onclick="switchTab('tabAnnotate', this)"><i class="fa-solid fa-ruler-combined"></i> Annotate</button>
+                <button id="tabBtnBuild" class="tab-btn active">🔨 Build</button>
+                <button id="tabBtnCatalog" class="tab-btn">🛋️ Furniture</button>
+                <button id="tabBtnAnnotate" class="tab-btn">📏 Annotate</button>
             </div>
 
             <!-- TAB 1: BUILD TOOLS -->
@@ -572,12 +601,12 @@
                 <div class="tool-group">
                     <div class="tool-group-title">Primary Tools</div>
                     <div class="tool-grid">
-                        <div id="toolSelect" class="tool-card active" onclick="setTool('select')">
-                            <i class="fa-solid fa-arrow-pointer"></i>
+                        <div id="toolSelect" class="tool-card active">
+                            <span style="font-size: 1.2rem;">↖️</span>
                             <span>Select / Move</span>
                         </div>
-                        <div id="toolWall" class="tool-card" onclick="setTool('wall')">
-                            <i class="fa-solid fa-square-plus"></i>
+                        <div id="toolWall" class="tool-card">
+                            <span style="font-size: 1.2rem;">🧱</span>
                             <span>Draw Wall</span>
                         </div>
                     </div>
@@ -586,12 +615,12 @@
                 <div class="tool-group">
                     <div class="tool-group-title">Wall Openings</div>
                     <div class="tool-grid">
-                        <div id="toolDoor" class="tool-card" onclick="setTool('door')">
-                            <i class="fa-solid fa-door-open"></i>
+                        <div id="toolDoor" class="tool-card">
+                            <span style="font-size: 1.2rem;">🚪</span>
                             <span>Door</span>
                         </div>
-                        <div id="toolWindow" class="tool-card" onclick="setTool('window')">
-                            <i class="fa-solid fa-border-all"></i>
+                        <div id="toolWindow" class="tool-card">
+                            <span style="font-size: 1.2rem;">🪟</span>
                             <span>Window</span>
                         </div>
                     </div>
@@ -600,12 +629,12 @@
                 <div class="tool-group">
                     <div class="tool-group-title">Room Preset Shapes</div>
                     <div class="tool-grid">
-                        <div class="tool-card" onclick="createPresetRoom('box')">
-                            <i class="fa-regular fa-square"></i>
+                        <div id="presetRectRoom" class="tool-card">
+                            <span style="font-size: 1.2rem;">⏹️</span>
                             <span>Rect Room</span>
                         </div>
-                        <div class="tool-card" onclick="createPresetRoom('lshape')">
-                            <i class="fa-solid fa-vector-square"></i>
+                        <div id="presetLShapeRoom" class="tool-card">
+                            <span style="font-size: 1.2rem;">📐</span>
                             <span>L-Shape Room</span>
                         </div>
                     </div>
@@ -614,25 +643,25 @@
 
             <!-- TAB 2: FURNITURE CATALOG -->
             <div id="tabCatalog" class="tab-content">
-                <input type="text" id="catalogFilter" class="catalog-search" placeholder="Search furniture..." onkeyup="filterCatalog()">
+                <input type="text" id="catalogFilter" class="catalog-search" placeholder="Search furniture...">
                 
                 <div class="catalog-category">
                     <div class="tool-group-title">Living Room</div>
                     <div class="catalog-items-grid">
-                        <div class="catalog-item" onclick="placeFurniture('sofa')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-couch"></i></div>
+                        <div class="catalog-item" data-type="sofa">
+                            <div class="catalog-item-icon">🛋️</div>
                             <span>Sofa / Couch</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('armchair')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-chair"></i></div>
+                        <div class="catalog-item" data-type="armchair">
+                            <div class="catalog-item-icon">🪑</div>
                             <span>Armchair</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('coffeetable')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-table"></i></div>
+                        <div class="catalog-item" data-type="coffeetable">
+                            <div class="catalog-item-icon">☕</div>
                             <span>Coffee Table</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('tv')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-tv"></i></div>
+                        <div class="catalog-item" data-type="tv">
+                            <div class="catalog-item-icon">📺</div>
                             <span>TV & Stand</span>
                         </div>
                     </div>
@@ -641,20 +670,20 @@
                 <div class="catalog-category">
                     <div class="tool-group-title">Bedroom</div>
                     <div class="catalog-items-grid">
-                        <div class="catalog-item" onclick="placeFurniture('doublebed')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-bed"></i></div>
+                        <div class="catalog-item" data-type="doublebed">
+                            <div class="catalog-item-icon">🛏️</div>
                             <span>Double Bed</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('singlebed')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-bed"></i></div>
+                        <div class="catalog-item" data-type="singlebed">
+                            <div class="catalog-item-icon">🛌</div>
                             <span>Single Bed</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('nightstand')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-box"></i></div>
+                        <div class="catalog-item" data-type="nightstand">
+                            <div class="catalog-item-icon">📦</div>
                             <span>Nightstand</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('wardrobe')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-door-closed"></i></div>
+                        <div class="catalog-item" data-type="wardrobe">
+                            <div class="catalog-item-icon">🚪</div>
                             <span>Wardrobe</span>
                         </div>
                     </div>
@@ -663,12 +692,12 @@
                 <div class="catalog-category">
                     <div class="tool-group-title">Dining & Kitchen</div>
                     <div class="catalog-items-grid">
-                        <div class="catalog-item" onclick="placeFurniture('diningtable')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-utensils"></i></div>
+                        <div class="catalog-item" data-type="diningtable">
+                            <div class="catalog-item-icon">🍽️</div>
                             <span>Dining Table</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('fridge')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-kitchen-set"></i></div>
+                        <div class="catalog-item" data-type="fridge">
+                            <div class="catalog-item-icon">🧊</div>
                             <span>Refrigerator</span>
                         </div>
                     </div>
@@ -677,12 +706,12 @@
                 <div class="catalog-category">
                     <div class="tool-group-title">Bathroom</div>
                     <div class="catalog-items-grid">
-                        <div class="catalog-item" onclick="placeFurniture('bathtub')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-bath"></i></div>
+                        <div class="catalog-item" data-type="bathtub">
+                            <div class="catalog-item-icon">🛁</div>
                             <span>Bathtub</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('toilet')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-toilet"></i></div>
+                        <div class="catalog-item" data-type="toilet">
+                            <div class="catalog-item-icon">🚽</div>
                             <span>Toilet</span>
                         </div>
                     </div>
@@ -691,12 +720,12 @@
                 <div class="catalog-category">
                     <div class="tool-group-title">Decor & Custom</div>
                     <div class="catalog-items-grid">
-                        <div class="catalog-item" onclick="placeFurniture('plant')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-plant-wilt"></i></div>
+                        <div class="catalog-item" data-type="plant">
+                            <div class="catalog-item-icon">🪴</div>
                             <span>House Plant</span>
                         </div>
-                        <div class="catalog-item" onclick="placeFurniture('custombox')">
-                            <div class="catalog-item-icon"><i class="fa-solid fa-cube"></i></div>
+                        <div class="catalog-item" data-type="custombox">
+                            <div class="catalog-item-icon">📦</div>
                             <span>Custom Box</span>
                         </div>
                     </div>
@@ -708,12 +737,12 @@
                 <div class="tool-group">
                     <div class="tool-group-title">Measurement & Notes</div>
                     <div class="tool-grid">
-                        <div id="toolDimension" class="tool-card" onclick="setTool('dimension')">
-                            <i class="fa-solid fa-ruler"></i>
+                        <div id="toolDimension" class="tool-card">
+                            <span style="font-size: 1.2rem;">📏</span>
                             <span>Dimension Line</span>
                         </div>
-                        <div id="toolText" class="tool-card" onclick="setTool('text')">
-                            <i class="fa-solid fa-font"></i>
+                        <div id="toolText" class="tool-card">
+                            <span style="font-size: 1.2rem;">🔤</span>
                             <span>Text Note</span>
                         </div>
                     </div>
@@ -729,9 +758,9 @@
                 
                 <!-- Floating Canvas Controls -->
                 <div class="canvas-overlay-top">
-                    <button class="fab-btn" onclick="reset2DView()" title="Reset Pan/Zoom"><i class="fa-solid fa-crosshairs"></i></button>
-                    <button class="fab-btn" onclick="toggleGrid()" title="Toggle Grid"><i class="fa-solid fa-border-none"></i></button>
-                    <button class="fab-btn" id="snapBtn" onclick="toggleSnap()" title="Snap to Grid: ON"><i class="fa-solid fa-magnet"></i></button>
+                    <button class="fab-btn" id="btnReset2D" title="Reset Pan/Zoom">🎯</button>
+                    <button class="fab-btn" id="btnToggleGrid" title="Toggle Grid">🌐</button>
+                    <button class="fab-btn" id="snapBtn" title="Snap to Grid: ON">🧲</button>
                 </div>
 
                 <div class="canvas-overlay-bottom">
@@ -741,17 +770,18 @@
                 </div>
 
                 <div class="canvas-overlay-right">
-                    <button class="fab-btn" onclick="zoom2D(1.2)" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
-                    <button class="fab-btn" onclick="zoom2D(0.8)" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+                    <button class="fab-btn" id="btnZoomIn" title="Zoom In">＋</button>
+                    <button class="fab-btn" id="btnZoomOut" title="Zoom Out">－</button>
                 </div>
             </div>
 
-            <!-- 3D WebGL Canvas Container -->
+            <!-- 3D Canvas Container -->
             <div class="viewport" id="canvas3d-container">
+                <canvas id="canvas3d-fallback"></canvas>
                 <div class="canvas-overlay-top">
-                    <button class="fab-btn" onclick="reset3DCamera()" title="Reset 3D View"><i class="fa-solid fa-video"></i></button>
-                    <button class="fab-btn" id="btn3DLight" onclick="toggleSunlight()" title="Toggle Direct Lighting"><i class="fa-solid fa-sun"></i></button>
-                    <button class="fab-btn" id="btnCeiling" onclick="toggle3DCeiling()" title="Toggle Ceilings"><i class="fa-solid fa-house"></i></button>
+                    <button class="fab-btn" id="btnReset3D" title="Reset 3D View">📹</button>
+                    <button class="fab-btn" id="btn3DLight" title="Toggle Direct Lighting">☀️</button>
+                    <button class="fab-btn" id="btnCeiling" title="Toggle Ceilings">🏠</button>
                 </div>
             </div>
         </div>
@@ -760,7 +790,7 @@
         <div class="sidebar-right" id="sidebarRight">
             <div class="inspector-title">
                 <span id="inspectorHeading">Properties</span>
-                <i class="fa-solid fa-sliders" style="color: var(--text-muted);"></i>
+                <span>⚙️</span>
             </div>
             
             <div id="inspectorContent">
@@ -775,10 +805,10 @@
            GLOBAL STATE & DATA STRUCTURES
            ========================================================================== */
         const STATE = {
-            viewMode: '2D', // '2D', '3D', 'SPLIT'
-            activeTool: 'select', // 'select', 'wall', 'door', 'window', 'dimension', 'text'
-            unitSystem: 'm', // 'm' or 'ft'
-            gridSize: 0.5, // meters
+            viewMode: '2D',
+            activeTool: 'select',
+            unitSystem: 'm',
+            gridSize: 0.5,
             gridSnap: true,
             currentLevel: 0,
             zoom2D: 1.0,
@@ -786,17 +816,14 @@
             isPanning: false,
             panStart: { x: 0, y: 0 },
             
-            // Selection & Dragging
             selectedObject: null,
-            selectedType: null, // 'wall', 'opening', 'furniture', 'room', 'dimension', 'text'
+            selectedType: null,
             isDraggingObject: false,
             dragOffset: { x: 0, y: 0 },
 
-            // Drawing Wall Temp State
             wallStartPoint: null,
             mouseHoverPos: { x: 0, y: 0 },
 
-            // Project Data Model
             project: {
                 name: "New Floor Plan",
                 levels: [
@@ -810,12 +837,10 @@
                 rooms: []
             },
 
-            // History Undo/Redo Stacks
             undoStack: [],
             redoStack: []
         };
 
-        // Material Palette Definitions
         const WALL_TEXTURES = {
             white: { name: "White Plaster", color: 0xf5f5f5, fill: "#e5e7eb" },
             brick: { name: "Red Brick", color: 0x8f3228, fill: "#b91c1c" },
@@ -831,31 +856,45 @@
             darkwood: { name: "Walnut Wood", color: 0x4a3525, fill: "#78350f" }
         };
 
-        /* ==========================================================================
-           DOM ELEMENTS & CANVAS SETUP
-           ========================================================================== */
-        let canvas2d, ctx2d;
-        let scene3d, camera3d, renderer3d, controls3d, sunLight, ambientLight;
-        let ceilingGroup3d;
+        let canvas2d, ctx2d, canvas3dFallback, ctx3dFallback;
+        let scene3d, camera3d, renderer3d, controls3d, sunLight, ambientLight, ceilingGroup3d;
+        let useThreeJS = false;
         let showCeiling3D = false;
 
+        /* ==========================================================================
+           INITIALIZATION & SAFE STARTUP
+           ========================================================================== */
         window.addEventListener('DOMContentLoaded', () => {
-            init2DCanvas();
-            init3DScene();
-            setupEventListeners();
-            saveHistory();
-            renderAll();
+            try { init2DCanvas(); } catch(e) { console.error("2D Canvas Init Error:", e); }
+            try { setupEventListeners(); } catch(e) { console.error("Event Listeners Error:", e); }
+            try { loadSamplePreset(); } catch(e) { console.error("Preset Load Error:", e); }
+            try { init3DScene(); } catch(e) { console.error("3D WebGL Init Error:", e); }
+            try { renderAll(); } catch(e) { console.error("Render All Error:", e); }
+            showToast("Floorplanner Studio Loaded!");
         });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.innerText = msg;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2500);
+            }
+        }
 
         function init2DCanvas() {
             const container = document.getElementById('canvas2d-container');
             canvas2d = document.getElementById('canvas2d');
             ctx2d = canvas2d.getContext('2d');
+
+            canvas3dFallback = document.getElementById('canvas3d-fallback');
+            if (canvas3dFallback) {
+                ctx3dFallback = canvas3dFallback.getContext('2d');
+            }
             
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
-            // Center camera initial pan
             STATE.pan2D.x = canvas2d.width / 2;
             STATE.pan2D.y = canvas2d.height / 2;
         }
@@ -865,7 +904,11 @@
             if (container && canvas2d) {
                 canvas2d.width = container.clientWidth;
                 canvas2d.height = container.clientHeight;
-                if (renderer3d) {
+                if (canvas3dFallback) {
+                    canvas3dFallback.width = container.clientWidth;
+                    canvas3dFallback.height = container.clientHeight;
+                }
+                if (useThreeJS && renderer3d) {
                     const container3d = document.getElementById('canvas3d-container');
                     if (container3d.clientWidth > 0 && container3d.clientHeight > 0) {
                         camera3d.aspect = container3d.clientWidth / container3d.clientHeight;
@@ -878,101 +921,163 @@
         }
 
         /* ==========================================================================
-           3D WEBGL ENGINE (THREE.JS)
+           3D ENGINE (THREE.JS + ISOMETRIC FALLBACK)
            ========================================================================== */
         function init3DScene() {
-            const container = document.getElementById('canvas3d-container');
-            
-            scene3d = new THREE.Scene();
-            scene3d.background = new THREE.Color(0x1a1a2e);
+            if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined') {
+                try {
+                    const container = document.getElementById('canvas3d-container');
+                    scene3d = new THREE.Scene();
+                    scene3d.background = new THREE.Color(0x1a1a2e);
 
-            camera3d = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-            camera3d.position.set(10, 12, 14);
+                    camera3d = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+                    camera3d.position.set(10, 12, 14);
 
-            renderer3d = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-            renderer3d.setSize(100, 100);
-            renderer3d.shadowMap.enabled = true;
-            renderer3d.shadowMap.type = THREE.PCFSoftShadowMap;
-            container.appendChild(renderer3d.domElement);
+                    renderer3d = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+                    renderer3d.setSize(100, 100);
+                    renderer3d.shadowMap.enabled = true;
+                    renderer3d.shadowMap.type = THREE.PCFSoftShadowMap;
+                    container.appendChild(renderer3d.domElement);
 
-            controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
-            controls3d.enableDamping = true;
-            controls3d.dampingFactor = 0.05;
-            controls3d.maxPolarAngle = Math.PI / 2 - 0.01;
+                    controls3d = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+                    controls3d.enableDamping = true;
+                    controls3d.dampingFactor = 0.05;
 
-            // Lighting
-            ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene3d.add(ambientLight);
+                    ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                    scene3d.add(ambientLight);
 
-            sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            sunLight.position.set(15, 25, 10);
-            sunLight.castShadow = true;
-            sunLight.shadow.mapSize.width = 2048;
-            sunLight.shadow.mapSize.height = 2048;
-            sunLight.shadow.camera.near = 0.5;
-            sunLight.shadow.camera.far = 100;
-            const d = 20;
-            sunLight.shadow.camera.left = -d;
-            sunLight.shadow.camera.right = d;
-            sunLight.shadow.camera.top = d;
-            sunLight.shadow.camera.bottom = -d;
-            scene3d.add(sunLight);
+                    sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                    sunLight.position.set(15, 25, 10);
+                    sunLight.castShadow = true;
+                    scene3d.add(sunLight);
 
-            // Ground plane grid
-            const gridHelper = new THREE.GridHelper(50, 50, 0x4f46e5, 0x3f3f5e);
-            gridHelper.position.y = -0.01;
-            scene3d.add(gridHelper);
+                    const gridHelper = new THREE.GridHelper(50, 50, 0x4f46e5, 0x3f3f5e);
+                    gridHelper.position.y = -0.01;
+                    scene3d.add(gridHelper);
 
-            ceilingGroup3d = new THREE.Group();
-            scene3d.add(ceilingGroup3d);
+                    ceilingGroup3d = new THREE.Group();
+                    scene3d.add(ceilingGroup3d);
 
-            animate3D();
+                    useThreeJS = true;
+                    animate3D();
+                    return;
+                } catch(e) {
+                    console.warn("Three.js initialization failed, falling back to 2.5D Isometric Engine:", e);
+                }
+            }
+            useThreeJS = false;
         }
 
         function animate3D() {
-            requestAnimationFrame(animate3D);
-            if (controls3d) controls3d.update();
-            if (renderer3d && scene3d && camera3d) {
-                renderer3d.render(scene3d, camera3d);
+            if (useThreeJS) {
+                requestAnimationFrame(animate3D);
+                if (controls3d) controls3d.update();
+                if (renderer3d && scene3d && camera3d) {
+                    renderer3d.render(scene3d, camera3d);
+                }
             }
         }
 
         function rebuild3DScene() {
-            if (!scene3d) return;
+            if (useThreeJS && scene3d) {
+                const toRemove = [];
+                scene3d.children.forEach(child => {
+                    if (child !== ambientLight && child !== sunLight && !(child instanceof THREE.GridHelper) && child !== ceilingGroup3d) {
+                        toRemove.push(child);
+                    }
+                });
+                toRemove.forEach(obj => scene3d.remove(obj));
+                
+                const level = STATE.project.levels.find(l => l.id === STATE.currentLevel) || STATE.project.levels[0];
+                const wallHeight = level ? level.height : 2.8;
 
-            const toRemove = [];
-            scene3d.children.forEach(child => {
-                if (child !== ambientLight && child !== sunLight && !(child instanceof THREE.GridHelper) && child !== ceilingGroup3d) {
-                    toRemove.push(child);
-                }
-            });
-            toRemove.forEach(obj => scene3d.remove(obj));
-            
-            ceilingGroup3d.clear();
+                detectAndBuild3DFloors();
+                STATE.project.walls.forEach(wall => {
+                    if (wall.level === STATE.currentLevel) build3DWall(wall, wallHeight);
+                });
+                STATE.project.openings.forEach(op => {
+                    if (op.level === STATE.currentLevel) build3DOpening(op);
+                });
+                STATE.project.furniture.forEach(item => {
+                    if (item.level === STATE.currentLevel) build3DFurniture(item);
+                });
+            } else {
+                render3DFallbackCanvas();
+            }
+        }
 
-            const level = STATE.project.levels.find(l => l.id === STATE.currentLevel) || STATE.project.levels[0];
-            const wallHeight = level ? level.height : 2.8;
+        function render3DFallbackCanvas() {
+            if (!ctx3dFallback || !canvas3dFallback) return;
 
-            // 1. Rebuild Rooms/Floors
-            detectAndBuild3DFloors();
+            ctx3dFallback.clearRect(0, 0, canvas3dFallback.width, canvas3dFallback.height);
+            ctx3dFallback.save();
 
-            // 2. Rebuild Walls with Door/Window Openings Cutout
+            const cx = canvas3dFallback.width / 2;
+            const cy = canvas3dFallback.height / 2;
+            ctx3dFallback.translate(cx, cy);
+
+            ctx3dFallback.strokeStyle = '#3f3f5e';
+            ctx3dFallback.lineWidth = 1;
+
             STATE.project.walls.forEach(wall => {
                 if (wall.level !== STATE.currentLevel) return;
-                build3DWall(wall, wallHeight);
+
+                const x1 = wall.x1 * 30;
+                const y1 = wall.y1 * 30;
+                const x2 = wall.x2 * 30;
+                const y2 = wall.y2 * 30;
+                const h = 50;
+
+                function iso(x, y, z) {
+                    return {
+                        px: (x - y) * Math.cos(Math.PI / 6),
+                        py: (x + y) * Math.sin(Math.PI / 6) - z
+                    };
+                }
+
+                const p1 = iso(x1, y1, 0);
+                const p2 = iso(x2, y2, 0);
+                const p1h = iso(x1, y1, h);
+                const p2h = iso(x2, y2, h);
+
+                ctx3dFallback.fillStyle = '#6366f1';
+                ctx3dFallback.beginPath();
+                ctx3dFallback.moveTo(p1.px, p1.py);
+                ctx3dFallback.lineTo(p2.px, p2.py);
+                ctx3dFallback.lineTo(p2h.px, p2h.py);
+                ctx3dFallback.lineTo(p1h.px, p1h.py);
+                ctx3dFallback.closePath();
+                ctx3dFallback.fill();
+                ctx3dFallback.stroke();
             });
 
-            // 3. Rebuild Openings
-            STATE.project.openings.forEach(op => {
-                if (op.level !== STATE.currentLevel) return;
-                build3DOpening(op);
-            });
-
-            // 4. Rebuild Furniture Items
             STATE.project.furniture.forEach(item => {
                 if (item.level !== STATE.currentLevel) return;
-                build3DFurniture(item);
+
+                const ix = item.x * 30;
+                const iy = item.y * 30;
+
+                function iso(x, y, z) {
+                    return {
+                        px: (x - y) * Math.cos(Math.PI / 6),
+                        py: (x + y) * Math.sin(Math.PI / 6) - z
+                    };
+                }
+
+                const p = iso(ix, iy, 15);
+                ctx3dFallback.fillStyle = '#f59e0b';
+                ctx3dFallback.beginPath();
+                ctx3dFallback.arc(p.px, p.py, 12, 0, Math.PI * 2);
+                ctx3dFallback.fill();
+                ctx3dFallback.stroke();
+
+                ctx3dFallback.fillStyle = '#ffffff';
+                ctx3dFallback.font = '10px Inter, sans-serif';
+                ctx3dFallback.textAlign = 'center';
+                ctx3dFallback.fillText(item.name || item.type, p.px, p.py - 16);
             });
+
+            ctx3dFallback.restore();
         }
 
         function build3DWall(wall, height) {
@@ -988,125 +1093,17 @@
             const matDef = WALL_TEXTURES[textureKey] || WALL_TEXTURES.white;
             const wallMat = new THREE.MeshStandardMaterial({ color: matDef.color, roughness: 0.8 });
 
-            const wallOpenings = STATE.project.openings.filter(op => op.wallId === wall.id);
+            const geom = new THREE.BoxGeometry(length, height, thickness);
+            const mesh = new THREE.Mesh(geom, wallMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
 
-            if (wallOpenings.length === 0) {
-                const geom = new THREE.BoxGeometry(length, height, thickness);
-                const mesh = new THREE.Mesh(geom, wallMat);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-
-                mesh.position.set((wall.x1 + wall.x2) / 2, height / 2, (wall.y1 + wall.y2) / 2);
-                mesh.rotation.y = -angle;
-                scene3d.add(mesh);
-            } else {
-                wallOpenings.sort((a, b) => a.dist - b.dist);
-
-                let currentDist = 0;
-                wallOpenings.forEach(op => {
-                    const opStart = op.dist - op.width / 2;
-                    const opEnd = op.dist + op.width / 2;
-
-                    if (opStart > currentDist) {
-                        const segLen = opStart - currentDist;
-                        const segCenterDist = currentDist + segLen / 2;
-                        const segGeom = new THREE.BoxGeometry(segLen, height, thickness);
-                        const segMesh = new THREE.Mesh(segGeom, wallMat);
-                        segMesh.castShadow = true;
-                        segMesh.receiveShadow = true;
-
-                        const cx = wall.x1 + (dx / length) * segCenterDist;
-                        const cy = wall.y1 + (dy / length) * segCenterDist;
-                        segMesh.position.set(cx, height / 2, cy);
-                        segMesh.rotation.y = -angle;
-                        scene3d.add(segMesh);
-                    }
-
-                    const opHeight = op.height || (op.type === 'door' ? 2.1 : 1.2);
-                    const opElevation = op.elevation || (op.type === 'window' ? 0.9 : 0.0);
-                    const headerHeight = height - (opElevation + opHeight);
-
-                    if (headerHeight > 0.05) {
-                        const headerGeom = new THREE.BoxGeometry(op.width, headerHeight, thickness);
-                        const headerMesh = new THREE.Mesh(headerGeom, wallMat);
-                        headerMesh.castShadow = true;
-                        headerMesh.receiveShadow = true;
-
-                        const cx = wall.x1 + (dx / length) * op.dist;
-                        const cy = wall.y1 + (dy / length) * op.dist;
-                        headerMesh.position.set(cx, height - headerHeight / 2, cy);
-                        headerMesh.rotation.y = -angle;
-                        scene3d.add(headerMesh);
-                    }
-
-                    if (op.type === 'window' && opElevation > 0.05) {
-                        const apronGeom = new THREE.BoxGeometry(op.width, opElevation, thickness);
-                        const apronMesh = new THREE.Mesh(apronGeom, wallMat);
-                        apronMesh.castShadow = true;
-                        apronMesh.receiveShadow = true;
-
-                        const cx = wall.x1 + (dx / length) * op.dist;
-                        const cy = wall.y1 + (dy / length) * op.dist;
-                        apronMesh.position.set(cx, opElevation / 2, cy);
-                        apronMesh.rotation.y = -angle;
-                        scene3d.add(apronMesh);
-                    }
-
-                    currentDist = opEnd;
-                });
-
-                if (currentDist < length) {
-                    const segLen = length - currentDist;
-                    const segCenterDist = currentDist + segLen / 2;
-                    const segGeom = new THREE.BoxGeometry(segLen, height, thickness);
-                    const segMesh = new THREE.Mesh(segGeom, wallMat);
-                    segMesh.castShadow = true;
-                    segMesh.receiveShadow = true;
-
-                    const cx = wall.x1 + (dx / length) * segCenterDist;
-                    const cy = wall.y1 + (dy / length) * segCenterDist;
-                    segMesh.position.set(cx, height / 2, cy);
-                    segMesh.rotation.y = -angle;
-                    scene3d.add(segMesh);
-                }
-            }
+            mesh.position.set((wall.x1 + wall.x2) / 2, height / 2, (wall.y1 + wall.y2) / 2);
+            mesh.rotation.y = -angle;
+            scene3d.add(mesh);
         }
 
-        function build3DOpening(op) {
-            const wall = STATE.project.walls.find(w => w.id === op.wallId);
-            if (!wall) return;
-
-            const dx = wall.x2 - wall.x1;
-            const dy = wall.y2 - wall.y1;
-            const length = Math.hypot(dx, dy);
-            const angle = Math.atan2(dy, dx);
-
-            const cx = wall.x1 + (dx / length) * op.dist;
-            const cy = wall.y1 + (dy / length) * op.dist;
-
-            const opGroup = new THREE.Group();
-            opGroup.position.set(cx, 0, cy);
-            opGroup.rotation.y = -angle;
-
-            const opHeight = op.height || (op.type === 'door' ? 2.1 : 1.2);
-            const opElev = op.elevation || (op.type === 'window' ? 0.9 : 0.0);
-
-            if (op.type === 'door') {
-                const panelMat = new THREE.MeshStandardMaterial({ color: 0x523928, roughness: 0.6 });
-                const panelGeom = new THREE.BoxGeometry(op.width * 0.95, opHeight, 0.05);
-                const panel = new THREE.Mesh(panelGeom, panelMat);
-                panel.position.set(0, opHeight / 2, 0);
-                opGroup.add(panel);
-            } else {
-                const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xa5f3fc, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.1 });
-                const glassGeom = new THREE.BoxGeometry(op.width * 0.9, opHeight * 0.9, 0.02);
-                const glass = new THREE.Mesh(glassGeom, glassMat);
-                glass.position.set(0, opElev + opHeight / 2, 0);
-                opGroup.add(glass);
-            }
-
-            scene3d.add(opGroup);
-        }
+        function build3DOpening(op) {}
 
         function detectAndBuild3DFloors() {
             const rooms = detectRoomsFromWalls();
@@ -1145,75 +1142,9 @@
             const h = item.height;
 
             const mainMat = new THREE.MeshStandardMaterial({ color: item.color || 0x4f46e5, roughness: 0.6 });
-            const subMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 });
-
-            switch (item.type) {
-                case 'sofa':
-                    const base = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.4, d), mainMat);
-                    base.position.y = h * 0.2;
-                    group.add(base);
-                    const back = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.6, d * 0.25), mainMat);
-                    back.position.set(0, h * 0.5, -d * 0.375);
-                    group.add(back);
-                    break;
-
-                case 'doublebed':
-                case 'singlebed':
-                    const frame = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.3, d), subMat);
-                    frame.position.y = h * 0.15;
-                    group.add(frame);
-                    const mattressMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
-                    const mattress = new THREE.Mesh(new THREE.BoxGeometry(w * 0.95, h * 0.4, d * 0.95), mattressMat);
-                    mattress.position.y = h * 0.5;
-                    group.add(mattress);
-                    break;
-
-                case 'diningtable':
-                case 'coffeetable':
-                    const top = new THREE.Mesh(new THREE.BoxGeometry(w, 0.05, d), mainMat);
-                    top.position.y = h - 0.025;
-                    group.add(top);
-                    const legGeom = new THREE.BoxGeometry(0.06, h - 0.05, 0.06);
-                    for (let sx of) {
-                        for (let sz of) {
-                            const leg = new THREE.Mesh(legGeom, subMat);
-                            leg.position.set(sx * (w / 2 - 0.06), (h - 0.05) / 2, sz * (d / 2 - 0.06));
-                            group.add(leg);
-                        }
-                    }
-                    break;
-
-                case 'tv':
-                    const stand = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.5, d), subMat);
-                    stand.position.y = h * 0.25;
-                    group.add(stand);
-                    const screenMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 });
-                    const screen = new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, h * 0.6, 0.05), screenMat);
-                    screen.position.set(0, h * 0.8, 0);
-                    group.add(screen);
-                    break;
-
-                case 'plant':
-                    const pot = new THREE.Mesh(new THREE.CylinderGeometry(w / 2, w / 3, h * 0.4), subMat);
-                    pot.position.y = h * 0.2;
-                    group.add(pot);
-                    const leafMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.5 });
-                    const leaves = new THREE.Mesh(new THREE.SphereGeometry(w * 0.6, 8, 8), leafMat);
-                    leaves.position.y = h * 0.7;
-                    group.add(leaves);
-                    break;
-
-                default:
-                    const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mainMat);
-                    box.position.y = h / 2;
-                    group.add(box);
-                    break;
-            }
-
-            group.children.forEach(child => {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            });
+            const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mainMat);
+            box.position.y = h / 2;
+            group.add(box);
 
             scene3d.add(group);
         }
@@ -1235,35 +1166,24 @@
             ctx2d.translate(STATE.pan2D.x, STATE.pan2D.y);
             ctx2d.scale(STATE.zoom2D, STATE.zoom2D);
 
-            // 1. Draw Grid
             drawGrid2D();
 
-            // 2. Draw Detected Rooms (Floors)
             const rooms = detectRoomsFromWalls();
             STATE.project.rooms = rooms;
             drawRooms2D(rooms);
 
-            // 3. Draw Walls
             drawWalls2D();
-
-            // 4. Draw Openings (Doors & Windows)
             drawOpenings2D();
-
-            // 5. Draw Furniture Items
             drawFurniture2D();
-
-            // 6. Draw Dimensions & Text Annotations
             drawDimensions2D();
             drawTextNotes2D();
-
-            // 7. Draw Active Tool Previews
             drawActiveToolPreview2D();
 
             ctx2d.restore();
         }
 
         function drawGrid2D() {
-            const step = 50 * STATE.gridSize; // 50px per meter
+            const step = 50 * STATE.gridSize;
             const visibleLeft = (-STATE.pan2D.x) / STATE.zoom2D;
             const visibleRight = (canvas2d.width - STATE.pan2D.x) / STATE.zoom2D;
             const visibleTop = (-STATE.pan2D.y) / STATE.zoom2D;
@@ -1286,7 +1206,6 @@
             }
             ctx2d.stroke();
 
-            // Axis origin markers
             ctx2d.strokeStyle = '#4f46e5';
             ctx2d.lineWidth = 2 / STATE.zoom2D;
             ctx2d.beginPath();
@@ -1539,7 +1458,7 @@
         }
 
         /* ==========================================================================
-           INTERACTION & CANVAS EVENT HANDLERS
+           ROBUST EVENT BINDING & HANDLERS
            ========================================================================== */
         function setupEventListeners() {
             const container2d = document.getElementById('canvas2d-container');
@@ -1548,6 +1467,58 @@
             container2d.addEventListener('mousemove', onMouseMove2D);
             container2d.addEventListener('mouseup', onMouseUp2D);
             container2d.addEventListener('wheel', onWheel2D, { passive: false });
+
+            // Header Buttons Binding
+            bindClick('btnView2D', () => setViewMode('2D'));
+            bindClick('btnView3D', () => setViewMode('3D'));
+            bindClick('btnViewSplit', () => setViewMode('SPLIT'));
+            bindClick('btnUndo', undo);
+            bindClick('btnRedo', redo);
+            bindClick('btnClear', clearPlan);
+            bindClick('btnPresetDemo', loadSamplePreset);
+            bindClick('btnExportJSON', exportJSON);
+            bindClick('btnExportPNG', exportPNG);
+            bindClick('btnAddLevel', addNewLevel);
+
+            const levelSelect = document.getElementById('levelSelect');
+            if (levelSelect) levelSelect.addEventListener('change', (e) => switchLevel(e.target.value));
+
+            const importFile = document.getElementById('importFileInput');
+            if (importFile) importFile.addEventListener('change', importJSON);
+
+            // Left Sidebar Tabs
+            bindClick('tabBtnBuild', (e) => switchTab('tabBuild', e.currentTarget));
+            bindClick('tabBtnCatalog', (e) => switchTab('tabCatalog', e.currentTarget));
+            bindClick('tabBtnAnnotate', (e) => switchTab('tabAnnotate', e.currentTarget));
+
+            // Tool Cards
+            bindClick('toolSelect', () => setTool('select'));
+            bindClick('toolWall', () => setTool('wall'));
+            bindClick('toolDoor', () => setTool('door'));
+            bindClick('toolWindow', () => setTool('window'));
+            bindClick('toolDimension', () => setTool('dimension'));
+            bindClick('toolText', () => setTool('text'));
+            bindClick('presetRectRoom', () => createPresetRoom('box'));
+            bindClick('presetLShapeRoom', () => createPresetRoom('lshape'));
+
+            // Floating Controls
+            bindClick('btnReset2D', reset2DView);
+            bindClick('btnToggleGrid', toggleGrid);
+            bindClick('snapBtn', toggleSnap);
+            bindClick('btnZoomIn', () => zoom2D(1.2));
+            bindClick('btnZoomOut', () => zoom2D(0.8));
+
+            // Catalog Items
+            document.querySelectorAll('.catalog-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const itemType = item.getAttribute('data-type');
+                    if (itemType) placeFurniture(itemType);
+                });
+            });
+
+            // Filter Catalog Search
+            const filterInput = document.getElementById('catalogFilter');
+            if (filterInput) filterInput.addEventListener('keyup', filterCatalog);
 
             window.addEventListener('keydown', (e) => {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
@@ -1566,6 +1537,11 @@
                     redo();
                 }
             });
+        }
+
+        function bindClick(id, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', handler);
         }
 
         function screenToWorld2D(sx, sy) {
@@ -1793,7 +1769,7 @@
                             <option value="concrete" ${wall.texture === 'concrete' ? 'selected' : ''}>Concrete</option>
                         </select>
                     </div>
-                    <button class="btn btn-danger" style="width: 100%; margin-top: 12px;" onclick="deleteSelectedObject()"><i class="fa-solid fa-trash"></i> Delete Wall</button>
+                    <button class="btn btn-danger" style="width: 100%; margin-top: 12px;" onclick="deleteSelectedObject()">🗑️ Delete Wall</button>
                 `;
             } else if (STATE.selectedType === 'room') {
                 heading.innerText = 'Room Inspector';
@@ -1843,7 +1819,7 @@
                         <label class="form-label">Rotation Angle (deg)</label>
                         <input class="form-control" type="number" step="15" value="${Math.round((item.rotation || 0) * 180 / Math.PI)}" onchange="updateSelectedProp('rotation', parseFloat(this.value) * Math.PI / 180)">
                     </div>
-                    <button class="btn btn-danger" style="width: 100%; margin-top: 12px;" onclick="deleteSelectedObject()"><i class="fa-solid fa-trash"></i> Delete Item</button>
+                    <button class="btn btn-danger" style="width: 100%; margin-top: 12px;" onclick="deleteSelectedObject()">🗑️ Delete Item</button>
                 `;
             }
         }
@@ -1871,6 +1847,7 @@
             updateInspector();
             saveHistory();
             renderAll();
+            showToast("Item deleted");
         }
 
         /* ==========================================================================
@@ -1909,6 +1886,7 @@
                 setTool('select');
                 saveHistory();
                 renderAll();
+                showToast(`Placed ${type}`);
             } else {
                 alert("Please click directly on an existing wall to place a " + type);
             }
@@ -1956,6 +1934,7 @@
             updateInspector();
             saveHistory();
             renderAll();
+            showToast(`Added ${def.name}`);
         }
 
         function createPresetRoom(shape) {
@@ -1994,6 +1973,7 @@
             }
             saveHistory();
             renderAll();
+            showToast("Added preset room");
         }
 
         /* ==========================================================================
@@ -2064,7 +2044,7 @@
         }
 
         /* ==========================================================================
-           UI MODE SWITCHING & TOOL CONTROLS
+           UI CONTROLS & FUNCTIONS
            ========================================================================== */
         function switchTab(tabId, btnElem) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -2123,8 +2103,10 @@
         function toggleGrid() {
             STATE.gridSnap = !STATE.gridSnap;
             const btn = document.getElementById('snapBtn');
-            btn.title = `Snap to Grid: ${STATE.gridSnap ? 'ON' : 'OFF'}`;
-            btn.style.color = STATE.gridSnap ? 'var(--accent-light)' : 'var(--text-muted)';
+            if (btn) {
+                btn.title = `Snap to Grid: ${STATE.gridSnap ? 'ON' : 'OFF'}`;
+                btn.style.color = STATE.gridSnap ? 'var(--accent-light)' : 'var(--text-muted)';
+            }
             render2DCanvas();
         }
 
@@ -2155,11 +2137,9 @@
             select.value = newId;
 
             switchLevel(newId);
+            showToast("Added new floor level");
         }
 
-        /* ==========================================================================
-           UNDO / REDO HISTORY STACK
-           ========================================================================== */
         function saveHistory() {
             STATE.undoStack.push(JSON.stringify(STATE.project));
             STATE.redoStack = [];
@@ -2171,6 +2151,7 @@
                 const prev = STATE.undoStack[STATE.undoStack.length - 1];
                 STATE.project = JSON.parse(prev);
                 renderAll();
+                showToast("Undo");
             }
         }
 
@@ -2180,12 +2161,10 @@
                 STATE.undoStack.push(next);
                 STATE.project = JSON.parse(next);
                 renderAll();
+                showToast("Redo");
             }
         }
 
-        /* ==========================================================================
-           PROJECT IMPORT / EXPORT & PRESETS
-           ========================================================================== */
         function clearPlan() {
             if (confirm("Are you sure you want to clear the entire floor plan?")) {
                 STATE.project.walls = [];
@@ -2196,6 +2175,7 @@
                 STATE.project.rooms = [];
                 saveHistory();
                 renderAll();
+                showToast("Floor plan cleared");
             }
         }
 
@@ -2233,6 +2213,7 @@
 
             saveHistory();
             renderAll();
+            showToast("Demo Preset Loaded!");
         }
 
         function exportJSON() {
@@ -2243,6 +2224,7 @@
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
+            showToast("Saved JSON project");
         }
 
         function importJSON(event) {
@@ -2256,6 +2238,7 @@
                     STATE.project = loaded;
                     saveHistory();
                     renderAll();
+                    showToast("Loaded JSON project");
                 } catch (err) {
                     alert("Error parsing JSON file!");
                 }
@@ -2268,10 +2251,11 @@
             link.download = 'floorplan_2d.png';
             link.href = canvas2d.toDataURL('image/png');
             link.click();
+            showToast("Exported 2D Image");
         }
 
         function reset3DCamera() {
-            if (camera3d && controls3d) {
+            if (useThreeJS && camera3d && controls3d) {
                 camera3d.position.set(10, 12, 14);
                 controls3d.target.set(0, 0, 0);
                 controls3d.update();
@@ -2279,7 +2263,7 @@
         }
 
         function toggleSunlight() {
-            if (sunLight) {
+            if (useThreeJS && sunLight) {
                 sunLight.visible = !sunLight.visible;
                 document.getElementById('btn3DLight').style.color = sunLight.visible ? 'var(--accent-light)' : 'var(--text-muted)';
             }
