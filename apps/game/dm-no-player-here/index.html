@@ -24,7 +24,7 @@
   .badge{display:inline-block;border-radius:999px;padding:0 8px;font-size:.75rem;border:1px solid var(--muted);color:var(--muted)}
   .badge.player{border-color:#4c7a3f;color:#4c7a3f}.badge.dm_only{border-color:var(--danger);color:var(--danger)}.badge.draft{border-color:var(--brass-dark);color:var(--brass-dark)}
   label{display:block;margin:12px 0 4px;font-size:.9rem;color:#4a3d2c}
-  input[type=text],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:inherit;font-size:.95rem}
+  input[type=text],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:inherit;font-size:.95rem}
   textarea{line-height:1.5}
   button{background:var(--brass);color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:.95rem}
   button:hover{background:var(--brass-dark)}
@@ -64,11 +64,11 @@
 </header>
 <div class="wrap">
   <div class="note">
-    <strong>How saving works on GitHub Pages:</strong> edits are stored in <em>this browser</em> as you work.
-    When you're ready to publish, use the Export buttons below to download fresh
-    <code>player-data.js</code> and <code>dm-data.js</code> files, replace the old ones in the repo,
-    commit, and run the <em>Rebuild website (no cards job)</em> workflow.
-    Player export only ever contains player-visible articles — DM-only and draft articles are written
+    <strong>How saving works:</strong> edits are stored in <em>this browser</em> as you work.
+    When you're ready to go live, save a GitHub token in the Publish box below (one time), then hit
+    <strong>Publish to jimmyd.space</strong> — it commits both data files and starts the
+    <em>Rebuild website (no cards job)</em> rebuild for you.
+    The player data file only ever contains player-visible articles — DM-only and draft articles are written
     only to <code>dm-data.js</code>, which lives in this folder and is never loaded by the player page.
     <br><a href="../">← View the player site</a>
   </div>
@@ -87,16 +87,37 @@
         <p class="small">Titles mentioned with [[brackets]] in any article that don't have an article yet.</p>
       </div>
       <div class="box">
-        <h3>Publish</h3>
+        <h3>Publish to GitHub</h3>
+        <p class="small">One click commits both data files to your repo and starts the site rebuild.
+        No downloading or uploading files.</p>
+        <label>GitHub token (fine-grained, this repo only)</label>
+        <input type="password" id="gh-token" placeholder="github_pat_…" autocomplete="off">
         <div class="btnrow">
-          <button onclick="exportPlayer()">Export player-data.js</button>
-          <button onclick="exportDM()">Export dm-data.js</button>
+          <button class="ghost" onclick="saveToken()">Save token</button>
+          <button class="ghost" onclick="forgetToken()">Forget token</button>
+        </div>
+        <p class="small" id="gh-token-state"></p>
+        <div class="btnrow">
+          <button id="publishBtn" onclick="publishToGitHub()">Publish to jimmyd.space</button>
+        </div>
+        <p class="small" id="ghStatus"></p>
+        <p class="small">No token yet? Create one at
+        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → New fine-grained token</a>:
+        name it <em>DM Desk Publish</em>, expiry ~90 days, Repository access → <em>Only select repositories</em> →
+        JimmyD.github.io, Permissions → Contents: Read and write, Actions: Read and write.
+        Generate it, copy it, paste it above, Save token. The token is stored only in this browser —
+        it never goes in the repo or the exported files.</p>
+        <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+        <h3>Manual backup (exports)</h3>
+        <div class="btnrow">
+          <button class="ghost" onclick="exportPlayer()">Export player-data.js</button>
+          <button class="ghost" onclick="exportDM()">Export dm-data.js</button>
         </div>
         <div class="btnrow">
           <button class="ghost" onclick="resetAll()">Discard local edits (back to published data)</button>
         </div>
-        <p class="small">After exporting: replace the files in <code>apps/game/</code> (player file) and
-        <code>apps/game/dm-no-player-here/</code> (DM file), commit, and run the rebuild workflow.</p>
+        <p class="small">Exports are the old by-hand route, kept as a backup: replace the files in
+        <code>apps/game/</code> and <code>apps/game/dm-no-player-here/</code>, commit, run the rebuild workflow.</p>
       </div>
     </div>
     <div class="box">
@@ -267,28 +288,105 @@ function download(name, text){
   a.href = URL.createObjectURL(new Blob([text], {type: "text/javascript"}));
   a.download = name; a.click(); URL.revokeObjectURL(a.href);
 }
-function exportPlayer(){
+function buildPlayerText(){
   const data = {
     categories: db.categories,
     articles: db.articles.filter(a => a.visibility === "player"),
     timeline: db.timeline.filter(e => e.visibility === "player")
   };
-  download("player-data.js",
-    "// Player-safe data — ONLY player-visible content. Generated from the DM Desk.\nwindow.PLAYER_DATA = " + JSON.stringify(data, null, 2) + ";\n");
+  return "// Player-safe data — ONLY player-visible content. Generated from the DM Desk.\nwindow.PLAYER_DATA = " + JSON.stringify(data, null, 2) + ";\n";
 }
-function exportDM(){
+function buildDmText(){
   const data = {
     articles: db.articles.filter(a => a.visibility !== "player"),
     timeline: db.timeline.filter(e => e.visibility !== "player")
   };
-  download("dm-data.js",
-    "// DM-only data — lives inside the secret DM folder only. Generated from the DM Desk.\nwindow.DM_DATA = " + JSON.stringify(data, null, 2) + ";\n");
+  return "// DM-only data — lives inside the secret DM folder only. Generated from the DM Desk.\nwindow.DM_DATA = " + JSON.stringify(data, null, 2) + ";\n";
+}
+function exportPlayer(){ download("player-data.js", buildPlayerText()); }
+function exportDM(){ download("dm-data.js", buildDmText()); }
+
+// ---- One-click publish via the GitHub API ----
+// The token is a fine-grained personal access token scoped to this one repo
+// (Contents + Actions, read/write). It is kept only in this browser's
+// localStorage under its own key — never in the article data or exports.
+const GH_OWNER = "JimmyD1812", GH_REPO = "JimmyD.github.io", GH_BRANCH = "main", GH_WORKFLOW = "rebuild-site.yml";
+const TOKEN_KEY = "game-dm-gh-token";
+function ghToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+function saveToken(){
+  const v = document.getElementById("gh-token").value.trim();
+  if (!v) { ghStatus("Paste a token first, then Save token."); return; }
+  localStorage.setItem(TOKEN_KEY, v);
+  document.getElementById("gh-token").value = "";
+  refreshTokenUI();
+  ghStatus("Token saved in this browser. You're ready to Publish.");
+}
+function forgetToken(){
+  localStorage.removeItem(TOKEN_KEY);
+  document.getElementById("gh-token").value = "";
+  refreshTokenUI();
+  ghStatus("Token removed from this browser.");
+}
+function refreshTokenUI(){
+  const has = !!ghToken();
+  document.getElementById("gh-token-state").textContent = has
+    ? "A token is saved in this browser — Publish is ready."
+    : "No token saved in this browser yet.";
+}
+function ghStatus(msg){ document.getElementById("ghStatus").textContent = msg; }
+function b64Encode(text){
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin);
+}
+async function ghFetch(path, opts = {}){
+  return fetch("https://api.github.com" + path, {
+    ...opts,
+    headers: {
+      "Authorization": "Bearer " + ghToken(),
+      "Accept": "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...(opts.headers || {})
+    }
+  });
+}
+async function putRepoFile(path, text, message){
+  const get = await ghFetch(`/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`);
+  if (!get.ok) throw new Error(`couldn't read ${path} (HTTP ${get.status}) — check the token covers this repo`);
+  const sha = (await get.json()).sha;
+  const put = await ghFetch(`/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, {
+    method: "PUT",
+    body: JSON.stringify({ message, content: b64Encode(text), sha, branch: GH_BRANCH })
+  });
+  if (!put.ok) throw new Error(`couldn't update ${path} (HTTP ${put.status})`);
+}
+async function publishToGitHub(){
+  if (!ghToken()) { ghStatus("No token saved yet — create one with the steps in this box, paste it above, and Save token first."); return; }
+  const btn = document.getElementById("publishBtn");
+  btn.disabled = true;
+  try {
+    ghStatus("Publishing player data…");
+    await putRepoFile("apps/game/player-data.js", buildPlayerText(), "Publish player data from DM Desk");
+    ghStatus("Player data committed. Publishing DM data…");
+    await putRepoFile("apps/game/dm-no-player-here/dm-data.js", buildDmText(), "Publish DM data from DM Desk");
+    ghStatus("Both files committed. Starting the site rebuild…");
+    const d = await ghFetch(`/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`, {
+      method: "POST",
+      body: JSON.stringify({ ref: GH_BRANCH })
+    });
+    if (d.status !== 204) throw new Error(`the files are committed, but the rebuild didn't start (HTTP ${d.status}) — check the token has Actions permission, or run "Rebuild website (no cards job)" from the Actions tab`);
+    ghStatus("Published ✓ Both data files are in the repo and the rebuild is running. Give the site a minute or two, then check the player page.");
+  } catch (e) {
+    ghStatus("Publish hit a snag: " + e.message);
+  }
+  btn.disabled = false;
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
   localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList();
+load(); fillTypes(); fillCats(); renderList(); refreshTokenUI();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
