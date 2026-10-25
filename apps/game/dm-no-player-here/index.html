@@ -35,9 +35,29 @@
   .todo{color:#4a3d2c;line-height:1.7}
   a{color:var(--brass-dark)}
   .small{font-size:.88rem;color:var(--muted);line-height:1.55}
+  /* Facade login gate — a deterrent, not real security. Credentials are
+     checked against SHA-256 hashes below, never stored in plaintext. */
+  #gate{max-width:400px;margin:70px auto;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;text-align:center}
+  #gate h2{margin:0 0 4px;font-weight:normal;font-size:1.5rem}
+  #gate p{color:var(--muted);font-style:italic;margin:0 0 10px}
+  #gate label{text-align:left}
+  #gate input[type=text],#gate input[type=password]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:inherit;font-size:1rem}
+  #gate button{width:100%;margin-top:16px;padding:10px}
+  #gateErr{color:var(--danger);min-height:1.2em;margin-top:10px;font-size:.92rem}
 </style>
 </head>
 <body>
+<div id="gate">
+  <h2>DM Desk</h2>
+  <p>DMs only beyond this point.</p>
+  <label for="g-user">Username</label>
+  <input type="text" id="g-user" autocomplete="username">
+  <label for="g-pass">Password</label>
+  <input type="password" id="g-pass" autocomplete="current-password" onkeydown="if(event.key==='Enter')tryLogin()">
+  <button onclick="tryLogin()">Enter the DM Desk</button>
+  <div id="gateErr"></div>
+</div>
+<div id="appShell" style="display:none">
 <header class="site">
   <h1>DM Desk</h1>
   <p>Not linked from the player site. Keep this address to yourself.</p>
@@ -108,8 +128,38 @@
     </div>
   </div>
 </div>
+</div><!-- /#appShell -->
 <script src="../player-data.js"></script>
 <script src="dm-data.js"></script>
+<script>
+// Facade login gate. The username/password are NOT in this file — only their
+// SHA-256 hashes are. This is a scarecrow for curious players, not a vault:
+// anyone who reads this page's code can work around it, which is accepted.
+const GATE_USER_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+const GATE_PASS_HASH = "0b14d501a594442a01c6859541bcb3e8164d183d32937b851835442f69d5c94e";
+async function sha256(text){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function unlock(){
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("appShell").style.display = "";
+}
+async function tryLogin(){
+  const u = document.getElementById("g-user").value.trim();
+  const p = document.getElementById("g-pass").value;
+  const err = document.getElementById("gateErr");
+  if (await sha256(u) === GATE_USER_HASH && await sha256(p) === GATE_PASS_HASH) {
+    sessionStorage.setItem("dm-desk-unlocked", "1");
+    err.textContent = "";
+    unlock();
+  } else {
+    err.textContent = "That's not it. This area is for the DM only.";
+    document.getElementById("g-pass").value = "";
+  }
+}
+if (sessionStorage.getItem("dm-desk-unlocked") === "1") unlock();
+</script>
 <script>
 const KEY = "game-dm-desk-v1";
 const TYPES = ["Generic","Character","Location","Settlement","Building / Landmark","Organization","Species","Item","Spell","Myth","Natural Law","Plot","Session Report"];
