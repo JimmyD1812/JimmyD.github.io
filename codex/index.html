@@ -172,7 +172,7 @@
 </head>
 <body>
 <header class="site">
-  <h1>World Codex</h1>
+  <h1 id="siteTitle">World Codex</h1>
   <div class="orn">◆ ◆ ◆</div>
   <p>The world, as the players are allowed to know it.</p>
 </header>
@@ -232,12 +232,17 @@
   </div>
   <footer class="site">
     <div class="orn">◆ ◆ ◆</div>
-    <div>World Codex — kept by the DM, shared with the party.</div>
+    <div id="footLine">World Codex — kept by the DM, shared with the party.</div>
   </footer>
 </div>
 <script src="player-data.js"></script>
 <script>
 const DATA = window.PLAYER_DATA;
+const SETTINGS = DATA.settings || {};
+const SITE_TITLE = SETTINGS.siteTitle || "World Codex";
+document.title = SITE_TITLE;
+document.getElementById("siteTitle").textContent = SITE_TITLE;
+if (SETTINGS.footerText) document.getElementById("footLine").textContent = SETTINGS.footerText;
 const byTitle = {}; DATA.articles.forEach(a => byTitle[a.title] = a);
 const catName = id => (DATA.categories.find(c => c.id === id) || {}).name || "Uncategorised";
 let activeCat = null, activeTag = null;
@@ -397,7 +402,7 @@ function tlShow(i){
   const total = evs.length + 1;
   let bg = "", era, head, text, more = "";
   if (tlIdx === 0) {
-    era = "The World Codex"; head = "Timeline";
+    era = SITE_TITLE; head = "Timeline";
     text = "The history of the world, as the players are allowed to know it. Walk the ages with the arrows, or jump with the markers below.";
     const first = evs[0] && evs[0].articleId ? DATA.articles.find(a => a.id === evs[0].articleId) : null;
     if (first && first.image) bg = first.image;
