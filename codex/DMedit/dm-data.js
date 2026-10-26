@@ -19,5 +19,6 @@ window.DM_DATA = {
     }
   ],
   "timeline": [],
-  "statblocks": []
+  "statblocks": [],
+  "npcs": []
 };
