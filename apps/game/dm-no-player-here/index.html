@@ -87,6 +87,14 @@
         <p class="small">Titles mentioned with [[brackets]] in any article that don't have an article yet.</p>
       </div>
       <div class="box">
+        <h3>Pending images <span id="imgCount"></span></h3>
+        <div id="pendingImgs" class="small">None. Images you add to articles wait here (in this browser) until you Publish.</div>
+        <p class="small">On Publish, pending images upload to the site's <code>images</code> folder first,
+        then the data files, then the rebuild runs. Published images are public files — for a DM-only
+        article, its image is protected only by its unguessable scrambled filename, the same facade
+        level as everything else here.</p>
+      </div>
+      <div class="box">
         <h3>Publish to GitHub</h3>
         <p class="small">One click commits both data files to your repo and starts the site rebuild.
         No downloading or uploading files.</p>
@@ -137,8 +145,21 @@
       <label><input type="checkbox" id="f-pinned" style="width:auto"> Pinned / featured</label>
       <label>Summary</label>
       <textarea id="f-summary" rows="2"></textarea>
+      <label>Cover image</label>
+      <img id="coverPreview" style="display:none;max-width:100%;border:1px solid var(--line);border-radius:8px;margin-bottom:8px" alt="">
+      <div class="small" id="coverName">No cover image.</div>
+      <div class="btnrow">
+        <button type="button" class="ghost" onclick="document.getElementById('coverFile').click()">Choose cover image…</button>
+        <button type="button" class="ghost" onclick="clearCover()">Remove cover</button>
+      </div>
+      <input type="file" id="coverFile" accept="image/*" style="display:none" onchange="onCoverChosen(this)">
       <label>Body — link to other articles with [[Exact Title]]</label>
       <textarea id="f-body" rows="16"></textarea>
+      <div class="btnrow">
+        <button type="button" class="ghost" onclick="document.getElementById('bodyImgFile').click()">Insert image into body…</button>
+      </div>
+      <input type="file" id="bodyImgFile" accept="image/*" style="display:none" onchange="onBodyImageChosen(this)">
+      <p class="small">Inserted images appear in the text as [img:filename] and upload on Publish, along with the cover image.</p>
       <label>Tags (comma separated)</label>
       <input type="text" id="f-tags">
       <div class="btnrow">
@@ -244,6 +265,8 @@ function select(id){
   document.getElementById("f-summary").value = a.summary;
   document.getElementById("f-body").value = a.body;
   document.getElementById("f-tags").value = a.tags.join(", ");
+  currentImage = a.image || "";
+  showCover();
   renderList();
 }
 function newArticle(prefillTitle){
@@ -256,6 +279,8 @@ function newArticle(prefillTitle){
   document.getElementById("f-summary").value = "";
   document.getElementById("f-body").value = "";
   document.getElementById("f-tags").value = "";
+  currentImage = "";
+  showCover();
   renderList();
   document.getElementById("f-title").focus();
 }
@@ -272,7 +297,8 @@ function save(){
     body: document.getElementById("f-body").value,
     tags: document.getElementById("f-tags").value.split(",").map(s => s.trim()).filter(Boolean)
   };
-  if (selId) { Object.assign(db.articles.find(a => a.id === selId), data); }
+  if (currentImage) data.image = currentImage;
+  if (selId) { const t = db.articles.find(a => a.id === selId); if (!currentImage) delete t.image; Object.assign(t, data); }
   else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; db.articles.push(data); selId = data.id; }
   persist(); renderList(); select(selId);
 }
@@ -305,6 +331,124 @@ function buildDmText(){
 }
 function exportPlayer(){ download("player-data.js", buildPlayerText()); }
 function exportDM(){ download("dm-data.js", buildDmText()); }
+
+// ---- Images ----
+// Picked images are resized/compressed in the browser, given a scrambled
+// filename (slug + content hash), and staged in IndexedDB — localStorage is
+// far too small for images. Publish uploads them to apps/game/images/.
+let currentImage = "";
+const IMG_DB = "game-dm-images", IMG_STORE = "pending";
+function imgDb(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(IMG_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(IMG_STORE, { keyPath: "name" });
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function imgPut(rec){
+  const db = await imgDb();
+  return new Promise((res, rej) => { const tx = db.transaction(IMG_STORE, "readwrite"); tx.objectStore(IMG_STORE).put(rec); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+}
+async function imgGet(name){
+  const db = await imgDb();
+  return new Promise((res, rej) => { const rq = db.transaction(IMG_STORE).objectStore(IMG_STORE).get(name); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); });
+}
+async function imgAll(){
+  const db = await imgDb();
+  return new Promise((res, rej) => { const rq = db.transaction(IMG_STORE).objectStore(IMG_STORE).getAll(); rq.onsuccess = () => res(rq.result || []); rq.onerror = () => rej(rq.error); });
+}
+async function imgDel(name){
+  const db = await imgDb();
+  return new Promise((res, rej) => { const tx = db.transaction(IMG_STORE, "readwrite"); tx.objectStore(IMG_STORE).delete(name); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+}
+async function sha256hex(buf){
+  const h = await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function slugBase(name){
+  return (name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "image").slice(0, 40);
+}
+async function stageImage(file){
+  if (!file) return null;
+  if (!/^image\//.test(file.type)) { alert("That's not an image file."); return null; }
+  try {
+    const bmp = await createImageBitmap(file);
+    const maxDim = 1600;
+    const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(bmp, 0, 0, w, h);
+    const keepPng = file.type === "image/png" && file.size < 900000;
+    const blob = await new Promise(r => canvas.toBlob(r, keepPng ? "image/png" : "image/jpeg", 0.85));
+    if (!blob) { alert("That image couldn't be processed."); return null; }
+    const buf = await blob.arrayBuffer();
+    const name = slugBase(file.name) + "-" + (await sha256hex(buf)).slice(0, 8) + (keepPng ? ".png" : ".jpg");
+    await imgPut({ name, blob, type: blob.type, size: blob.size, addedAt: Date.now() });
+    renderPending();
+    return name;
+  } catch (e) {
+    alert("That image couldn't be processed: " + e.message);
+    return null;
+  }
+}
+async function onCoverChosen(input){
+  const f = input.files[0]; input.value = "";
+  if (!f) return;
+  const name = await stageImage(f);
+  if (name) { currentImage = name; showCover(); }
+}
+function clearCover(){ currentImage = ""; showCover(); }
+async function showCover(){
+  const img = document.getElementById("coverPreview"), nm = document.getElementById("coverName");
+  if (!currentImage) { img.style.display = "none"; nm.textContent = "No cover image."; return; }
+  nm.textContent = currentImage + " — remember to Save the article, then Publish to upload it.";
+  const rec = await imgGet(currentImage);
+  img.onerror = () => { img.style.display = "none"; };
+  img.src = rec ? URL.createObjectURL(rec.blob) : "../images/" + currentImage;
+  img.style.display = "";
+}
+async function onBodyImageChosen(input){
+  const f = input.files[0]; input.value = "";
+  if (!f) return;
+  const name = await stageImage(f);
+  if (!name) return;
+  const ta = document.getElementById("f-body");
+  const s = ta.selectionStart ?? ta.value.length;
+  ta.value = ta.value.slice(0, s) + "\n[img:" + name + "]\n" + ta.value.slice(s);
+  ta.focus();
+}
+async function renderPending(){
+  const el = document.getElementById("pendingImgs");
+  if (!el) return;
+  let list = [];
+  try { list = await imgAll(); } catch (e) { el.textContent = "Image staging isn't available in this browser."; return; }
+  document.getElementById("imgCount").textContent = list.length ? `(${list.length})` : "";
+  if (!list.length) { el.textContent = "None. Images you add to articles wait here (in this browser) until you Publish."; return; }
+  el.innerHTML = "";
+  list.forEach(rec => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:10px;align-items:center;margin-bottom:8px";
+    const im = document.createElement("img");
+    im.src = URL.createObjectURL(rec.blob);
+    im.style.cssText = "width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid var(--line)";
+    const tx = document.createElement("div");
+    tx.innerHTML = `<div>${rec.name}</div><div>${Math.max(1, Math.round(rec.size / 1024))} KB — uploads on next Publish</div>`;
+    const del = document.createElement("button");
+    del.className = "ghost"; del.textContent = "Remove";
+    del.onclick = async () => { await imgDel(rec.name); renderPending(); };
+    row.append(im, tx, del);
+    el.appendChild(row);
+  });
+}
+function bufToB64(buf){
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  return btoa(bin);
+}
 
 // ---- One-click publish via the GitHub API ----
 // The token is a fine-grained personal access token scoped to this one repo
@@ -351,6 +495,15 @@ async function ghFetch(path, opts = {}){
     }
   });
 }
+async function putImageFile(path, blob){
+  const b64 = bufToB64(await blob.arrayBuffer());
+  const get = await ghFetch(`/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`);
+  const body = { message: "Add image from DM Desk", content: b64, branch: GH_BRANCH };
+  if (get.ok) body.sha = (await get.json()).sha;
+  else if (get.status !== 404) throw new Error(`couldn't check ${path} (HTTP ${get.status})`);
+  const put = await ghFetch(`/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { method: "PUT", body: JSON.stringify(body) });
+  if (!put.ok) throw new Error(`couldn't upload ${path} (HTTP ${put.status}) — is the image under ~1 MB after resizing?`);
+}
 async function putRepoFile(path, text, message){
   const get = await ghFetch(`/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`);
   if (!get.ok) throw new Error(`couldn't read ${path} (HTTP ${get.status}) — check the token covers this repo`);
@@ -365,7 +518,13 @@ async function publishToGitHub(){
   if (!ghToken()) { ghStatus("No token saved yet — create one with the steps in this box, paste it above, and Save token first."); return; }
   const btn = document.getElementById("publishBtn");
   btn.disabled = true;
+  let pending = [];
   try {
+    pending = await imgAll();
+    if (pending.length) {
+      ghStatus(`Uploading ${pending.length} image(s) first…`);
+      for (const rec of pending) await putImageFile("apps/game/images/" + rec.name, rec.blob);
+    }
     ghStatus("Publishing player data…");
     await putRepoFile("apps/game/player-data.js", buildPlayerText(), "Publish player data from DM Desk");
     ghStatus("Player data committed. Publishing DM data…");
@@ -376,7 +535,9 @@ async function publishToGitHub(){
       body: JSON.stringify({ ref: GH_BRANCH })
     });
     if (d.status !== 204) throw new Error(`the files are committed, but the rebuild didn't start (HTTP ${d.status}) — check the token has Actions permission, or run "Rebuild website (no cards job)" from the Actions tab`);
-    ghStatus("Published ✓ Both data files are in the repo and the rebuild is running. Give the site a minute or two, then check the player page.");
+    for (const rec of pending) await imgDel(rec.name);
+    renderPending();
+    ghStatus("Published ✓ Images and both data files are in the repo and the rebuild is running. Give the site a minute or two, then check the player page.");
   } catch (e) {
     ghStatus("Publish hit a snag: " + e.message);
   }
@@ -386,7 +547,7 @@ function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
   localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); refreshTokenUI();
+load(); fillTypes(); fillCats(); renderList(); refreshTokenUI(); renderPending();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
