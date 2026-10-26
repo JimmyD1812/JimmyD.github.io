@@ -66,6 +66,12 @@
   .zone-label{font-weight:400}
   .row .m{font-family:'Scaly Sans',sans-serif;font-size:.88rem}
   .badge{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif}
+  /* Collapsible left-column sections (tap the header) */
+  .box.fold > h3{cursor:pointer;position:relative;padding-right:22px;user-select:none;-webkit-user-select:none}
+  .box.fold > h3::after{content:"▾";position:absolute;right:2px;top:0;color:#58180D;font-size:.85rem}
+  .box.fold.closed > h3::after{content:"▸"}
+  .box.fold.closed > *:not(h3){display:none}
+  .box.fold.closed{padding-bottom:8px}
 </style>
 </head>
 <body>
@@ -96,19 +102,19 @@
   </div>
   <div class="layout">
     <div>
-      <div class="box">
+      <div class="box fold" data-fold="articles">
         <h3>Articles <span id="count"></span></h3>
         <input type="text" id="q" placeholder="Search…" oninput="renderList()">
         <div style="height:10px"></div>
         <div id="list"></div>
         <button onclick="newArticle()" style="width:100%;margin-top:6px">+ New article</button>
       </div>
-      <div class="box">
+      <div class="box fold" data-fold="links">
         <h3>Links to write</h3>
         <div class="todo" id="todo">—</div>
         <p class="small">Titles mentioned with [[brackets]] in any article that don't have an article yet.</p>
       </div>
-      <div class="box">
+      <div class="box fold" data-fold="timeline">
         <h3>Timeline events</h3>
         <div id="tlList"></div>
         <label>Event title</label>
@@ -133,7 +139,7 @@
         </div>
         <p class="small">Click an event above to edit it. Changes save in this browser; Publish sends them live, same as articles.</p>
       </div>
-      <div class="box">
+      <div class="box fold" data-fold="categories">
         <h3>Categories</h3>
         <div id="catList"></div>
         <label>Category name</label>
@@ -149,7 +155,7 @@
         </div>
         <p class="small">Deleting a category moves its articles into the first remaining category. Renaming is safe — articles follow automatically.</p>
       </div>
-      <div class="box">
+      <div class="box fold" data-fold="statblocks">
         <h3>Statblocks</h3>
         <div id="sbList"></div>
         <label>Name</label>
@@ -168,7 +174,7 @@
         </div>
         <p class="small">Use one inside an article body with [sb:Exact Name]. Player-visible statblocks also get their own tab on the player site.</p>
       </div>
-      <div class="box">
+      <div class="box fold" data-fold="npcs">
         <h3>NPCs <span id="npcCount"></span></h3>
         <div id="npcList"></div>
         <div class="sect-pub">
@@ -214,17 +220,15 @@
         <p class="small">One record, two faces: the green half is all that ever publishes to players; the red half is written only into dm-data.js.</p>
       </div>
       <div class="box">
-        <h3>Pending images <span id="imgCount"></span></h3>
-        <div id="pendingImgs" class="small">None. Images you add to articles wait here (in this browser) until you Publish.</div>
-        <p class="small">On Publish, pending images upload to the site's <code>images</code> folder first,
-        then the data files, then the rebuild runs. Published images are public files — for a DM-only
-        article, its image is protected only by its unguessable scrambled filename, the same facade
-        level as everything else here.</p>
-      </div>
-      <div class="box">
-        <h3>Publish to GitHub</h3>
-        <p class="small">One click commits both data files to your repo and starts the site rebuild.
-        No downloading or uploading files.</p>
+        <h3>Publish</h3>
+        <p class="small" style="margin-top:0"><strong>Pending images <span id="imgCount"></span></strong></p>
+        <div id="pendingImgs" class="small">None. Images you add wait here (in this browser) until you Publish.</div>
+        <div class="btnrow">
+          <button id="publishBtn" onclick="publishToGitHub()">Publish to jimmyd.space</button>
+        </div>
+        <p class="small" id="ghStatus"></p>
+        <p class="small">One click: pending images upload first, then both data files, then the rebuild runs.
+        Published images are public files — a DM-only article's image is protected only by its scrambled filename.</p>
         <label>GitHub token (fine-grained, this repo only)</label>
         <input type="password" id="gh-token" placeholder="github_pat_…" autocomplete="off">
         <div class="btnrow">
@@ -232,16 +236,8 @@
           <button class="ghost" onclick="forgetToken()">Forget token</button>
         </div>
         <p class="small" id="gh-token-state"></p>
-        <div class="btnrow">
-          <button id="publishBtn" onclick="publishToGitHub()">Publish to jimmyd.space</button>
-        </div>
-        <p class="small" id="ghStatus"></p>
-        <p class="small">No token yet? Create one at
-        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → New fine-grained token</a>:
-        name it <em>DM Desk Publish</em>, expiry ~90 days, Repository access → <em>Only select repositories</em> →
-        JimmyD.github.io, Permissions → Contents: Read and write, Actions: Read and write.
-        Generate it, copy it, paste it above, Save token. The token is stored only in this browser —
-        it never goes in the repo or the exported files.</p>
+        <p class="small">No token yet? <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create a fine-grained token</a>:
+        this repo only, Contents + Actions read/write. Paste it above and Save — it's stored only in this browser.</p>
         <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
         <h3>Manual backup (exports)</h3>
         <div class="btnrow">
@@ -251,8 +247,7 @@
         <div class="btnrow">
           <button class="ghost" onclick="resetAll()">Discard local edits (back to published data)</button>
         </div>
-        <p class="small">Exports are the old by-hand route, kept as a backup: replace the files in
-        <code>codex/</code> and <code>codex/DMedit/</code>, commit, run the rebuild workflow.</p>
+        <p class="small">The old by-hand route: replace the files in <code>codex/</code> and <code>codex/DMedit/</code>, commit, rebuild.</p>
       </div>
     </div>
     <div class="box">
@@ -534,6 +529,23 @@ function npcDel(){
   if (!n || !confirm(`Delete NPC "${n.name}"?`)) return;
   db.npcs = db.npcs.filter(x => x.id !== npcSelId);
   npcSelId = null; persist(); npcClear();
+}
+// ---- Collapsible sections (left column; state remembered per browser) ----
+const FOLD_KEY = "game-dm-folds";
+function initFolds(){
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(FOLD_KEY) || "{}"); } catch (e) { saved = {}; }
+  const narrow = window.innerWidth < 821;
+  document.querySelectorAll(".box.fold").forEach(box => {
+    const key = box.dataset.fold;
+    const closed = key in saved ? !!saved[key] : (narrow && key !== "articles");
+    box.classList.toggle("closed", closed);
+    box.querySelector("h3").addEventListener("click", () => {
+      const now = !box.classList.contains("closed");
+      box.classList.toggle("closed", now);
+      try { saved[key] = now; localStorage.setItem(FOLD_KEY, JSON.stringify(saved)); } catch (e) {}
+    });
+  });
 }
 // ---- Categories manager ----
 let catSelId = null;
@@ -946,7 +958,7 @@ function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
   localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); initFolds();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
