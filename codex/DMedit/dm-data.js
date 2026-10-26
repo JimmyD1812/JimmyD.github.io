@@ -16,19 +16,6 @@ window.DM_DATA = {
         "undecided"
       ],
       "pinned": false
-    },
-    {
-      "title": "United Being",
-      "type": "Character",
-      "categoryId": 3,
-      "visibility": "draft",
-      "pinned": false,
-      "summary": "",
-      "body": "For a mere moment the siblings [[Khavos]] and [[Vaelos]] formed the United Being and created everything in a flash of existence ([[The Creation: The Twins and the Fracture]]).",
-      "tags": [
-        "united being"
-      ],
-      "id": 12
     }
   ],
   "timeline": [],
