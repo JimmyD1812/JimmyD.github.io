@@ -171,7 +171,8 @@ window.PLAYER_DATA = {
       "summary": "What remains of the United Being, sleeping at the core of the world for untold millennia after the exertion of creation — and the source of all magic.",
       "body": "Equilibrium is what remains of the [[United Being]] after the [[Shards]] fractured off of it — not a shard itself, but the core that stayed behind when the pieces scattered. It rests at the center of the world, and it is the source of all magic.\n\nThe exertion of creation exhausted it. Equilibrium has slept at the world's core for untold millennia, recovering, while the shards above shape the world as they see fit. No one knows what it will think of what they have made when it wakes — or whether it will want its pieces back.\n\nMages work their craft by drawing on the dichotomy of order and chaos still held in balance within the sleeping Equilibrium — order to give a spell its form, chaos to give it its power. Whether the sleeper notices the borrowing, no one can say. Some scholars claim ground-quakes are Equilibrium turning in its sleep. The shards, notably, do not laugh at this.\n\nNo church serves Equilibrium. You cannot pray to something asleep — and so the world's faiths belong to the shards, and the one power greater than them all hears none of it.",
       "tags": [],
-      "id": 11
+      "id": 11,
+      "image": "gemini-generated-image-qa8qijqa8qijqa8q-4c8f18a9.jpg"
     }
   ],
   "timeline": [
