@@ -26,8 +26,8 @@ window.PLAYER_DATA = {
       "title": "The Creation: The Twins and the Fracture",
       "type": "Myth",
       "categoryId": 2,
-      "summary": "In the beginning there was nothing but twin brothers — Order and Chaos. Their cooperation created the universe, the world, and life — and broke them apart.",
-      "body": "In the beginning there was nothing except twin siblings: [[Vaelos]] and [[Khavos]] aka Order and Chaos.\n\n[[Vaelos]] — attempted to create life, it was a timeless, static, beautiful and idyllic realm, but nothing was alive in it. Life proved to be more chaotic than they could wrap their mind around. \n\n[[Khavos]] — ready to prove they were the superior sibling made a primal realm where all time existed at once, where void and light fight, and where opposites coexist in the same space. Life proved to require more systemic order than they could produce.\n\nDisappointed in their solo attempts, the siblings cooperated to create the universe, the world, and life. But cooperating merged them into one unstable United being. That being created the world and souls — and then fractured into many pieces: [[The Shards]].\n\nWhat remains of the United being still sits at the core of the world, broken-off shards scattered from it, and it is the source of all magic.\n\nFrom the fracture came a pantheon: patron gods of the races, and aspects of light, darkness, time, wind, sea, and fire — each with its own personality and goals, sometimes cooperating, sometimes in conflict.\n\nThe brothers' first realms never went away. [[Aethelis, the Unchanging]] and [[Khavora, the Maelstrom Womb]] still exist, and they are the only two destinations for the dead. See [[The Two Afterlives]].",
+      "summary": "In the beginning there was nothing but twin gods, Order and Chaos. Their cooperation created the universe, the world, and life - and shattered them.",
+      "body": "In the beginning there was nothing except twin siblings: [[Vaelos]] and [[Khavos]] aka the aspects of order and chaos.\n\n[[Vaelos]] attempted to create life, it was a timeless, beautiful and idyllic realm full of perfect geology, but nothing was alive in it. Life proved to be more chaotic than they could wrap their mind around. \n\n[[Khavos]] ready to prove they were the superior sibling made a primal realm where all time existed at once, where void and light are in constant conflict, where opposites exist in the same space, and where fleshy biological mounds of goo . Life require more systemic order than they could provide.\n\nDisappointed in their solo attempts, the siblings cooperated on the next attempt and created the universe, the world, and countless souls with their own will. But cooperating merged them into one [[United Being]]. That beings creation was successful, but after its success it was too unstable to continue existing in its current form - over the course of seconds they fractured into many pieces and thus the [[Shards]] came into being.\n\nWhat remains of that [[United Being]] still sits at the core of the world now after finding [[Equilibrium]], broken-off shards scattered from it, and it is the source of all magic.\n\nFrom the fracturing came a pantheon of gods: patron gods of the [[Races]], aspects of the natural world such as [[Time]], [[Light and Dark]], a shard of divinity for each of the four [[Elements]] and minor shards down to the smallest local river spirit — each with its own personality and goals, sometimes cooperating, sometimes in conflict.\n\nThe sibling's first realms never went away. [[Aethelis, the Unchanging]] and [[Khavora, the Maelstrom Womb]] still exist, and they are the only two destinations for the dead. See [[The Two Afterlives]].",
       "visibility": "player",
       "tags": [
         "creation",
@@ -60,7 +60,7 @@ window.PLAYER_DATA = {
       "type": "Character",
       "categoryId": 3,
       "summary": "Vaelos is Order — one of the twin brothers who stood alone in the nothingness before creation, and maker of Aethelis, the Unchanging.",
-      "body": "Vaelos is Order, twin brother of [[Khavos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Vaelos made [[Aethelis, the Unchanging]]: a timeless, static, beautiful, idyllic realm — perfect, and completely empty of life. Order alone could not create life.\n\nWhen the brothers finally cooperated to create the universe, they merged into a single unstable United being, which fractured into [[The Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nVaelos's first realm endures. Aethelis is one of only two destinations for the dead — see [[The Two Afterlives]] — and the elves hold it to be the good one: there, they can become their perfect selves.",
+      "body": "Vaelos is Order, twin brother of [[Khavos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Vaelos made [[Aethelis, the Unchanging]]: a timeless, static, beautiful, idyllic realm — perfect, and completely empty of life. Order alone could not create life.\n\nWhen the brothers finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nVaelos's first realm endures. Aethelis is one of only two destinations for the dead — see [[The Two Afterlives]] — and the elves hold it to be the good one: there, they can become their perfect selves.",
       "visibility": "player",
       "tags": [
         "order",
@@ -76,7 +76,7 @@ window.PLAYER_DATA = {
       "type": "Character",
       "categoryId": 3,
       "summary": "Khavos is Chaos — one of the twin brothers who stood alone in the nothingness before creation, and maker of Khavora, the Maelstrom Womb.",
-      "body": "Khavos is Chaos, twin brother of [[Vaelos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Khavos made [[Khavora, the Maelstrom Womb]]: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist. For all its wildness, Chaos alone could not create life either.\n\nWhen the brothers finally cooperated to create the universe, they merged into a single unstable United being, which fractured into [[The Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nKhavos's first realm endures. Khavora is one of only two destinations for the dead — see [[The Two Afterlives]] — and the orcs hold it to be the good one: there, they can fight forever.",
+      "body": "Khavos is Chaos, twin brother of [[Vaelos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Khavos made [[Khavora, the Maelstrom Womb]]: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist. For all its wildness, Chaos alone could not create life either.\n\nWhen the brothers finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nKhavos's first realm endures. Khavora is one of only two destinations for the dead — see [[The Two Afterlives]] — and the orcs hold it to be the good one: there, they can fight forever.",
       "visibility": "player",
       "tags": [
         "chaos",
@@ -88,7 +88,7 @@ window.PLAYER_DATA = {
     },
     {
       "id": 5,
-      "title": "The Shards",
+      "title": "Shards",
       "type": "Natural Law",
       "categoryId": 3,
       "summary": "When the United being fractured, its pieces became shards — the gods and powers of the world, ranked from Time down to local spirits.",
@@ -109,7 +109,7 @@ window.PLAYER_DATA = {
       "type": "Location",
       "categoryId": 1,
       "summary": "The timeless, static, beautiful realm made by Vaelos before the world — and one of the only two destinations for the dead.",
-      "body": "Aethelis, the Unchanging, is the realm [[Vaelos]] made when Order stood alone in the nothingness: timeless, static, beautiful and idyllic — and, when he made it, empty of life.\n\nAethelis was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. Elves revere Aethelis as the good destination: in the Unchanging, they can become their perfect selves.",
+      "body": "Aethelis, the Unchanging, is the realm [[Vaelos]] made when Order stood alone in the nothingness: timeless, static, beautiful and idyllic — and, when they made it, empty of life.\n\nAethelis was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. [[Elves]] revere Aethelis as the good destination: in the Unchanging, they can become their perfect selves.",
       "visibility": "player",
       "tags": [
         "realm",
@@ -134,6 +134,39 @@ window.PLAYER_DATA = {
         "plane"
       ],
       "pinned": false
+    },
+    {
+      "title": "Time",
+      "type": "Generic",
+      "categoryId": 2,
+      "visibility": "player",
+      "pinned": false,
+      "summary": "",
+      "body": "The largest shard, apart from the leftover [[Equilibrium]] at the core of the world",
+      "tags": [],
+      "id": 9
+    },
+    {
+      "title": "Light and Dark",
+      "type": "Character",
+      "categoryId": 3,
+      "visibility": "player",
+      "pinned": false,
+      "summary": "",
+      "body": "Although two separate [[Shards]] these two are always together, \"For how can there be light without the darkness right behind?\"",
+      "tags": [],
+      "id": 10
+    },
+    {
+      "title": "Equilibrium",
+      "type": "Character",
+      "categoryId": 2,
+      "visibility": "player",
+      "pinned": false,
+      "summary": "",
+      "body": "What remains of the [[United Being]] after the [[Shards]] fractured off. Mages can use the dichotomy of order and chaos to do any number of magical acts",
+      "tags": [],
+      "id": 11
     }
   ],
   "timeline": [
