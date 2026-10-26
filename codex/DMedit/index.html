@@ -87,6 +87,31 @@
         <p class="small">Titles mentioned with [[brackets]] in any article that don't have an article yet.</p>
       </div>
       <div class="box">
+        <h3>Timeline events</h3>
+        <div id="tlList"></div>
+        <label>Event title</label>
+        <input type="text" id="tl-title">
+        <label>When (label players see, e.g. "Before time")</label>
+        <input type="text" id="tl-when">
+        <label>Order (lower comes first)</label>
+        <input type="number" id="tl-sort" step="any">
+        <label>Visibility</label>
+        <select id="tl-vis">
+          <option value="player">Players can see it</option>
+          <option value="dm_only">DM only</option>
+        </select>
+        <label>Linked article (optional)</label>
+        <select id="tl-article"></select>
+        <label>Description</label>
+        <textarea id="tl-desc" rows="3"></textarea>
+        <div class="btnrow">
+          <button onclick="tlSave()">Add / update event</button>
+          <button class="ghost" onclick="tlClear()">Clear</button>
+          <button class="ghost" onclick="tlDel()">Delete selected</button>
+        </div>
+        <p class="small">Click an event above to edit it. Changes save in this browser; Publish sends them live, same as articles.</p>
+      </div>
+      <div class="box">
         <h3>Pending images <span id="imgCount"></span></h3>
         <div id="pendingImgs" class="small">None. Images you add to articles wait here (in this browser) until you Publish.</div>
         <p class="small">On Publish, pending images upload to the site's <code>images</code> folder first,
@@ -216,6 +241,7 @@ function seed(){
 function load(){
   try { const raw = localStorage.getItem(KEY); db = raw ? JSON.parse(raw) : seed(); }
   catch(e){ db = seed(); }
+  if (!Array.isArray(db.timeline)) db.timeline = [];
 }
 function persist(){
   localStorage.setItem(KEY, JSON.stringify(db));
@@ -245,6 +271,69 @@ function renderTodo(){
   document.getElementById("todo").innerHTML = missing.size
     ? [...missing].map(t => `• <a href="#" onclick="newArticle('${esc(t)}');return false">${esc(t)}</a>`).join("<br>")
     : "Nothing outstanding. Every link resolves.";
+}
+// ---- Timeline editor ----
+let tlSelId = null;
+function tlFillArticles(){
+  const sel = document.getElementById("tl-article");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">— no linked article —</option>` + db.articles.slice().sort((a,b) => a.title.localeCompare(b.title)).map(a => `<option value="${a.id}">${esc(a.title)}</option>`).join("");
+  sel.value = cur;
+}
+function renderTimeline(){
+  tlFillArticles();
+  const items = db.timeline.slice().sort((a,b) => (a.sortKey || 0) - (b.sortKey || 0));
+  document.getElementById("tlList").innerHTML = items.map(e => `
+    <div class="row ${e.id===tlSelId?'sel':''}" onclick="tlSelect(${e.id})">
+      <div class="t">${esc(e.title)}</div>
+      <div class="m">${esc(e.whenLabel || "")} · ${e.visibility === 'player' ? 'players' : 'DM only'} · order ${e.sortKey ?? ""}</div>
+    </div>`).join("") || '<p class="small">No events yet.</p>';
+}
+function tlSelect(id){
+  const e = db.timeline.find(x => x.id === id); if (!e) return;
+  tlSelId = id;
+  document.getElementById("tl-title").value = e.title || "";
+  document.getElementById("tl-when").value = e.whenLabel || "";
+  document.getElementById("tl-sort").value = e.sortKey ?? "";
+  document.getElementById("tl-vis").value = e.visibility === "player" ? "player" : "dm_only";
+  document.getElementById("tl-desc").value = e.description || "";
+  tlFillArticles();
+  document.getElementById("tl-article").value = e.articleId ? String(e.articleId) : "";
+  renderTimeline();
+}
+function tlClear(){
+  tlSelId = null;
+  document.getElementById("tl-title").value = "";
+  document.getElementById("tl-when").value = "";
+  document.getElementById("tl-sort").value = db.timeline.length ? Math.max(...db.timeline.map(e => e.sortKey || 0)) + 1 : 1;
+  document.getElementById("tl-vis").value = "player";
+  document.getElementById("tl-desc").value = "";
+  document.getElementById("tl-article").value = "";
+  renderTimeline();
+}
+function tlSave(){
+  const title = document.getElementById("tl-title").value.trim();
+  if (!title) { alert("Give the event a title first."); return; }
+  const sortVal = parseFloat(document.getElementById("tl-sort").value);
+  const data = {
+    title,
+    whenLabel: document.getElementById("tl-when").value.trim(),
+    sortKey: Number.isFinite(sortVal) ? sortVal : (db.timeline.length ? Math.max(...db.timeline.map(e => e.sortKey || 0)) + 1 : 1),
+    description: document.getElementById("tl-desc").value,
+    visibility: document.getElementById("tl-vis").value
+  };
+  const art = document.getElementById("tl-article").value;
+  if (art) data.articleId = +art;
+  if (tlSelId) { const t = db.timeline.find(e => e.id === tlSelId); if (!art) delete t.articleId; Object.assign(t, data); }
+  else { data.id = Math.max(0, ...db.timeline.map(e => e.id)) + 1; db.timeline.push(data); tlSelId = data.id; }
+  persist(); renderTimeline();
+}
+function tlDel(){
+  if (!tlSelId) { alert("Select an event first."); return; }
+  const e = db.timeline.find(x => x.id === tlSelId);
+  if (!e || !confirm(`Delete timeline event "${e.title}"?`)) return;
+  db.timeline = db.timeline.filter(x => x.id !== tlSelId);
+  tlSelId = null; persist(); tlClear();
 }
 function fillCats(){
   document.getElementById("f-cat").innerHTML = db.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
@@ -300,14 +389,14 @@ function save(){
   if (currentImage) data.image = currentImage;
   if (selId) { const t = db.articles.find(a => a.id === selId); if (!currentImage) delete t.image; Object.assign(t, data); }
   else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; db.articles.push(data); selId = data.id; }
-  persist(); renderList(); select(selId);
+  persist(); renderList(); renderTimeline(); select(selId);
 }
 function del(){
   if (!selId) return;
   const a = db.articles.find(x => x.id === selId);
   if (!confirm(`Delete "${a.title}"? This only affects this browser until you export.`)) return;
   db.articles = db.articles.filter(x => x.id !== selId); selId = null;
-  persist(); newArticle();
+  persist(); renderTimeline(); newArticle();
 }
 function download(name, text){
   const a = document.createElement("a");
@@ -545,9 +634,9 @@ async function publishToGitHub(){
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
-  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); newArticle();
+  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); refreshTokenUI(); renderPending();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); refreshTokenUI(); renderPending();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
