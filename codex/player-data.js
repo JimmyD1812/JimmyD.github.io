@@ -27,7 +27,7 @@ window.PLAYER_DATA = {
       "type": "Myth",
       "categoryId": 2,
       "summary": "In the beginning there was nothing but twin gods, Order and Chaos. Their cooperation created the universe, the world, and life - and shattered them.",
-      "body": "In the beginning there was nothing except twin siblings: [[Vaelos]] and [[Khavos]] aka the aspects of order and chaos.\n\n[[Vaelos]] attempted to create life, it was a timeless, beautiful and idyllic realm full of perfect geology, but nothing was alive in it. Life proved to be more chaotic than they could wrap their mind around. \n\n[[Khavos]] ready to prove they were the superior sibling made a primal realm where all time existed at once, where void and light are in constant conflict, where opposites exist in the same space, and where fleshy biological mounds of goo . Life require more systemic order than they could provide.\n\nDisappointed in their solo attempts, the siblings cooperated on the next attempt and created the universe, the world, and countless souls with their own will. But cooperating merged them into one [[United Being]]. That beings creation was successful, but after its success it was too unstable to continue existing in its current form - over the course of seconds they fractured into many pieces and thus the [[Shards]] came into being.\n\nWhat remains of that [[United Being]] still sits at the core of the world now after finding [[Equilibrium]], broken-off shards scattered from it, and it is the source of all magic.\n\nFrom the fracturing came a pantheon of gods: patron gods of the [[Races]], aspects of the natural world such as [[Time]], [[Light and Dark]], a shard of divinity for each of the four [[Elements]] and minor shards down to the smallest local river spirit — each with its own personality and goals, sometimes cooperating, sometimes in conflict.\n\nThe sibling's first realms never went away. [[Aethelis, the Unchanging]] and [[Khavora, the Maelstrom Womb]] still exist, and they are the only two destinations for the dead. See [[The Two Afterlives]].",
+      "body": "In the beginning there was nothing except twin siblings: [[Vaelos]] and [[Khavos]] aka the aspects of order and chaos.\n\n[[Vaelos]] attempted to create life, it was a timeless, beautiful and idyllic realm full of perfect geology, but nothing was alive in it. Life proved to be more chaotic than they could wrap their mind around. \n\n[[Khavos]], eager to prove they were the superior sibling, made a primal realm where all time existed at once, where void and light are in constant conflict, where opposites exist in the same space, and where fleshy mounds of biological goo heaved and pulsed, it was flesh without form and growth without pattern — it moved, but it did not live. Life required more systemic order than they could provide.\n\nDisappointed in their solo attempts, the siblings cooperated on the next attempt and created the universe, the world, and countless souls with their own will. But cooperating merged them into one [[United Being]]. Its creation succeeded — but the Being was too unstable to hold together, and within seconds it began to fracture. The first piece to break away was [[Time]], and it had to be: only once Time existed could anything happen one moment after another. Piece after piece followed in sequence, and thus the [[Shards]] came into being.\n\nWhat remains of that [[United Being]] still sits at the core of the world now after finding [[Equilibrium]], broken-off shards scattered from it, and it is the source of all magic.\n\nFrom the fracturing came a pantheon of gods: patron gods of the [[Races]], aspects of the natural world such as [[Time]], [[Light and Dark]], a shard of divinity for each of the four [[Elements]] and minor shards down to the smallest local river spirit — each with its own personality and goals, sometimes cooperating, sometimes in conflict.\n\nThe sibling's first realms never went away. [[Aethelis, the Unchanging]] and [[Khavora, the Maelstrom Womb]] still exist, and they are the only two destinations for the dead. See [[The Two Afterlives]].",
       "visibility": "player",
       "tags": [
         "creation",
@@ -93,7 +93,7 @@ window.PLAYER_DATA = {
       "type": "Natural Law",
       "categoryId": 3,
       "summary": "When the United being fractured, its pieces became shards — the gods and powers of the world, ranked from Time down to local spirits.",
-      "body": "The fragments of the fractured United being are called shards.\n\nThe United being created the world and souls. The shards gathered that soul power and formed the races of the world in their own image. The main being still remains at the core of the world, and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]] — first and most powerful, and untamable. There is no time travel unless Time deems it useful.\n2. The elemental shards.\n3. The patron gods of the races.\n4. Local spirits.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun.\n\nSee [[The Creation: The Twins and the Fracture]].",
+      "body": "The fragments of the fractured United being are called shards.\n\nThe United being created the world and souls. The shards gathered that soul power and formed the races of the world in their own image. The main being still remains at the core of the world, and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]] — The first shard to break away, the most powerful, untamable. Time enforces the steady pace forward, regardless the cost.\n2. The elemental shards.\n3. The patron gods of the races.\n4. Local spirits.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun.\n\nSee [[The Creation: The Twins and the Fracture]].",
       "visibility": "player",
       "tags": [
         "shards",
@@ -143,7 +143,7 @@ window.PLAYER_DATA = {
       "visibility": "player",
       "pinned": false,
       "summary": "",
-      "body": "The largest shard, apart from the leftover [[Equilibrium]] at the core of the world",
+      "body": "The first shard to break away from the [[United Being]] — and the largest, apart from the leftover [[Equilibrium]] at the core of the world. Time's separation is what let the rest of the fracture unfold in sequence rather than all at once. Although many foolish magic users have tried, Time is untamable.",
       "tags": [],
       "id": 9
     },
@@ -153,8 +153,8 @@ window.PLAYER_DATA = {
       "categoryId": 3,
       "visibility": "player",
       "pinned": false,
-      "summary": "",
-      "body": "Although two separate [[Shards]] these two are always together, \"For how can there be light without the darkness right behind?\"",
+      "summary": "Light and Dark are two separate shards who are never apart, served by a single shared church — whose priests argue endlessly over which of the two is stronger.",
+      "body": "Light and Dark are two separate [[Shards]], but they are never apart. Where Light goes, Dark is right behind; where Dark settles, Light is already pressing at its edges. Whether they broke away from the [[United Being]] already paired, or found each other in the first moments after the fracture, no one knows, the two tell the story differently, and both versions are preached as fact.\n\nNeither is good, and neither is evil, whatever mortals assume. Light reveals, warms, and grows, and it also blinds, burns, and withers. Dark hides, cools, and rests and it also conceals the knife and the rot. As with all things, the races call whichever one serves them good.\n\nThe two share a single church, the only faith that serves two shards under one roof. Its temples hold services at dawn and at dusk, in the same hall, and its founding teaching is the pairing itself: \"For how can there be light without the darkness right behind?\"\n\nBut sharing a church has not made its priests agree. Some lean toward the Light, preaching that it is the stronger of the two; that a single flame drives back a whole room of darkness, and Dark is only ever the space Light has not reached yet. Others lean toward the Dark, preaching that it is the older, vaster, more patient power; that every light ever lit has eventually gone out, and the Dark was there before each one and remained after. The church holds both doctrines. Barely.\n\nThe one teaching both sides defend together: that either could exist without the other is heresy.",
       "tags": [],
       "id": 10
     },
@@ -164,8 +164,8 @@ window.PLAYER_DATA = {
       "categoryId": 3,
       "visibility": "player",
       "pinned": false,
-      "summary": "",
-      "body": "What remains of the [[United Being]] after the [[Shards]] fractured off. Mages can use the dichotomy of order and chaos to do any number of magical acts",
+      "summary": "What remains of the United Being, sleeping at the core of the world for untold millennia after the exertion of creation — and the source of all magic.",
+      "body": "Equilibrium is what remains of the [[United Being]] after the [[Shards]] fractured off of it — not a shard itself, but the core that stayed behind when the pieces scattered. It rests at the center of the world, and it is the source of all magic.\n\nThe exertion of creation exhausted it. Equilibrium has slept at the world's core for untold millennia, recovering, while the shards above shape the world as they see fit. No one knows what it will think of what they have made when it wakes — or whether it will want its pieces back.\n\nMages work their craft by drawing on the dichotomy of order and chaos still held in balance within the sleeping Equilibrium — order to give a spell its form, chaos to give it its power. Whether the sleeper notices the borrowing, no one can say. Some scholars claim ground-quakes are Equilibrium turning in its sleep. The shards, notably, do not laugh at this.\n\nNo church serves Equilibrium. You cannot pray to something asleep — and so the world's faiths belong to the shards, and the one power greater than them all hears none of it.",
       "tags": [],
       "id": 11
     }
@@ -176,7 +176,7 @@ window.PLAYER_DATA = {
       "title": "The Twins Alone in the Nothingness",
       "whenLabel": "Before time",
       "sortKey": 1,
-      "description": "There is nothing except twin brothers: Order (Vaelos) and Chaos (Khavos). Neither can create life alone.",
+      "description": "There is nothing except two entities: Order (Vaelos) and Chaos (Khavos). Neither can create life alone.",
       "visibility": "player",
       "articleId": 1
     },
@@ -185,7 +185,7 @@ window.PLAYER_DATA = {
       "title": "The Cooperation and the Fracture",
       "whenLabel": "The beginning of the world",
       "sortKey": 2,
-      "description": "Bored with their own realms, the brothers cooperate to create the universe, the world, and life. Cooperating merges them into one unstable United being, which creates the world and souls — then fractures into the shards. What remains of it still sits at the world's core, the source of magic.",
+      "description": "Bored with their own realms, the twins cooperate to create the universe, the world, and life. Cooperating merges them into one unstable United being, which creates the world and souls — then fractures into the shards. What remains of it still sits at the world's core, the source of magic.",
       "visibility": "player",
       "articleId": 1
     },
@@ -194,7 +194,7 @@ window.PLAYER_DATA = {
       "title": "The Shards Form the Races",
       "whenLabel": "After the fracture",
       "sortKey": 3,
-      "description": "The shards gather soul power and form the races of the world in their own image. Shards too small to matter are ejected into the cosmos and become the stars; many conjoined form the sun.",
+      "description": "The shards gather souls and form the races of the world in their own image. Shards too small to matter are ejected into the cosmos and become the stars; many conjoined form the sun.",
       "visibility": "player",
       "articleId": 1
     }
