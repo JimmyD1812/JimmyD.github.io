@@ -138,7 +138,7 @@ window.PLAYER_DATA = {
     {
       "title": "Time",
       "type": "Character",
-      "categoryId": 2,
+      "categoryId": 3,
       "visibility": "player",
       "pinned": false,
       "summary": "",
@@ -160,7 +160,7 @@ window.PLAYER_DATA = {
     {
       "title": "Equilibrium",
       "type": "Character",
-      "categoryId": 2,
+      "categoryId": 3,
       "visibility": "player",
       "pinned": false,
       "summary": "",
