@@ -19,7 +19,7 @@ window.DM_DATA = {
     },
     {
       "title": "United Being",
-      "type": "Generic",
+      "type": "Character",
       "categoryId": 2,
       "visibility": "draft",
       "pinned": false,
