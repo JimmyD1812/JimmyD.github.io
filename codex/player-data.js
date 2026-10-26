@@ -127,7 +127,7 @@ window.PLAYER_DATA = {
       "type": "Location",
       "categoryId": 1,
       "summary": "The primal realm made by Khavos before the world, where all time exists at once — and one of the only two destinations for the dead.",
-      "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist.\n\nKhavora was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. Orcs revere Khavora as the good destination: in the Maelstrom Womb, they can fight forever.",
+      "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist.\n\nKhavora was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. [[Orcs]] revere Khavora as the good destination: in the Maelstrom Womb, they can fight forever.",
       "visibility": "player",
       "tags": [
         "realm",
