@@ -5,45 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>DM Desk</title>
+<link rel="stylesheet" href="../fonts/fonts.css">
 <style>
-  :root{--bg:#efe7d3;--paper:#faf5e9;--ink:#2b2118;--muted:#7a6a55;--brass:#a07d2c;--brass-dark:#7d611f;--line:#ddd0b4;--card:#fffaf0;--danger:#9b2c2c}
+  :root{--bg:#EEE5CE;--paper:#F7F2E5;--ink:#241a10;--muted:#7a6a55;--brass:#B89A67;--brass-dark:#58180D;--line:#D8C9A3;--card:#FDF1DC;--danger:#9C2B1B;--tan:#E5D5AC;--gold-bright:#C9AD6A;
+    --display:'Cinzel',serif;--body:'EB Garamond',Georgia,serif;--flavor:'IM Fell English',Georgia,serif}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif}
-  header.site{background:#171008;color:#f3ead6;padding:20px;text-align:center;border-bottom:4px solid var(--brass)}
-  header.site h1{margin:0;font-size:1.6rem;font-weight:normal;letter-spacing:.04em}
-  header.site p{margin:6px 0 0;color:#cdbd97;font-style:italic;font-size:.95rem}
+  ::selection{background:#58180D;color:#F7F2E5}
+  body{margin:0;color:var(--ink);font-family:var(--body);font-size:1.03rem;
+    background-color:var(--bg);
+    background-image:radial-gradient(1200px 500px at 50% -80px, rgba(184,154,103,.20), transparent 70%),
+      radial-gradient(900px 600px at 110% 110%, rgba(88,24,13,.07), transparent 60%),
+      repeating-linear-gradient(43deg, rgba(88,24,13,.016) 0 2px, transparent 2px 5px),
+      repeating-linear-gradient(-41deg, rgba(88,24,13,.014) 0 2px, transparent 2px 6px)}
+  header.site{background:#171009;color:#f3e5c0;padding:22px 20px 18px;text-align:center;border-bottom:3px solid var(--gold-bright);box-shadow:0 4px 0 #58180D, 0 10px 24px rgba(23,16,9,.35)}
+  header.site h1{margin:0;font-family:var(--display);font-weight:900;font-size:1.7rem;letter-spacing:.14em;text-transform:uppercase;color:#F3E5C0;text-shadow:0 2px 0 #000}
+  header.site p{margin:6px 0 0;color:#cdbd97;font-family:var(--flavor);font-style:italic;font-size:.98rem}
   .wrap{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
-  .note{background:#fdf3d8;border:1px solid var(--brass);border-radius:8px;padding:12px 16px;margin-bottom:16px;line-height:1.55}
+  .note{background:var(--paper);border:1px solid var(--brass);border-left:5px solid #58180D;border-radius:4px;padding:12px 16px;margin-bottom:16px;line-height:1.55}
   .layout{display:grid;grid-template-columns:340px 1fr;gap:22px}
   @media (max-width:820px){.layout{grid-template-columns:1fr}}
-  .box{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:16px}
-  h3{margin:2px 0 10px;font-size:.95rem;text-transform:uppercase;letter-spacing:.09em;color:var(--brass-dark)}
-  .row{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
-  .row:hover{border-color:var(--brass)} .row.sel{border-color:var(--brass-dark);background:#f7ecd2}
-  .row .t{font-weight:bold}.row .m{color:var(--muted);font-size:.85rem}
+  .box{background:var(--paper);border:1px solid var(--line);border-top:3px solid #58180D;border-radius:4px;padding:14px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(36,26,16,.08)}
+  h3{margin:2px 0 10px;font-family:var(--display);font-weight:700;font-size:.92rem;text-transform:uppercase;letter-spacing:.12em;color:#58180D;border-bottom:1px solid var(--gold-bright);padding-bottom:6px}
+  .row{border:1px solid var(--line);background:var(--card);border-radius:4px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+  .row:hover{border-color:var(--brass)} .row.sel{border-color:#58180D;background:var(--tan);box-shadow:inset 3px 0 0 #58180D}
+  .row .t{font-weight:600}.row .m{color:var(--muted);font-size:.86rem}
   .badge{display:inline-block;border-radius:999px;padding:0 8px;font-size:.75rem;border:1px solid var(--muted);color:var(--muted)}
-  .badge.player{border-color:#4c7a3f;color:#4c7a3f}.badge.dm_only{border-color:var(--danger);color:var(--danger)}.badge.draft{border-color:var(--brass-dark);color:var(--brass-dark)}
-  label{display:block;margin:12px 0 4px;font-size:.9rem;color:#4a3d2c}
-  input[type=text],input[type=password],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:inherit;font-size:.95rem}
+  .badge.player{border-color:#2e5e4e;color:#2e5e4e}.badge.dm_only{border-color:var(--danger);color:var(--danger)}.badge.draft{border-color:#8a6a14;color:#8a6a14}
+  label{display:block;margin:12px 0 4px;font-size:.92rem;font-variant:small-caps;letter-spacing:.04em;color:#4a3d2c}
+  input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:#fffdf6;font-family:inherit;font-size:.97rem}
   textarea{line-height:1.5}
-  button{background:var(--brass);color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:.95rem}
-  button:hover{background:var(--brass-dark)}
-  button.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
-  button.ghost:hover{background:#f0e6cd}
+  button{background:#58180D;color:#F7F2E5;border:1px solid #58180D;border-radius:4px;padding:8px 14px;cursor:pointer;font-family:var(--display);font-weight:700;font-size:.8rem;letter-spacing:.06em}
+  button:hover{background:var(--danger)}
+  button.ghost{background:none;color:#58180D;border:1px solid #58180D}
+  button.ghost:hover{background:var(--tan)}
   button.danger{background:none;color:var(--danger);border:1px solid var(--danger)}
   .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
   .todo{color:#4a3d2c;line-height:1.7}
-  a{color:var(--brass-dark)}
+  a{color:var(--danger)}
   .small{font-size:.88rem;color:var(--muted);line-height:1.55}
+  .sect-pub{border:1px solid var(--brass);background:#fffdf4;border-radius:4px;padding:4px 12px 12px;margin-top:10px}
+  .sect-dm{border:1px dashed var(--danger);background:#f9e9e2;border-radius:4px;padding:4px 12px 12px;margin-top:12px}
+  .zone-label{font-family:var(--display);font-weight:700;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
+  .zone-label.pub{color:#2e5e4e}.zone-label.dm{color:var(--danger)}
   /* Facade login gate — a deterrent, not real security. Credentials are
      checked against SHA-256 hashes below, never stored in plaintext. */
-  #gate{max-width:400px;margin:70px auto;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px 28px;text-align:center}
-  #gate h2{margin:0 0 4px;font-weight:normal;font-size:1.5rem}
-  #gate p{color:var(--muted);font-style:italic;margin:0 0 10px}
-  #gate label{text-align:left}
-  #gate input[type=text],#gate input[type=password]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:inherit;font-size:1rem}
-  #gate button{width:100%;margin-top:16px;padding:10px}
-  #gateErr{color:var(--danger);min-height:1.2em;margin-top:10px;font-size:.92rem}
+  #gate{max-width:400px;margin:70px auto;background:#1d130a;border:1px solid var(--gold-bright);box-shadow:0 0 0 4px #171009, 0 0 0 5px var(--gold-bright), 0 18px 40px rgba(23,16,9,.45);border-radius:4px;padding:28px 30px;text-align:center;color:#f3e5c0}
+  #gate h2{margin:0 0 4px;font-family:var(--display);font-weight:900;font-size:1.6rem;letter-spacing:.12em;text-transform:uppercase;color:#F3E5C0}
+  #gate p{color:#cdbd97;font-family:var(--flavor);font-style:italic;margin:0 0 10px}
+  #gate label{text-align:left;color:#cdbd97}
+  #gate input[type=text],#gate input[type=password]{width:100%;padding:9px 10px;border:1px solid var(--gold-bright);border-radius:4px;background:#F7F2E5;font-family:inherit;font-size:1rem}
+  #gate button{width:100%;margin-top:16px;padding:11px;background:#58180D}
+  #gate button:hover{background:var(--danger)}
+  #gateErr{color:#ff9a8a;min-height:1.2em;margin-top:10px;font-size:.92rem}
 </style>
 </head>
 <body>
@@ -145,6 +158,51 @@
           <button class="ghost" onclick="sbDel()">Delete selected</button>
         </div>
         <p class="small">Use one inside an article body with [sb:Exact Name]. Player-visible statblocks also get their own tab on the player site.</p>
+      </div>
+      <div class="box">
+        <h3>NPCs <span id="npcCount"></span></h3>
+        <div id="npcList"></div>
+        <div class="sect-pub">
+          <div class="zone-label pub">Players see this half</div>
+          <label>Name</label>
+          <input type="text" id="n-name">
+          <label>Role / title</label>
+          <input type="text" id="n-role">
+          <label>Location</label>
+          <input type="text" id="n-loc">
+          <label>First met (when / where)</label>
+          <input type="text" id="n-met">
+          <label>Portrait image</label>
+          <img id="nPortraitPreview" style="display:none;max-width:100%;border:1px solid var(--line);border-radius:4px;margin-bottom:8px" alt="">
+          <div class="small" id="nPortraitName">No portrait.</div>
+          <div class="btnrow">
+            <button type="button" class="ghost" onclick="document.getElementById('nPortraitFile').click()">Choose portrait…</button>
+            <button type="button" class="ghost" onclick="clearNpcPortrait()">Remove portrait</button>
+          </div>
+          <input type="file" id="nPortraitFile" accept="image/*" style="display:none" onchange="onNpcPortraitChosen(this)">
+          <label>Public notes — what the party knows</label>
+          <textarea id="n-pub" rows="4"></textarea>
+          <label>Visibility</label>
+          <select id="n-vis">
+            <option value="player">Players can see this NPC</option>
+            <option value="dm_only">DM only — never published to the player file</option>
+          </select>
+          <label>Linked statblock (optional)</label>
+          <select id="n-sb"></select>
+        </div>
+        <div class="sect-dm">
+          <div class="zone-label dm">DM only — this half never reaches the player file</div>
+          <label>Secret notes (true motives, secrets, plans)</label>
+          <textarea id="n-dm" rows="4"></textarea>
+          <label>Private stats — one per line, as Label: Value</label>
+          <textarea id="n-rows" rows="4" placeholder="HP: 32&#10;Weakness: Silver"></textarea>
+        </div>
+        <div class="btnrow">
+          <button onclick="npcSave()">Add / update NPC</button>
+          <button class="ghost" onclick="npcClear()">Clear</button>
+          <button class="ghost" onclick="npcDel()">Delete selected</button>
+        </div>
+        <p class="small">One record, two faces: the green half is all that ever publishes to players; the red half is written only into dm-data.js.</p>
       </div>
       <div class="box">
         <h3>Pending images <span id="imgCount"></span></h3>
@@ -272,13 +330,17 @@ function seed(){
   const arts = [...window.PLAYER_DATA.articles, ...window.DM_DATA.articles];
   const tl = [...window.PLAYER_DATA.timeline, ...(window.DM_DATA.timeline || [])];
   const sb = [...(window.PLAYER_DATA.statblocks || []), ...(window.DM_DATA.statblocks || [])];
-  return { categories: cats, articles: arts, timeline: tl, statblocks: sb };
+  const npcMap = {};
+  (window.PLAYER_DATA.npcs || []).forEach(n => { npcMap[n.id] = n; });
+  (window.DM_DATA.npcs || []).forEach(n => { npcMap[n.id] = n; }); // full DM records win over public projections
+  return { categories: cats, articles: arts, timeline: tl, statblocks: sb, npcs: Object.values(npcMap) };
 }
 function load(){
   try { const raw = localStorage.getItem(KEY); db = raw ? JSON.parse(raw) : seed(); }
   catch(e){ db = seed(); }
   if (!Array.isArray(db.timeline)) db.timeline = [];
   if (!Array.isArray(db.statblocks)) db.statblocks = [];
+  if (!Array.isArray(db.npcs)) db.npcs = [];
 }
 function persist(){
   localStorage.setItem(KEY, JSON.stringify(db));
@@ -372,6 +434,98 @@ function tlDel(){
   db.timeline = db.timeline.filter(x => x.id !== tlSelId);
   tlSelId = null; persist(); tlClear();
 }
+// ---- NPCs manager (public face + DM-only half in one record) ----
+let npcSelId = null, npcImage = "";
+function npcFillSb(){
+  const sel = document.getElementById("n-sb");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">— none —</option>` + db.statblocks.slice().sort((a,b) => a.name.localeCompare(b.name)).map(s =>
+    `<option value="${s.id}">${esc(s.name)}${s.visibility === "player" ? "" : " (DM only — players won't see it)"}</option>`).join("");
+  sel.value = cur;
+}
+function renderNpcMgr(){
+  npcFillSb();
+  document.getElementById("npcCount").textContent = `(${db.npcs.length})`;
+  const items = db.npcs.slice().sort((a,b) => a.name.localeCompare(b.name));
+  document.getElementById("npcList").innerHTML = items.map(n => `
+    <div class="row ${n.id===npcSelId?'sel':''}" onclick="npcSelect(${n.id})">
+      <div class="t">${esc(n.name)}</div>
+      <div class="m">${esc(n.role || "")} · <span class="badge ${n.visibility === 'player' ? 'player' : 'dm_only'}">${n.visibility === 'player' ? 'players' : 'DM only'}</span></div>
+    </div>`).join("") || '<p class="small">No NPCs yet.</p>';
+}
+function npcSelect(id){
+  const n = db.npcs.find(x => x.id === id); if (!n) return;
+  npcSelId = id;
+  document.getElementById("n-name").value = n.name || "";
+  document.getElementById("n-role").value = n.role || "";
+  document.getElementById("n-loc").value = n.location || "";
+  document.getElementById("n-met").value = n.met || "";
+  document.getElementById("n-pub").value = n.publicNotes || "";
+  document.getElementById("n-vis").value = n.visibility === "player" ? "player" : "dm_only";
+  document.getElementById("n-dm").value = n.dmNotes || "";
+  document.getElementById("n-rows").value = (n.dmRows || []).map(r => r.label + ": " + r.value).join("\n");
+  npcImage = n.image || "";
+  showNpcPortrait();
+  npcFillSb();
+  document.getElementById("n-sb").value = n.statblockId ? String(n.statblockId) : "";
+  renderNpcMgr();
+}
+function npcClear(){
+  npcSelId = null;
+  ["n-name","n-role","n-loc","n-met","n-pub","n-dm","n-rows"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("n-vis").value = "player";
+  document.getElementById("n-sb").value = "";
+  npcImage = "";
+  showNpcPortrait();
+  renderNpcMgr();
+}
+async function onNpcPortraitChosen(input){
+  const f = input.files[0]; input.value = "";
+  if (!f) return;
+  const name = await stageImage(f);
+  if (name) { npcImage = name; showNpcPortrait(); }
+}
+function clearNpcPortrait(){ npcImage = ""; showNpcPortrait(); }
+async function showNpcPortrait(){
+  const img = document.getElementById("nPortraitPreview"), nm = document.getElementById("nPortraitName");
+  if (!npcImage) { img.style.display = "none"; nm.textContent = "No portrait."; return; }
+  nm.textContent = npcImage + " — remember to save the NPC, then Publish.";
+  const rec = await imgGet(npcImage);
+  img.onerror = () => { img.style.display = "none"; };
+  img.src = rec ? URL.createObjectURL(rec.blob) : "../images/" + npcImage;
+  img.style.display = "";
+}
+function npcSave(){
+  const name = document.getElementById("n-name").value.trim();
+  if (!name) { alert("Give the NPC a name first."); return; }
+  const rows = document.getElementById("n-rows").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+    const i = l.indexOf(":");
+    return i > 0 ? { label: l.slice(0, i).trim(), value: l.slice(i + 1).trim() } : { label: l, value: "" };
+  });
+  const data = {
+    name,
+    role: document.getElementById("n-role").value.trim(),
+    location: document.getElementById("n-loc").value.trim(),
+    met: document.getElementById("n-met").value.trim(),
+    publicNotes: document.getElementById("n-pub").value,
+    visibility: document.getElementById("n-vis").value,
+    dmNotes: document.getElementById("n-dm").value,
+    dmRows: rows
+  };
+  if (npcImage) data.image = npcImage;
+  const sbv = document.getElementById("n-sb").value;
+  if (sbv) data.statblockId = +sbv;
+  if (npcSelId) { const t = db.npcs.find(x => x.id === npcSelId); if (!npcImage) delete t.image; if (!sbv) delete t.statblockId; Object.assign(t, data); }
+  else { data.id = Math.max(0, ...db.npcs.map(x => x.id)) + 1; db.npcs.push(data); npcSelId = data.id; }
+  persist(); renderNpcMgr();
+}
+function npcDel(){
+  if (!npcSelId) { alert("Select an NPC first."); return; }
+  const n = db.npcs.find(x => x.id === npcSelId);
+  if (!n || !confirm(`Delete NPC "${n.name}"?`)) return;
+  db.npcs = db.npcs.filter(x => x.id !== npcSelId);
+  npcSelId = null; persist(); npcClear();
+}
 // ---- Categories manager ----
 let catSelId = null;
 function renderCatMgr(){
@@ -461,14 +615,14 @@ function sbSave(){
   const data = { name, visibility: document.getElementById("sb-vis").value, rows };
   if (sbSelId) Object.assign(db.statblocks.find(s => s.id === sbSelId), data);
   else { data.id = Math.max(0, ...db.statblocks.map(s => s.id)) + 1; db.statblocks.push(data); sbSelId = data.id; }
-  persist(); renderSbMgr();
+  persist(); renderSbMgr(); renderNpcMgr();
 }
 function sbDel(){
   if (!sbSelId) { alert("Select a statblock first."); return; }
   const s = db.statblocks.find(x => x.id === sbSelId);
   if (!s || !confirm(`Delete statblock "${s.name}"? Articles that embed it will show the plain [sb:...] text instead.`)) return;
   db.statblocks = db.statblocks.filter(x => x.id !== sbSelId);
-  sbSelId = null; persist(); sbClear();
+  sbSelId = null; persist(); renderNpcMgr(); sbClear();
 }
 function fillCats(){
   const sel = document.getElementById("f-cat");
@@ -546,7 +700,13 @@ function buildPlayerText(){
     categories: db.categories,
     articles: db.articles.filter(a => a.visibility === "player"),
     timeline: db.timeline.filter(e => e.visibility === "player"),
-    statblocks: db.statblocks.filter(s => s.visibility === "player")
+    statblocks: db.statblocks.filter(s => s.visibility === "player"),
+    npcs: db.npcs.filter(n => n.visibility === "player").map(n => {
+      const pub = { id: n.id, name: n.name, role: n.role || "", location: n.location || "", met: n.met || "", publicNotes: n.publicNotes || "" };
+      if (n.image) pub.image = n.image;
+      if (n.statblockId) pub.statblockId = n.statblockId;
+      return pub;
+    })
   };
   return "// Player-safe data — ONLY player-visible content. Generated from the DM Desk.\nwindow.PLAYER_DATA = " + JSON.stringify(data, null, 2) + ";\n";
 }
@@ -554,7 +714,8 @@ function buildDmText(){
   const data = {
     articles: db.articles.filter(a => a.visibility !== "player"),
     timeline: db.timeline.filter(e => e.visibility !== "player"),
-    statblocks: db.statblocks.filter(s => s.visibility !== "player")
+    statblocks: db.statblocks.filter(s => s.visibility !== "player"),
+    npcs: db.npcs
   };
   return "// DM-only data — lives inside the secret DM folder only. Generated from the DM Desk.\nwindow.DM_DATA = " + JSON.stringify(data, null, 2) + ";\n";
 }
@@ -774,9 +935,9 @@ async function publishToGitHub(){
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
-  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); newArticle();
+  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); refreshTokenUI(); renderPending();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
