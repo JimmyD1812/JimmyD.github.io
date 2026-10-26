@@ -112,6 +112,41 @@
         <p class="small">Click an event above to edit it. Changes save in this browser; Publish sends them live, same as articles.</p>
       </div>
       <div class="box">
+        <h3>Categories</h3>
+        <div id="catList"></div>
+        <label>Category name</label>
+        <input type="text" id="cat-name">
+        <label>Description (shown to players)</label>
+        <textarea id="cat-desc" rows="2"></textarea>
+        <label>Order (lower comes first)</label>
+        <input type="number" id="cat-sort" step="any">
+        <div class="btnrow">
+          <button onclick="catSave()">Add / update category</button>
+          <button class="ghost" onclick="catClear()">Clear</button>
+          <button class="ghost" onclick="catDel()">Delete selected</button>
+        </div>
+        <p class="small">Deleting a category moves its articles into the first remaining category. Renaming is safe — articles follow automatically.</p>
+      </div>
+      <div class="box">
+        <h3>Statblocks</h3>
+        <div id="sbList"></div>
+        <label>Name</label>
+        <input type="text" id="sb-name">
+        <label>Visibility</label>
+        <select id="sb-vis">
+          <option value="player">Players can see it</option>
+          <option value="dm_only">DM only</option>
+        </select>
+        <label>Stats — one per line, as Label: Value</label>
+        <textarea id="sb-rows" rows="6" placeholder="HP: 45&#10;AC: 15&#10;Speed: 30 ft"></textarea>
+        <div class="btnrow">
+          <button onclick="sbSave()">Add / update statblock</button>
+          <button class="ghost" onclick="sbClear()">Clear</button>
+          <button class="ghost" onclick="sbDel()">Delete selected</button>
+        </div>
+        <p class="small">Use one inside an article body with [sb:Exact Name]. Player-visible statblocks also get their own tab on the player site.</p>
+      </div>
+      <div class="box">
         <h3>Pending images <span id="imgCount"></span></h3>
         <div id="pendingImgs" class="small">None. Images you add to articles wait here (in this browser) until you Publish.</div>
         <p class="small">On Publish, pending images upload to the site's <code>images</code> folder first,
@@ -236,12 +271,14 @@ function seed(){
   const cats = window.PLAYER_DATA.categories;
   const arts = [...window.PLAYER_DATA.articles, ...window.DM_DATA.articles];
   const tl = [...window.PLAYER_DATA.timeline, ...(window.DM_DATA.timeline || [])];
-  return { categories: cats, articles: arts, timeline: tl };
+  const sb = [...(window.PLAYER_DATA.statblocks || []), ...(window.DM_DATA.statblocks || [])];
+  return { categories: cats, articles: arts, timeline: tl, statblocks: sb };
 }
 function load(){
   try { const raw = localStorage.getItem(KEY); db = raw ? JSON.parse(raw) : seed(); }
   catch(e){ db = seed(); }
   if (!Array.isArray(db.timeline)) db.timeline = [];
+  if (!Array.isArray(db.statblocks)) db.statblocks = [];
 }
 function persist(){
   localStorage.setItem(KEY, JSON.stringify(db));
@@ -335,8 +372,109 @@ function tlDel(){
   db.timeline = db.timeline.filter(x => x.id !== tlSelId);
   tlSelId = null; persist(); tlClear();
 }
+// ---- Categories manager ----
+let catSelId = null;
+function renderCatMgr(){
+  const items = db.categories.slice().sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  document.getElementById("catList").innerHTML = items.map(c => {
+    const n = db.articles.filter(a => a.categoryId === c.id).length;
+    return `<div class="row ${c.id===catSelId?'sel':''}" onclick="catSelect(${c.id})">
+      <div class="t">${esc(c.name)}</div>
+      <div class="m">${n} article${n === 1 ? "" : "s"} · order ${c.sortOrder ?? ""}</div>
+    </div>`;
+  }).join("") || '<p class="small">No categories yet.</p>';
+}
+function catSelect(id){
+  const c = db.categories.find(x => x.id === id); if (!c) return;
+  catSelId = id;
+  document.getElementById("cat-name").value = c.name || "";
+  document.getElementById("cat-desc").value = c.description || "";
+  document.getElementById("cat-sort").value = c.sortOrder ?? "";
+  renderCatMgr();
+}
+function catClear(){
+  catSelId = null;
+  document.getElementById("cat-name").value = "";
+  document.getElementById("cat-desc").value = "";
+  document.getElementById("cat-sort").value = db.categories.length ? Math.max(...db.categories.map(c => c.sortOrder || 0)) + 1 : 1;
+  renderCatMgr();
+}
+function catSave(){
+  const name = document.getElementById("cat-name").value.trim();
+  if (!name) { alert("Give the category a name first."); return; }
+  const sortVal = parseFloat(document.getElementById("cat-sort").value);
+  const data = {
+    name,
+    description: document.getElementById("cat-desc").value.trim(),
+    sortOrder: Number.isFinite(sortVal) ? sortVal : (db.categories.length ? Math.max(...db.categories.map(c => c.sortOrder || 0)) + 1 : 1)
+  };
+  if (catSelId) Object.assign(db.categories.find(c => c.id === catSelId), data);
+  else { data.id = Math.max(0, ...db.categories.map(c => c.id)) + 1; db.categories.push(data); catSelId = data.id; }
+  persist(); fillCats(); renderList(); renderCatMgr();
+}
+function catDel(){
+  if (!catSelId) { alert("Select a category first."); return; }
+  const c = db.categories.find(x => x.id === catSelId); if (!c) return;
+  const others = db.categories.filter(x => x.id !== catSelId).sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const mine = db.articles.filter(a => a.categoryId === catSelId);
+  if (mine.length && !others.length) { alert("This is the only category and it still has articles — move them or add another category first."); return; }
+  const msg = mine.length
+    ? `Delete category "${c.name}"? Its ${mine.length} article(s) will move into "${others[0].name}".`
+    : `Delete category "${c.name}"?`;
+  if (!confirm(msg)) return;
+  if (mine.length) mine.forEach(a => a.categoryId = others[0].id);
+  db.categories = db.categories.filter(x => x.id !== catSelId);
+  catSelId = null; persist(); fillCats(); renderList(); catClear();
+}
+// ---- Statblocks manager ----
+let sbSelId = null;
+function renderSbMgr(){
+  const items = db.statblocks.slice().sort((a,b) => a.name.localeCompare(b.name));
+  document.getElementById("sbList").innerHTML = items.map(s => `
+    <div class="row ${s.id===sbSelId?'sel':''}" onclick="sbSelect(${s.id})">
+      <div class="t">${esc(s.name)}</div>
+      <div class="m">${s.visibility === 'player' ? 'players' : 'DM only'} · ${(s.rows || []).length} stats</div>
+    </div>`).join("") || '<p class="small">No statblocks yet.</p>';
+}
+function sbSelect(id){
+  const s = db.statblocks.find(x => x.id === id); if (!s) return;
+  sbSelId = id;
+  document.getElementById("sb-name").value = s.name || "";
+  document.getElementById("sb-vis").value = s.visibility === "player" ? "player" : "dm_only";
+  document.getElementById("sb-rows").value = (s.rows || []).map(r => r.label + ": " + r.value).join("\n");
+  renderSbMgr();
+}
+function sbClear(){
+  sbSelId = null;
+  document.getElementById("sb-name").value = "";
+  document.getElementById("sb-vis").value = "player";
+  document.getElementById("sb-rows").value = "";
+  renderSbMgr();
+}
+function sbSave(){
+  const name = document.getElementById("sb-name").value.trim();
+  if (!name) { alert("Give the statblock a name first."); return; }
+  const rows = document.getElementById("sb-rows").value.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+    const i = l.indexOf(":");
+    return i > 0 ? { label: l.slice(0, i).trim(), value: l.slice(i + 1).trim() } : { label: l, value: "" };
+  });
+  const data = { name, visibility: document.getElementById("sb-vis").value, rows };
+  if (sbSelId) Object.assign(db.statblocks.find(s => s.id === sbSelId), data);
+  else { data.id = Math.max(0, ...db.statblocks.map(s => s.id)) + 1; db.statblocks.push(data); sbSelId = data.id; }
+  persist(); renderSbMgr();
+}
+function sbDel(){
+  if (!sbSelId) { alert("Select a statblock first."); return; }
+  const s = db.statblocks.find(x => x.id === sbSelId);
+  if (!s || !confirm(`Delete statblock "${s.name}"? Articles that embed it will show the plain [sb:...] text instead.`)) return;
+  db.statblocks = db.statblocks.filter(x => x.id !== sbSelId);
+  sbSelId = null; persist(); sbClear();
+}
 function fillCats(){
-  document.getElementById("f-cat").innerHTML = db.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  const sel = document.getElementById("f-cat");
+  const cur = sel.value;
+  sel.innerHTML = db.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if (cur) sel.value = cur;
 }
 function fillTypes(){
   document.getElementById("f-type").innerHTML = TYPES.map(t => `<option>${t}</option>`).join("");
@@ -389,14 +527,14 @@ function save(){
   if (currentImage) data.image = currentImage;
   if (selId) { const t = db.articles.find(a => a.id === selId); if (!currentImage) delete t.image; Object.assign(t, data); }
   else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; db.articles.push(data); selId = data.id; }
-  persist(); renderList(); renderTimeline(); select(selId);
+  persist(); renderList(); renderTimeline(); renderCatMgr(); select(selId);
 }
 function del(){
   if (!selId) return;
   const a = db.articles.find(x => x.id === selId);
   if (!confirm(`Delete "${a.title}"? This only affects this browser until you export.`)) return;
   db.articles = db.articles.filter(x => x.id !== selId); selId = null;
-  persist(); renderTimeline(); newArticle();
+  persist(); renderTimeline(); renderCatMgr(); newArticle();
 }
 function download(name, text){
   const a = document.createElement("a");
@@ -407,14 +545,16 @@ function buildPlayerText(){
   const data = {
     categories: db.categories,
     articles: db.articles.filter(a => a.visibility === "player"),
-    timeline: db.timeline.filter(e => e.visibility === "player")
+    timeline: db.timeline.filter(e => e.visibility === "player"),
+    statblocks: db.statblocks.filter(s => s.visibility === "player")
   };
   return "// Player-safe data — ONLY player-visible content. Generated from the DM Desk.\nwindow.PLAYER_DATA = " + JSON.stringify(data, null, 2) + ";\n";
 }
 function buildDmText(){
   const data = {
     articles: db.articles.filter(a => a.visibility !== "player"),
-    timeline: db.timeline.filter(e => e.visibility !== "player")
+    timeline: db.timeline.filter(e => e.visibility !== "player"),
+    statblocks: db.statblocks.filter(s => s.visibility !== "player")
   };
   return "// DM-only data — lives inside the secret DM folder only. Generated from the DM Desk.\nwindow.DM_DATA = " + JSON.stringify(data, null, 2) + ";\n";
 }
@@ -634,9 +774,9 @@ async function publishToGitHub(){
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
-  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); newArticle();
+  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); refreshTokenUI(); renderPending();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); refreshTokenUI(); renderPending();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
