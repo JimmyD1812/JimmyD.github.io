@@ -36,7 +36,8 @@ window.PLAYER_DATA = {
         "fracture",
         "cosmology"
       ],
-      "pinned": true
+      "pinned": true,
+      "image": "gemini-generated-image-vzzpaxvzzpaxvzzp-01326a2f.jpg"
     },
     {
       "id": 7,
