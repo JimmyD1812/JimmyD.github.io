@@ -137,7 +137,7 @@ window.PLAYER_DATA = {
     },
     {
       "title": "Time",
-      "type": "Generic",
+      "type": "Character",
       "categoryId": 2,
       "visibility": "player",
       "pinned": false,
