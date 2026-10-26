@@ -219,6 +219,15 @@
         </div>
         <p class="small">One record, two faces: the green half is all that ever publishes to players; the red half is written only into dm-data.js.</p>
       </div>
+      <div class="box fold" data-fold="branding">
+        <h3>Site name & footer</h3>
+        <label>Site title (masthead + browser tab)</label>
+        <input type="text" id="s-title" onchange="brandSave()">
+        <label>Footer line</label>
+        <input type="text" id="s-footer" onchange="brandSave()">
+        <p class="small">Shown on the player site. Blank = the "World Codex" defaults. Takes effect when you Publish.</p>
+        <p class="small" id="brandState"></p>
+      </div>
       <div class="box">
         <h3>Publish</h3>
         <p class="small" style="margin-top:0"><strong>Pending images <span id="imgCount"></span></strong></p>
@@ -337,7 +346,10 @@ function seed(){
   const npcMap = {};
   (window.PLAYER_DATA.npcs || []).forEach(n => { npcMap[n.id] = n; });
   (window.DM_DATA.npcs || []).forEach(n => { npcMap[n.id] = n; }); // full DM records win over public projections
-  return { categories: cats, articles: arts, timeline: tl, statblocks: sb, npcs: Object.values(npcMap) };
+  const settings = Object.assign(
+    { siteTitle: "World Codex", footerText: "World Codex — kept by the DM, shared with the party." },
+    window.PLAYER_DATA.settings || {});
+  return { categories: cats, articles: arts, timeline: tl, statblocks: sb, npcs: Object.values(npcMap), settings };
 }
 function load(){
   try { const raw = localStorage.getItem(KEY); db = raw ? JSON.parse(raw) : seed(); }
@@ -345,6 +357,7 @@ function load(){
   if (!Array.isArray(db.timeline)) db.timeline = [];
   if (!Array.isArray(db.statblocks)) db.statblocks = [];
   if (!Array.isArray(db.npcs)) db.npcs = [];
+  if (!db.settings) db.settings = { siteTitle: "World Codex", footerText: "World Codex — kept by the DM, shared with the party." };
 }
 function persist(){
   localStorage.setItem(KEY, JSON.stringify(db));
@@ -529,6 +542,17 @@ function npcDel(){
   if (!n || !confirm(`Delete NPC "${n.name}"?`)) return;
   db.npcs = db.npcs.filter(x => x.id !== npcSelId);
   npcSelId = null; persist(); npcClear();
+}
+// ---- Site branding (player-site masthead + footer) ----
+function brandFill(){
+  document.getElementById("s-title").value = db.settings.siteTitle || "";
+  document.getElementById("s-footer").value = db.settings.footerText || "";
+}
+function brandSave(){
+  db.settings.siteTitle = document.getElementById("s-title").value.trim();
+  db.settings.footerText = document.getElementById("s-footer").value.trim();
+  persist();
+  document.getElementById("brandState").textContent = "Saved in this browser — Publish to make it live.";
 }
 // ---- Collapsible sections (left column; state remembered per browser) ----
 const FOLD_KEY = "game-dm-folds";
@@ -718,6 +742,7 @@ function download(name, text){
 }
 function buildPlayerText(){
   const data = {
+    settings: db.settings,
     categories: db.categories,
     articles: db.articles.filter(a => a.visibility === "player"),
     timeline: db.timeline.filter(e => e.visibility === "player"),
@@ -956,9 +981,9 @@ async function publishToGitHub(){
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
-  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); newArticle();
+  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); brandFill(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); initFolds();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
