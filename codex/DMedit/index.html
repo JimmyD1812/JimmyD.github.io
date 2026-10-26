@@ -284,7 +284,7 @@
         <button type="button" class="ghost" onclick="clearCover()">Remove cover</button>
       </div>
       <input type="file" id="coverFile" accept="image/*" style="display:none" onchange="onCoverChosen(this)">
-      <label>Body — link to other articles with [[Exact Title]]</label>
+      <label>Body — link with [[Exact Title]], or [[Exact Title|any display text]] (e.g. [[Patrons|Patron]])</label>
       <textarea id="f-body" rows="16"></textarea>
       <div class="btnrow">
         <button type="button" class="ghost" onclick="document.getElementById('bodyImgFile').click()">Insert image into body…</button>
@@ -382,7 +382,7 @@ function renderTodo(){
   const titles = new Set(db.articles.map(a => a.title));
   const missing = new Set();
   db.articles.forEach(a => (a.body.match(/\[\[([^\]]+)\]\]/g) || []).forEach(m => {
-    const t = m.slice(2, -2); if (!titles.has(t)) missing.add(t);
+    const t = m.slice(2, -2).split("|")[0].trim(); if (!titles.has(t)) missing.add(t);
   }));
   document.getElementById("todo").innerHTML = missing.size
     ? [...missing].map(t => `• <a href="#" onclick="newArticle('${esc(t)}');return false">${esc(t)}</a>`).join("<br>")
