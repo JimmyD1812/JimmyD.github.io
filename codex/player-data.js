@@ -27,7 +27,7 @@ window.PLAYER_DATA = {
       "type": "Myth",
       "categoryId": 2,
       "summary": "In the beginning there was nothing but twin gods, Order and Chaos. Their cooperation created the universe, the world, and life - and shattered them.",
-      "body": "In the beginning there was nothing except twin siblings: [[Vaelos]] and [[Khavos]] aka the aspects of order and chaos.\n\n[[Vaelos]] attempted to create life, it was a timeless, beautiful and idyllic realm full of perfect geology, but nothing was alive in it. Life proved to be more chaotic than they could wrap their mind around. \n\n[[Khavos]], eager to prove they were the superior sibling, made a primal realm where all time existed at once, where void and light are in constant conflict, where opposites exist in the same space, and where fleshy mounds of biological goo heaved and pulsed, it was flesh without form and growth without pattern — it moved, but it did not live. Life required more systemic order than they could provide.\n\nDisappointed in their solo attempts, the siblings cooperated on the next attempt and created the universe, the world, and countless souls with their own will. But cooperating merged them into one [[United Being]]. Its creation succeeded — but the Being was too unstable to hold together, and within seconds it began to fracture. The first piece to break away was [[Time]], and it had to be: only once Time existed could anything happen one moment after another. Piece after piece followed in sequence, and thus the [[Shards]] came into being.\n\nWhat remains of that [[United Being]] still sits at the core of the world now after finding [[Equilibrium]], broken-off shards scattered from it, and it is the source of all magic.\n\nFrom the fracturing came a pantheon: aspects of the natural world such as [[Time]], [[Light and Dark]], and other [[Elementals]]. The [[Patrons]] of the [[Races]], and a shard of divinity down to the smallest [[Nature Spirit]] — each with its own personality and goals, sometimes cooperating, sometimes in conflict.\n\nThe sibling's first realms never went away. [[Aethelis, the Unchanging]] and [[Khavora, the Maelstrom Womb]] still exist, and they are the only two destinations for the dead. See [[The Two Afterlives]].",
+      "body": "In the beginning there was nothing except twin siblings: [[Vaelos]] and [[Khavos]] aka the aspects of order and chaos.\n\n[[Vaelos]] attempted to create life, it was a timeless, beautiful and idyllic realm full of perfect geology, but nothing was alive in it. Life proved to be more chaotic than they could wrap their mind around. \n\n[[Khavos]], eager to prove they were the superior sibling, made a primal realm where all time existed at once, where void and light are in constant conflict, where opposites exist in the same space, and where fleshy mounds of biological goo heaved and pulsed, it was flesh without form and growth without pattern — it moved, but it did not live. Life required more systemic order than they could provide.\n\nDisappointed in their solo attempts, the siblings cooperated on the next attempt and created the universe, the world, and countless souls with their own will. But cooperating merged them into one [[United Being]]. Its creation succeeded — but the Being was too unstable to hold together, and within seconds it began to fracture. The first piece to break away was [[Time]], and it had to be: only once Time existed could anything happen one moment after another. Piece after piece followed in sequence, and thus the [[Shards]] came into being.\n\nWhat remains of that [[United Being]] still sits at the core of the world now after finding [[Equilibrium]], broken-off shards scattered from it, and it is the source of all magic.\n\nFrom the fracturing came a pantheon of gods: patron gods of the [[Races]], aspects of the natural world such as [[Time]], [[Light and Dark]], a shard of divinity for each of the four [[Elements]] and minor shards down to the smallest local river spirit — each with its own personality and goals, sometimes cooperating, sometimes in conflict.\n\nThe sibling's first realms never went away. [[Aethelis, the Unchanging]] and [[Khavora, the Maelstrom Womb]] still exist, and they are the only two destinations for the dead. See [[The Two Afterlives]].",
       "visibility": "player",
       "tags": [
         "creation",
@@ -92,8 +92,8 @@ window.PLAYER_DATA = {
       "title": "Shards",
       "type": "Natural Law",
       "categoryId": 3,
-      "summary": "When the United Being fractured, its pieces became shards; aspects and powers of the world, ranked from Time down to Nature Spirits.",
-      "body": "The fragments of the fractured [[United Being]] are called shards.\n\nThe United being created the world and souls. The shards gathered that soul power and formed the races of the world in their own image. The main being still remains at the core of the world, and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]]: the first and only major shard.\n2. [[Light and Dark]]: paired shards, twice as powerful as the other Elementals.\n3. The [[Elementals]]: [[Libris]], [[Air]], [[Water]], [[Fire]].\n4. The [[Patrons]] of the races.\n5. [[Nature Spirits]]: minor shards that align themselves with the Elementals e.g. local mountains, rivers, forests.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun.\n\nSee [[The Creation: The Twins and the Fracture]].",
+      "summary": "When the United Being fractured, its pieces became shards: the powers standing behind the world's aspects, ranked from Time down to Nature Spirits. Mortals rarely meet a shard itself — only its power.",
+      "body": "The fragments of the fractured [[United Being]] are called shards. Each shard is a being in its own right, with its own personality and its own goals for the world — and each one is the power behind some aspect of it.\n\nA shard is not the thing it rules. Every fire burns by the power of [[Fire]], but no single flame is the Fire shard. Every breeze moves by the power of [[Air]], but the wind that hits your face is not the Air shard itself. The rock of the world's shell endures by the power of [[Libris]] - which is why the world bears that shard's name - but breaking a stone does not wound Libris, and dousing a flame does not diminish Fire. Mortals never touch a shard itself. They only ever deal with its power, which is everywhere its aspect is found.\n\nWhat sets a great shard above a small one is scope. An Elemental stands behind every instance of its kind in the world. A [[Nature Spirit]] stands behind one particular place — this mountain, this river, this forest — and aligns itself with the greater power whose aspect it shares.\n\nThe [[United Being]] created the world and souls. The shards known as [[Patrons]] gathered that soul power and formed the races of the world in their own image. What remained of the United Being still rests at the core of the world as [[Equilibrium]], and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]]: the first shard to break away, and the only major shard.\n2. [[Light and Dark]]: Elements themselves, but so conjoined a pair that they are ranked together, above the other Elementals — their power is combined.\n3. The [[Elements]]: [[Libris]], [[Air]], [[Water]], [[Fire]].\n4. The [[Patrons]] of the races.\n5. [[Nature Spirits]]: minor shards that align themselves with the Elementals, e.g. local mountains, rivers, forests.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun.\n\nSee [[The Creation: The Twins and the Fracture]].",
       "visibility": "player",
       "tags": [
         "shards",
@@ -109,8 +109,8 @@ window.PLAYER_DATA = {
       "title": "Aethelis, the Unchanging",
       "type": "Location",
       "categoryId": 1,
-      "summary": "The timeless, static, beautiful realm made by Vaelos before the world — and one of the only two destinations for the dead.",
-      "body": "Aethelis, the Unchanging, is the realm [[Vaelos]] made when Order stood alone in the nothingness: timeless, static, beautiful and idyllic — and, when they made it, empty of life.\n\nAethelis was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. [[Elves]] revere Aethelis as the good destination: in the Unchanging, they can become their perfect selves.",
+      "summary": "The timeless, static, beautiful realm made by Vaelos before the world - and one of the only two destinations for the dead.",
+      "body": "Aethelis, the Unchanging, is the realm [[Vaelos]] made when Order stood alone in the nothingness: timeless, static, beautiful and idyllic; and, when they made it, empty of life.\n\nAethelis was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. [[Elves]] revere Aethelis as the good destination: in the Unchanging, they can become their perfect selves.",
       "visibility": "player",
       "tags": [
         "realm",
@@ -126,8 +126,8 @@ window.PLAYER_DATA = {
       "title": "Khavora, the Maelstrom Womb",
       "type": "Location",
       "categoryId": 1,
-      "summary": "The primal realm made by Khavos before the world, where all time exists at once — and one of the only two destinations for the dead.",
-      "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist.\n\nKhavora was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. [[Orcs]] revere Khavora as the good destination: in the Maelstrom Womb, they can fight forever.",
+      "summary": "The primal realm made by Khavos before the world, where all time exists at once - and one of the only two destinations for the dead.",
+      "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist.\n\nKhavora was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. Orcs revere Khavora as the good destination: in the Maelstrom Womb, they can fight forever.",
       "visibility": "player",
       "tags": [
         "realm",
@@ -230,6 +230,18 @@ window.PLAYER_DATA = {
       "articleId": 1
     }
   ],
-  "statblocks": [],
+  "statblocks": [
+    {
+      "name": "Khavos",
+      "visibility": "player",
+      "rows": [
+        {
+          "label": "HP",
+          "value": "-1"
+        }
+      ],
+      "id": 1
+    }
+  ],
   "npcs": []
 };
