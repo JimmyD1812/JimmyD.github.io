@@ -35,6 +35,9 @@
   article.reader .meta{color:var(--muted);margin-bottom:14px}
   article.reader .summary{font-style:italic;font-size:1.08rem;border-left:3px solid var(--brass);padding-left:12px;margin:0 0 18px;color:#4a3d2c}
   article.reader .body p{line-height:1.65;margin:0 0 14px;white-space:pre-wrap}
+  .cover-img{display:block;width:100%;max-height:420px;object-fit:cover;border:1px solid var(--line);border-radius:8px;margin:0 0 16px}
+  .body-img{display:block;max-width:100%;border:1px solid var(--line);border-radius:8px;margin:6px auto}
+  .card-img{display:block;width:100%;height:150px;object-fit:cover;border-radius:6px;margin-bottom:8px}
   a.xlink{color:var(--brass-dark);text-decoration:none;border-bottom:1px dotted var(--brass);cursor:pointer}
   a.xlink:hover{color:var(--ink)}
   .back{background:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;margin-bottom:14px}
@@ -117,9 +120,15 @@ const catName = id => (DATA.categories.find(c => c.id === id) || {}).name || "Un
 let activeCat = null, activeTag = null;
 
 function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+const IMG_FILE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*\.(jpg|jpeg|png|gif|webp)$/i;
 function linkify(text){
   return esc(text).replace(/\[\[([^\]]+)\]\]/g, (m, t) =>
     byTitle[t] ? `<a class="xlink" onclick="openArticle(${byTitle[t].id})">${esc(t)}</a>` : esc(t));
+}
+function imgify(html){
+  // [img:filename] tokens (written by the DM Desk) become images from images/
+  return html.replace(/\[img:([^\]]+)\]/g, (m, name) =>
+    IMG_FILE.test(name.trim()) ? `<img class="body-img" src="images/${name.trim()}" alt="">` : esc(m));
 }
 function showTab(name){
   ["articles","timeline","dice"].forEach(t => {
@@ -166,6 +175,7 @@ function renderList(){
   const items = filtered();
   el.innerHTML = items.length ? items.map(a => `
     <div class="card" onclick="openArticle(${a.id})">
+      ${a.image && IMG_FILE.test(a.image) ? `<img class="card-img" src="images/${a.image}" alt="">` : ''}
       ${a.pinned ? '<div class="pin">★ Featured</div>' : ''}
       <h4>${esc(a.title)}</h4>
       <div class="meta">${esc(a.type)} · ${esc(catName(a.categoryId))}</div>
@@ -181,8 +191,9 @@ function openArticle(id){
     <article class="reader">
       <h2>${esc(a.title)}</h2>
       <div class="meta">${esc(a.type)} · ${esc(catName(a.categoryId))} · ${a.tags.map(t => `<span class="tag" onclick="setTag('${esc(t)}');renderList()">${esc(t)}</span>`).join(" ")}</div>
+      ${a.image && IMG_FILE.test(a.image) ? `<img class="cover-img" src="images/${a.image}" alt="">` : ''}
       <p class="summary">${esc(a.summary)}</p>
-      <div class="body">${a.body.split(/\n\s*\n/).map(p => `<p>${linkify(p)}</p>`).join("")}</div>
+      <div class="body">${a.body.split(/\n\s*\n/).map(p => `<p>${imgify(linkify(p))}</p>`).join("")}</div>
     </article>`;
   window.scrollTo(0, 0);
 }
