@@ -60,8 +60,8 @@ window.PLAYER_DATA = {
       "title": "Vaelos",
       "type": "Character",
       "categoryId": 3,
-      "summary": "Vaelos is Order — one of the twin brothers who stood alone in the nothingness before creation, and maker of Aethelis, the Unchanging.",
-      "body": "Vaelos is Order, twin brother of [[Khavos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Vaelos made [[Aethelis, the Unchanging]]: a timeless, static, beautiful, idyllic realm — perfect, and completely empty of life. Order alone could not create life.\n\nWhen the brothers finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nVaelos's first realm endures. Aethelis is one of only two destinations for the dead — see [[The Two Afterlives]] — and the elves hold it to be the good one: there, they can become their perfect selves.",
+      "summary": "Vaelos is Order — one of the twins who stood alone in the nothingness before creation, and maker of Aethelis, the Unchanging.",
+      "body": "Vaelos is Order, twin of [[Khavos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Vaelos made [[Aethelis, the Unchanging]]: a timeless, static, beautiful, idyllic realm — perfect, and completely empty of life. Order alone could not create life.\n\nWhen the siblings finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nVaelos's first realm endures. Aethelis is one of only two destinations for the dead — see [[The Two Afterlives]] — and the elves hold it to be the good one: there, they can become their perfect selves.",
       "visibility": "player",
       "tags": [
         "order",
@@ -76,8 +76,8 @@ window.PLAYER_DATA = {
       "title": "Khavos",
       "type": "Character",
       "categoryId": 3,
-      "summary": "Khavos is Chaos — one of the twin brothers who stood alone in the nothingness before creation, and maker of Khavora, the Maelstrom Womb.",
-      "body": "Khavos is Chaos, twin brother of [[Vaelos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Khavos made [[Khavora, the Maelstrom Womb]]: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist. For all its wildness, Chaos alone could not create life either.\n\nWhen the brothers finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nKhavos's first realm endures. Khavora is one of only two destinations for the dead — see [[The Two Afterlives]] — and the orcs hold it to be the good one: there, they can fight forever.",
+      "summary": "Khavos is Chaos — one of the twins who stood alone in the nothingness before creation, and maker of Khavora, the Maelstrom Womb.",
+      "body": "Khavos is Chaos, twin of [[Vaelos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Khavos made [[Khavora, the Maelstrom Womb]]: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist. For all its wildness, Chaos alone could not create life either.\n\nWhen the siblings finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nKhavos's first realm endures. Khavora is one of only two destinations for the dead — see [[The Two Afterlives]] — and the orcs hold it to be the good one: there, they can fight forever.",
       "visibility": "player",
       "tags": [
         "chaos",
