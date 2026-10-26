@@ -29,5 +29,6 @@ window.DM_DATA = {
       "id": 12
     }
   ],
-  "timeline": []
+  "timeline": [],
+  "statblocks": []
 };
