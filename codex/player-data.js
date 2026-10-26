@@ -202,7 +202,8 @@ window.PLAYER_DATA = {
       "summary": "The third and only creation to bear life: Libris to scholars, The Cradle to common folk - a world in the overlap between order and chaos, built around the sleeping Equilibrium.",
       "body": "Libris: known to most mortals in the common tongue simply as The Cradle, it is the third and only creation to bear life. Born from the union of [[Vaelos]] and [[Khavos]], it is a world built around the slumbering form of [[Equilibrium]] and shaped by the countless [[Shards]] that broke away in the first seconds of its existence.\n\nWhere [[Aethelis, the Unchanging]] had too much order to permit life, and [[Khavora, the Maelstrom Womb]] had too much chaos to sustain it, Libris exists in the narrow, fragile margin between the two.\n\nHow a mortal refers to the world usually tells you how they view their place in it:\n\nLibris is the name used by historians, astronomers, high priests, and arcane scholars. It honors the world as a mathematical and metaphysical triumph: the exact point where static perfection and primal fury met in harmony.\n\nThe Cradle is what sailors, farmers, miners, and cynical mercenaries call the ground beneath their boots. Every child grows up hearing that Equilibrium sleeps at the center of Libris, and common wisdom bequeathed by [[Shards]] holds no illusions about what the world actually is: a shell of stone and dirt holding a sleeping core of a god. As the old tavern saying goes: \"Tread lightly on the Cradle, lest you wake the child.\"",
       "tags": [],
-      "id": 13
+      "id": 13,
+      "image": "gemini-generated-image-17ye6a17ye6a17ye-da8849f8.jpg"
     }
   ],
   "timeline": [
