@@ -92,8 +92,8 @@ window.PLAYER_DATA = {
       "title": "Shards",
       "type": "Natural Law",
       "categoryId": 3,
-      "summary": "When the United being fractured, its pieces became shards — the gods and powers of the world, ranked from Time down to local spirits.",
-      "body": "The fragments of the fractured United being are called shards.\n\nThe United being created the world and souls. The shards gathered that soul power and formed the races of the world in their own image. The main being still remains at the core of the world, and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]] — The first shard to break away, the most powerful, untamable. Time enforces the steady pace forward, regardless the cost.\n2. The elemental shards.\n3. The patron gods of the races.\n4. Local spirits.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun.\n\nSee [[The Creation: The Twins and the Fracture]].",
+      "summary": "When the United Being fractured, its pieces became shards; aspects and powers of the world, ranked from Time down to Nature Spirits.",
+      "body": "The fragments of the fractured [[United Being]] are called shards.\n\nThe United being created the world and souls. The shards gathered that soul power and formed the races of the world in their own image. The main being still remains at the core of the world, and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]]: the first and only major shard.\n2. [[Light and Dark]]: paired shards, twice as powerful as the other Elementals.\n3. The [[Elementals]]: [[Libris]], [[Air]], [[Water]], [[Fire]].\n4. The [[Patrons]] of the races.\n5. [[Nature Spirits]]: minor shards that align themselves with the Elementals e.g. local mountains, rivers, forests.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun.\n\nSee [[The Creation: The Twins and the Fracture]].",
       "visibility": "player",
       "tags": [
         "shards",
@@ -175,6 +175,30 @@ window.PLAYER_DATA = {
       ],
       "id": 11,
       "image": "gemini-generated-image-qa8qijqa8qijqa8q-4c8f18a9.jpg"
+    },
+    {
+      "title": "United Being",
+      "type": "Character",
+      "categoryId": 3,
+      "visibility": "player",
+      "pinned": false,
+      "summary": "",
+      "body": "For a mere moment the siblings [[Khavos]] and [[Vaelos]] formed the United Being and created everything in a flash of existence. See [[The Creation: The Twins and the Fracture]]",
+      "tags": [
+        "united being"
+      ],
+      "id": 12
+    },
+    {
+      "title": "The world of Libris",
+      "type": "Location",
+      "categoryId": 1,
+      "visibility": "player",
+      "pinned": false,
+      "summary": "",
+      "body": "Libris: known to most mortals in the common tongue simply as The Cradle, it is the third and only creation to bear life. Born from the union of [[Vaelos]] and [[Khavos]], it is a world built around the slumbering form of [[Equilibrium]] and shaped by the countless [[Shards]] that broke away in the first seconds of its existence.\n\nWhere [[Aethelis, the Unchanging]] had too much order to permit life, and [[Khavora, the Maelstrom Womb]] had too much chaos to sustain it, Libris exists in the narrow, fragile margin between the two.\n\nHow a mortal refers to the world usually tells you how they view their place in it:\n\nLibris is the name used by historians, astronomers, high priests, and arcane scholars. It honors the world as a mathematical and metaphysical triumph: the exact point where static perfection and primal fury met in harmony.\n\nThe Cradle is what sailors, farmers, miners, and cynical mercenaries call the ground beneath their boots. Every child grows up hearing that Equilibrium sleeps at the center of Libris, and common wisdom bequeathed by [[Shards]] holds no illusions about what the world actually is: a shell of stone and dirt holding a sleeping core of a god. As the old tavern saying goes: \"Tread lightly on the Cradle, lest you wake the child.\"",
+      "tags": [],
+      "id": 13
     }
   ],
   "timeline": [
@@ -206,5 +230,17 @@ window.PLAYER_DATA = {
       "articleId": 1
     }
   ],
-  "statblocks": []
+  "statblocks": [
+    {
+      "name": "Khavos",
+      "visibility": "player",
+      "rows": [
+        {
+          "label": "HP",
+          "value": "-1"
+        }
+      ],
+      "id": 1
+    }
+  ]
 };
