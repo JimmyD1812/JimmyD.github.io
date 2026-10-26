@@ -230,18 +230,6 @@ window.PLAYER_DATA = {
       "articleId": 1
     }
   ],
-  "statblocks": [
-    {
-      "name": "Khavos",
-      "visibility": "player",
-      "rows": [
-        {
-          "label": "HP",
-          "value": "-1"
-        }
-      ],
-      "id": 1
-    }
-  ],
+  "statblocks": [],
   "npcs": []
 };
