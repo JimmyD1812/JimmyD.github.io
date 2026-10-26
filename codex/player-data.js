@@ -118,7 +118,8 @@ window.PLAYER_DATA = {
         "afterlife",
         "plane"
       ],
-      "pinned": false
+      "pinned": false,
+      "image": "gemini-generated-image-668ibx668ibx668i-0665c633.jpg"
     },
     {
       "id": 3,
@@ -134,7 +135,8 @@ window.PLAYER_DATA = {
         "afterlife",
         "plane"
       ],
-      "pinned": false
+      "pinned": false,
+      "image": "gemini-generated-image-8k0npy8k0npy8k0n-4a404362.jpg"
     },
     {
       "title": "Time",
@@ -145,7 +147,8 @@ window.PLAYER_DATA = {
       "summary": "",
       "body": "The first shard to break away from the [[United Being]] — and the largest, apart from the leftover [[Equilibrium]] at the core of the world. Time's separation is what let the rest of the fracture unfold in sequence rather than all at once. Although many foolish magic users have tried, Time is untamable.",
       "tags": [],
-      "id": 9
+      "id": 9,
+      "image": "gemini-generated-image-ne8n41ne8n41ne8n-b1124946.jpg"
     },
     {
       "title": "Light and Dark",
@@ -156,7 +159,8 @@ window.PLAYER_DATA = {
       "summary": "Light and Dark are two separate shards who are never apart, served by a single shared church — whose priests argue endlessly over which of the two is stronger.",
       "body": "Light and Dark are two separate [[Shards]], but they are never apart. Where Light goes, Dark is right behind; where Dark settles, Light is already pressing at its edges. Whether they broke away from the [[United Being]] already paired, or found each other in the first moments after the fracture, no one knows, the two tell the story differently, and both versions are preached as fact.\n\nNeither is good, and neither is evil, whatever mortals assume. Light reveals, warms, and grows, and it also blinds, burns, and withers. Dark hides, cools, and rests and it also conceals the knife and the rot. As with all things, the races call whichever one serves them good.\n\nThe two share a single church, the only faith that serves two shards under one roof. Its temples hold services at dawn and at dusk, in the same hall, and its founding teaching is the pairing itself: \"For how can there be light without the darkness right behind?\"\n\nBut sharing a church has not made its priests agree. Some lean toward the Light, preaching that it is the stronger of the two; that a single flame drives back a whole room of darkness, and Dark is only ever the space Light has not reached yet. Others lean toward the Dark, preaching that it is the older, vaster, more patient power; that every light ever lit has eventually gone out, and the Dark was there before each one and remained after. The church holds both doctrines. Barely.\n\nThe one teaching both sides defend together: that either could exist without the other is heresy.",
       "tags": [],
-      "id": 10
+      "id": 10,
+      "image": "gemini-generated-image-ybgjfbybgjfbybgj-ab6e1066.jpg"
     },
     {
       "title": "Equilibrium",
@@ -198,5 +202,6 @@ window.PLAYER_DATA = {
       "visibility": "player",
       "articleId": 1
     }
-  ]
+  ],
+  "statblocks": []
 };
