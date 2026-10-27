@@ -49,7 +49,7 @@ window.PLAYER_DATA = {
       "type": "Myth",
       "categoryId": 2,
       "summary": "There are only two places the dead can go — Aethelis or Khavora — and which one counts as heaven depends entirely on who you ask.",
-      "body": "[[Aethelis, the Unchanging|Aethelis]], and [[Khavora, the Maelstrom Womb|Khavora]] still exist, they are the only two afterlife destinations.\n\nGood and evil are not objective facts of the universe. They are labels the [[Patrons]] use: what benefits the [[Shards|Shard]] gets called good, and what directly opposes them gets called evil. The afterlives are a way to reward the souls that the the Patrons found useful during their lives.\n\nElves call Aethelis the good afterlife, because there they can become their perfect selves. Orcs call Khavora the good afterlife, because there they can fight forever. Both are telling the truth about themselves. \n\nIndividual members of the races that are considered evil by the shards are sent to the other destination where they beg any Shard that will take them to reincarnate them as something else.\n\nSince the moment of fracture time now exists in all three realms and both afterlives run at the same pace as Libris.",
+      "body": "[[Aethelis, the Unchanging|Aethelis]], and [[Khavora, the Maelstrom Womb|Khavora]] still exist, they are the only two afterlife destinations.\n\n\nGood and evil are not objective facts of the universe. They are labels the [[Patrons]] use: what benefits the [[Shards|Shard]] gets called good, and what directly opposes them gets called evil. The afterlives are a way to reward the souls that the the Patrons found useful during their lives.\n\nElves call Aethelis the good afterlife, because there they can become their perfect selves. Orcs call Khavora the good afterlife, because there they can fight forever. Both are telling the truth about themselves. \n\nIndividual members of the races that are considered evil by the shards are sent to the other destination where they beg any Shard that will take them to reincarnate them as something else.\n\nSince the moment of fracture time now exists in all three realms and both afterlives run at the same pace as Libris.",
       "visibility": "player",
       "tags": [
         "afterlife",
@@ -248,18 +248,6 @@ window.PLAYER_DATA = {
       "articleId": 1
     }
   ],
-  "statblocks": [
-    {
-      "name": "Khavos",
-      "visibility": "player",
-      "rows": [
-        {
-          "label": "HP",
-          "value": "-1"
-        }
-      ],
-      "id": 1
-    }
-  ],
+  "statblocks": [],
   "npcs": []
 };
