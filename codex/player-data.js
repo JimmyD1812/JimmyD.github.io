@@ -15,7 +15,7 @@ window.PLAYER_DATA = {
       "id": 1,
       "name": "Realms",
       "description": "Aethelis and Khavora — the first realms, and the only two afterlives.",
-      "sortOrder": 3
+      "sortOrder": 2
     }
   ],
   "articles": [
@@ -124,7 +124,7 @@ window.PLAYER_DATA = {
       "title": "Khavora, the Maelstrom Womb",
       "type": "Location",
       "categoryId": 1,
-      "summary": "The primal realm made by Khavos before the world, where all time exists at once - and one of the only two destinations for the dead.",
+      "summary": "The primal, ever-warring realm made by Khavos before the world - and one of the only two destinations for the dead.",
       "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where opposites coexist, and where void and light still fight over scraps of normalcy.\n\nSince the fracture and the creation of Libris, Khavora is now one of only two places the souls of the dead can go. When [[Time]] was set into motion souls of mortals were transported here by [[Patrons|Patron]] [[Shards]], whether they believe it is heaven or hell is up to them. See [[The Two Afterlives]].\n\nA soul arriving in Khavora is begun again. The Maelstrom takes the dead the way the sea takes a swimmer, all at once and without apology, and what it gives back is raw and strong and hungry. The rewarded dead wake in bodies like the ones they remember, only more so, in a land that wants something from them every hour of every day. Beasts hunt plains that were never tame. Rivers run uphill where the realm feels like arguing with itself. A warrior can die gloriously on a Khavora morning and wake by evening in the warm dark of the Womb, already knitting back together, already angry, already ready.\n\nIt is not all war. There are feasts that last for days, and hunts that become legends by the second telling. Khavora's dead love as loudly as they fight, and they fight the way other peoples shake hands. A grudge is a form of respect. A scar is a sentence in a story everyone will ask about. What Khavora never offers is rest. Nothing here is allowed to be over. Even peace talks are held at a run, between battles, with weapons in hand, because sitting still too long makes the land itself impatient.\n\n\"Your grandfather is still fighting in Khavora,\" says Urzoth, feast-priest of the Broken Table, at every funeral feast that can afford him. \"So is his grandfather. When you get there, they will move down the bench and put a weapon in your hand. That is not a threat. That is the seating arrangement.\"\n\nFor the souls sent here as a punishment, the realm is a life sentence with no sleep in it. A scholar who spent her life building quiet order will watch her work torn down daily by a world that treats calm as an insult. These are Khavora's beggars, trailing after shards and shouting their cases over the noise, begging to be reincarnated as anything else.\n",
       "visibility": "player",
       "tags": [
