@@ -100,11 +100,10 @@ window.PLAYER_DATA = {
       "body": "The fragments of the fractured [[United Being]] are called shards. Each shard is a being in its own right, with its own personality and its own goals for the world — and each one is the power behind some aspect of it.\n\nA shard is not the thing it rules. Every fire burns by the power of [[Fire]], but no single flame is the Fire shard. Every breeze moves by the power of [[Air]], but the wind that hits your face is not the Air shard itself. The rock of the world's shell endures by the power of [[Libris]] - which is why the world bears that shard's name - but breaking a stone does not wound Libris, and dousing a flame does not diminish Fire. Mortals never touch a shard itself. They only ever deal with its power, which is everywhere its aspect is found.\n\nWhat sets a great shard above a small one is scope. An Element stands behind every instance of its kind in the world. A [[Nature Spirit]] stands behind one particular place — this mountain, this river, this forest — and aligns itself with the greater power whose aspect it shares.\n\nThe [[United Being]] created the world and souls. The [[Patrons|Patron]] shards gathered that souls and formed the races of the world in their own image. What remained of the United Being still rests at the core of the world as [[Equilibrium]], and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]]: the first shard to break away, and the only major shard.\n2. [[Light and Dark]]: Elements themselves, but so conjoined a pair that they are ranked together, above the other Elements — their power is combined.\n3. The [[Elements]]: [[Libris]], [[Air]], [[Water]], [[Fire]].\n4. The [[Patrons]] of the races.\n5. [[Nature Spirits]]: minor shards that align themselves with the Elements, e.g. local mountains, rivers, forests.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun. This gestalt entity channels and directs the power from two shards; Fire and Light.\n\nSee [[The Creation: The Twins and the Fracture]].",
       "visibility": "player",
       "tags": [
-        "shards",
+        "shard",
         "pantheon",
         "magic",
-        "hierarchy",
-        "time"
+        "hierarchy"
       ],
       "pinned": false,
       "image": "gemini-generated-image-cjswaicjswaicjsw-1224223d.jpg"
@@ -149,7 +148,11 @@ window.PLAYER_DATA = {
       "pinned": false,
       "summary": "The first shard to break away from the United Being, and the only major shard — the power behind every moment there has ever been. Time answers to no one.",
       "body": "The first shard to break away from the [[United Being]] — and the largest, apart from the leftover [[Equilibrium]] at the core of the world. Time's separation is what let the rest of the fracture unfold in sequence rather than all at once. Although many foolish magic users have tried, Time is untamable.\n\nTime is, in a sense, the twins' oldest argument settled. In [[Aethelis, the Unchanging]] there was no time at all. In [[Khavora, the Maelstrom Womb]] all time existed at once. Time, the shard, is neither: one moment at a time, in order, each one arriving once and never returning. It is the compromise the whole world runs on — sequence, imposed on simultaneity.\n\nTime's power stands behind every moment that has ever occurred. This is the largest scope of any shard, and it is why Time alone is counted a major shard. The other [[Shards]] act within Time's domain whether they wish to or not — a storm, a tide, a life, a war all take place one moment after another, on Time's terms. Even the sleep of Equilibrium is measured in Time's passing. There is nowhere to stand outside it. Sailors can flee a storm and miners can hide from the sun, but nothing made of the world can hide from the next moment.\n\nBecause of this, there is no time travel. To travel against the sequence is to ask Time to contradict itself, and Time refuses shards and mortals alike, without exception, negotiation, or appeal. What Time permits, on the rarest of occasions, is a correction: when the sequence tangles, Time has been known to let a moment be re-entered so the knot can be undone. Nobody applies for this honor. Time chooses, and the chosen are rarely thanked and never asked twice. The wizards who tried to force the matter instead are remembered as warnings — found aged a hundred years in a doorway, or young at their own funeral, or simply not found at all.\n\nTime has no church, in any ordinary sense. It grants nothing it does not grant to everyone equally — moments — and answers no prayers. What it has instead are keepers: chroniclers, calendar-priests, and recorders who hold that since Time keeps no copies of anything, memory is mortals' work. Every archive, history, and calendar in the world is, whether it knows it or not, an offering laid at Time's feet.\n\nSeers who peer along Time's power report the past clearly and the future as weather — patterns, pressures, likely storms, never certainties. The scholars of the shards believe this is because souls were made with wills of their own, and the future is the one thing genuinely not yet written. If that is true, then not even Time knows how the story ends.\n\nEverything that has ever happened, happened inside Time's power — including the fracture itself. Everything still to come will arrive the same way the past did: one moment, in order, exactly when it is time. Including the waking of Equilibrium.",
-      "tags": [],
+      "tags": [
+        "shard",
+        "nature",
+        "major shard"
+      ],
       "id": 9,
       "image": "gemini-generated-image-ne8n41ne8n41ne8n-b1124946.jpg"
     },
@@ -174,7 +177,10 @@ window.PLAYER_DATA = {
       "summary": "What remains of the United Being, sleeping at the core of the world for untold millennia after the exertion of creation — and the source of all magic.",
       "body": "Equilibrium is what remains of the [[United Being]] after the [[Shards]] fractured off of it — not a shard itself, but the core that stayed behind when the pieces scattered. It rests at the center of the world, and it is the source of all magic.\n\nThe exertion of creation exhausted it. Equilibrium has slept at the world's core for untold millennia, recovering, while the shards above shape the world as they see fit. No one knows what it will think of what they have made when it wakes — or whether it will want its pieces back.\n\nMages work their craft by drawing on the dichotomy of order and chaos still held in balance within the sleeping Equilibrium — order to give a spell its form, chaos to give it its power. Whether the sleeper notices the borrowing, no one can say. Some scholars claim ground-quakes are Equilibrium turning in its sleep. The shards, notably, do not laugh at this.\n\nNo church serves Equilibrium. You cannot pray to something asleep — and so the world's faiths belong to the shards, and the one power greater than them all hears none of it.",
       "tags": [
-        "united being"
+        "united being",
+        "sleeping",
+        "source of magic",
+        "deity"
       ],
       "id": 11,
       "image": "gemini-generated-image-qa8qijqa8qijqa8q-4c8f18a9.jpg"
@@ -188,7 +194,9 @@ window.PLAYER_DATA = {
       "summary": "",
       "body": "For a mere moment the siblings [[Khavos]] and [[Vaelos]] formed the United Being and created everything in a flash of existence. See [[The Creation: The Twins and the Fracture]]",
       "tags": [
-        "united being"
+        "equilibrium",
+        "deity",
+        "creation"
       ],
       "id": 12
     },
@@ -200,7 +208,11 @@ window.PLAYER_DATA = {
       "pinned": false,
       "summary": "The third and only creation to bear life: Libris to scholars, The Cradle to common folk - a world in the overlap between order and chaos, built around the sleeping Equilibrium.",
       "body": "Libris: known to most mortals in the common tongue simply as The Cradle, it is the third and only creation to bear life. Born from the union of [[Vaelos]] and [[Khavos]], it is a world built around the slumbering form of [[Equilibrium]] and shaped by the countless [[Shards]] that broke away in the first seconds of its existence.\n\nWhere [[Aethelis, the Unchanging]] had too much order to permit life, and [[Khavora, the Maelstrom Womb]] had too much chaos to sustain it, Libris exists in the narrow, fragile margin between the two.\n\nThe world of Libris was named after [[Libris]] that powers the stone and dirt that surround the sleeping Equilibrium, after the very slow communicating shard divulged this information.\n\nHow a mortal refers to the world usually tells you how they view their place in it:\n\nLibris is the name used by historians, astronomers, high priests, and arcane scholars. It honors the world as a mathematical and metaphysical triumph: the exact point where static perfection and primal fury met in harmony.\n\nThe Cradle is what sailors, farmers, miners, and cynical mercenaries call the ground beneath their boots. Every child grows up hearing that Equilibrium sleeps at the center of Libris, and common wisdom bequeathed by [[Shards]] holds no illusions about what the world actually is: a shell of stone and dirt holding a sleeping core of a god. As the old tavern saying goes: \"Tread lightly on the Cradle, lest you wake the child.\"",
-      "tags": [],
+      "tags": [
+        "world",
+        "realm",
+        "life"
+      ],
       "id": 13,
       "image": "gemini-generated-image-17ye6a17ye6a17ye-da8849f8.jpg"
     },
@@ -212,7 +224,11 @@ window.PLAYER_DATA = {
       "pinned": false,
       "summary": "The shards whose power stands behind the world's foundations — Libris, Air, Water, Fire, and the conjoined pair Light and Dark. Every breath, tide, flame, and stone is an Element at work.",
       "body": "The Elements are the [[Shards]] whose power stands behind the foundations of the world. There are six of them, counted as five: [[Libris]], [[Air]], [[Water]], and [[Fire]], each standing alone — and [[Light and Dark]], who are Elements in their own right but so conjoined a pair that the hierarchy ranks them together, above the other four. Only [[Time]] stands above them.\n\nAn Element's power is behind every instance of its kind, everywhere, all at once. This is what separates the Elements from the [[Nature Spirits]] below them: a spirit stands behind one river, but Water stands behind all water — the river, the rain, the sea, and the cup in a traveler's hand are all the same power at work.\n\nThe world runs on the Elements' cooperation, and suffers from their contention. Rain is Water given passage by Air. A storm at sea is Air and Water in open argument. A volcano is Fire pressing up from below and breaking through the stone of Libris. Given enough centuries, Water wears down mountains — the slowest and oldest disagreement in the world, and one Water is winning.\n\n[[Libris]] is the power behind stone and soil. The world bears its name because the shell that holds the sleeping [[Equilibrium]] endures by Libris' power above all. It is the most patient of the Elements: nothing about stone is in a hurry, and when its power shifts within the ground, mortals feel it as a ground-quake. Miners and farmers, who work closest to it, are careful to stay on its good side - if a shard can be said to have one.\n\n[[Air]] is the power behind wind, weather, and breath. Everything that lives and breathes does so on borrowed Air, taking its power in and giving it back with every breath from the first to the last. A calm day is Air at rest. A hurricane is Air with its attention elsewhere — or on something.\n\n[[Water]] is the power behind the seas, the rivers, and the rain. Water is patient in a different way than stone: it does not resist, it persists. It carved the riverbeds, it fills every low place it is offered, and it remembers every shape it has ever been poured into — or so its priests claim.\n\n[[Fire]] is the power behind flame and heat. It is the one Element mortals can summon themselves: strike the spark, and Fire's power answers, whether it was invited politely or not. Some traditions say the first fire-makers stole that knowledge. Others say Fire taught it, and enjoys being called. A hearth and a wildfire are the same power — separated only by how much of it arrived.\n\n[[Light and Dark]] stand apart from the other four even while counted among them: two Elements, never separated, ranked as a pair above the rest on their combined power. Their church, their argument, and their strange marriage are covered in their own entry. See [[Light and Dark]].\n\nNo mortal is ever outside the Elements' power. You stand on Libris, breathe Air, drink Water, warm yourself by Fire, see by Light, and sleep in Dark — every moment of every life is lived inside the attention of at least three shards. That the Elements rarely notice any single mortal in return is not cruelty. It is scale.",
-      "tags": [],
+      "tags": [
+        "elements",
+        "shards",
+        "nature"
+      ],
       "id": 14,
       "image": "gemini-generated-image-um58w9um58w9um58-b37d258f.jpg"
     }
