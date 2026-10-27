@@ -12,12 +12,6 @@ window.PLAYER_DATA = {
       "sortOrder": 1
     },
     {
-      "id": 3,
-      "name": "The Twins & The Shards",
-      "description": "Vaelos, Khavos, and the pantheon their fracture created.",
-      "sortOrder": 2
-    },
-    {
       "id": 1,
       "name": "Realms",
       "description": "Aethelis and Khavora — the first realms, and the only two afterlives.",
@@ -63,7 +57,7 @@ window.PLAYER_DATA = {
       "id": 2,
       "title": "Vaelos",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "summary": "Vaelos is Order — one of the twins who stood alone in the nothingness before creation, and maker of Aethelis, the Unchanging.",
       "body": "Vaelos is Order, twin of [[Khavos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Vaelos made [[Aethelis, the Unchanging]]: a timeless, static, beautiful, idyllic realm — perfect, and completely empty of life. Order alone could not create life.\n\nWhen the siblings finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nVaelos's first realm endures. Aethelis is one of only two destinations for the dead — see [[The Two Afterlives]] — and the elves hold it to be the good one: there, they can become their perfect selves.",
       "visibility": "player",
@@ -79,7 +73,7 @@ window.PLAYER_DATA = {
       "id": 6,
       "title": "Khavos",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "summary": "Khavos is Chaos — one of the twins who stood alone in the nothingness before creation, and maker of Khavora, the Maelstrom Womb.",
       "body": "Khavos is Chaos, twin of [[Vaelos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Khavos made [[Khavora, the Maelstrom Womb]]: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist. For all its wildness, Chaos alone could not create life either.\n\nWhen the siblings finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nKhavos's first realm endures. Khavora is one of only two destinations for the dead — see [[The Two Afterlives]] — and the orcs hold it to be the good one: there, they can fight forever.",
       "visibility": "player",
@@ -95,7 +89,7 @@ window.PLAYER_DATA = {
       "id": 5,
       "title": "Shards",
       "type": "Natural Law",
-      "categoryId": 3,
+      "categoryId": 2,
       "summary": "When the United Being fractured, its pieces became shards: the powers standing behind the world's aspects, ranked from Time down to Nature Spirits. Mortals rarely meet a shard itself — only its power.",
       "body": "The fragments of the fractured [[United Being]] are called shards. Each shard is a being in its own right, with its own personality and its own goals for the world — and each one is the power behind some aspect of it.\n\nA shard is not the thing it rules. Every fire burns by the power of [[Fire]], but no single flame is the Fire shard. Every breeze moves by the power of [[Air]], but the wind that hits your face is not the Air shard itself. The rock of the world's shell endures by the power of [[Libris]] - which is why the world bears that shard's name - but breaking a stone does not wound Libris, and dousing a flame does not diminish Fire. Mortals never touch a shard itself. They only ever deal with its power, which is everywhere its aspect is found.\n\nWhat sets a great shard above a small one is scope. An Element stands behind every instance of its kind in the world. A [[Nature Spirit]] stands behind one particular place — this mountain, this river, this forest — and aligns itself with the greater power whose aspect it shares.\n\nThe [[United Being]] created the world and souls. The [[Patrons|Patron]] shards gathered that souls and formed the races of the world in their own image. What remained of the United Being still rests at the core of the world as [[Equilibrium]], and it is the source of magic; the shards broke off from it.\n\nThe shards have a hierarchy:\n\n1. [[Time]]: the first shard to break away, and the only major shard.\n2. [[Light and Dark]]: Elements themselves, but so conjoined a pair that they are ranked together, above the other Elements — their power is combined.\n3. The [[Elements]]: [[Libris]], [[Air]], [[Water]], [[Fire]].\n4. The [[Patrons]] of the races.\n5. [[Nature Spirits]]: minor shards that align themselves with the Elements, e.g. local mountains, rivers, forests.\n\nNot every shard became a power. Shards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun. This gestalt entity channels and directs the power from two shards; Fire and Light.\n\nSee [[The Creation: The Twins and the Fracture]].",
       "visibility": "player",
@@ -145,7 +139,7 @@ window.PLAYER_DATA = {
     {
       "title": "Time",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "The first shard to break away from the United Being, and the only major shard — the power behind every moment there has ever been. Time answers to no one.",
@@ -161,7 +155,7 @@ window.PLAYER_DATA = {
     {
       "title": "Light and Dark",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "Light and Dark are two separate shards who are never apart, served by a single shared church — whose priests argue endlessly over which of the two is stronger.",
@@ -177,7 +171,7 @@ window.PLAYER_DATA = {
     {
       "title": "Equilibrium",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "What remains of the United Being, sleeping at the core of the world for untold millennia after the exertion of creation — and the source of all magic.",
@@ -196,12 +190,12 @@ window.PLAYER_DATA = {
     },
     {
       "title": "United Being",
-      "type": "Character",
-      "categoryId": 3,
+      "type": "Myth",
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "",
-      "body": "For a mere moment the siblings [[Khavos]] and [[Vaelos]] formed the United Being and created everything in a flash of existence. See [[The Creation: The Twins and the Fracture]]",
+      "body": "[[Vaelos]] and [[Khavos]] did not mean to become one thing. They meant only to work together, side by side, after each had failed alone. But order and chaos cannot touch without mixing. The priests who tell the story say the merging happened at the exact moment the twins first understood each other from the inside: Order feeling what it was to surge and change, Chaos feeling what it was to hold still and be whole. Understanding was the fusion. What woke up in the nothingness, blinking with two natures at once, was the United Being.\n\nIt could do what neither twin could. Vaelos had never comprehended life, because life was too chaotic. Khavos had never organized it, because life needed more system than chaos could give. The United Being held both halves of the problem at the same time, and the story says it solved the problem the way a lock is solved by the arrival of its key: all at once, and in a flash.\n\nFirst it made room. The universe opened where the nothingness had been, space for things to exist separately from one another and at a distance from the dark.\n\nThen it set the twins' old realms in their places, Aethelis on one side and Khavora on the other, and it built the world at the balance point between them. Priests of the scales teach that this is why the world is called [[The world of Libris|Libris]]: it hangs at the center of the weighing, held level by the two realms pulling against each other, with the United Being's creation resting exactly where the beam comes to rest.\n\nThen it made souls. Not a few, and not carefully: countless souls, and every one of them given a will of its own. This is the deed the storytellers slow down for. Vaelos alone would have made souls perfect and finished, with nothing left to choose. Khavos alone would have made them raw and formless, with nothing to choose with. The United Being made souls that could refuse, wander, fail, and surprise their makers. It made the only things in existence that it could not predict.\n\nIt did not make the races. It did not appoint patrons or arrange the world it had built. Those things came later, and lesser hands did them. The United Being's whole life was the making: a universe, a world, and everyone who would ever live in it.\n\nAnd then, within seconds of its beginning, it came apart. Holding order and chaos in one frame had never been a stable thing to be, and the seams went quickly. [[Time]] broke away first, because until Time existed, even the ending could not happen in order. Piece after piece followed, scattering into the world as the [[Shards]]. The greatest part of the Being sank down into the center of its own creation and came to rest there, and sleeps there still, as [[Equilibrium]], the source of all magic.\n\nHere the story forks, and every faith picks its side. Some priests teach that the United Being broke: that the moment was an accident at the heart of everything, a god that tried to be two things and failed. Others teach that it poured: that in its final instants the Being understood exactly what it was doing, and spent itself on purpose, the way a candle spends itself to light a room. The shards, who were there, have never settled the question in public. What they think it means may be the deepest difference between them.\n\nThe United Being never gave its name, and was finished before anyone thought to ask for one. \"United Being\" is a description mortals invented afterward, for a god they arrived too late to meet. In several faiths the moment is still retold aloud in under a minute, by custom, on the grounds that it deserves no more time than it took. The tellers say the room always goes quiet anyway, and stays quiet a while longer than a minute.",
       "tags": [
         "equilibrium",
         "deity",
@@ -231,7 +225,7 @@ window.PLAYER_DATA = {
     {
       "title": "Elements",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "The shards whose power stands behind the world's foundations — Libris, Air, Water, Fire, and the conjoined pair Light and Dark. Every breath, tide, flame, and stone is an Element at work.",
