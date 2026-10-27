@@ -134,7 +134,7 @@ window.PLAYER_DATA = {
         "khavos"
       ],
       "pinned": false,
-      "image": "gemini-generated-image-8k0npy8k0npy8k0n-4a404362.jpg"
+      "image": "gemini-generated-image-t9nyi8t9nyi8t9ny-d1c274a2.jpg"
     },
     {
       "title": "Time",
