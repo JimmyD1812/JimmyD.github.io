@@ -119,7 +119,8 @@ window.PLAYER_DATA = {
       "tags": [
         "realm",
         "order",
-        "afterlife"
+        "afterlife",
+        "vaelos"
       ],
       "pinned": false,
       "image": "gemini-generated-image-668ibx668ibx668i-0665c633.jpg"
@@ -135,7 +136,8 @@ window.PLAYER_DATA = {
       "tags": [
         "realm",
         "chaos",
-        "afterlife"
+        "afterlife",
+        "khavos"
       ],
       "pinned": false,
       "image": "gemini-generated-image-8k0npy8k0npy8k0n-4a404362.jpg"
@@ -184,7 +186,10 @@ window.PLAYER_DATA = {
         "united being",
         "sleeping",
         "source of magic",
-        "deity"
+        "deity",
+        "conjoined",
+        "khavos",
+        "vaelos"
       ],
       "id": 11,
       "image": "gemini-generated-image-qa8qijqa8qijqa8q-4c8f18a9.jpg"
@@ -201,7 +206,9 @@ window.PLAYER_DATA = {
         "equilibrium",
         "deity",
         "creation",
-        "conjoined"
+        "conjoined",
+        "khavos",
+        "vaelos"
       ],
       "id": 12
     },
