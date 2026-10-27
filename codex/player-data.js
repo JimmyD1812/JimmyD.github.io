@@ -256,7 +256,7 @@ window.PLAYER_DATA = {
       "sortKey": 2,
       "description": "Bored with their own realms, the twins cooperate to create the universe, the world, and life. Cooperating merges them into one unstable United being, which creates the world and souls — then fractures into the shards. What remains of it still sits at the world's core, the source of magic.",
       "visibility": "player",
-      "articleId": 1
+      "articleId": 12
     },
     {
       "id": 3,
@@ -265,7 +265,7 @@ window.PLAYER_DATA = {
       "sortKey": 3,
       "description": "The shards gather souls and form the races of the world in their own image. Shards too small to matter are ejected into the cosmos and become the stars; many conjoined form the sun.",
       "visibility": "player",
-      "articleId": 1
+      "articleId": 5
     }
   ],
   "statblocks": [],
