@@ -115,7 +115,7 @@ window.PLAYER_DATA = {
       "type": "Location",
       "categoryId": 1,
       "summary": "The timeless, static, beautiful realm made by Vaelos before the world - and one of the only two destinations for the dead.",
-      "body": "Aethelis, the Unchanging, is the realm [[Vaelos]] made when Order stood alone in the nothingness: timeless, static, beautiful and idyllic; and, when they made it, empty of life.\n\nAethelis was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. [[Elves]] revere Aethelis as the good destination: in the Unchanging, they can become their perfect selves.",
+      "body": "Aethelis, the Unchanging, is the realm [[Vaelos]] made when Order stood alone in the nothingness: static and unchanging, beautiful and idyllic; and, when they made it, empty of life.\n\nSince the fracture and the creation of Libris, Aethelis is now one of only two places the souls of the dead can go. When [[Time]] was set into motion souls of mortals were transported here by [[Patrons|Patron]] [[Shards]], whether they believe it is heaven or hell is up to them. See [[The Two Afterlives]].\n",
       "visibility": "player",
       "tags": [
         "realm",
@@ -132,7 +132,7 @@ window.PLAYER_DATA = {
       "type": "Location",
       "categoryId": 1,
       "summary": "The primal realm made by Khavos before the world, where all time exists at once - and one of the only two destinations for the dead.",
-      "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist.\n\nKhavora was never replaced by creation. It still exists, and it is one of only two places the dead can go. See [[The Two Afterlives]].\n\nWhich afterlife a culture calls the good one depends on its religion. Orcs revere Khavora as the good destination: in the Maelstrom Womb, they can fight forever.",
+      "body": "Khavora, the Maelstrom Womb, is the realm [[Khavos]] made when Chaos stood alone in the nothingness: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist.\n\nSince the fracture and the creation of Libris, Khavora is now one of only two places the souls of the dead can go. When [[Time]] was set into motion souls of mortals were transported here by [[Patrons|Patron]] [[Shards]], whether they believe it is heaven or hell is up to them. See [[The Two Afterlives]].\n",
       "visibility": "player",
       "tags": [
         "realm",
