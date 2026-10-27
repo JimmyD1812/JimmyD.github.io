@@ -186,7 +186,7 @@ window.PLAYER_DATA = {
         "vaelos"
       ],
       "id": 11,
-      "image": "gemini-generated-image-qa8qijqa8qijqa8q-4c8f18a9.jpg"
+      "image": "gemini-generated-image-a19mzoa19mzoa19m-0e7eab46.jpg"
     },
     {
       "title": "United Being",
@@ -236,7 +236,7 @@ window.PLAYER_DATA = {
         "nature"
       ],
       "id": 14,
-      "image": "gemini-generated-image-um58w9um58w9um58-b37d258f.jpg"
+      "image": "gemini-generated-image-48m47e48m47e48m4-0f6400b0.jpg"
     }
   ],
   "timeline": [
