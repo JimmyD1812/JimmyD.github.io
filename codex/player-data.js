@@ -35,7 +35,7 @@ window.PLAYER_DATA = {
         "cosmology"
       ],
       "pinned": true,
-      "image": "gemini-generated-image-vzzpaxvzzpaxvzzp-01326a2f.jpg"
+      "image": "gemini-generated-image-msklfdmsklfdmskl-65089277.jpg"
     },
     {
       "id": 7,
