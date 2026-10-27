@@ -120,8 +120,7 @@ window.PLAYER_DATA = {
       "tags": [
         "realm",
         "order",
-        "afterlife",
-        "plane"
+        "afterlife"
       ],
       "pinned": false,
       "image": "gemini-generated-image-668ibx668ibx668i-0665c633.jpg"
@@ -137,8 +136,7 @@ window.PLAYER_DATA = {
       "tags": [
         "realm",
         "chaos",
-        "afterlife",
-        "plane"
+        "afterlife"
       ],
       "pinned": false,
       "image": "gemini-generated-image-8k0npy8k0npy8k0n-4a404362.jpg"
