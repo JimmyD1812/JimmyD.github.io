@@ -117,7 +117,7 @@ window.PLAYER_DATA = {
         "vaelos"
       ],
       "pinned": false,
-      "image": "gemini-generated-image-668ibx668ibx668i-0665c633.jpg"
+      "image": "gemini-generated-image-bqancrbqancrbqan-2a0a548c.jpg"
     },
     {
       "id": 3,
