@@ -164,7 +164,11 @@ window.PLAYER_DATA = {
       "pinned": false,
       "summary": "Light and Dark are two separate shards who are never apart, served by a single shared church — whose priests argue endlessly over which of the two is stronger.",
       "body": "Light and Dark are two separate [[Shards]], but they are never apart. Where Light goes, Dark is right behind; where Dark settles, Light is already pressing at its edges. Whether they broke away from the [[United Being]] already paired, or found each other in the first moments after the fracture, no one knows, the two tell the story differently, and both versions are preached as fact.\n\nNeither is good, and neither is evil, whatever mortals assume. Light reveals, warms, and grows, but it also blinds, burns, and withers. Dark hides, cools, and rests but it also conceals the knife and the rot. As with all things, the races call whichever one serves them good.\n\nThe two share a single church, the only faith that serves two shards under one roof. Its temples hold services at dawn and at dusk, in the same hall, and its founding teaching is the pairing itself: \"For how can there be light without the darkness right behind?\"\n\nBut sharing a church has not made its priests agree. Some lean toward the Light, preaching that it is the stronger of the two; that a single flame drives back a whole room of darkness, and Dark is only ever the space Light has not reached yet. Others lean toward the Dark, preaching that it is the older, vaster, more patient power; that every light ever lit has eventually gone out, and the Dark was there before each one and remained after. The church holds both doctrines. Barely.\n\nThe one teaching both sides defend together: that either could exist without the other is heresy.",
-      "tags": [],
+      "tags": [
+        "shard",
+        "nature",
+        "conjoined"
+      ],
       "id": 10,
       "image": "gemini-generated-image-ybgjfbybgjfbybgj-ab6e1066.jpg"
     },
@@ -196,7 +200,8 @@ window.PLAYER_DATA = {
       "tags": [
         "equilibrium",
         "deity",
-        "creation"
+        "creation",
+        "conjoined"
       ],
       "id": 12
     },
@@ -226,7 +231,7 @@ window.PLAYER_DATA = {
       "body": "The Elements are the [[Shards]] whose power stands behind the foundations of the world. There are six of them, counted as five: [[Libris]], [[Air]], [[Water]], and [[Fire]], each standing alone — and [[Light and Dark]], who are Elements in their own right but so conjoined a pair that the hierarchy ranks them together, above the other four. Only [[Time]] stands above them.\n\nAn Element's power is behind every instance of its kind, everywhere, all at once. This is what separates the Elements from the [[Nature Spirits]] below them: a spirit stands behind one river, but Water stands behind all water — the river, the rain, the sea, and the cup in a traveler's hand are all the same power at work.\n\nThe world runs on the Elements' cooperation, and suffers from their contention. Rain is Water given passage by Air. A storm at sea is Air and Water in open argument. A volcano is Fire pressing up from below and breaking through the stone of Libris. Given enough centuries, Water wears down mountains — the slowest and oldest disagreement in the world, and one Water is winning.\n\n[[Libris]] is the power behind stone and soil. The world bears its name because the shell that holds the sleeping [[Equilibrium]] endures by Libris' power above all. It is the most patient of the Elements: nothing about stone is in a hurry, and when its power shifts within the ground, mortals feel it as a ground-quake. Miners and farmers, who work closest to it, are careful to stay on its good side - if a shard can be said to have one.\n\n[[Air]] is the power behind wind, weather, and breath. Everything that lives and breathes does so on borrowed Air, taking its power in and giving it back with every breath from the first to the last. A calm day is Air at rest. A hurricane is Air with its attention elsewhere — or on something.\n\n[[Water]] is the power behind the seas, the rivers, and the rain. Water is patient in a different way than stone: it does not resist, it persists. It carved the riverbeds, it fills every low place it is offered, and it remembers every shape it has ever been poured into — or so its priests claim.\n\n[[Fire]] is the power behind flame and heat. It is the one Element mortals can summon themselves: strike the spark, and Fire's power answers, whether it was invited politely or not. Some traditions say the first fire-makers stole that knowledge. Others say Fire taught it, and enjoys being called. A hearth and a wildfire are the same power — separated only by how much of it arrived.\n\n[[Light and Dark]] stand apart from the other four even while counted among them: two Elements, never separated, ranked as a pair above the rest on their combined power. Their church, their argument, and their strange marriage are covered in their own entry. See [[Light and Dark]].\n\nNo mortal is ever outside the Elements' power. You stand on Libris, breathe Air, drink Water, warm yourself by Fire, see by Light, and sleep in Dark — every moment of every life is lived inside the attention of at least three shards. That the Elements rarely notice any single mortal in return is not cruelty. It is scale.",
       "tags": [
         "elements",
-        "shards",
+        "shard",
         "nature"
       ],
       "id": 14,
