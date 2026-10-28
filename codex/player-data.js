@@ -150,7 +150,7 @@ window.PLAYER_DATA = {
         "major shard"
       ],
       "id": 9,
-      "image": "gemini-generated-image-ne8n41ne8n41ne8n-b1124946.jpg"
+      "image": "gemini-generated-image-8pew4y8pew4y8pew-43031d75.jpg"
     },
     {
       "title": "Light and Dark",
@@ -220,7 +220,7 @@ window.PLAYER_DATA = {
         "life"
       ],
       "id": 13,
-      "image": "gemini-generated-image-17ye6a17ye6a17ye-da8849f8.jpg"
+      "image": "gemini-generated-image-7hzb8y7hzb8y7hzb-fc7b25a6.jpg"
     },
     {
       "title": "Elements",
