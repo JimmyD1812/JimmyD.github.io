@@ -58,6 +58,25 @@
   article.reader .body p{line-height:1.68;margin:0 0 14px;white-space:pre-wrap;color:var(--body-ink);font-size:1.07rem}
   article.reader .body > p:first-of-type::first-letter{font-family:var(--display);font-weight:900;font-size:3.3em;float:left;
     line-height:.82;padding:5px 10px 0 0;color:var(--titlered)}
+  /* — markdown-lite article elements — */
+  article.reader .body .md-h1{font-family:var(--display);font-weight:400;color:var(--titlered);font-size:1.72rem;line-height:1.2;margin:26px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--titlered)}
+  article.reader .body .md-h2{font-family:var(--display);font-weight:400;color:var(--titlered);font-size:1.38rem;line-height:1.25;margin:22px 0 8px;padding-bottom:3px;border-bottom:1px solid var(--gold)}
+  article.reader .body .md-h3{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;color:var(--titlered);font-size:1rem;letter-spacing:.05em;margin:18px 0 6px}
+  .md-hr{text-align:center;color:var(--gold-bright);letter-spacing:.6em;font-size:.8rem;margin:20px 0}
+  blockquote.md-quote{margin:16px 0;padding:2px 0 2px 16px;border-left:3px solid var(--gold-bright);font-family:var(--flavor);font-style:italic;font-size:1.08rem;line-height:1.55;color:#4a3d2c;white-space:pre-wrap}
+  blockquote.md-quote .qattr{display:block;margin-top:6px;font-style:normal;font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;font-size:.85rem;letter-spacing:.05em;color:var(--titlered);text-align:right}
+  .aloud{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--ribbon);border-bottom:3px solid var(--ribbon);padding:12px 16px;margin:16px 0;line-height:1.6;white-space:pre-wrap;box-shadow:0 1px 4px rgba(36,26,16,.12)}
+  article.reader .body ul.md-list,article.reader .body ol.md-list{margin:4px 0 14px 24px;line-height:1.6;padding:0}
+  .md-list li{margin:3px 0}
+  table.md-table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.98rem;line-height:1.45}
+  table.md-table th{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;font-weight:400;background:var(--tan);color:var(--titlered);text-align:left;padding:6px 10px;border-bottom:2px solid var(--titlered)}
+  table.md-table td{padding:5px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.md-table tbody tr:nth-child(even){background:rgba(184,154,103,.13)}
+  .toc{background:var(--paper);border:1px solid var(--line);border-top:3px solid var(--titlered);padding:12px 16px;margin:18px 0}
+  .toc-h{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;letter-spacing:.08em;color:var(--titlered);margin-bottom:5px}
+  .toc a{display:block;cursor:pointer;color:#5a4632;padding:2px 0}
+  .toc a:hover{color:var(--rulered);text-decoration:underline}
+  .toc a.toc-l2{padding-left:16px}.toc a.toc-l3{padding-left:32px}
   .cover-img,.body-img{display:block;background:var(--paper);padding:6px;border:1px solid var(--gold);box-shadow:0 3px 12px rgba(36,26,16,.18)}
   .cover-img{width:100%;max-height:430px;object-fit:cover;margin:0 0 18px}
   .body-img{max-width:100%;margin:8px auto}
@@ -277,6 +296,78 @@ function sbify(html){
   return html.replace(/\[sb:([^\]]+)\]/g, (m, name) =>
     sbByName[name.trim()] ? sbCard(sbByName[name.trim()]) : esc(m));
 }
+/* — Article body renderer ("markdown-lite") —
+   Blocks: paragraphs (blank-line separated; single newlines stay line breaks),
+   # / ## / ### headings, > quotes (a last line starting with — becomes the
+   attribution), >> read-aloud boxes, - bullets, 1. numbered lists, --- dividers,
+   | pipe tables |, and the standalone [img:file] / [sb:Name] token lines.
+   Inline: **bold**, *italic*, ***both***, [[links]] incl. [[Title|text]].
+   Articles with 2+ headings get an automatic Contents box before heading one. */
+function mdInline(html){ // runs on already linkified HTML
+  return html
+    .replace(/\*\*\*([^*]+)\*\*\*/g, "<strong><em>$1</em></strong>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+}
+const mdPipe = t => sbify(imgify(mdInline(linkify(t))));
+function mdSpecial(s){
+  return /^#{1,3}\s/.test(s) || s === "---" || s.startsWith("|") || s.startsWith(">")
+    || /^[-*]\s/.test(s) || /^\d+\.\s/.test(s)
+    || /^\[img:[^\]]+\]$/.test(s) || /^\[sb:[^\]]+\]$/.test(s);
+}
+function mdRow(s){ return s.replace(/^\||\|$/g, "").split("|").map(c => c.trim()); }
+function renderBody(text){
+  const lines = text.split("\n");
+  const out = []; const headings = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { i++; continue; }
+    if (/^\[img:[^\]]+\]$/.test(line) || /^\[sb:[^\]]+\]$/.test(line)) { out.push(mdPipe(line)); i++; continue; }
+    const hm = line.match(/^(#{1,3})\s+(.*)$/);
+    if (hm) {
+      const lvl = hm[1].length, id = "sec-" + headings.length;
+      headings.push({ lvl, text: hm[2], id });
+      out.push(`<h${lvl + 2} class="md-h${lvl}" id="${id}">${mdPipe(hm[2])}</h${lvl + 2}>`); i++; continue;
+    }
+    if (line === "---") { out.push('<div class="md-hr">◆ ◆ ◆</div>'); i++; continue; }
+    if (line.startsWith("|") && i + 1 < lines.length && /^\|[\s:|-]+\|$/.test(lines[i + 1].trim())) {
+      const head = mdRow(line); i += 2; const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) { rows.push(mdRow(lines[i].trim())); i++; }
+      out.push(`<table class="md-table"><thead><tr>${head.map(c => `<th>${mdPipe(c)}</th>`).join("")}</tr></thead><tbody>${
+        rows.map(r => `<tr>${r.map(c => `<td>${mdPipe(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
+      continue;
+    }
+    if (line.startsWith(">")) {
+      const aloud = line.startsWith(">>"); const q = [];
+      while (i < lines.length && lines[i].trim().startsWith(">")) { q.push(lines[i].trim().replace(/^>>?\s?/, "")); i++; }
+      let attr = "";
+      if (!aloud && q.length > 1 && /^—\s*/.test(q[q.length - 1])) attr = q.pop().replace(/^—\s*/, "");
+      const inner = mdPipe(q.join("\n"));
+      out.push(aloud ? `<div class="aloud">${inner}</div>`
+        : `<blockquote class="md-quote">${inner}${attr ? `<span class="qattr">— ${esc(attr)}</span>` : ""}</blockquote>`);
+      continue;
+    }
+    if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      const ordered = /^\d/.test(line); const items = [];
+      const re = ordered ? /^\d+\.\s+/ : /^[-*]\s+/;
+      while (i < lines.length && re.test(lines[i].trim())) { items.push(lines[i].trim().replace(re, "")); i++; }
+      const tag = ordered ? "ol" : "ul";
+      out.push(`<${tag} class="md-list">${items.map(t => `<li>${mdPipe(t)}</li>`).join("")}</${tag}>`);
+      continue;
+    }
+    const plines = [];
+    while (i < lines.length && lines[i].trim() && !mdSpecial(lines[i].trim())) { plines.push(lines[i].trim()); i++; }
+    if (plines.length) out.push(`<p>${mdPipe(plines.join("\n"))}</p>`);
+  }
+  if (headings.length >= 2) {
+    const toc = `<div class="toc"><div class="toc-h">Contents</div>${headings.map(h =>
+      `<a class="toc-l${h.lvl}" onclick="document.getElementById('${h.id}').scrollIntoView({behavior:'smooth'})">${esc(h.text)}</a>`).join("")}</div>`;
+    const idx = out.findIndex(b => b.startsWith("<h"));
+    if (idx >= 0) out.splice(idx, 0, toc); else out.push(toc);
+  }
+  return out.join("");
+}
 function renderStatblocks(){
   const el = document.getElementById("view-statblocks");
   const items = (DATA.statblocks || []).slice().sort((a,b) => a.name.localeCompare(b.name));
@@ -380,7 +471,7 @@ function openArticle(id){
       <div class="meta">${esc(a.type)} · ${esc(catName(a.categoryId))} · ${a.tags.map(t => `<span class="tag" onclick="setTag('${esc(t)}');renderList()">${esc(t)}</span>`).join(" ")}</div>
       ${a.image && IMG_FILE.test(a.image) ? `<img class="cover-img" src="images/${a.image}" alt="">` : ''}
       <p class="summary">${esc(a.summary)}</p>
-      <div class="body">${a.body.split(/\n\s*\n/).map(p => `<p>${sbify(imgify(linkify(p)))}</p>`).join("")}</div>
+      <div class="body">${renderBody(a.body)}</div>
     </article>`;
   window.scrollTo(0, 0);
 }
