@@ -360,6 +360,11 @@ function renderBody(text){
       while (i < lines.length && lines[i].trim().startsWith(">")) { q.push(lines[i].trim().replace(/^>>?\s?/, "")); i++; }
       let attr = "";
       if (!aloud && q.length > 1 && /^—\s*/.test(q[q.length - 1])) attr = q.pop().replace(/^—\s*/, "");
+      if (!aloud && !attr && q.length) {
+        // inline form: "Quote text." — Attribution, all on the last line
+        const im = q[q.length - 1].match(/^(.*["”])\s*—\s*([^—]{2,80})$/);
+        if (im) { attr = im[2].trim(); q[q.length - 1] = im[1]; }
+      }
       const inner = mdPipe(q.join("\n"));
       out.push(aloud ? `<div class="aloud">${inner}</div>`
         : `<blockquote class="md-quote">${inner}${attr ? `<span class="qattr">— ${esc(attr)}</span>` : ""}</blockquote>`);
