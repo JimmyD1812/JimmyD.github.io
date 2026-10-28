@@ -187,6 +187,23 @@
   article.reader .body > p:first-of-type::first-letter{font-family:'Nodesto Caps Condensed','Cinzel',serif;font-weight:400}
   article.reader .body p{font-size:1.05rem;line-height:1.6}
   .tl-count{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;font-variant:normal}
+  /* — Centered-article layout: the page centers on the ARTICLE column.
+     The articles view becomes a mirrored three-column grid (sidebar 250 ·
+     article 776 · empty 250) inside a block wider than .wrap, so the article
+     sits dead-center under the masthead and above the footer, with Search /
+     Categories / Type / Tags hanging off its left. The right column is
+     deliberately empty — the mirror that makes the centering honest.
+     Below 1380px viewport there isn't room for the mirror: single centered
+     column, sidebar stacked above the article at the same width. — */
+  .tabs{justify-content:center}
+  .layout{display:grid;grid-template-columns:250px 776px 250px;gap:22px;width:min(1320px,calc(100vw - 32px));margin-left:50%;transform:translateX(-50%)}
+  .layout aside{grid-column:1}
+  .layout main{grid-column:2;min-width:0}
+  @media (max-width:1380px){
+    .layout{display:block;width:auto;margin-left:0;transform:none}
+    .layout aside{max-width:776px;margin:0 auto 18px}
+  }
+  article.reader .body table.md-table td{overflow-wrap:break-word}
 </style>
 </head>
 <body>
