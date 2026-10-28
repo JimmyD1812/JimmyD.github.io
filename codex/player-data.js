@@ -100,7 +100,7 @@ window.PLAYER_DATA = {
         "hierarchy"
       ],
       "pinned": false,
-      "image": "gemini-generated-image-cjswaicjswaicjsw-1224223d.jpg"
+      "image": "gemini-generated-image-gamvjtgamvjtgamv-99db11b4.jpg"
     },
     {
       "id": 4,
@@ -166,7 +166,7 @@ window.PLAYER_DATA = {
         "conjoined"
       ],
       "id": 10,
-      "image": "gemini-generated-image-ybgjfbybgjfbybgj-ab6e1066.jpg"
+      "image": "gemini-generated-image-ba8lurba8lurba8l-69550e2e.jpg"
     },
     {
       "title": "Equilibrium",
