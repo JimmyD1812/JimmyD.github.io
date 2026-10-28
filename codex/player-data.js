@@ -220,7 +220,7 @@ window.PLAYER_DATA = {
         "life"
       ],
       "id": 13,
-      "image": "gemini-generated-image-7hzb8y7hzb8y7hzb-fc7b25a6.jpg"
+      "image": "gemini-generated-image-7hzb8y7hzb8y7hz32-3222d5fe.jpg"
     },
     {
       "title": "Elements",
