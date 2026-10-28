@@ -594,7 +594,8 @@ function tumble(indices, done){
     renderTray();
     indices.forEach(i => { const n = document.getElementById("die-" + i); if (n) n.classList.add("rolling"); });
   }, 70);
-  setTimeout(() => { clearInterval(tick); indices.forEach(i => { if (tray[i]) tray[i].value = rollOne(tray[i].sides); }); renderTray(); done && done(); }, 580);
+  // The last tumble frame IS the result — no extra roll when the animation stops.
+  setTimeout(() => { clearInterval(tick); renderTray(); done && done(); }, 580);
 }
 function logRoll(){
   if (!tray.length) return;
