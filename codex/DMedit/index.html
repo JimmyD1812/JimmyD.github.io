@@ -72,6 +72,33 @@
   .box.fold.closed > h3::after{content:"▸"}
   .box.fold.closed > *:not(h3){display:none}
   .box.fold.closed{padding-bottom:8px}
+  /* — Formatting guide: live examples rendered with the player page's own styles — */
+  .fmtguide{margin-top:10px;border:1px solid var(--line);border-radius:4px;background:#fffdf6}
+  .fg-head{cursor:pointer;padding:8px 12px;font-family:var(--display);font-size:.85rem;letter-spacing:.07em;color:#58180D;user-select:none;-webkit-user-select:none}
+  .fg-head::after{content:"▸";float:right}
+  .fmtguide.open .fg-head::after{content:"▾"}
+  .fg-body{display:none;padding:2px 12px 12px}
+  .fmtguide.open .fg-body{display:block}
+  .fg-item{margin-bottom:12px}
+  .fg-code{display:block;font-family:ui-monospace,Menlo,monospace;font-size:.8rem;background:#f1e8d2;border:1px solid var(--line);border-radius:4px;padding:5px 8px;margin-bottom:5px;white-space:pre-wrap;color:#4a3d2c}
+  .fg-note{font-size:.86rem;color:var(--muted);line-height:1.5;margin:2px 0 0}
+  .fmtex{background:var(--paper);border:1px solid var(--line);padding:10px 14px;font-family:var(--body);font-size:1.02rem;color:#33261a;line-height:1.6}
+  .fmtex p{margin:0 0 10px;line-height:1.6}
+  .fmtex p:last-child{margin-bottom:0}
+  .fmtex .md-h1{font-family:var(--display);font-weight:400;color:#58180D;font-size:1.6rem;line-height:1.2;margin:4px 0 8px;padding-bottom:5px;border-bottom:2px solid #58180D}
+  .fmtex .md-h2{font-family:var(--display);font-weight:400;color:#58180D;font-size:1.3rem;line-height:1.25;margin:4px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--brass)}
+  .fmtex .md-h3{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;color:#58180D;font-size:.98rem;letter-spacing:.05em;margin:4px 0 4px}
+  .fmtex .md-hr{text-align:center;color:var(--gold-bright);letter-spacing:.6em;font-size:.78rem;margin:8px 0}
+  .fmtex blockquote.md-quote{margin:4px 0;padding:2px 0 2px 16px;border-left:3px solid var(--gold-bright);font-family:var(--flavor);font-style:italic;font-size:1.05rem;line-height:1.55;color:#4a3d2c;white-space:pre-wrap}
+  .fmtex blockquote.md-quote .qattr{display:block;margin-top:6px;font-style:normal;font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;font-size:.82rem;letter-spacing:.05em;color:#58180D;text-align:right}
+  .fmtex .aloud{background:var(--card);border:1px solid var(--line);border-top:3px solid #E69A28;border-bottom:3px solid #E69A28;padding:10px 14px;margin:4px 0;line-height:1.6;white-space:pre-wrap}
+  .fmtex ul.md-list,.fmtex ol.md-list{margin:2px 0 4px 22px;line-height:1.6;padding:0}
+  .fmtex .md-list li{margin:3px 0}
+  .fmtex table.md-table{border-collapse:collapse;width:100%;margin:4px 0;font-size:.95rem;line-height:1.45}
+  .fmtex table.md-table th{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;font-weight:400;background:var(--tan);color:#58180D;text-align:left;padding:5px 9px;border-bottom:2px solid #58180D}
+  .fmtex table.md-table td{padding:4px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  .fmtex table.md-table tbody tr:nth-child(even){background:rgba(184,154,103,.13)}
+  .fmtex a.xlink{color:var(--danger);text-decoration:none;border-bottom:1px dotted var(--brass);font-weight:600}
 </style>
 </head>
 <body>
@@ -286,7 +313,33 @@
       <input type="file" id="coverFile" accept="image/*" style="display:none" onchange="onCoverChosen(this)">
       <label>Body — link with [[Exact Title]], or [[Exact Title|any display text]] (e.g. [[Patrons|Patron]])</label>
       <textarea id="f-body" rows="16"></textarea>
-      <p class="small">Formatting: # Section · ## Subsection · ### Minor head · **bold** · *italic* · - bullets · 1. numbered · &gt; quote (add a last line "— Name" for attribution) · &gt;&gt; read-aloud box · --- divider · tables: | Col | Col |, then | --- | --- |, then one row per line. Two or more # headings add an automatic Contents box.</p>
+      <div class="fmtguide" id="fmtGuide">
+        <div class="fg-head" onclick="document.getElementById('fmtGuide').classList.toggle('open')">Formatting guide — type this, see this</div>
+        <div class="fg-body">
+          <div class="fg-item"><code class="fg-code"># Section heading</code><div class="fmtex" data-md="# The Order of Shards"></div></div>
+          <div class="fg-item"><code class="fg-code">## Subsection</code><div class="fmtex" data-md="## Greater Shards"></div></div>
+          <div class="fg-item"><code class="fg-code">### Minor head</code><div class="fmtex" data-md="### A minor note"></div></div>
+          <div class="fg-item"><code class="fg-code">**bold** · *italic* · ***both***</code><div class="fmtex" data-md="The hierarchy is **canon**, *not* open to debate, and ***never*** skipped."></div></div>
+          <div class="fg-item"><code class="fg-code">- bullet list</code><div class="fmtex" data-md="- [[Time]], first and largest
+- The [[Elements]] themselves"></div></div>
+          <div class="fg-item"><code class="fg-code">1. numbered list</code><div class="fmtex" data-md="1. [[Time]]
+2. [[Light and Dark]]
+3. The [[Patrons]]"></div></div>
+          <div class="fg-item"><code class="fg-code">&gt; quote — finish with a — Name line for attribution</code><div class="fmtex" data-md="> Tread lightly on the Cradle, lest you wake the child.
+> — Common saying in the villages"></div></div>
+          <div class="fg-item"><code class="fg-code">&gt;&gt; read-aloud box</code><div class="fmtex" data-md=">> When you enter the shrine, the air smells of rain that has not fallen yet."></div></div>
+          <div class="fg-item"><code class="fg-code">--- divider</code><div class="fmtex" data-md="---"></div></div>
+          <div class="fg-item"><code class="fg-code">| Rank | Shards |
+| --- | --- |
+| 1 | [[Time]] |
+| 2 | [[Light and Dark]] |</code><div class="fmtex" data-md="| Rank | Shards |
+| --- | --- |
+| 1 | [[Time]] |
+| 2 | [[Light and Dark]] |"></div></div>
+          <div class="fg-item"><code class="fg-code">[[Title]] · [[Title|display text]]</code><div class="fmtex" data-md="One [[Patrons|Patron]] speaks for all the [[Patrons]]."></div></div>
+          <p class="fg-note">Two or more headings in one article add an automatic Contents box above the first heading. [img:file] on its own line inserts an image; [sb:Name] inserts a statblock.</p>
+        </div>
+      </div>
       <div class="btnrow">
         <button type="button" class="ghost" onclick="document.getElementById('bodyImgFile').click()">Insert image into body…</button>
       </div>
@@ -984,7 +1037,77 @@ function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
   localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); brandFill(); newArticle();
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds();
+// ---- Formatting guide: the player page's renderer, ported so the examples
+// under the Body field show exactly what players will see ----
+function fgLinkify(text){
+  const titles = {}; db.articles.forEach(a => { titles[a.title] = a; });
+  return esc(text).replace(/\[\[([^\]]+)\]\]/g, (m, t) => {
+    const parts = t.split("|");
+    const target = parts[0].trim(), label = (parts.length > 1 ? parts[1] : parts[0]).trim();
+    return titles[target] ? `<a class="xlink">${esc(label)}</a>` : esc(label);
+  });
+}
+function fgMdInline(html){
+  return html
+    .replace(/\*\*\*([^*]+)\*\*\*/g, "<strong><em>$1</em></strong>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+}
+const fgPipe = t => fgMdInline(fgLinkify(t));
+function fgSpecial(s){
+  return /^#{1,3}\s/.test(s) || s === "---" || s.startsWith("|") || s.startsWith(">")
+    || /^[-*]\s/.test(s) || /^\d+\.\s/.test(s);
+}
+function fgRow(s){ return s.replace(/^\||\|$/g, "").split("|").map(c => c.trim()); }
+function fgRenderBody(text){
+  const lines = text.split("\n");
+  const out = []; const headings = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { i++; continue; }
+    const hm = line.match(/^(#{1,3})\s+(.*)$/);
+    if (hm) {
+      const lvl = hm[1].length, id = "fgsec-" + headings.length;
+      headings.push({ lvl, text: hm[2], id });
+      out.push(`<h${lvl + 2} class="md-h${lvl}" id="${id}">${fgPipe(hm[2])}</h${lvl + 2}>`); i++; continue;
+    }
+    if (line === "---") { out.push('<div class="md-hr">◆ ◆ ◆</div>'); i++; continue; }
+    if (line.startsWith("|") && i + 1 < lines.length && /^\|[\s:|-]+\|$/.test(lines[i + 1].trim())) {
+      const head = fgRow(line); i += 2; const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) { rows.push(fgRow(lines[i].trim())); i++; }
+      out.push(`<table class="md-table"><thead><tr>${head.map(c => `<th>${fgPipe(c)}</th>`).join("")}</tr></thead><tbody>${
+        rows.map(r => `<tr>${r.map(c => `<td>${fgPipe(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`);
+      continue;
+    }
+    if (line.startsWith(">")) {
+      const aloud = line.startsWith(">>"); const q = [];
+      while (i < lines.length && lines[i].trim().startsWith(">")) { q.push(lines[i].trim().replace(/^>>?\s?/, "")); i++; }
+      let attr = "";
+      if (!aloud && q.length > 1 && /^—\s*/.test(q[q.length - 1])) attr = q.pop().replace(/^—\s*/, "");
+      const inner = fgPipe(q.join("\n"));
+      out.push(aloud ? `<div class="aloud">${inner}</div>`
+        : `<blockquote class="md-quote">${inner}${attr ? `<span class="qattr">— ${esc(attr)}</span>` : ""}</blockquote>`);
+      continue;
+    }
+    if (/^[-*]\s+/.test(line) || /^\d+\.\s+/.test(line)) {
+      const ordered = /^\d/.test(line); const items = [];
+      const re = ordered ? /^\d+\.\s+/ : /^[-*]\s+/;
+      while (i < lines.length && re.test(lines[i].trim())) { items.push(lines[i].trim().replace(re, "")); i++; }
+      const tag = ordered ? "ol" : "ul";
+      out.push(`<${tag} class="md-list">${items.map(t => `<li>${fgPipe(t)}</li>`).join("")}</${tag}>`);
+      continue;
+    }
+    const plines = [];
+    while (i < lines.length && lines[i].trim() && !fgSpecial(lines[i].trim())) { plines.push(lines[i].trim()); i++; }
+    if (plines.length) out.push(`<p>${fgPipe(plines.join("\n"))}</p>`);
+  }
+  return out.join("");
+}
+function renderFmtGuide(){
+  document.querySelectorAll(".fmtex").forEach(el => { el.innerHTML = fgRenderBody(el.dataset.md); });
+}
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
