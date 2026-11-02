@@ -236,7 +236,32 @@ window.PLAYER_DATA = {
       "id": 12,
       "image": "united-being-hands.jpg",
       "parentId": 1,
-      "relations": []
+      "relations": [
+        {
+          "targetKind": "article",
+          "targetId": 2,
+          "label": "part of",
+          "inverse": "contains",
+          "note": "",
+          "visibility": "player"
+        },
+        {
+          "targetKind": "article",
+          "targetId": 6,
+          "label": "part of",
+          "inverse": "contains",
+          "note": "",
+          "visibility": "player"
+        },
+        {
+          "targetKind": "article",
+          "targetId": 11,
+          "label": "created",
+          "inverse": "created by",
+          "note": "",
+          "visibility": "player"
+        }
+      ]
     },
     {
       "title": "The world of Libris",
