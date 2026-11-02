@@ -178,7 +178,7 @@ window.PLAYER_DATA = {
         "conjoined"
       ],
       "id": 10,
-      "image": "gemini-generated-image-ybgjfbybgjfbybgj-ab6e1066.jpg"
+      "image": "gemini-generated-image-ba8lurba8lurba8l-69550e2e.jpg"
     },
     {
       "title": "Equilibrium",
