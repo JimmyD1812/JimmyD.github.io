@@ -972,14 +972,19 @@ const CONSULT_LINES = [
   "The shards are listening. They rarely answer plainly.",
   "Somewhere in the deep, a shard turns toward you."
 ];
+const CONSULT_MIN_BODY = 900; /* shorter bodies are placeholders, not answers */
 let consultIdx = 0, consultLast = null, consultTimer = 0, consultCurrent = null;
+function consultPool(){
+  const full = DATA.articles.filter(a => (a.body || "").trim().length >= CONSULT_MIN_BODY);
+  return full.length ? full : DATA.articles;
+}
 function consultLineNext(){
   const el = document.getElementById("cLine"); if (!el) return;
   el.style.opacity = 0;
   setTimeout(() => { el.textContent = CONSULT_LINES[consultIdx % CONSULT_LINES.length]; consultIdx++; el.style.opacity = 1; }, 260);
 }
 function consultDraw(){
-  const pool = DATA.articles;
+  const pool = consultPool();
   if (!pool.length) return;
   let a = pool[Math.floor(Math.random() * pool.length)];
   if (pool.length > 1) { let guard = 0; while (a.id === consultLast && guard++ < 12) a = pool[Math.floor(Math.random() * pool.length)]; }
