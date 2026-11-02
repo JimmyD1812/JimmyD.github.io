@@ -161,6 +161,13 @@
         <input type="text" id="tl-title">
         <label>When (label players see, e.g. "Before time")</label>
         <input type="text" id="tl-when">
+        <label>Calendar date (optional — overrides the When label wherever dates show)</label>
+        <select id="tl-cal" onchange="tlCalChanged()"><option value="">— no calendar date —</option></select>
+        <div class="btnrow" style="justify-content:flex-start">
+          <label style="margin:0">Year <input type="number" id="tl-y" style="width:84px"></label>
+          <label style="margin:0">Month <select id="tl-m" style="width:auto"></select></label>
+          <label style="margin:0">Day <input type="number" id="tl-d" min="1" style="width:64px"></label>
+        </div>
         <label>Order (lower comes first)</label>
         <input type="number" id="tl-sort" step="any">
         <label>Visibility</label>
@@ -178,6 +185,39 @@
           <button class="ghost" onclick="tlDel()">Delete selected</button>
         </div>
         <p class="small">Click an event above to edit it. Changes save in this browser; Publish sends them live, same as articles.</p>
+      </div>
+      <div class="box fold" data-fold="calendars">
+        <h3>Calendars <span class="small" id="calCount"></span></h3>
+        <div id="calList"></div>
+        <label>Calendar name</label>
+        <input type="text" id="cal-name" placeholder="e.g. The Reckoning of Libris">
+        <label>Era label (optional — printed after the year, e.g. AF)</label>
+        <input type="text" id="cal-era">
+        <label>Months — one per line: Name, days</label>
+        <textarea id="cal-months" rows="6" placeholder="Emberfall, 30&#10;Frostmere, 28"></textarea>
+        <label>Weekdays — comma separated, in order</label>
+        <input type="text" id="cal-weekdays" placeholder="Firstday, Seconday, Thirday">
+        <label>Moons — one per line: Name, cycle in days, offset in days (offset optional)</label>
+        <textarea id="cal-moons" rows="3" placeholder="The Pale Moon, 28, 0"></textarea>
+        <label>Leap rule — extra days added to a month in leap years (leave blank for none)</label>
+        <div class="btnrow" style="justify-content:flex-start">
+          <label style="margin:0">Extra days <input type="number" id="cal-leap-days" style="width:64px"></label>
+          <label style="margin:0">in month # <input type="number" id="cal-leap-month" style="width:64px"></label>
+          <label style="margin:0">every <input type="number" id="cal-leap-every" style="width:64px"> years</label>
+        </div>
+        <label>Current date — the world's "today"</label>
+        <div class="btnrow" style="justify-content:flex-start">
+          <label style="margin:0">Year <input type="number" id="cal-cur-y" style="width:84px"></label>
+          <label style="margin:0">Month <select id="cal-cur-m" style="width:auto"></select></label>
+          <label style="margin:0">Day <input type="number" id="cal-cur-d" min="1" style="width:64px"></label>
+        </div>
+        <p class="small" id="calPreview"></p>
+        <div class="btnrow">
+          <button onclick="calSave()">Save calendar</button>
+          <button class="ghost" onclick="calNew()">New calendar</button>
+          <button class="ghost" onclick="calDel()">Delete selected</button>
+        </div>
+        <p class="small">Calendars publish to players with the world. Timeline events can then carry a calendar date, and the player Calendar page shows months, moons, and the current day.</p>
       </div>
       <div class="box fold" data-fold="categories">
         <h3>Categories</h3>
@@ -597,6 +637,126 @@ function renderTodo(){
     : "Nothing outstanding. Every link resolves.";
 }
 // ---- Timeline editor ----
+// ---- Calendars (V3 Phase 8): definitions, date maths, the Desk editor.
+// A calendar: months with lengths, a weekday cycle, moons with cycles, an
+// optional leap rule (extra days in one month every N years), an era label,
+// and a current date (the world's today). Timeline events can carry a
+// structured date {cal, y, m, d}; the free-text whenLabel stays as fallback.
+function calById(id){ return (db.calendars || []).find(c => c.id === id) || null; }
+function calIsLeap(cal, y){ return !!(cal && cal.leap && (+cal.leap.every || 0) > 0 && y % (+cal.leap.every) === 0); }
+function calMonthDays(cal, y, m){ let d = +((cal.months[m] || {}).days || 0); if (calIsLeap(cal, y) && cal.leap && (+cal.leap.month) === m + 1) d += (+cal.leap.days || 0); return d; }
+function calYearDays(cal, y){ let t = 0; cal.months.forEach((mm, i) => t += calMonthDays(cal, y, i)); return t; }
+function calAbs(cal, date){ let days = 0; const y = +date.y || 1;
+  for (let yy = 1; yy < y; yy++) days += calYearDays(cal, yy);
+  for (let mm = 0; mm < (+date.m || 0); mm++) days += calMonthDays(cal, y, mm);
+  return days + ((+date.d || 1) - 1); }
+function calOrdinal(n){ const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+function calFmt(cal, date){ if (!cal || !date || !cal.months[date.m]) return ""; return `${calOrdinal(date.d)} of ${cal.months[date.m].name}, ${date.y}${cal.era ? " " + cal.era : ""}`; }
+function calWeekday(cal, date){ if (!cal.weekdays || !cal.weekdays.length) return ""; const n = cal.weekdays.length; return cal.weekdays[((calAbs(cal, date) % n) + n) % n]; }
+const MOON_PHASES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+function calMoonPhase(cal, moon, date){ const cyc = +moon.cycle || 0; if (cyc < 1) return null; const pos = ((calAbs(cal, date) + (+moon.offset || 0)) % cyc + cyc) % cyc; const frac = pos / cyc; return { name: MOON_PHASES[Math.floor(((frac + 1 / 16) % 1) * 8)], frac }; }
+function tlLabel(e){ if (e && e.date) { const c = calById(e.date.cal); if (c) { const f = calFmt(c, e.date); if (f) return f; } } return (e && e.whenLabel) || ""; }
+let calSelId = null;
+function calParseMonths(text){ return text.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(line => { const i = line.lastIndexOf(","); return i < 0 ? { name: line, days: 0 } : { name: line.slice(0, i).trim(), days: parseInt(line.slice(i + 1), 10) || 0 }; }).filter(m => m.name); }
+function calParseMoons(text){ return text.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(line => { const p = line.split(",").map(x => x.trim()); return { name: p[0] || "", cycle: parseInt(p[1], 10) || 0, offset: parseInt(p[2], 10) || 0 }; }).filter(m => m.name); }
+function renderCalMgr(){
+  document.getElementById("calCount").textContent = `(${db.calendars.length})`;
+  document.getElementById("calList").innerHTML = db.calendars.map(c => `
+    <div class="row ${c.id === calSelId ? 'sel' : ''}" onclick="calSelect('${c.id}')">
+      <div class="t">${esc(c.name)}</div>
+      <div class="m">${c.months.length} months · ${c.weekdays.length} weekdays · ${c.moons.length} moons${c.current ? " · today: " + esc(calFmt(c, c.current)) : ""}</div>
+    </div>`).join("") || '<p class="small">No calendars yet. The form below makes the first one.</p>';
+  calPreview();
+}
+function calFillCurMonths(months, keepIdx){
+  const sel = document.getElementById("cal-cur-m");
+  sel.innerHTML = months.map((m, i) => `<option value="${i}">${esc(m.name)}</option>`).join("");
+  if (keepIdx != null && sel.querySelector(`option[value="${keepIdx}"]`)) sel.value = keepIdx;
+}
+function calSelect(id){
+  const c = calById(id); if (!c) return;
+  calSelId = id;
+  document.getElementById("cal-name").value = c.name || "";
+  document.getElementById("cal-era").value = c.era || "";
+  document.getElementById("cal-months").value = c.months.map(m => `${m.name}, ${m.days}`).join("\n");
+  document.getElementById("cal-weekdays").value = c.weekdays.join(", ");
+  document.getElementById("cal-moons").value = c.moons.map(m => `${m.name}, ${m.cycle}, ${m.offset || 0}`).join("\n");
+  document.getElementById("cal-leap-days").value = c.leap ? c.leap.days : "";
+  document.getElementById("cal-leap-month").value = c.leap ? c.leap.month : "";
+  document.getElementById("cal-leap-every").value = c.leap ? c.leap.every : "";
+  calFillCurMonths(c.months, c.current ? c.current.m : 0);
+  document.getElementById("cal-cur-y").value = c.current ? c.current.y : "";
+  document.getElementById("cal-cur-d").value = c.current ? c.current.d : "";
+  renderCalMgr();
+}
+function calNew(){
+  calSelId = null;
+  ["cal-name", "cal-era", "cal-months", "cal-weekdays", "cal-moons", "cal-leap-days", "cal-leap-month", "cal-leap-every", "cal-cur-y", "cal-cur-d"].forEach(i => document.getElementById(i).value = "");
+  document.getElementById("cal-cur-m").innerHTML = "";
+  renderCalMgr();
+}
+function calFormRead(){
+  const name = document.getElementById("cal-name").value.trim();
+  if (!name) { alert("Give the calendar a name first."); return null; }
+  const months = calParseMonths(document.getElementById("cal-months").value);
+  if (!months.length || months.some(m => !(m.days >= 1))) { alert("Months need a name and at least 1 day each, one per line: Name, days."); return null; }
+  const weekdays = document.getElementById("cal-weekdays").value.split(",").map(s => s.trim()).filter(Boolean);
+  if (!weekdays.length) { alert("Give the calendar at least one weekday name."); return null; }
+  const moons = calParseMoons(document.getElementById("cal-moons").value);
+  if (moons.some(m => !(m.cycle >= 2))) { alert("Each moon needs a cycle of at least 2 days: Name, cycle, offset."); return null; }
+  let leap = null;
+  const ld = parseInt(document.getElementById("cal-leap-days").value, 10), lm = parseInt(document.getElementById("cal-leap-month").value, 10), le = parseInt(document.getElementById("cal-leap-every").value, 10);
+  if (Number.isFinite(ld) || Number.isFinite(lm) || Number.isFinite(le)) {
+    if (!(ld >= 1 && lm >= 1 && lm <= months.length && le >= 2)) { alert("Leap rule needs extra days (1 or more), a month number within the calendar, and an every-years of 2 or more."); return null; }
+    leap = { days: ld, month: lm, every: le };
+  }
+  let current = null;
+  const cy = parseInt(document.getElementById("cal-cur-y").value, 10), cd = parseInt(document.getElementById("cal-cur-d").value, 10);
+  if (Number.isFinite(cy) || Number.isFinite(cd)) {
+    const prevIdx = parseInt(document.getElementById("cal-cur-m").value, 10);
+    calFillCurMonths(months, Number.isFinite(prevIdx) ? prevIdx : 0);
+    const cm = parseInt(document.getElementById("cal-cur-m").value, 10) || 0;
+    if (!(cy >= 1 && cd >= 1)) { alert("Current date needs a year of 1 or more and a day of 1 or more."); return null; }
+    if (cd > calMonthDays({ months, weekdays, moons, leap }, cy, cm)) { alert("That current day runs past the end of its month."); return null; }
+    current = { y: cy, m: cm, d: cd };
+  }
+  return { name, era: document.getElementById("cal-era").value.trim(), months, weekdays, moons, leap, current };
+}
+function calSave(){
+  const data = calFormRead(); if (!data) return;
+  if (calSelId) { const c = calById(calSelId); Object.assign(c, data); }
+  else { data.id = "cal" + Date.now().toString(36); db.calendars.push(data); calSelId = data.id; }
+  persist(); renderCalMgr(); tlFillCals(); calSelect(calSelId);
+}
+function calDel(){
+  if (!calSelId) { alert("Select a calendar first."); return; }
+  const c = calById(calSelId);
+  if (!c || !confirm(`Delete calendar "${c.name}"? Events dated in it fall back to their free-text labels.`)) return;
+  db.calendars = db.calendars.filter(x => x.id !== calSelId);
+  calSelId = null; persist(); calNew(); tlFillCals();
+}
+function calPreview(){
+  const el = document.getElementById("calPreview"); if (!el) return;
+  const c = calSelId ? calById(calSelId) : null;
+  if (!c) { el.textContent = db.calendars.length ? "Select a calendar above to preview its today." : ""; return; }
+  if (!c.current) { el.textContent = "No current date set for this calendar yet."; return; }
+  const moons = c.moons.map(mn => { const p = calMoonPhase(c, mn, c.current); return p ? `${mn.name}: ${p.name}` : ""; }).filter(Boolean).join(" · ");
+  el.textContent = `Today: ${calFmt(c, c.current)}${calWeekday(c, c.current) ? " · " + calWeekday(c, c.current) : ""}${moons ? " · " + moons : ""}`;
+}
+function tlFillCals(){
+  const sel = document.getElementById("tl-cal"); if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">— no calendar date —</option>` + db.calendars.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if (db.calendars.some(c => c.id === cur)) sel.value = cur;
+  tlCalChanged(true);
+}
+function tlCalChanged(keep){
+  const cal = calById(document.getElementById("tl-cal").value);
+  const mSel = document.getElementById("tl-m");
+  const cur = keep ? mSel.value : "";
+  mSel.innerHTML = cal ? cal.months.map((m, i) => `<option value="${i}">${esc(m.name)}</option>`).join("") : "";
+  if (cur !== "" && mSel.querySelector(`option[value="${cur}"]`)) mSel.value = cur;
+}
 let tlSelId = null;
 function tlFillArticles(){
   const sel = document.getElementById("tl-article");
@@ -605,12 +765,12 @@ function tlFillArticles(){
   sel.value = cur;
 }
 function renderTimeline(){
-  tlFillArticles();
+  tlFillArticles(); tlFillCals();
   const items = db.timeline.slice().sort((a,b) => (a.sortKey || 0) - (b.sortKey || 0));
   document.getElementById("tlList").innerHTML = items.map(e => `
     <div class="row ${e.id===tlSelId?'sel':''}" onclick="tlSelect(${e.id})">
       <div class="t">${esc(e.title)}</div>
-      <div class="m">${esc(e.whenLabel || "")} · ${e.visibility === 'player' ? 'players' : 'DM only'} · order ${e.sortKey ?? ""}</div>
+      <div class="m">${esc(tlLabel(e))} · ${e.visibility === 'player' ? 'players' : 'DM only'} · order ${e.sortKey ?? ""}</div>
     </div>`).join("") || '<p class="small">No events yet.</p>';
 }
 function tlSelect(id){
@@ -623,6 +783,16 @@ function tlSelect(id){
   document.getElementById("tl-desc").value = e.description || "";
   tlFillArticles();
   document.getElementById("tl-article").value = e.articleId ? String(e.articleId) : "";
+  tlFillCals();
+  if (e.date && calById(e.date.cal)) {
+    document.getElementById("tl-cal").value = e.date.cal; tlCalChanged();
+    document.getElementById("tl-y").value = e.date.y;
+    document.getElementById("tl-m").value = e.date.m;
+    document.getElementById("tl-d").value = e.date.d;
+  } else {
+    document.getElementById("tl-cal").value = ""; tlCalChanged();
+    document.getElementById("tl-y").value = ""; document.getElementById("tl-d").value = "";
+  }
   renderTimeline();
 }
 function tlClear(){
@@ -633,6 +803,8 @@ function tlClear(){
   document.getElementById("tl-vis").value = "player";
   document.getElementById("tl-desc").value = "";
   document.getElementById("tl-article").value = "";
+  document.getElementById("tl-cal").value = ""; tlCalChanged();
+  document.getElementById("tl-y").value = ""; document.getElementById("tl-d").value = "";
   renderTimeline();
 }
 function tlSave(){
@@ -648,7 +820,14 @@ function tlSave(){
   };
   const art = document.getElementById("tl-article").value;
   if (art) data.articleId = +art;
-  if (tlSelId) { const t = db.timeline.find(e => e.id === tlSelId); if (!art) delete t.articleId; Object.assign(t, data); }
+  const calId = document.getElementById("tl-cal").value;
+  if (calId) {
+    const cal = calById(calId);
+    const y = parseInt(document.getElementById("tl-y").value, 10), m = parseInt(document.getElementById("tl-m").value, 10), d = parseInt(document.getElementById("tl-d").value, 10);
+    if (!(y >= 1 && Number.isFinite(m) && d >= 1 && d <= calMonthDays(cal, y, m))) { alert("That calendar date does not fit the calendar. Check the year, month, and day."); return; }
+    data.date = { cal: calId, y, m, d };
+  }
+  if (tlSelId) { const t = db.timeline.find(e => e.id === tlSelId); if (!art) delete t.articleId; if (!calId) delete t.date; Object.assign(t, data); }
   else { data.id = Math.max(0, ...db.timeline.map(e => e.id)) + 1; db.timeline.push(data); tlSelId = data.id; }
   persist(); renderTimeline();
 }
@@ -1684,7 +1863,7 @@ async function publishToGitHub(){
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
-  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); brandFill(); newArticle();
+  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); brandFill(); newArticle(); renderCalMgr(); calSelId = null; calNew();
 }
 // ---- Formatting guide: the player page's renderer, ported so the examples
 // under the Body field show exactly what players will see ----
@@ -1760,7 +1939,7 @@ function fgRenderBody(text){
 function renderFmtGuide(){
   document.querySelectorAll(".fmtex").forEach(el => { el.innerHTML = fgRenderBody(el.dataset.md); });
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr(); renderRelEditors();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr(); renderRelEditors(); renderCalMgr();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>

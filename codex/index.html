@@ -81,6 +81,20 @@
   .consult-card .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
   .consult-card .btnrow button{background:#58180D;color:#F7F2E5;border:1px solid #58180D;border-radius:4px;padding:7px 16px;font-family:var(--display);letter-spacing:.06em;cursor:pointer}
   .consult-card .btnrow button.ghost{background:none;color:#58180D}
+  .moon-ic{display:inline-block;width:13px;height:13px;border-radius:50%;background:#2A2118;vertical-align:-2px;position:relative;overflow:hidden;border:1px solid #8a6d3b;flex:none}
+  .moon-ic i{position:absolute;top:0;bottom:0;background:#E8CE8A}
+  .tl-moons{margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;font-family:'Scaly Sans',sans-serif;font-size:.95rem}
+  .tl-moons .tm{display:inline-flex;align-items:center;gap:6px}
+  .cal-grid{display:grid;gap:4px;margin:12px 0}
+  .cal-grid .cg-head{font-family:'Scaly Sans Caps',sans-serif;font-size:.8rem;letter-spacing:.04em;color:var(--muted);text-align:center;padding:4px 0}
+  .cal-grid .cg-day{border:1px solid var(--line);min-height:44px;padding:4px 6px;font-size:.92rem;background:rgba(255,255,255,.25);position:relative}
+  .cal-grid .cg-day.today{border:2px solid var(--titlered);background:#FDF1DC;font-weight:700}
+  .cal-grid .cg-day .cg-ev{color:var(--titlered);font-size:.78rem;line-height:1.25;cursor:pointer;font-family:'Scaly Sans',sans-serif}
+  .cal-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cal-nav h3{margin:0}
+  .cal-nav button{background:none;border:1px solid var(--titlered);color:var(--titlered);border-radius:4px;padding:5px 12px;cursor:pointer;font-family:var(--display);letter-spacing:.04em}
+  .cal-cols{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;margin-top:8px}
+  @media (max-width:760px){.cal-cols{grid-template-columns:1fr}}
   .tag{display:inline-block;border:1px solid var(--titlered);color:var(--titlered);border-radius:999px;padding:1px 10px;margin:2px 2px 2px 0;font-size:.82rem;cursor:pointer;background:none;font-family:inherit}
   .tag:hover,.tag.active{background:var(--titlered);color:#F7F2E5}
   .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:12px;cursor:pointer;box-shadow:0 1px 3px rgba(36,26,16,.08);transition:border-color .15s, box-shadow .15s, transform .15s}
@@ -264,6 +278,7 @@
     <button id="tab-npcs" onclick="showTab('npcs')">NPCs</button>
     <button id="tab-statblocks" onclick="showTab('statblocks')">Statblocks</button>
     <button id="tab-graph" onclick="showTab('graph')">Graph</button>
+    <button id="tab-calendar" onclick="showTab('calendar')">Calendar</button>
     <button id="tab-dice" onclick="showTab('dice')">Dice Roller</button>
   </div>
   <div id="view-articles">
@@ -313,6 +328,7 @@
       <p class="small" style="margin-top:10px">Drag a knot to untangle it, drag the parchment to pan, scroll to zoom. The web settles into the same shape on every visit.</p>
     </div>
   </div>
+  <div id="view-calendar" style="display:none"></div>
   <div id="view-dice" style="display:none">
     <div class="panel">
       <h3>Dice Roller</h3>
@@ -475,11 +491,12 @@ function renderStatblocks(){
 }
 function showTab(name){
   if (typeof pvHide === "function") pvHide();
-  ["articles","timeline","npcs","statblocks","graph","dice"].forEach(t => {
+  ["articles","timeline","npcs","statblocks","graph","calendar","dice"].forEach(t => {
     document.getElementById("view-"+t).style.display = t === name ? "" : "none";
     document.getElementById("tab-"+t).classList.toggle("active", t === name);
   });
   if (name === "graph") renderGraph();
+  if (name === "calendar") renderCalendar();
   if (name === "timeline") renderTimeline();
   if (name === "npcs") renderNpcs();
   if (name === "statblocks") renderStatblocks();
@@ -638,6 +655,27 @@ function openArticle(id){
     </article>`;
   window.scrollTo(0, 0);
 }
+/* — Calendar maths (V3 Phase 8), mirrored in the DM Desk. A date is
+   {cal, y, m, d} with m 0-based; years count from 1. — */
+function calById(id){ return (DATA.calendars || []).find(c => c.id === id) || null; }
+function calIsLeap(cal, y){ return !!(cal && cal.leap && (+cal.leap.every || 0) > 0 && y % (+cal.leap.every) === 0); }
+function calMonthDays(cal, y, m){ let d = +((cal.months[m] || {}).days || 0); if (calIsLeap(cal, y) && cal.leap && (+cal.leap.month) === m + 1) d += (+cal.leap.days || 0); return d; }
+function calYearDays(cal, y){ let t = 0; cal.months.forEach((mm, i) => t += calMonthDays(cal, y, i)); return t; }
+function calAbs(cal, date){ let days = 0; const y = +date.y || 1;
+  for (let yy = 1; yy < y; yy++) days += calYearDays(cal, yy);
+  for (let mm = 0; mm < (+date.m || 0); mm++) days += calMonthDays(cal, y, mm);
+  return days + ((+date.d || 1) - 1); }
+function calOrdinal(n){ const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+function calFmt(cal, date){ if (!cal || !date || !cal.months[date.m]) return ""; return `${calOrdinal(date.d)} of ${cal.months[date.m].name}, ${date.y}${cal.era ? " " + cal.era : ""}`; }
+function calWeekday(cal, date){ if (!cal.weekdays || !cal.weekdays.length) return ""; const n = cal.weekdays.length; return cal.weekdays[((calAbs(cal, date) % n) + n) % n]; }
+const MOON_PHASES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
+function calMoonPhase(cal, moon, date){ const cyc = +moon.cycle || 0; if (cyc < 1) return null; const pos = ((calAbs(cal, date) + (+moon.offset || 0)) % cyc + cyc) % cyc; const frac = pos / cyc; return { name: MOON_PHASES[Math.floor(((frac + 1 / 16) % 1) * 8)], frac }; }
+function tlDateLabel(e){ if (e && e.date) { const c = calById(e.date.cal); if (c) { const f = calFmt(c, e.date); if (f) return f; } } return (e && e.whenLabel) || ""; }
+function moonIconHtml(frac){
+  const waxing = frac <= 0.5;
+  const w = Math.round((waxing ? frac * 2 : (1 - frac) * 2) * 100);
+  return `<span class="moon-ic"><i style="${waxing ? "right:0" : "left:0"};width:${w}%"></i></span>`;
+}
 /* — Timeline (TimelineJS-style slides over a marker nav strip) — */
 let tlIdx = 0;
 function tlEvents(){ return [...DATA.timeline].sort((a,b) => a.sortKey - b.sortKey); }
@@ -659,7 +697,7 @@ function tlShow(i){
   tlIdx = Math.max(0, Math.min(i, evs.length));
   const stage = document.getElementById("tlStage");
   const total = evs.length + 1;
-  let bg = "", era, head, text, more = "";
+  let bg = "", era, head, text, more = "", moonsHtml = "";
   if (tlIdx === 0) {
     era = SITE_TITLE; head = "Timeline";
     text = "The history of the world, as the players are allowed to know it. Walk the ages with the arrows, or jump with the markers below.";
@@ -667,10 +705,11 @@ function tlShow(i){
     if (first && first.image) bg = first.image;
   } else {
     const e = evs[tlIdx - 1];
-    era = e.whenLabel || ""; head = e.title; text = e.description || "";
+    era = tlDateLabel(e); head = e.title; text = e.description || "";
     const art = e.articleId ? DATA.articles.find(a => a.id === e.articleId) : null;
     if (art && art.image) bg = art.image;
     if (art) more = `<a class="tl-more" onclick="showTab('articles');openArticle(${art.id})">Read the article →</a>`;
+    if (e.date) { const cal = calById(e.date.cal); if (cal && cal.moons.length) moonsHtml = `<div class="tl-moons">${cal.moons.map(mn => { const p = calMoonPhase(cal, mn, e.date); return p ? `<span class="tm">${moonIconHtml(p.frac)} ${esc(mn.name)}: ${p.name}</span>` : ""; }).join("")}</div>`; }
   }
   stage.innerHTML = `
     ${bg ? `<div class="tl-bg" style="background-image:url('images/${bg}')"></div><div class="tl-shade"></div>` : ''}
@@ -679,6 +718,7 @@ function tlShow(i){
       <div class="tl-head">${esc(head)}</div>
       <div class="tl-text">${esc(text)}</div>
       ${more}
+      ${moonsHtml}
     </div>
     <button class="tl-arrow tl-prev" onclick="tlShow(tlIdx-1)" ${tlIdx === 0 ? 'disabled style="opacity:.35"' : ''}>‹</button>
     <button class="tl-arrow tl-next" onclick="tlShow(tlIdx+1)" ${tlIdx === evs.length ? 'disabled style="opacity:.35"' : ''}>›</button>`;
@@ -686,10 +726,69 @@ function tlShow(i){
   track.innerHTML = evs.map((e, j) => {
     const pct = evs.length === 1 ? 50 : 5 + (j / (evs.length - 1)) * 90;
     const shift = j === 0 ? "-6%" : j === evs.length - 1 ? "-94%" : "-50%";
-    return `<button class="tl-flag ${tlIdx === j + 1 ? 'active' : ''}" style="left:${pct}%;transform:translateX(${shift})" onclick="tlShow(${j + 1})">${esc(e.whenLabel || e.title)}</button>
+    return `<button class="tl-flag ${tlIdx === j + 1 ? 'active' : ''}" style="left:${pct}%;transform:translateX(${shift})" onclick="tlShow(${j + 1})">${esc(tlDateLabel(e) || e.title)}</button>
             <button class="tl-marker ${tlIdx === j + 1 ? 'active' : ''}" style="left:${pct}%" onclick="tlShow(${j + 1})" aria-label="${esc(e.title)}"></button>`;
   }).join("");
   document.getElementById("tlCount").textContent = tlIdx === 0 ? `Title slide · ${total} slides` : `${esc(evs[tlIdx - 1].title)} · slide ${tlIdx + 1} of ${total}`;
+}
+/* — Calendar page (V3 Phase 8): the world's today, a browsable month
+   grid with event markers, and the moons. State CV = viewed month. — */
+let CV = { calId: null, y: 1, m: 0 };
+function calPick(id){ const cal = calById(id); if (!cal) return; CV.calId = cal.id; CV.y = cal.current ? cal.current.y : 1; CV.m = cal.current ? cal.current.m : 0; renderCalendar(); }
+function calNavMonth(dir){
+  const cal = calById(CV.calId); if (!cal) return;
+  CV.m += dir;
+  if (CV.m < 0) { CV.m = cal.months.length - 1; CV.y = Math.max(1, CV.y - 1); }
+  if (CV.m >= cal.months.length) { CV.m = 0; CV.y++; }
+  renderCalendar();
+}
+function calJumpEvent(id){
+  const evs = tlEvents();
+  const idx = evs.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  showTab("timeline"); tlShow(idx + 1);
+}
+function renderCalendar(){
+  const el = document.getElementById("view-calendar");
+  const cals = DATA.calendars || [];
+  if (!cals.length) { el.innerHTML = `<div class="panel"><p class="empty">No calendar has been shared yet.</p></div>`; return; }
+  let cal = cals.find(c => c.id === CV.calId);
+  if (!cal) { cal = cals[0]; CV.calId = cal.id; CV.y = cal.current ? cal.current.y : 1; CV.m = cal.current ? cal.current.m : 0; }
+  CV.m = Math.max(0, Math.min(CV.m, cal.months.length - 1));
+  const y = CV.y, m = CV.m;
+  const daysIn = calMonthDays(cal, y, m);
+  const wdCount = Math.max(1, cal.weekdays.length);
+  const lead = ((calAbs(cal, { y, m, d: 1 }) % wdCount) + wdCount) % wdCount;
+  const evs = tlEvents();
+  const evOn = d => evs.filter(e => e.date && e.date.cal === cal.id && e.date.y === y && e.date.m === m && e.date.d === d);
+  let cells = "";
+  for (let i = 0; i < lead; i++) cells += `<div></div>`;
+  for (let d = 1; d <= daysIn; d++) {
+    const dayEvs = evOn(d);
+    const isToday = cal.current && cal.current.y === y && cal.current.m === m && cal.current.d === d;
+    cells += `<div class="cg-day ${isToday ? "today" : ""}"><div>${d}</div>${dayEvs.map(e => `<div class="cg-ev" title="${esc(e.title)}" onclick="calJumpEvent(${e.id})">◆ ${esc(e.title)}</div>`).join("")}</div>`;
+  }
+  const heads = cal.weekdays.map(w => `<div class="cg-head">${esc(w)}</div>`).join("");
+  const today = cal.current ? `
+    <p><strong>Today:</strong> ${esc(calFmt(cal, cal.current))}${calWeekday(cal, cal.current) ? " · " + esc(calWeekday(cal, cal.current)) : ""}</p>
+    ${cal.moons.length ? `<p>${cal.moons.map(mn => { const p = calMoonPhase(cal, mn, cal.current); return p ? `<span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px">${moonIconHtml(p.frac)} ${esc(mn.name)}: ${p.name}</span>` : ""; }).join("")}</p>` : ""}` : `<p class="small">No current date has been set for this calendar.</p>`;
+  el.innerHTML = `<div class="panel">
+    ${cals.length > 1 ? `<div class="cal-nav"><label>Calendar <select onchange="calPick(this.value)">${cals.map(c => `<option value="${c.id}" ${c.id === cal.id ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label></div>` : ""}
+    <h3>${esc(cal.name)}</h3>
+    ${today}
+    <div class="cal-nav" style="margin:12px 0 4px">
+      <button onclick="calNavMonth(-1)">‹ Prev month</button>
+      <h3 style="font-size:1.3rem">${esc(cal.months[m].name)} ${y}${cal.era ? " " + esc(cal.era) : ""}</h3>
+      <button onclick="calNavMonth(1)">Next month ›</button>
+      ${cal.current ? `<button onclick="CV.y=${cal.current.y};CV.m=${cal.current.m};renderCalendar()">Jump to today</button>` : ""}
+    </div>
+    <div class="cal-grid" style="grid-template-columns:repeat(${wdCount},1fr)">${heads}${cells}</div>
+    <div class="cal-cols">
+      <div><h4>The months</h4>${cal.months.map((mm, i) => `<div>${esc(mm.name)} — ${calMonthDays(cal, y, i)} days${calIsLeap(cal, y) && cal.leap && cal.leap.month === i + 1 ? " (leap year)" : ""}</div>`).join("")}</div>
+      <div><h4>The moons</h4>${cal.moons.length ? cal.moons.map(mn => `<div>${esc(mn.name)} — a ${mn.cycle}-day cycle</div>`).join("") : `<div class="small">No moons recorded.</div>`}
+      <h4>The week</h4><div>${cal.weekdays.map(w => esc(w)).join(" · ")}</div></div>
+    </div>
+  </div>`;
 }
 /* — Dice roller (Google-style: palette → tray → tumble) — */
 const DIE_DEFS = [
@@ -1067,6 +1166,7 @@ document.addEventListener("click", ev => {
 }, true);
 window.addEventListener("scroll", pvHide, { passive: true });
 renderCats(); renderTags(); renderTypes(); renderList(); renderTree();
+if (!DATA.calendars || !DATA.calendars.length) document.getElementById("tab-calendar").style.display = "none";
 PV.el = document.getElementById("linkPreview");
 </script>
 </body>
