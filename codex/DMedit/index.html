@@ -25,6 +25,12 @@
   .layout{display:grid;grid-template-columns:340px 1fr;gap:22px}
   @media (max-width:820px){.layout{grid-template-columns:1fr}}
   .box{background:var(--paper);border:1px solid var(--line);border-top:3px solid #58180D;border-radius:4px;padding:14px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(36,26,16,.08)}
+  .map-stage{position:relative;border:1px solid var(--line);margin-top:8px}
+  .map-stage img{width:100%;display:block}
+  .map-stage .mk-pin{position:absolute;transform:translate(-50%,-100%);width:20px;height:20px;border-radius:50%;background:#58180D;color:#F7F2E5;border:2px solid #F7F2E5;box-shadow:0 1px 4px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:grab;z-index:2}
+  .map-stage .mk-label{position:absolute;transform:translate(-50%,-50%);font-family:'Scaly Sans Caps',sans-serif;font-size:.8rem;background:rgba(238,229,206,.88);padding:1px 6px;border-radius:3px;white-space:nowrap;cursor:grab;z-index:2}
+  .map-stage .mk-pin.dm,.map-stage .mk-label.dm{opacity:.65;outline:1px dashed #58180D}
+  .map-stage .mk-pin.sel,.map-stage .mk-label.sel{outline:2px solid #B89A67;z-index:3}
   h3{margin:2px 0 10px;font-family:var(--display);font-weight:700;font-size:.92rem;text-transform:uppercase;letter-spacing:.12em;color:#58180D;border-bottom:1px solid var(--gold-bright);padding-bottom:6px}
   .row{border:1px solid var(--line);background:var(--card);border-radius:4px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
   .row:hover{border-color:var(--brass)} .row.sel{border-color:#58180D;background:var(--tan);box-shadow:inset 3px 0 0 #58180D}
@@ -218,6 +224,44 @@
           <button class="ghost" onclick="calDel()">Delete selected</button>
         </div>
         <p class="small">Calendars publish to players with the world. Timeline events can then carry a calendar date, and the player Calendar page shows months, moons, and the current day.</p>
+      </div>
+      <div class="box fold" data-fold="maps">
+        <h3>Maps <span class="small" id="mapCount"></span></h3>
+        <div id="mapList"></div>
+        <label>Map name</label>
+        <input type="text" id="map-name">
+        <label>Image</label>
+        <select id="map-image" onchange="mapImageChanged()"></select>
+        <div class="btnrow" style="justify-content:flex-start">
+          <button type="button" class="ghost" onclick="document.getElementById('mapFile').click()">Upload a new map image…</button>
+        </div>
+        <input type="file" id="mapFile" accept="image/*" style="display:none" onchange="onMapImageChosen(this)">
+        <label>Visibility</label>
+        <select id="map-vis">
+          <option value="player">Players can see it</option>
+          <option value="dm_only">DM only</option>
+        </select>
+        <div id="mapStageWrap" style="display:none">
+          <p class="small">Click the map to drop a marker. Drag a marker to move it; click one to edit it below.</p>
+          <div id="mapStage"></div>
+          <label>Marker label</label>
+          <input type="text" id="mk-label" oninput="mkField()">
+          <div class="btnrow" style="justify-content:flex-start">
+            <label style="margin:0">Style <select id="mk-kind" onchange="mkField()"><option value="pin">Pin</option><option value="label">Text label</option></select></label>
+            <label style="margin:0">Visibility <select id="mk-vis" onchange="mkField()"><option value="player">Players</option><option value="dm">DM only</option></select></label>
+          </div>
+          <label>Links to (optional)</label>
+          <select id="mk-target" onchange="mkField()"></select>
+          <div class="btnrow">
+            <button class="ghost" onclick="mkDelete()">Delete marker</button>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button onclick="mapSave()">Save map</button>
+          <button class="ghost" onclick="mapNew()">New map</button>
+          <button class="ghost" onclick="mapDel()">Delete map</button>
+        </div>
+        <p class="small">Maps publish with the world; DM-only markers never reach the player file. Embed a map in an article body with [map:Map Name].</p>
       </div>
       <div class="box fold" data-fold="categories">
         <h3>Categories</h3>
@@ -432,7 +476,7 @@
 | 1 | [[Time]] |
 | 2 | [[Light and Dark]] |"></div></div>
           <div class="fg-item"><code class="fg-code">[[Title]] · [[Title|display text]]</code><div class="fmtex" data-md="One [[Patrons|Patron]] speaks for all the [[Patrons]]."></div></div>
-          <p class="fg-note">Two or more headings in one article add an automatic Contents box above the first heading. [img:file] on its own line inserts an image; [sb:Name] inserts a statblock.</p>
+          <p class="fg-note">Two or more headings in one article add an automatic Contents box above the first heading. [img:file] on its own line inserts an image; [sb:Name] inserts a statblock; [map:Map Name] embeds a map.</p>
         </div>
       </div>
       <div class="btnrow">
@@ -637,6 +681,167 @@ function renderTodo(){
     : "Nothing outstanding. Every link resolves.";
 }
 // ---- Timeline editor ----
+// ---- Maps (V3 Phase 9): an image plus point markers / text labels.
+// Markers carry percent coordinates, an optional article/NPC link, and a
+// visibility flag; DM markers are stripped from the player export, and
+// link targets players cannot open are stripped with them.
+let mapWork = null, mapSelId = null, mkSel = -1, mapImgUrl = "";
+function mapById(id){ return (db.maps || []).find(m => m.id === id) || null; }
+function mapBlank(){ return { id: null, name: "", image: "", visibility: "player", markers: [] }; }
+function renderMapMgr(){
+  document.getElementById("mapCount").textContent = `(${db.maps.length})`;
+  document.getElementById("mapList").innerHTML = db.maps.map(m => `
+    <div class="row ${m.id === mapSelId ? 'sel' : ''}" onclick="mapSelect('${m.id}')">
+      <div class="t">${esc(m.name)}</div>
+      <div class="m">${m.visibility === 'player' ? 'players' : 'DM only'} · ${(m.markers || []).length} markers</div>
+    </div>`).join("") || '<p class="small">No maps yet.</p>';
+}
+async function mapFillImages(){
+  const names = new Set();
+  db.articles.forEach(a => { if (a.image) names.add(a.image); (a.body || "").replace(/\[img:([^\]]+)\]/g, (mm, n) => names.add(n.trim())); });
+  db.npcs.forEach(n => { if (n.image) names.add(n.image); });
+  db.maps.forEach(m => { if (m.image) names.add(m.image); });
+  try { (await imgAll()).forEach(r => names.add(r.name)); } catch (e) {}
+  const sel = document.getElementById("map-image");
+  const cur = mapWork ? mapWork.image : "";
+  sel.innerHTML = `<option value="">— choose an image —</option>` + [...names].sort().map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  if (cur && !names.has(cur)) sel.innerHTML += `<option value="${esc(cur)}">${esc(cur)}</option>`;
+  sel.value = cur || "";
+}
+async function mapRefreshStageImg(){
+  mapImgUrl = "";
+  if (mapWork && mapWork.image) {
+    let rec = null;
+    try { rec = await imgGet(mapWork.image); } catch (e) {}
+    mapImgUrl = rec ? URL.createObjectURL(rec.blob) : "../images/" + mapWork.image;
+  }
+  mapRenderStage();
+}
+function mapImageChanged(){
+  if (!mapWork) mapWork = mapBlank();
+  mapWork.image = document.getElementById("map-image").value;
+  mkSel = -1; mkFillForm(); mapRefreshStageImg();
+}
+async function onMapImageChosen(input){
+  const f = input.files[0]; input.value = "";
+  if (!f) return;
+  const name = await stageImage(f);
+  if (!name) return;
+  if (!mapWork) mapWork = mapBlank();
+  mapWork.image = name;
+  await mapFillImages();
+  document.getElementById("map-image").value = name;
+  mapRefreshStageImg();
+}
+function mapSelect(id){
+  const m = mapById(id); if (!m) return;
+  mapSelId = id;
+  mapWork = JSON.parse(JSON.stringify(m));
+  mapWork.markers = mapWork.markers || [];
+  mkSel = -1;
+  document.getElementById("map-name").value = mapWork.name || "";
+  document.getElementById("map-vis").value = mapWork.visibility === "player" ? "player" : "dm_only";
+  renderMapMgr();
+  mapFillImages().then(() => { document.getElementById("map-image").value = mapWork.image || ""; mapRefreshStageImg(); mkFillForm(); });
+}
+function mapNew(){
+  mapSelId = null; mapWork = mapBlank(); mkSel = -1; mapImgUrl = "";
+  document.getElementById("map-name").value = "";
+  document.getElementById("map-vis").value = "player";
+  renderMapMgr(); mapFillImages(); mapRenderStage(); mkFillForm();
+}
+function mapSave(){
+  if (!mapWork) mapWork = mapBlank();
+  mapWork.name = document.getElementById("map-name").value.trim();
+  mapWork.image = document.getElementById("map-image").value;
+  mapWork.visibility = document.getElementById("map-vis").value;
+  if (!mapWork.name) { alert("Give the map a name first."); return; }
+  if (!mapWork.image) { alert("Choose or upload the map image first."); return; }
+  if (mapSelId) { const m = mapById(mapSelId); Object.assign(m, JSON.parse(JSON.stringify(mapWork))); }
+  else { mapWork.id = "map" + Date.now().toString(36); db.maps.push(JSON.parse(JSON.stringify(mapWork))); mapSelId = mapWork.id; }
+  persist(); renderMapMgr();
+}
+function mapDel(){
+  if (!mapSelId) { alert("Select a map first."); return; }
+  const m = mapById(mapSelId);
+  if (!m || !confirm(`Delete map "${m.name}"? Articles embedding it will show the plain [map:...] text instead.`)) return;
+  db.maps = db.maps.filter(x => x.id !== mapSelId);
+  persist(); mapNew();
+}
+function mapMkHtml(mk, i){
+  const pos = `left:${mk.x}%;top:${mk.y}%`;
+  const cls = `${i === mkSel ? "sel" : ""} ${mk.visibility === "dm" ? "dm" : ""}`;
+  return mk.kind === "label"
+    ? `<span class="mk-label ${cls}" style="${pos}" data-mk="${i}">${esc(mk.label || "Label")}</span>`
+    : `<span class="mk-pin ${cls}" style="${pos}" data-mk="${i}" title="${esc(mk.label || "")}">◆</span>`;
+}
+function mapRenderStage(){
+  const wrap = document.getElementById("mapStageWrap");
+  if (!mapWork || !mapWork.image || !mapImgUrl) { wrap.style.display = "none"; return; }
+  wrap.style.display = "";
+  document.getElementById("mapStage").innerHTML = `<div class="map-stage" id="mapStageInner"><img src="${mapImgUrl}" alt="" draggable="false">${mapWork.markers.map((mk, i) => mapMkHtml(mk, i)).join("")}</div>`;
+  mapStageWire();
+}
+function mapStageWire(){
+  const st = document.getElementById("mapStageInner"); if (!st) return;
+  st.addEventListener("pointerdown", ev => {
+    const pctOf = (host, e2) => { const r = host.getBoundingClientRect(); return {
+      x: Math.round(Math.max(0, Math.min(100, (e2.clientX - r.left) / r.width * 100)) * 10) / 10,
+      y: Math.round(Math.max(0, Math.min(100, (e2.clientY - r.top) / r.height * 100)) * 10) / 10 }; };
+    const mkEl = ev.target.closest ? ev.target.closest("[data-mk]") : null;
+    if (mkEl) {
+      ev.preventDefault();
+      mkSel = +mkEl.getAttribute("data-mk");
+      mkFillForm(); mapRenderStage();
+      const stEl = document.getElementById("mapStageInner"); if (!stEl) return;
+      const el2 = stEl.querySelector(`[data-mk="${mkSel}"]`);
+      const mk = mapWork.markers[mkSel];
+      const p0 = pctOf(stEl, ev);
+      const off = { x: p0.x - mk.x, y: p0.y - mk.y };
+      const move = e2 => { const p = pctOf(stEl, e2); mk.x = Math.round((p.x - off.x) * 10) / 10; mk.y = Math.round((p.y - off.y) * 10) / 10; if (el2) { el2.style.left = mk.x + "%"; el2.style.top = mk.y + "%"; } };
+      const up = () => { document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up); };
+      document.addEventListener("pointermove", move);
+      document.addEventListener("pointerup", up);
+    } else {
+      const p = pctOf(st, ev);
+      mapWork.markers.push({ x: p.x, y: p.y, label: "New marker", kind: "pin", visibility: "player", targetKind: null, targetId: null });
+      mkSel = mapWork.markers.length - 1;
+      mkFillForm(); mapRenderStage();
+    }
+  });
+}
+function mkFillTargets(){
+  const sel = document.getElementById("mk-target");
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">— no link —</option>` +
+    `<optgroup label="Articles">${db.articles.slice().sort((a, b) => a.title.localeCompare(b.title)).map(a => `<option value="article:${a.id}">${esc(a.title)}${a.visibility === "player" ? "" : " (not player-visible)"}</option>`).join("")}</optgroup>` +
+    `<optgroup label="NPCs">${db.npcs.slice().sort((a, b) => a.name.localeCompare(b.name)).map(n => `<option value="npc:${n.id}">${esc(n.name)}${n.visibility === "player" ? "" : " (not player-visible)"}</option>`).join("")}</optgroup>`;
+  sel.value = cur;
+}
+function mkFillForm(){
+  mkFillTargets();
+  const mk = mapWork && mkSel >= 0 ? mapWork.markers[mkSel] : null;
+  document.getElementById("mk-label").value = mk ? (mk.label || "") : "";
+  document.getElementById("mk-kind").value = mk ? (mk.kind || "pin") : "pin";
+  document.getElementById("mk-vis").value = mk ? (mk.visibility || "player") : "player";
+  document.getElementById("mk-target").value = mk && mk.targetKind ? `${mk.targetKind}:${mk.targetId}` : "";
+  ["mk-label", "mk-kind", "mk-vis", "mk-target"].forEach(id => document.getElementById(id).disabled = !mk);
+}
+function mkField(){
+  const mk = mapWork && mkSel >= 0 ? mapWork.markers[mkSel] : null; if (!mk) return;
+  mk.label = document.getElementById("mk-label").value;
+  mk.kind = document.getElementById("mk-kind").value;
+  mk.visibility = document.getElementById("mk-vis").value;
+  const t = document.getElementById("mk-target").value;
+  if (t) { const parts = t.split(":"); mk.targetKind = parts[0]; mk.targetId = +parts[1]; }
+  else { mk.targetKind = null; mk.targetId = null; }
+  mapRenderStage();
+}
+function mkDelete(){
+  if (!mapWork || mkSel < 0) return;
+  mapWork.markers.splice(mkSel, 1);
+  mkSel = -1; mkFillForm(); mapRenderStage();
+}
 // ---- Calendars (V3 Phase 8): definitions, date maths, the Desk editor.
 // A calendar: months with lengths, a weekday cycle, moons with cycles, an
 // optional leap rule (extra days in one month every N years), an era label,
@@ -1410,7 +1615,14 @@ function buildPlayerText(){
     timeline: db.timeline.filter(e => e.visibility === "player"),
     statblocks: db.statblocks.filter(s => s.visibility === "player"),
     calendars: db.calendars || [],
-    maps: (db.maps || []).filter(m => m.visibility === "player"),
+    maps: (db.maps || []).filter(m => m.visibility === "player").map(m => ({ ...m,
+      markers: (m.markers || []).filter(mk => mk.visibility !== "dm").map(mk => {
+        const out = { ...mk };
+        // a link target players cannot open is stripped, not leaked
+        if (out.targetKind === "article") { const a = db.articles.find(x => x.id === out.targetId); if (!a || a.visibility !== "player") { out.targetKind = null; out.targetId = null; } }
+        if (out.targetKind === "npc") { const n = db.npcs.find(x => x.id === out.targetId); if (!n || n.visibility !== "player") { out.targetKind = null; out.targetId = null; } }
+        return out;
+      }) })),
     npcs: db.npcs.filter(n => n.visibility === "player").map(n => {
       const pub = { id: n.id, name: n.name, role: n.role || "", location: n.location || "", met: n.met || "", publicNotes: n.publicNotes || "", relations: playerRelations(n) };
       if (n.image) pub.image = n.image;
@@ -1427,7 +1639,7 @@ function buildDmText(){
     timeline: db.timeline.filter(e => e.visibility !== "player"),
     statblocks: db.statblocks.filter(s => s.visibility !== "player"),
     templates: db.templates || [],
-    maps: (db.maps || []).filter(m => m.visibility !== "player"),
+    maps: db.maps || [],
     npcs: db.npcs
   };
   return "// DM-only data — lives inside the secret DM folder only. Generated from the DM Desk.\nwindow.DM_DATA = " + JSON.stringify(data, null, 2) + ";\n";
@@ -1863,7 +2075,7 @@ async function publishToGitHub(){
 }
 function resetAll(){
   if (!confirm("Discard all local (unpublished) edits and go back to the published data files?")) return;
-  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); brandFill(); newArticle(); renderCalMgr(); calSelId = null; calNew();
+  localStorage.removeItem(KEY); load(); selId = null; fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); brandFill(); newArticle(); renderCalMgr(); calSelId = null; calNew(); renderMapMgr(); mapSelId = null; mapNew();
 }
 // ---- Formatting guide: the player page's renderer, ported so the examples
 // under the Body field show exactly what players will see ----
@@ -1939,7 +2151,7 @@ function fgRenderBody(text){
 function renderFmtGuide(){
   document.querySelectorAll(".fmtex").forEach(el => { el.innerHTML = fgRenderBody(el.dataset.md); });
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr(); renderRelEditors(); renderCalMgr();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr(); renderRelEditors(); renderCalMgr(); renderMapMgr(); mapNew();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
