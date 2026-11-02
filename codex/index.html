@@ -48,6 +48,11 @@
   .crumbs{font-size:.92rem;color:var(--muted);margin-bottom:6px}
   .crumbs a{color:var(--titlered);cursor:pointer;text-decoration:none}
   .crumbs a:hover{text-decoration:underline}
+  .rel-panel{margin-top:26px;border:1px solid var(--line);border-top:3px solid var(--titlered);background:var(--paper);padding:12px 16px}
+  .rel-panel h3{margin:2px 0 8px;font-family:var(--display);color:var(--titlered)}
+  .rel-group{margin:5px 0}
+  .rel-label{font-family:'Scaly Sans Caps','Scaly Sans',sans-serif;letter-spacing:.04em;color:var(--titlered);margin-right:6px}
+  .rel-note{color:var(--muted)}
   .tag{display:inline-block;border:1px solid var(--titlered);color:var(--titlered);border-radius:999px;padding:1px 10px;margin:2px 2px 2px 0;font-size:.82rem;cursor:pointer;background:none;font-family:inherit}
   .tag:hover,.tag.active{background:var(--titlered);color:#F7F2E5}
   .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:12px;cursor:pointer;box-shadow:0 1px 3px rgba(36,26,16,.08);transition:border-color .15s, box-shadow .15s, transform .15s}
@@ -452,6 +457,7 @@ function openNpc(id){
       ${n.image && IMG_FILE.test(n.image) ? `<img class="cover-img" src="images/${n.image}" alt="">` : ''}
       <div class="body">${(n.publicNotes || "").split(/\n\s*\n/).filter(Boolean).map(p => `<p>${linkify(p)}</p>`).join("") || '<p class="empty">Nothing written yet.</p>'}</div>
       ${sb ? sbCard(sb) : ''}
+      ${relPanel("npc", n.id)}
     </article>`;
   window.scrollTo(0, 0);
 }
@@ -516,6 +522,26 @@ function renderTree(){
     return h;
   }).join("");
 }
+/* — Relations panel (V3 Phase 4): outgoing relations plus incoming ones,
+   shown under the inverse label, grouped by label. The player data only
+   ever contains player-visible relations between visible records. — */
+function relPanel(kind, id){
+  const me = kind === "article" ? DATA.articles.find(a => a.id === id) : (DATA.npcs || []).find(n => n.id === id);
+  if (!me) return "";
+  const link = r => {
+    if (r.targetKind === "npc") { const t = (DATA.npcs || []).find(n => n.id === r.targetId); return t ? `<a class="xlink" onclick="showTab('npcs');openNpc(${t.id})">${esc(t.name)}</a>` : ""; }
+    const t = DATA.articles.find(a => a.id === r.targetId); return t ? `<a class="xlink" onclick="showTab('articles');openArticle(${t.id})">${esc(t.title)}</a>` : "";
+  };
+  const groups = {};
+  const push = (label, r) => { if (link(r)) (groups[label] = groups[label] || []).push(r); };
+  (me.relations || []).forEach(r => push(r.label, r));
+  DATA.articles.forEach(a => (a.relations || []).forEach(r => { if (r.targetKind === kind && r.targetId === id) push(r.inverse || r.label, { targetKind: "article", targetId: a.id, note: r.note }); }));
+  (DATA.npcs || []).forEach(n => (n.relations || []).forEach(r => { if (r.targetKind === kind && r.targetId === id) push(r.inverse || r.label, { targetKind: "npc", targetId: n.id, note: r.note }); }));
+  const labels = Object.keys(groups).sort();
+  if (!labels.length) return "";
+  return `<div class="rel-panel"><h3>Relations</h3>` + labels.map(l =>
+    `<div class="rel-group"><span class="rel-label">${esc(l)}</span> ${groups[l].map(r => link(r) + (r.note ? ` <span class="rel-note">— ${esc(r.note)}</span>` : "")).join(", ")}</div>`).join("") + `</div>`;
+}
 function crumbsFor(a){
   const parts = [`<a onclick="setCat(${a.categoryId});renderList()">${esc(catName(a.categoryId))}</a>`];
   const chain = [];
@@ -552,6 +578,7 @@ function openArticle(id){
       ${a.image && IMG_FILE.test(a.image) ? `<img class="cover-img" src="images/${a.image}" alt="">` : ''}
       <p class="summary">${esc(a.summary)}</p>
       <div class="body">${renderBody(a.body)}</div>
+      ${relPanel("article", a.id)}
     </article>`;
   window.scrollTo(0, 0);
 }

@@ -32,6 +32,8 @@
   .tn-cat{display:flex;align-items:center;gap:6px;font-family:'Mr Eaves Small Caps',serif;letter-spacing:.05em;color:#58180D;cursor:pointer;padding:8px 2px 4px;border-bottom:1px solid var(--line);margin:10px 0 8px}
   .tn-caret{display:inline-block;width:14px;text-align:center;cursor:pointer;color:var(--muted);font-size:.8rem;user-select:none;flex:none}
   .tn-btn{padding:0 7px;font-size:.78rem;line-height:1.5}
+  .rel-box{border:1px solid var(--line);border-top:3px solid #58180D;background:var(--card);border-radius:4px;padding:12px 14px;margin-top:14px}
+  .rel-box h4{margin:2px 0 10px;font-family:'Mr Eaves Small Caps',serif;font-size:1.05rem;letter-spacing:.06em;color:#58180D}
   .badge{display:inline-block;border-radius:999px;padding:0 8px;font-size:.75rem;border:1px solid var(--muted);color:var(--muted)}
   .badge.player{border-color:#2e5e4e;color:#2e5e4e}.badge.dm_only{border-color:var(--danger);color:var(--danger)}.badge.draft{border-color:#8a6a14;color:#8a6a14}
   label{display:block;margin:12px 0 4px;font-size:.92rem;font-variant:small-caps;letter-spacing:.04em;color:#4a3d2c}
@@ -247,6 +249,7 @@
           <button class="ghost" onclick="npcClear()">Clear</button>
           <button class="ghost" onclick="npcDel()">Delete selected</button>
         </div>
+        <div id="relMountN"></div>
         <p class="small">One record, two faces: the green half is all that ever publishes to players; the red half is written only into dm-data.js.</p>
       </div>
       <div class="box fold" data-fold="branding">
@@ -392,6 +395,7 @@
         <button class="danger" onclick="del()">Delete article</button>
       </div>
       <p class="small" id="saveMsg"></p>
+      <div id="relMountA"></div>
     </div>
   </div>
 </div>
@@ -663,6 +667,7 @@ function npcSelect(id){
   npcFillSb();
   document.getElementById("n-sb").value = n.statblockId ? String(n.statblockId) : "";
   renderNpcMgr();
+  renderRelEditors();
 }
 function npcClear(){
   npcSelId = null;
@@ -672,6 +677,7 @@ function npcClear(){
   npcImage = "";
   showNpcPortrait();
   renderNpcMgr();
+  renderRelEditors();
 }
 async function onNpcPortraitChosen(input){
   const f = input.files[0]; input.value = "";
@@ -710,8 +716,8 @@ function npcSave(){
   const sbv = document.getElementById("n-sb").value;
   if (sbv) data.statblockId = +sbv;
   if (npcSelId) { const t = db.npcs.find(x => x.id === npcSelId); if (!npcImage) delete t.image; if (!sbv) delete t.statblockId; Object.assign(t, data); }
-  else { data.id = Math.max(0, ...db.npcs.map(x => x.id)) + 1; db.npcs.push(data); npcSelId = data.id; }
-  persist(); renderNpcMgr();
+  else { data.id = Math.max(0, ...db.npcs.map(x => x.id)) + 1; data.parentId = null; data.relations = []; db.npcs.push(data); npcSelId = data.id; }
+  persist(); renderNpcMgr(); renderRelEditors();
 }
 function npcDel(){
   if (!npcSelId) { alert("Select an NPC first."); return; }
@@ -801,6 +807,99 @@ function catDel(){
   if (mine.length) mine.forEach(a => a.categoryId = others[0].id);
   db.categories = db.categories.filter(x => x.id !== catSelId);
   catSelId = null; persist(); fillCats(); renderList(); catClear();
+}
+// ---- Relations (V3 Phase 4) ----
+// A relation lives once, on its owner: {targetKind, targetId, label,
+// inverse, note, visibility}. Presets carry their inverse; a custom label
+// shows as written on both ends. The same editor mounts in the article
+// form ("A") and the NPC form ("N").
+const REL_PRESETS = [
+  ["parent of", "child of"], ["created", "created by"], ["serves", "served by"],
+  ["opposes", "opposed by"], ["allied with", "allied with"], ["part of", "contains"],
+  ["patron of", "guided by"]
+];
+function relTargetName(r){
+  const t = r.targetKind === "npc" ? db.npcs.find(n => n.id === r.targetId) : db.articles.find(a => a.id === r.targetId);
+  return t ? (r.targetKind === "npc" ? t.name : t.title) : null;
+}
+function relOwnerOf(sfx){ return sfx === "A" ? db.articles.find(a => a.id === selId) : db.npcs.find(n => n.id === npcSelId); }
+function renderRelEditors(){ relRenderMount("A"); relRenderMount("N"); }
+function relRenderMount(sfx){
+  const mount = document.getElementById(sfx === "A" ? "relMountA" : "relMountN"); if (!mount) return;
+  const kind = sfx === "A" ? "article" : "npc";
+  const owner = relOwnerOf(sfx);
+  if (!owner) { mount.innerHTML = `<div class="rel-box"><h4>Relations</h4><p class="small">Save this ${kind === "article" ? "article" : "NPC"} first, then add relations.</p></div>`; return; }
+  const own = owner.relations || (owner.relations = []);
+  const rows = own.map((r, i) => {
+    const tn = relTargetName(r);
+    return `<div class="row">
+      <div class="t">${esc(r.label)} → ${tn ? esc(tn) : '<span style="color:var(--danger)">⚠ target missing — deleted?</span>'}</div>
+      <div class="m">${r.targetKind === "npc" ? "NPC" : "Article"} · <span class="badge ${r.visibility === 'player' ? 'player' : 'dm_only'}">${r.visibility === 'player' ? 'players' : 'DM only'}</span>${r.note ? " · " + esc(r.note) : ""}</div>
+      <div class="btnrow"><button class="ghost" onclick="relDel('${sfx}', ${i})">Remove</button></div>
+    </div>`;
+  }).join("");
+  const incoming = [];
+  db.articles.forEach(a => (a.relations || []).forEach(r => { if (r.targetKind === kind && r.targetId === owner.id && a.id !== owner.id) incoming.push({ from: a.title, r }); }));
+  db.npcs.forEach(n => (n.relations || []).forEach(r => { if (r.targetKind === kind && r.targetId === owner.id && n.id !== owner.id) incoming.push({ from: n.name, r }); }));
+  const inRows = incoming.map(({ from, r }) => `<div class="m" style="margin:4px 0">${esc(from)} — <b>${esc(r.inverse || r.label)}</b> → this ${kind} <span class="badge ${r.visibility === 'player' ? 'player' : 'dm_only'}">${r.visibility === 'player' ? 'players' : 'DM only'}</span></div>`).join("");
+  const artOpts = db.articles.filter(a => !(kind === "article" && a.id === owner.id)).map(a => `<option value="article:${a.id}">${esc(a.title)}</option>`).join("");
+  const npcOpts = db.npcs.filter(n => !(kind === "npc" && n.id === owner.id)).map(n => `<option value="npc:${n.id}">${esc(n.name)}</option>`).join("");
+  mount.innerHTML = `<div class="rel-box">
+    <h4>Relations</h4>
+    ${rows || '<p class="small">No relations yet.</p>'}
+    ${incoming.length ? `<div class="zone-label" style="margin-top:8px">Pointing here</div>${inRows}` : ""}
+    <label>New relation — target</label>
+    <select id="relT${sfx}"><optgroup label="Articles">${artOpts}</optgroup><optgroup label="NPCs">${npcOpts}</optgroup></select>
+    <label>Label</label>
+    <select id="relL${sfx}" onchange="relLabelToggle('${sfx}')">${REL_PRESETS.map(p => `<option value="${esc(p[0])}">${esc(p[0])}</option>`).join("")}<option value="__custom">Custom label…</option></select>
+    <input type="text" id="relC${sfx}" placeholder="Custom label (shows the same on both ends)" style="display:none;margin-top:6px">
+    <label>Note (optional)</label>
+    <input type="text" id="relNote${sfx}">
+    <label>Visibility</label>
+    <select id="relV${sfx}"><option value="player">Players can see this relation</option><option value="dm">DM only — never published</option></select>
+    <div class="btnrow"><button onclick="relAdd('${sfx}')">Add relation</button></div>
+  </div>`;
+}
+function relLabelToggle(sfx){
+  const c = document.getElementById("relC" + sfx);
+  c.style.display = document.getElementById("relL" + sfx).value === "__custom" ? "" : "none";
+  if (c.style.display === "") c.focus();
+}
+function relAdd(sfx){
+  const owner = relOwnerOf(sfx); if (!owner) return;
+  const tv = document.getElementById("relT" + sfx).value;
+  if (!tv) { alert("Pick a target first."); return; }
+  const [targetKind, tid] = tv.split(":");
+  let label = document.getElementById("relL" + sfx).value, inverse;
+  if (label === "__custom") {
+    label = document.getElementById("relC" + sfx).value.trim();
+    if (!label) { alert("Write the custom label first."); return; }
+    inverse = label;
+  } else {
+    inverse = (REL_PRESETS.find(p => p[0] === label) || [label, label])[1];
+  }
+  (owner.relations || (owner.relations = [])).push({
+    targetKind, targetId: +tid, label, inverse,
+    note: document.getElementById("relNote" + sfx).value.trim(),
+    visibility: document.getElementById("relV" + sfx).value
+  });
+  persist(); renderRelEditors();
+}
+function relDel(sfx, i){
+  const owner = relOwnerOf(sfx); if (!owner || !owner.relations) return;
+  owner.relations.splice(i, 1);
+  persist(); renderRelEditors();
+}
+// Export rule: a relation reaches player-data only if the relation itself is
+// player-visible AND its target is player-visible. DM relations, and
+// relations pointing into the DM side, never leave the Desk.
+function playerRelations(owner){
+  return (owner.relations || []).filter(r => {
+    if (r.visibility !== "player") return false;
+    if (r.targetKind === "article") { const t = db.articles.find(a => a.id === r.targetId); return !!t && t.visibility === "player"; }
+    if (r.targetKind === "npc") { const t = db.npcs.find(n => n.id === r.targetId); return !!t && t.visibility === "player"; }
+    return false;
+  });
 }
 // ---- Templates manager (V3 Phase 2) ----
 let tplSelId = null;
@@ -1025,6 +1124,7 @@ function select(id){
   currentImage = a.image || "";
   showCover();
   renderList();
+  renderRelEditors();
 }
 function newArticle(prefillTitle){
   selId = null;
@@ -1041,6 +1141,7 @@ function newArticle(prefillTitle){
   currentImage = "";
   showCover();
   renderList();
+  renderRelEditors();
   document.getElementById("f-title").focus();
 }
 function save(){
@@ -1099,13 +1200,13 @@ function buildPlayerText(){
     schema: 3,
     settings: db.settings,
     categories: db.categories,
-    articles: db.articles.filter(a => a.visibility === "player").map(a => ({ ...a, parentId: effParentId(a) })),
+    articles: db.articles.filter(a => a.visibility === "player").map(a => ({ ...a, parentId: effParentId(a), relations: playerRelations(a) })),
     timeline: db.timeline.filter(e => e.visibility === "player"),
     statblocks: db.statblocks.filter(s => s.visibility === "player"),
     calendars: db.calendars || [],
     maps: (db.maps || []).filter(m => m.visibility === "player"),
     npcs: db.npcs.filter(n => n.visibility === "player").map(n => {
-      const pub = { id: n.id, name: n.name, role: n.role || "", location: n.location || "", met: n.met || "", publicNotes: n.publicNotes || "" };
+      const pub = { id: n.id, name: n.name, role: n.role || "", location: n.location || "", met: n.met || "", publicNotes: n.publicNotes || "", relations: playerRelations(n) };
       if (n.image) pub.image = n.image;
       if (n.statblockId) pub.statblockId = n.statblockId;
       return pub;
@@ -1481,7 +1582,7 @@ function fgRenderBody(text){
 function renderFmtGuide(){
   document.querySelectorAll(".fmtex").forEach(el => { el.innerHTML = fgRenderBody(el.dataset.md); });
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr(); renderRelEditors();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
