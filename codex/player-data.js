@@ -119,7 +119,32 @@ window.PLAYER_DATA = {
       "pinned": false,
       "image": "gemini-generated-image-gamvjtgamvjtgamv-99db11b4.jpg",
       "parentId": null,
-      "relations": []
+      "relations": [
+        {
+          "targetKind": "article",
+          "targetId": 14,
+          "label": "part of",
+          "inverse": "contains",
+          "note": "",
+          "visibility": "player"
+        },
+        {
+          "targetKind": "article",
+          "targetId": 15,
+          "label": "part of",
+          "inverse": "contains",
+          "note": "",
+          "visibility": "player"
+        },
+        {
+          "targetKind": "article",
+          "targetId": 9,
+          "label": "part of",
+          "inverse": "contains",
+          "note": "",
+          "visibility": "player"
+        }
+      ]
     },
     {
       "id": 4,
@@ -193,7 +218,16 @@ window.PLAYER_DATA = {
       "id": 10,
       "image": "gemini-generated-image-ba8lurba8lurba8l-69550e2e.jpg",
       "parentId": 14,
-      "relations": []
+      "relations": [
+        {
+          "targetKind": "article",
+          "targetId": 14,
+          "label": "part of",
+          "inverse": "contains",
+          "note": "",
+          "visibility": "player"
+        }
+      ]
     },
     {
       "title": "Equilibrium",
