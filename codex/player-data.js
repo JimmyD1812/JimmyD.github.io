@@ -63,7 +63,8 @@ window.PLAYER_DATA = {
         "good and evil",
         "religion"
       ],
-      "pinned": false
+      "pinned": false,
+      "image": "two-afterlives-ferry.jpg"
     },
     {
       "id": 2,
