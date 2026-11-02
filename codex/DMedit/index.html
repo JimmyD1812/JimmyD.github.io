@@ -255,6 +255,29 @@
         <p class="small">Shown on the player site. Blank = the "World Codex" defaults. Takes effect when you Publish.</p>
         <p class="small" id="brandState"></p>
       </div>
+      <div class="box fold" data-fold="templates">
+        <h3>Article templates</h3>
+        <div id="tplList"></div>
+        <label>Template name</label>
+        <input type="text" id="tpl-name">
+        <label>Type</label>
+        <select id="tpl-type"></select>
+        <label>Category</label>
+        <select id="tpl-cat"></select>
+        <label>Summary placeholder</label>
+        <textarea id="tpl-summary" rows="2"></textarea>
+        <label>Body skeleton — the headings and structure; the writing happens in the article</label>
+        <textarea id="tpl-body" rows="8"></textarea>
+        <div class="btnrow">
+          <button onclick="tplSave()">Add / update template</button>
+          <button class="ghost" onclick="tplClear()">Clear</button>
+          <button class="ghost" onclick="tplDel()">Delete selected</button>
+        </div>
+        <div class="btnrow">
+          <button onclick="tplUse()">New article from this template</button>
+        </div>
+        <p class="small">Templates travel in dm-data.js when you Publish, so both your devices share the set. "Save as template" in the article form captures an article's headings and structure only, never its words.</p>
+      </div>
       <div class="box fold" data-fold="snapshots">
         <h3>Snapshots & rollback</h3>
         <p class="small" style="margin-top:0">Full copies of everything in this Desk, kept in this browser under their own key, so they survive "Discard local edits" and never get published. One is taken automatically before each Publish and on the first open of each day. Restoring replaces what's in the Desk now, and a safety snapshot is taken first, so a rollback can itself be undone.</p>
@@ -360,6 +383,7 @@
       <input type="text" id="f-tags">
       <div class="btnrow">
         <button onclick="save()">Save</button>
+        <button class="ghost" onclick="saveAsTemplate()">Save as template</button>
         <button class="danger" onclick="del()">Delete article</button>
       </div>
       <p class="small" id="saveMsg"></p>
@@ -428,6 +452,7 @@ function load(){
   if (!Array.isArray(db.npcs)) db.npcs = [];
   if (!db.settings) db.settings = { siteTitle: "World Codex", footerText: "World Codex — kept by the DM, shared with the party." };
   normalizeDb();
+  seedTemplates();
 }
 // V3 Phase 0: every article/NPC record carries parentId + relations (empty
 // until Phases 3-4 use them), and the Desk state carries the templates,
@@ -706,6 +731,134 @@ function catDel(){
   db.categories = db.categories.filter(x => x.id !== catSelId);
   catSelId = null; persist(); fillCats(); renderList(); catClear();
 }
+// ---- Templates manager (V3 Phase 2) ----
+let tplSelId = null;
+function tplFillSelects(){
+  const tSel = document.getElementById("tpl-type");
+  const cur = tSel.value;
+  tSel.innerHTML = TYPES.map(t => `<option>${esc(t)}</option>`).join("");
+  if (cur) tSel.value = cur;
+  const cSel = document.getElementById("tpl-cat");
+  const curCat = cSel.value;
+  cSel.innerHTML = '<option value="">— no preset category —</option>' + db.categories.slice().sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0)).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if (curCat) cSel.value = curCat;
+}
+function renderTplMgr(){
+  const elx = document.getElementById("tplList"); if (!elx) return;
+  const items = db.templates.slice().sort((a,b) => a.name.localeCompare(b.name));
+  elx.innerHTML = items.map(t => `
+    <div class="row ${t.id===tplSelId?'sel':''}" onclick="tplSelect(${t.id})">
+      <div class="t">${esc(t.name)}</div>
+      <div class="m">${esc(t.type)}${t.categoryId ? " · " + esc(catName(t.categoryId)) : ""}</div>
+    </div>`).join("") || '<p class="small">No templates yet.</p>';
+}
+function tplSelect(id){
+  const t = db.templates.find(x => x.id === id); if (!t) return;
+  tplSelId = id;
+  tplFillSelects();
+  document.getElementById("tpl-name").value = t.name || "";
+  if (!TYPES.includes(t.type)) { const o = document.createElement("option"); o.textContent = t.type; document.getElementById("tpl-type").appendChild(o); }
+  document.getElementById("tpl-type").value = t.type;
+  document.getElementById("tpl-cat").value = t.categoryId || "";
+  document.getElementById("tpl-summary").value = t.summary || "";
+  document.getElementById("tpl-body").value = t.body || "";
+  renderTplMgr();
+}
+function tplClear(){
+  tplSelId = null;
+  tplFillSelects();
+  document.getElementById("tpl-name").value = "";
+  document.getElementById("tpl-summary").value = "";
+  document.getElementById("tpl-body").value = "";
+  renderTplMgr();
+}
+function tplSave(){
+  const name = document.getElementById("tpl-name").value.trim();
+  if (!name) { alert("Give the template a name first."); return; }
+  const data = {
+    name,
+    type: document.getElementById("tpl-type").value,
+    categoryId: +document.getElementById("tpl-cat").value || null,
+    summary: document.getElementById("tpl-summary").value,
+    body: document.getElementById("tpl-body").value
+  };
+  if (tplSelId) Object.assign(db.templates.find(t => t.id === tplSelId), data);
+  else { data.id = Math.max(0, ...db.templates.map(t => t.id)) + 1; db.templates.push(data); tplSelId = data.id; }
+  persist(); renderTplMgr();
+}
+function tplDel(){
+  if (!tplSelId) { alert("Select a template first."); return; }
+  const t = db.templates.find(x => x.id === tplSelId); if (!t) return;
+  if (!confirm(`Delete template "${t.name}"? Articles already made from it are untouched.`)) return;
+  db.templates = db.templates.filter(x => x.id !== tplSelId);
+  persist(); tplClear();
+}
+function tplUse(){
+  const t = db.templates.find(x => x.id === tplSelId);
+  if (!t) { alert("Select a template first."); return; }
+  newArticle();
+  if (!TYPES.includes(t.type)) { const o = document.createElement("option"); o.textContent = t.type; document.getElementById("f-type").appendChild(o); }
+  document.getElementById("f-type").value = t.type;
+  if (t.categoryId) document.getElementById("f-cat").value = t.categoryId;
+  document.getElementById("f-summary").value = t.summary || "";
+  document.getElementById("f-body").value = t.body || "";
+  document.getElementById("formTitle").textContent = "New article — from template: " + t.name;
+  document.getElementById("formTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("f-title").focus();
+}
+// Structure-only skeleton of an article body: headings, dividers, table
+// headers and image slots survive; every word of prose is dropped.
+function skeletonOf(body){
+  const out = [];
+  let inTable = false;
+  (body || "").split("\n").forEach(raw => {
+    const l = raw.trim();
+    if (/^#{1,3}(?!#)\s*\S/.test(l)) { out.push(l); inTable = false; return; }
+    if (l === "---") { out.push("---"); inTable = false; return; }
+    if (l.startsWith("|")) {
+      if (!inTable) { out.push(l); inTable = true; }
+      else if (/^\|[\s:|-]+\|$/.test(l)) out.push(l);
+      return;
+    }
+    inTable = false;
+    if (l.startsWith("[img:")) out.push("[img:REPLACE-WITH-IMAGE.png]");
+  });
+  return out.join("\n\n").trim();
+}
+function saveAsTemplate(){
+  const title = document.getElementById("f-title").value.trim() || "Untitled";
+  const name = prompt("Template name:", title + " template");
+  if (!name || !name.trim()) return;
+  const t = {
+    id: Math.max(0, ...db.templates.map(x => x.id)) + 1,
+    name: name.trim(),
+    type: document.getElementById("f-type").value,
+    categoryId: +document.getElementById("f-cat").value || null,
+    summary: "",
+    body: skeletonOf(document.getElementById("f-body").value)
+  };
+  db.templates.push(t);
+  persist(); tplSelect(t.id);
+  alert(`Template "${t.name}" saved — it is selected in the Article templates box. It holds the structure only, none of the words.`);
+}
+// Starter templates, seeded once, modelled on Jim's real article shapes.
+function seedTemplates(){
+  if (db.settings.templatesSeeded) return;
+  db.settings.templatesSeeded = true;
+  if (!Array.isArray(db.templates) || db.templates.length) return;
+  const catByName = n => (db.categories.find(c => c.name === n) || {}).id || null;
+  db.templates = [
+    { id: 1, name: "Patron", type: "Character", categoryId: catByName("Cosmology"),
+      summary: "[One line: whose Patron this is, their epithet, and the one thing they want.]",
+      body: "## [Race]: [Name], [the Epithet]\n\n[Who they are: what they made their people to be, what they teach, what their church is like.]\n\n[Name]'s reward is [Aethelis / Khavora]. [Why their church chooses it, in the church's own reasoning, and what the other realm means to them.]" },
+    { id: 2, name: "Race", type: "Species", categoryId: catByName("History"),
+      summary: "[One line: who their Patron made them to be.]",
+      body: "## [Race name]\n\n[img:REPLACE-WITH-PORTRAIT.png]\n\n[Who their Patron made them to be: temperament, their country and how it is ruled, how they keep their history.]\n\n### Callings:\n[Which classes gather here, and why.]\n\n### Neighbors:\n[How they get on with the other peoples, and where the friction lives.]" },
+    { id: 3, name: "Myth / Cosmology", type: "Myth", categoryId: catByName("Cosmology"),
+      summary: "[One line: the story or truth this article holds.]",
+      body: "[The story or truth, told plainly: who was there, what happened, what it changed.]\n\n## [The idea underneath]\n\n[What this means for the world: the rule, the tension, the thing mortals get wrong about it.]\n\n> \"[A voice from the world, on this.]\" — [Name, title]" }
+  ];
+}
 // ---- Statblocks manager ----
 let sbSelId = null;
 function renderSbMgr(){
@@ -806,7 +959,7 @@ function save(){
   };
   if (currentImage) data.image = currentImage;
   if (selId) { const t = db.articles.find(a => a.id === selId); if (!currentImage) delete t.image; Object.assign(t, data); }
-  else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; db.articles.push(data); selId = data.id; }
+  else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; data.parentId = null; data.relations = []; db.articles.push(data); selId = data.id; }
   persist(); renderList(); renderTimeline(); renderCatMgr(); select(selId);
 }
 function del(){
@@ -1208,7 +1361,7 @@ function fgRenderBody(text){
 function renderFmtGuide(){
   document.querySelectorAll(".fmtex").forEach(el => { el.innerHTML = fgRenderBody(el.dataset.md); });
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots(); tplFillSelects(); renderTplMgr();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
