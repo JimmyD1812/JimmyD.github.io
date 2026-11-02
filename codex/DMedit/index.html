@@ -34,6 +34,14 @@
   .tn-btn{padding:0 7px;font-size:.78rem;line-height:1.5}
   .rel-box{border:1px solid var(--line);border-top:3px solid #58180D;background:var(--card);border-radius:4px;padding:12px 14px;margin-top:14px}
   .rel-box h4{margin:2px 0 10px;font-family:'Mr Eaves Small Caps',serif;font-size:1.05rem;letter-spacing:.06em;color:#58180D}
+  .dgedge{stroke:#9C2B1B;stroke-opacity:.4;fill:none;stroke-width:1.4}
+  .dgedge-l{font-size:9px;fill:#6d5c33;paint-order:stroke;stroke:#F7F2E5;stroke-width:3px;font-family:'Scaly Sans',sans-serif;text-anchor:middle}
+  .dgnode text{text-anchor:middle;fill:#2b2118}
+  .dgnode .gt{font-size:12.5px;font-weight:600}
+  .dgnode .gs{font-size:9.5px;fill:#6d5c33;font-family:'Scaly Sans',sans-serif}
+  #dgSvg{display:block;width:100%;height:auto;touch-action:none}
+  #dgOverlay .tag{display:inline-block;border:1px solid #58180D;color:#58180D;border-radius:999px;padding:2px 12px;margin:2px 2px 2px 0;font-size:.85rem;cursor:pointer;background:none;font-family:inherit}
+  #dgOverlay .tag.active{background:#58180D;color:#F7F2E5}
   .badge{display:inline-block;border-radius:999px;padding:0 8px;font-size:.75rem;border:1px solid var(--muted);color:var(--muted)}
   .badge.player{border-color:#2e5e4e;color:#2e5e4e}.badge.dm_only{border-color:var(--danger);color:var(--danger)}.badge.draft{border-color:#8a6a14;color:#8a6a14}
   label{display:block;margin:12px 0 4px;font-size:.92rem;font-variant:small-caps;letter-spacing:.04em;color:#4a3d2c}
@@ -261,6 +269,11 @@
         <p class="small">Shown on the player site. Blank = the "World Codex" defaults. Takes effect when you Publish.</p>
         <p class="small" id="brandState"></p>
       </div>
+      <div class="box fold" data-fold="graph">
+        <h3>Relation graph</h3>
+        <p class="small">The whole web, DM side included — dashed knots and threads are DM-only. The player graph is drawn separately, from player data only.</p>
+        <div class="btnrow"><button onclick="dgOpen()">Open the graph</button></div>
+      </div>
       <div class="box fold" data-fold="templates">
         <h3>Article templates</h3>
         <div id="tplList"></div>
@@ -400,6 +413,20 @@
   </div>
 </div>
 </div><!-- /#appShell -->
+<div id="dgOverlay" style="display:none;position:fixed;inset:0;background:rgba(30,20,10,.55);z-index:80;overflow:auto">
+  <div style="background:#F7F2E5;max-width:1180px;margin:3vh auto;padding:18px 20px;border-radius:6px;border-top:4px solid #58180D">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0;font-family:'Mr Eaves Small Caps',serif;letter-spacing:.06em;color:#58180D">The Web of the World — DM view</h3>
+      <button class="ghost" onclick="dgClose()">Close ✕</button>
+    </div>
+    <div id="dgControls" style="margin:10px 0"></div>
+    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <div id="dgStage" style="flex:1 1 520px;background:#efe6cb;border:1px solid var(--line);border-radius:4px"></div>
+      <div id="dgCard" style="flex:0 1 250px;border:1px solid var(--line);border-top:3px solid #58180D;background:#fffdf6;padding:12px 14px"></div>
+    </div>
+    <p class="small" style="margin-top:10px">Drag a knot to untangle it, drag the parchment to pan, scroll to zoom. Dashed = DM only.</p>
+  </div>
+</div>
 <script src="../player-data.js"></script>
 <script src="dm-data.js"></script>
 <script>
@@ -1229,6 +1256,157 @@ function buildDmText(){
 function exportPlayer(){ download("player-data.js", buildPlayerText()); }
 function exportDM(){ download("dm-data.js", buildDmText()); }
 
+// ---- Relation graph, DM view (V3 Phase 5) ----
+// Same hand-rolled SVG renderer as the player graph, but drawn from the
+// full Desk data: DM knots and DM threads included, drawn dashed.
+const DGW = 900, DGH = 600;
+const DG = { mode: "web", center: null, depth: 2, sel: null, view: { x: 0, y: 0, k: 1 }, pos: {}, setKey: "", edgesNow: [], drag: null };
+function dgAll(){
+  const nodes = [], byKey = {};
+  db.articles.forEach(a => { const n = { key: "a" + a.id, kind: "article", id: a.id, label: a.title, sub: a.type, dm: a.visibility !== "player" }; nodes.push(n); byKey[n.key] = n; });
+  db.npcs.forEach(x => { const n = { key: "n" + x.id, kind: "npc", id: x.id, label: x.name, sub: "NPC", dm: x.visibility !== "player" }; nodes.push(n); byKey[n.key] = n; });
+  const edges = [];
+  const add = (ok, o) => (o.relations || []).forEach(r => { const tk = (r.targetKind === "npc" ? "n" : "a") + r.targetId; if (byKey[tk] && tk !== ok) edges.push({ a: ok, b: tk, label: r.label, dm: r.visibility !== "player" }); });
+  db.articles.forEach(a => add("a" + a.id, a));
+  db.npcs.forEach(x => add("n" + x.id, x));
+  return { nodes, edges, byKey };
+}
+function dgVisible(){
+  const { nodes, edges, byKey } = dgAll();
+  let keep;
+  if (DG.mode === "explore" && DG.center && byKey[DG.center]) {
+    const adj = {}; edges.forEach(e => { (adj[e.a] = adj[e.a] || []).push(e.b); (adj[e.b] = adj[e.b] || []).push(e.a); });
+    keep = new Set([DG.center]); let frontier = [DG.center];
+    for (let d = 0; d < DG.depth; d++) { const next = []; frontier.forEach(k => (adj[k] || []).forEach(m => { if (!keep.has(m)) { keep.add(m); next.push(m); } })); frontier = next; }
+  } else keep = new Set(nodes.map(n => n.key));
+  return { nodes: nodes.filter(n => keep.has(n.key)), edges: edges.filter(e => keep.has(e.a) && keep.has(e.b)), byKey };
+}
+function dgLayout(nodes, edges, pinKey){
+  let seed = 987654321;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const cx = DGW / 2, cy = DGH / 2, R = Math.min(DGW, DGH) * 0.32;
+  const pos = {};
+  nodes.forEach((n, i) => { const t = nodes.length > 1 ? (i / nodes.length) * Math.PI * 2 : 0; pos[n.key] = { x: cx + Math.cos(t) * R + (rnd() - .5) * 24, y: cy + Math.sin(t) * R + (rnd() - .5) * 24 }; });
+  if (pinKey && pos[pinKey]) pos[pinKey] = { x: cx, y: cy };
+  for (let it = 0; it < 300; it++) {
+    const f = {}; nodes.forEach(n => f[n.key] = { x: 0, y: 0 });
+    for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+      const A = pos[nodes[i].key], B = pos[nodes[j].key];
+      let dx = A.x - B.x, dy = A.y - B.y; const d2 = dx * dx + dy * dy || 1, d = Math.sqrt(d2);
+      const rep = Math.min(14000 / d2, 3); dx /= d; dy /= d;
+      f[nodes[i].key].x += dx * rep; f[nodes[i].key].y += dy * rep;
+      f[nodes[j].key].x -= dx * rep; f[nodes[j].key].y -= dy * rep;
+    }
+    edges.forEach(e => { const A = pos[e.a], B = pos[e.b]; if (!A || !B) return; let dx = B.x - A.x, dy = B.y - A.y; const d = Math.sqrt(dx * dx + dy * dy) || 1; const s = (d - 150) * 0.03; dx /= d; dy /= d;
+      f[e.a].x += dx * s; f[e.a].y += dy * s; f[e.b].x -= dx * s; f[e.b].y -= dy * s; });
+    nodes.forEach(n => { if (n.key === pinKey) return; const p = pos[n.key], F = f[n.key];
+      F.x += (cx - p.x) * 0.008; F.y += (cy - p.y) * 0.008;
+      p.x += Math.max(-14, Math.min(14, F.x)); p.y += Math.max(-14, Math.min(14, F.y));
+      p.x = Math.max(34, Math.min(DGW - 34, p.x)); p.y = Math.max(30, Math.min(DGH - 44, p.y)); });
+  }
+  return pos;
+}
+function dgEdgeGeom(e, i){
+  const A = DG.pos[e.a], B = DG.pos[e.b]; if (!A || !B) return null;
+  const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+  let dx = B.x - A.x, dy = B.y - A.y; const d = Math.sqrt(dx * dx + dy * dy) || 1; dx /= d; dy /= d;
+  const bend = (i % 2 ? 16 : -16);
+  const qx = mx - dy * bend, qy = my + dx * bend;
+  return { d: `M ${A.x} ${A.y} Q ${qx} ${qy} ${B.x} ${B.y}`, lx: 0.25 * A.x + 0.5 * qx + 0.25 * B.x, ly: 0.25 * A.y + 0.5 * qy + 0.25 * B.y };
+}
+function dgDrawEdges(){
+  DG.edgesNow.forEach((e, i) => {
+    const g = dgEdgeGeom(e, i); if (!g) return;
+    const p = document.getElementById("dge" + i), t = document.getElementById("dgl" + i);
+    if (p) p.setAttribute("d", g.d);
+    if (t) { t.setAttribute("x", g.lx); t.setAttribute("y", g.ly); }
+  });
+}
+function dgApplyView(){ const w = document.getElementById("dgWorld"); if (w) w.setAttribute("transform", `translate(${DG.view.x},${DG.view.y}) scale(${DG.view.k})`); }
+function dgPoint(ev){ const svg = document.getElementById("dgSvg"); const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+function dgOpen(){ document.getElementById("dgOverlay").style.display = ""; dgRender(); }
+function dgClose(){ document.getElementById("dgOverlay").style.display = "none"; }
+function dgEdit(key){
+  const { byKey } = dgAll(); const n = byKey[key]; if (!n) return;
+  dgClose();
+  if (n.kind === "article") { select(n.id); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  else { npcSelect(n.id); document.querySelector('[data-fold="npcs"]').scrollIntoView({ behavior: "smooth" }); }
+}
+function dgCard(){
+  const el = document.getElementById("dgCard"); if (!el) return;
+  const { byKey } = dgAll();
+  const n = DG.sel ? byKey[DG.sel] : null;
+  if (!n) { el.innerHTML = `<h4 style="margin:2px 0 6px;font-family:'Mr Eaves Small Caps',serif;color:#58180D">The Web</h4><p class="small">${db.articles.length} articles · ${db.npcs.length} NPCs · ${dgAll().edges.length} relations. Click a knot for its card.</p>`; return; }
+  el.innerHTML = `<h4 style="margin:2px 0 6px;font-family:'Mr Eaves Small Caps',serif;color:#58180D">${esc(n.label)}</h4>
+    <div class="m">${esc(n.sub)} · ${n.dm ? "DM only" : "players"}</div>
+    <div class="btnrow"><button onclick="dgEdit('${n.key}')">Open in editor</button>
+    <button class="ghost" onclick="DG.mode='explore';DG.center='${n.key}';DG.sel='${n.key}';dgRender()">Explore from here</button></div>`;
+}
+function dgRender(){
+  const { nodes, edges } = dgVisible();
+  DG.edgesNow = edges;
+  const key = (DG.mode === "explore" ? "x" + DG.center + ":" + DG.depth : "w") + "|" + nodes.map(n => n.key).sort().join(",");
+  if (key !== DG.setKey) { DG.setKey = key; DG.pos = dgLayout(nodes, edges, DG.mode === "explore" ? DG.center : null); DG.view = { x: 0, y: 0, k: 1 }; }
+  const ctl = document.getElementById("dgControls");
+  let ch = `<button class="tag ${DG.mode === 'web' ? 'active' : ''}" onclick="DG.mode='web';dgRender()">The Web</button>
+    <button class="tag ${DG.mode === 'explore' ? 'active' : ''}" onclick="DG.mode='explore';if(!DG.center)DG.center='${nodes.length ? nodes[0].key : ''}';dgRender()">Explorer</button>`;
+  if (DG.mode === "explore") {
+    ch += ` <label style="display:inline">Centred on <select onchange="DG.center=this.value;DG.sel=this.value;dgRender()" style="width:auto;display:inline-block;max-width:280px">
+      ${dgAll().nodes.slice().sort((a, b) => a.label.localeCompare(b.label)).map(n => `<option value="${n.key}" ${DG.center === n.key ? "selected" : ""}>${esc(n.label)}</option>`).join("")}</select></label>
+      Depth ${[1, 2, 3].map(d => `<button class="tag ${DG.depth === d ? 'active' : ''}" onclick="DG.depth=${d};dgRender()">${d}</button>`).join(" ")}`;
+  }
+  ctl.innerHTML = ch;
+  const stage = document.getElementById("dgStage");
+  const edgeSvg = edges.map((e, i) => `<path class="dgedge" id="dge${i}" ${e.dm ? 'stroke-dasharray="5 4"' : ""} marker-end="url(#dgArr)"></path><text class="dgedge-l" id="dgl${i}">${esc(e.label)}</text>`).join("");
+  const nodeSvg = nodes.map(n => {
+    const p = DG.pos[n.key]; const r = n.kind === "npc" ? 11 : 13;
+    const isC = DG.mode === "explore" && n.key === DG.center, isS = n.key === DG.sel;
+    const short = n.label.length > 24 ? n.label.slice(0, 23) + "…" : n.label;
+    return `<g class="dgnode" data-key="${n.key}" transform="translate(${p.x},${p.y})" style="cursor:grab">
+      ${(isC || isS) ? `<circle r="${r + 5}" fill="none" stroke="${isC ? '#9C2B1B' : '#B89A67'}" stroke-width="1.6"></circle>` : ""}
+      <circle r="${r}" fill="${n.kind === 'npc' ? '#B89A67' : '#58180D'}" fill-opacity="${n.dm ? '.45' : '1'}" stroke="#2b1c10" stroke-width="1" ${n.dm ? 'stroke-dasharray="3 2"' : ""}></circle>
+      <text class="gt" y="${r + 16}">${esc(short)}</text>
+      <text class="gs" y="${r + 28}">${esc(n.sub)}${n.dm ? " · DM" : ""}</text>
+    </g>`;
+  }).join("");
+  stage.innerHTML = `<svg id="dgSvg" viewBox="0 0 ${DGW} ${DGH}">
+    <defs><marker id="dgArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9 z" fill="#9C2B1B" fill-opacity=".55"></path></marker></defs>
+    <g id="dgWorld" transform="translate(${DG.view.x},${DG.view.y}) scale(${DG.view.k})">${edgeSvg}${nodeSvg}</g></svg>`;
+  dgDrawEdges();
+  dgCard();
+  const svg = document.getElementById("dgSvg");
+  svg.addEventListener("pointerdown", ev => {
+    const gEl = ev.target.closest(".dgnode");
+    const pt = dgPoint(ev);
+    DG.drag = { key: gEl ? gEl.getAttribute("data-key") : null, last: pt, moved: 0, off: null };
+    if (DG.drag.key) { const p = DG.pos[DG.drag.key]; DG.drag.off = { x: p.x - (pt.x - DG.view.x) / DG.view.k, y: p.y - (pt.y - DG.view.y) / DG.view.k }; }
+    svg.setPointerCapture(ev.pointerId);
+  });
+  svg.addEventListener("pointermove", ev => {
+    if (!DG.drag) return;
+    const pt = dgPoint(ev);
+    const dx = pt.x - DG.drag.last.x, dy = pt.y - DG.drag.last.y;
+    DG.drag.moved += Math.abs(dx) + Math.abs(dy); DG.drag.last = pt;
+    if (DG.drag.key) {
+      const p = DG.pos[DG.drag.key];
+      p.x = (pt.x - DG.view.x) / DG.view.k + DG.drag.off.x; p.y = (pt.y - DG.view.y) / DG.view.k + DG.drag.off.y;
+      const elx = svg.querySelector(`.dgnode[data-key="${DG.drag.key}"]`);
+      if (elx) elx.setAttribute("transform", `translate(${p.x},${p.y})`);
+      dgDrawEdges();
+    } else { DG.view.x += dx; DG.view.y += dy; dgApplyView(); }
+  });
+  svg.addEventListener("pointerup", () => {
+    if (DG.drag && DG.drag.key && DG.drag.moved < 4) { DG.sel = DG.drag.key; dgRender(); }
+    DG.drag = null;
+  });
+  svg.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    const pt = dgPoint(ev);
+    const gx = (pt.x - DG.view.x) / DG.view.k, gy = (pt.y - DG.view.y) / DG.view.k;
+    const k2 = Math.max(0.3, Math.min(2.6, DG.view.k * (ev.deltaY < 0 ? 1.12 : 0.89)));
+    DG.view.x = pt.x - gx * k2; DG.view.y = pt.y - gy * k2; DG.view.k = k2; dgApplyView();
+  }, { passive: false });
+}
 // ---- Snapshots & rollback (V3 Phase 1) ----
 // Full copies of the Desk state under their own localStorage key: they
 // survive "Discard local edits" and never enter the published data files.
