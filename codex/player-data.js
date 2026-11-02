@@ -216,7 +216,8 @@ window.PLAYER_DATA = {
         "khavos",
         "vaelos"
       ],
-      "id": 12
+      "id": 12,
+      "image": "united-being-cover.jpg"
     },
     {
       "title": "The world of Libris",
