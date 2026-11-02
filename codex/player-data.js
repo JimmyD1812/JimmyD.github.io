@@ -51,7 +51,7 @@ window.PLAYER_DATA = {
       "id": 7,
       "title": "The Two Afterlives",
       "type": "Myth",
-      "categoryId": 2,
+      "categoryId": 1,
       "summary": "There are only two places the dead can go — Aethelis or Khavora — and which one counts as heaven depends entirely on who you ask.",
       "body": "[[Vaelos]]'s realm, [[Aethelis, the Unchanging|Aethelis]], and [[Khavos]]'s realm, [[Khavora, the Maelstrom Womb|Khavora]], never went away — and they are the only two places the dead can go.\n\nSince the moment of the fracture, time has flowed in all three realms, and both afterlives run at the same pace as [[Libris]]. A year dead is a year, in either destination.\n\nGood and evil are not objective facts of the universe. They are labels the [[Patrons|Patron]] [[Shards]] use: what benefits a shard is called good, and what directly opposes it is called evil. The afterlives work by the same measure. A soul's destination is a reward, granted to those the Patrons found useful during their lives.\n\nWhich reward a soul hopes for depends on its people's Patron. Elves call Aethelis the good afterlife, because there they can become their perfect selves. Orcs call Khavora the good afterlife, because there they can fight forever. Both are telling the truth about themselves.\n\nA soul the shards judge evil is sent to the other destination instead: not the heaven of its people, but the hell. Stranded in a realm that does not fit it, such a soul does the only thing left to it. It begs — pleading with any shard that will listen to take it, claim it, and reincarnate it as something else.",
       "visibility": "player",
