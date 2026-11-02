@@ -19,22 +19,6 @@ window.DM_DATA = {
       "pinned": false,
       "parentId": null,
       "relations": []
-    },
-    {
-      "id": 17,
-      "title": "DM Draft: TEST — Draft Push Pipeline Check",
-      "type": "Plot",
-      "categoryId": 2,
-      "summary": "TEST draft pushed by Muse through the GitHub connector on Nov 1, 2026, to verify the new draft workflow. Safe to delete.",
-      "body": "This is a test draft, created to verify the new workflow end to end.\n\nThe pipeline: Muse writes the draft, commits codex/DMedit/dm-data.js to the repo through the GitHub connector, the push rebuilds the site on its own, and the draft waits here in the DM Desk until Jim flips it to player or DM view from the laptop.\n\nIf you are reading this in the Desk, the loop works. Delete this draft whenever; it holds no lore.",
-      "visibility": "draft",
-      "tags": [
-        "dm notes",
-        "test"
-      ],
-      "pinned": false,
-      "parentId": null,
-      "relations": []
     }
   ],
   "timeline": [],
