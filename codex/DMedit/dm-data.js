@@ -49,6 +49,33 @@ window.DM_DATA = {
       "body": "[The story or truth, told plainly: who was there, what happened, what it changed.]\n\n## [The idea underneath]\n\n[What this means for the world: the rule, the tension, the thing mortals get wrong about it.]\n\n> \"[A voice from the world, on this.]\" — [Name, title]"
     }
   ],
-  "maps": [],
+  "maps": [
+    {
+      "id": "mapmvz3ofqn",
+      "name": "Test Map",
+      "image": "mapp-b80ff45d.jpg",
+      "visibility": "player",
+      "markers": [
+        {
+          "x": 27.6,
+          "y": 38,
+          "label": "Bed",
+          "kind": "pin",
+          "visibility": "player",
+          "targetKind": null,
+          "targetId": null
+        },
+        {
+          "x": 65.5,
+          "y": 50,
+          "label": "Shrine to the Patron",
+          "kind": "pin",
+          "visibility": "player",
+          "targetKind": "article",
+          "targetId": 15
+        }
+      ]
+    }
+  ],
   "npcs": []
 };
