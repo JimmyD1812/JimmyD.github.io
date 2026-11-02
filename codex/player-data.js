@@ -1,8 +1,10 @@
 // Player-safe data — ONLY player-visible content. Generated from the DM Desk.
 window.PLAYER_DATA = {
+  "schema": 3,
   "settings": {
     "siteTitle": "The Scales of Libris",
-    "footerText": "Fortune favors the balanced."
+    "footerText": "Fortune favors the balanced.",
+    "templatesSeeded": true
   },
   "categories": [
     {
@@ -10,12 +12,6 @@ window.PLAYER_DATA = {
       "name": "Cosmology",
       "description": "How the world began — the twins, the United being, and the fracture.",
       "sortOrder": 1
-    },
-    {
-      "id": 3,
-      "name": "The Twins & The Shards",
-      "description": "Vaelos, Khavos, and the pantheon their fracture created.",
-      "sortOrder": 2
     },
     {
       "id": 1,
@@ -27,7 +23,7 @@ window.PLAYER_DATA = {
       "id": 4,
       "name": "History",
       "description": "",
-      "sortOrder": 4
+      "sortOrder": 2
     }
   ],
   "articles": [
@@ -47,7 +43,9 @@ window.PLAYER_DATA = {
         "cosmology"
       ],
       "pinned": true,
-      "image": "gemini-generated-image-msklfdmsklfdmskl-65089277.jpg"
+      "image": "gemini-generated-image-msklfdmsklfdmskl-65089277.jpg",
+      "parentId": null,
+      "relations": []
     },
     {
       "id": 7,
@@ -64,13 +62,15 @@ window.PLAYER_DATA = {
         "religion"
       ],
       "pinned": false,
-      "image": "two-afterlives-ferry.jpg"
+      "image": "two-afterlives-ferry.jpg",
+      "parentId": null,
+      "relations": []
     },
     {
       "id": 2,
       "title": "Vaelos",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "summary": "Vaelos is Order — one of the twins who stood alone in the nothingness before creation, and maker of Aethelis, the Unchanging.",
       "body": "Vaelos is Order, twin of [[Khavos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Vaelos made [[Aethelis, the Unchanging]]: a timeless, static, beautiful, idyllic realm — perfect, and completely empty of life. Order alone could not create life.\n\nWhen the siblings finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nVaelos's first realm endures. Aethelis is one of only two destinations for the dead — see [[The Two Afterlives]] — and the elves hold it to be the good one: there, they can become their perfect selves.",
       "visibility": "player",
@@ -80,13 +80,15 @@ window.PLAYER_DATA = {
         "deity",
         "vaelos"
       ],
-      "pinned": false
+      "pinned": false,
+      "parentId": null,
+      "relations": []
     },
     {
       "id": 6,
       "title": "Khavos",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "summary": "Khavos is Chaos — one of the twins who stood alone in the nothingness before creation, and maker of Khavora, the Maelstrom Womb.",
       "body": "Khavos is Chaos, twin of [[Vaelos]]. Before there was a world, there were only the two of them in the nothingness.\n\nAlone, Khavos made [[Khavora, the Maelstrom Womb]]: a primal realm where all time exists at once, where void and light fight, and where opposites — too hot and too cold — coexist. For all its wildness, Chaos alone could not create life either.\n\nWhen the siblings finally cooperated to create the universe, they merged into a single unstable United being, which fractured into the [[Shards]]. See [[The Creation: The Twins and the Fracture]].\n\nKhavos's first realm endures. Khavora is one of only two destinations for the dead — see [[The Two Afterlives]] — and the orcs hold it to be the good one: there, they can fight forever.",
       "visibility": "player",
@@ -96,13 +98,15 @@ window.PLAYER_DATA = {
         "deity",
         "khavos"
       ],
-      "pinned": false
+      "pinned": false,
+      "parentId": null,
+      "relations": []
     },
     {
       "id": 5,
       "title": "Shards",
       "type": "Natural Law",
-      "categoryId": 3,
+      "categoryId": 2,
       "summary": "When the United Being fractured, its pieces became shards: the powers standing behind the world's aspects, ranked from Time down to Nature Spirits. Mortals rarely meet a shard itself — only its power.",
       "body": "The fragments of the fractured [[United Being]] are called **shards**. Each shard is a being in its own right, with its own personality and its own goals for the world — and each one is the power behind some aspect of it.\n\n## A shard is not the thing it rules\n\nEvery fire burns by the power of [[Fire]], but no single flame is the Fire shard. Every breeze moves by the power of [[Air]], but the wind that hits your face is not the Air shard itself. The rock of the world's shell endures by the power of [[Libris]] - which is why the world bears that shard's name - but breaking a stone does not wound Libris, and dousing a flame does not diminish Fire. Mortals never touch a shard itself. They only ever deal with its power, which is everywhere its aspect is found.\n\nWhat sets a great shard above a small one is **scope**. An Element stands behind every instance of its kind in the world. A [[Nature Spirit]] stands behind one particular place — this mountain, this river, this forest — and aligns itself with the greater power whose aspect it shares.\n\nThe [[United Being]] created the world and souls. The [[Patrons|Patron]] shards gathered those souls and formed the races of the world in their own image. What remained of the United Being still rests at the core of the world as [[Equilibrium]], and it is the source of magic; the shards broke off from it.\n\n## The shards have a hierarchy\n\n| Rank | Shard |\n| --- | --- |\n| 1 | [[Time]]: the first shard to break away, and the only major shard. |\n| 2 | [[Light and Dark]]: Elements themselves, but so conjoined a pair that they are ranked together, above the other Elements — their power is combined. |\n| 3 | The [[Elements]]: [[Libris]], [[Air]], [[Water]], [[Fire]]. |\n| 4 | The [[Patrons]] of the races. |\n| 5 | [[Nature Spirits]]: minor shards that align themselves with the Elements, e.g. local mountains, rivers, forests. |\n\n## Not every shard became a power\n\nShards too small to influence anything were ejected into the cosmos and formed the stars; many conjoined to make the sun. This gestalt entity channels and directs the power from two shards; Fire and Light.",
       "visibility": "player",
@@ -113,7 +117,9 @@ window.PLAYER_DATA = {
         "hierarchy"
       ],
       "pinned": false,
-      "image": "gemini-generated-image-gamvjtgamvjtgamv-99db11b4.jpg"
+      "image": "gemini-generated-image-gamvjtgamvjtgamv-99db11b4.jpg",
+      "parentId": null,
+      "relations": []
     },
     {
       "id": 4,
@@ -130,7 +136,9 @@ window.PLAYER_DATA = {
         "vaelos"
       ],
       "pinned": false,
-      "image": "gemini-generated-image-bqancrbqancrbqan-2a0a548c.jpg"
+      "image": "gemini-generated-image-bqancrbqancrbqan-2a0a548c.jpg",
+      "parentId": null,
+      "relations": []
     },
     {
       "id": 3,
@@ -147,12 +155,14 @@ window.PLAYER_DATA = {
         "khavos"
       ],
       "pinned": false,
-      "image": "gemini-generated-image-t9nyi8t9nyi8t9ny-d1c274a2.jpg"
+      "image": "gemini-generated-image-t9nyi8t9nyi8t9ny-d1c274a2.jpg",
+      "parentId": null,
+      "relations": []
     },
     {
       "title": "Time",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "The first shard to break away from the United Being, and the only major shard — the power behind every moment there has ever been. Time answers to no one.",
@@ -163,12 +173,14 @@ window.PLAYER_DATA = {
         "major shard"
       ],
       "id": 9,
-      "image": "gemini-generated-image-8pew4y8pew4y8pew-43031d75.jpg"
+      "image": "gemini-generated-image-8pew4y8pew4y8pew-43031d75.jpg",
+      "parentId": 5,
+      "relations": []
     },
     {
       "title": "Light and Dark",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "Light and Dark are two separate shards who are never apart, served by a single shared church — whose priests argue endlessly over which of the two is stronger.",
@@ -179,12 +191,14 @@ window.PLAYER_DATA = {
         "conjoined"
       ],
       "id": 10,
-      "image": "gemini-generated-image-ba8lurba8lurba8l-69550e2e.jpg"
+      "image": "gemini-generated-image-ba8lurba8lurba8l-69550e2e.jpg",
+      "parentId": 14,
+      "relations": []
     },
     {
       "title": "Equilibrium",
       "type": "Character",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "What remains of the United Being, sleeping at the core of the world for untold millennia after the exertion of creation — and the source of all magic.",
@@ -199,12 +213,14 @@ window.PLAYER_DATA = {
         "vaelos"
       ],
       "id": 11,
-      "image": "gemini-generated-image-a19mzoa19mzoa19m-0e7eab46.jpg"
+      "image": "gemini-generated-image-a19mzoa19mzoa19m-0e7eab46.jpg",
+      "parentId": 12,
+      "relations": []
     },
     {
       "title": "United Being",
       "type": "Myth",
-      "categoryId": 3,
+      "categoryId": 2,
       "visibility": "player",
       "pinned": false,
       "summary": "For a mere moment the siblings Khavos and Vaelos formed the United Being and created everything in a flash of existence.",
@@ -218,7 +234,9 @@ window.PLAYER_DATA = {
         "vaelos"
       ],
       "id": 12,
-      "image": "united-being-hands.jpg"
+      "image": "united-being-hands.jpg",
+      "parentId": 1,
+      "relations": []
     },
     {
       "title": "The world of Libris",
@@ -234,7 +252,9 @@ window.PLAYER_DATA = {
         "life"
       ],
       "id": 13,
-      "image": "gemini-generated-image-7hzb8y7hzb8y7hz32-3222d5fe.jpg"
+      "image": "gemini-generated-image-7hzb8y7hzb8y7hz32-3222d5fe.jpg",
+      "parentId": null,
+      "relations": []
     },
     {
       "title": "Elements",
@@ -250,7 +270,9 @@ window.PLAYER_DATA = {
         "nature"
       ],
       "id": 14,
-      "image": "gemini-generated-image-48m47e48m47e48m4-0f6400b0.jpg"
+      "image": "gemini-generated-image-48m47e48m47e48m4-0f6400b0.jpg",
+      "parentId": 5,
+      "relations": []
     },
     {
       "title": "Patrons",
@@ -262,7 +284,9 @@ window.PLAYER_DATA = {
       "body": "| Race | Patron | Epithet | Reward |\n| --- | --- | --- | --- |\n| Elf | Aelith | the Patient | Aethelis |\n| Orc | Khargun | the First Scar | Khavora |\n| Dwarf | Tharnok | Keeper of Debts | Aethelis |\n| Dragonborn | Vharess | the Breath-Giver | Khavora |\n| Gnome | Fennik | the First Question | *Unsettled* |\n| Goliath | Urgath | the Trial-Keeper | Khavora |\n| Tiefling | Sevara | the One Who Answers | *Either, by asking* |\n| Human | *No name in use* | the Missing Shard | *None* |\n\n## Elf: Aelith, the Patient\n\nAelith shaped a long-lived people meant to ripen slowly toward a finished form, which is why elven culture treats a human lifetime the way humans treat a season. Aethelis is the natural heaven for Aelith's people, and Aelith's church is the one most confident that the afterlife question is settled.\n\nAelith's reward is Aethelis. Her priests teach that death is not the interruption of the ripening but its final season, and that an elven soul sent anywhere else has been harvested early. Of Khavora they say only that a finished thing set down in that realm is a cruelty, like a bound book left in a river.\n\n## Orc: Khargun, the First Scar\n\nKhargun taught the orcs that a wound survived is a credential and a life without resistance is a slow death. Orcish funerals are short because Khargun's doctrine is short: the dead are not gone, they are ahead of you, fighting, and you are expected to catch up.\n\nKhargun's reward is Khavora, and no orc priest has ever had to argue for it. Aethelis is the true death in orcish teaching: a place where a warrior's edges are sanded politely away, forever, by people who do not understand why he is screaming. The funerals are short partly so the dead do not lose their place in the fighting.\n\n## Dwarf: Tharnok, Keeper of Debts\n\nTharnok's people keep ledgers because Tharnok keeps one: every craft owed, every oath sworn, every grudge unpaid, recorded in stone that does not forget and does not forgive on anyone else's schedule. Dwarven grudges and dwarven craftsmanship are the same virtue in Tharnok's teaching. A debt is a debt.\n\nTharnok's reward is Aethelis, where the ledger is kept in a realm that has never lost a page. His church is the only one in the world untroubled by the finishing: a debt is not damage, the priests say, and what is owed survives becoming, intact and itemized. Khavora is the dwarven hell, an eternity of watching yesterday's work torn down by morning.\n\n## Dragonborn: Vharess, the Breath-Giver\n\nVharess gave the dragonborn their breath and their clans in the same gesture, and dragonborn honor culture treats the two as one gift: what you breathe, you owe to the clan. Self-improvement is worship in Vharess's church, because the template expects to be exceeded.\n\nVharess's reward is Khavora, and her church is blunt about why it is not Aethelis: perfection done to you is not improvement. Only Khavora demands more of the dead than life did, every day, without end, and the exceeding must be done by the soul itself. A dragonborn who wakes finished has not been rewarded, her priests teach. He has been robbed.\n\n## Gnome: Fennik, the First Question\n\nFennik shaped a small people with oversized curiosity and no respect for the phrase \"leave it alone,\" which is why gnome workshops produce equal parts brilliance and property damage. Gnomish theology is the only one that treats a catechism as a starting position.\n\nFennik has never said. His church keeps the question itself as its central liturgy, argued in every generation and settled in none: a finished realm has nothing left to ask, which sounds like hell, except that being finished is the one experience no living gnome can describe, which sounds like a door. In practice, Fennik ferries each gnome soul where its curiosity was pointing at the end, and the church records both choices with identical respect, as evidence.\n\n## Goliath: Urgath, the Trial-Keeper\n\nUrgath's people measure a life in trials honestly attempted, and their Patron is the only one whose church keeps score in public. Cheating a contest is the one true blasphemy in Urgath's faith, because a rigged trial tells the shard nothing, and telling the shard the truth about yourself is the entire point.\n\nUrgath's reward is Khavora, where the trials never run out and cannot be rigged: chaos keeps no favorites, so every contest tells the truth. His church counts Aethelis as the punishment realm without a moment's hesitation. A goliath with nothing left to attempt has not been perfected. He has been erased, gradually and politely.\n\n## Tiefling: Sevara, the One Who Answers\n\nSomebody has to be the shard that the begging dead actually reach. Sevara is the Patron famous for answering: gathering strays, strays' souls, and peoples nobody else claimed, and shaping the Tieflings from what the other Patrons left unclaimed or gave up on. Tieflings carry visible marks of that mixed inheritance, horns and tails and stranger things, and their reputation for bargaining comes straight from their maker. Sevara's people make deals because Sevara is the deal maker.\n\nSevara claims no realm, because her work is at the edges of both, where the begging is. Her own people receive the Answering turned homeward: a tiefling soul is ferried to whichever realm it asks for, and her priests keep both roads open and charge nothing for the asking. She is the only Patron whose dead choose their destination, and her church considers that the entire point of her.\n\n---\n\n## Human: the Missing Shard\n\nNo name in use. There may have been one once, and if so, it is the most thoroughly lost word in the world. The human Patron gathered its souls, shaped its people partway, and then, at some point no history pins down, it stopped. No voice, no church, no ferrying of the dead.\n\nThere is no doctrine to record here, and the silence in this entry is the doctrine. Human funerals borrow the rites, and often the priests, of whatever church the dead person joined in life, because somebody has to do the ferrying. The human dead who belonged to no church at all are a large part of why the edges of both realms are crowded, and why Sevara's priests never lack for work.\n",
       "tags": [],
       "id": 15,
-      "image": "gemini-generated-image-9l99x99l99x99l99-07ebf86b.jpg"
+      "image": "gemini-generated-image-9l99x99l99x99l99-07ebf86b.jpg",
+      "parentId": 5,
+      "relations": []
     },
     {
       "title": "Races",
@@ -273,7 +297,9 @@ window.PLAYER_DATA = {
       "summary": "The eight peoples of Libris: dragonborn, dwarves, elves, gnomes, goliaths, humans, orcs, and tieflings, each shaped by a Patron from the same pool of souls, and divided by everything except the sleeping god and the two afterlives they all share.",
       "body": "Eight peoples walk [[The world of Libris|Libris]], and every one of them knows exactly how it got there.\n\n\nThe souls are older than all of them. The [[United Being]] made the souls first, countless and free-willed, and the [[Patrons]] later gathered that soul power and shaped it into forms: eight peoples, each made in its Patron's image, each carrying its Patron's priorities into the world like a family resemblance. A race's temperament is not an accident. It is a inheritance. Ask any of the eight who made them and why, and you will get a name, a story, and an argument with the other seven versions before you get an apology for any of it.\n\nWhat they share is everything underneath. One sleeping god at the core of the world. One pool of souls. Two afterlives, and a funeral in any nation on Libris will have mourners from three races arguing cheerfully about which one grandma went to. What they do not share is everything on top of that.\n\n---\n\n## Dragonborn \n[img:dragonborn-d518359b.png]\nVharess the Breath-Giver shaped the dragonborn proud, scaled, and clan-bound, and gave them breath and belonging in the same gift. Dragonborn country is a league of clan-states with no throne above the clan speakers, and its law is a code of honor detailed enough to start arguments at funerals. Exile is the worst sentence a dragonborn court can pass, because it takes the clan, and the clan is the point. Dragonborn history is kept as honor-rolls: who stood, who ran, who paid a debt that was not theirs because the clan's name was on it.\n### Callings:\nPaladins and sorcerers are thick on the ground, the first from honor, the second from the blood. Fighters fill the clan companies that hire out across the continent under contracts a dragonborn would rather die than break. Rogues are rare, not because dragonborn lack the talent, but because sneaking is a clan embarrassment.\n### Neighbors: \nThey respect dwarves deeply, one ledger people to another, and grate against tieflings, whose whole culture runs on the kind of bargains dragonborn honor codes exist to prevent. Underneath the grating, both peoples know what it is to be visibly marked, and it shows at borders, where dragonborn guards wave tiefling travelers through a half-second faster than the law requires.\n\n## Dwarves\n[img:dwarf-adc9f498.png]\nTharnok, Keeper of Debts, shaped the dwarves in the image of a ledger: exact, durable, and impossible to argue with once something is written down. Dwarven holds are kingdoms under mountains, and their treaties with each other are quite literally schedules of mutual debt, audited on holy days. A dwarven king is a chief auditor with a crown. Dwarven archives are the oldest written records on Libris, running unbroken back to the First Ledger, and dwarven historians are the only ones the other races fully believe.\n### Callings: \nFighters and clerics above all, serving Tharnok and Libris both, with forge-priests who hold that good work is the only prayer that cannot be faked. Paladins of oath are honored. Wizards exist, guild-licensed and paperwork-heavy, which is exactly how dwarves prefer their wizards.\n### Neighbors: \nGoliaths are respected as mountain kin by address if not by blood. Elves drive dwarves to despair, because an elven promise can take three hundred years to come due and dwarves want a payment schedule. The ancient wars with the orcs of the foothills are now a famous balanced account, settled in blood and silver generations ago, and both sides bring it up at festivals the way other peoples bring up the weather.\n\n## Elves\n[img:elf-f7362372.png]\nAelith the Patient shaped the elves for the long ripening: long-lived, slow to move, and oriented from birth toward the finished self they expect to become in Aethelis. Elven country is one old continuous realm under a court that has been in session, with breaks for art, for longer than most nations have existed. Elven borders are more suggested than fenced. Elven history barely needs archives, because elves have individual memories longer than other races' written records, and an elven elder is a primary source for events everyone else calls myth.\n### Callings: \nWizards preeminent, since a centuries-long life makes arcane study a natural hobby rather than a sacrifice. Rangers walk the long borders. Bards serve as living archives. Clerics of Aelith teach becoming, and treat a life as a draft being revised toward its final copy.\n### Neighbors: \nHumans are beloved and pitied in equal measure, brilliant mayflies building cathedrals. Dwarves are exasperating and secretly relied on, because an elf would rather owe a dwarf than the reverse. Orcs are considered a tragedy with good posture: all that strength, spent on fighting, pointed at a heaven of more fighting. Elves will say this with genuine sorrow, at length, to anyone.\n\n## Gnomes\n[img:gnome-2b0ea21c.png]\nFennik, the First Question, shaped the gnomes small, bright, and constitutionally unable to leave a mechanism, a mystery, or a rule unexamined. Gnomes have no kingdom and appear not to want one. They keep burrow warrens under green hills and workshop enclaves inside everyone else's cities, and gnome foreign policy is generally a delivered crate. Gnome history is mostly unwritten, not from secrecy but from triage: the chronicle can wait, the prototype cannot.\n### Callings: \nWizards, especially illusionists, in numbers wildly out of proportion to the population. Bards carry gnome news and gnome inventions between enclaves at the same speed. Rogues are common enough that other races just price it in. Fennik's rare clerics, the question-priests, treat doctrine as a hypothesis.\n### Neighbors: \nEveryone tolerates gnomes, most peoples like them, and several cities have exiled an entire enclave after an incident involving the water supply, the bell tower, or both. Dwarves grumble about gnome workmanship in public and buy gnome devices in private. Humans are the best customers and the worst influence, in both directions.\n\n## Goliaths\n[img:goliath-bfefb2c1.png]\nUrgath the Trial-Keeper shaped the goliaths for the high places: huge, marked, and fair to the bone. Goliaths keep no kingdoms, only clan circuits through the mountain ranges, with camps above the tree line and chiefs who must re-prove the right to lead every season. Their history is oral and athletic: who climbed what, who carried whom down, who lasted the winter. Their dead are honored with a final trial of the mourners' choosing, and their elders walk out into the storm alone when they judge their strength spent, which the clan records as a completed life, not a tragedy.\n### Callings: \nBarbarians and fighters in the front of everything, druids of peak and storm close behind, and rangers on every high road. Arcane casters are scarce. Urgath's score-keeping priests travel far beyond goliath country, because every race on Libris has learned that a goliath judge cannot be bribed, flattered, or hurried, and tournaments across the continent hire them.\n### Neighbors: \nDwarves are respected rivals in endurance, and the two peoples hold joint feats of strength that function as diplomacy. Orcs are contest-kin: the ritual competitions between goliath clans and orc bands have replaced at least two wars that everyone agrees would have been tedious. Lowland peoples baffle goliaths, who cannot understand why anyone lives where the air is that thick and the horizon that close.\n\n## Humans\n[img:human-73d2f00b.png]\nNobody shaped humans and stopped halfway on purpose, as far as anyone knows. The human Patron gathered its souls, began its people, and went silent at a point no history can date, and humans have been improvising ever since. Human country is most of the map and most of it is temporary: kingdoms, republics, and empires rising and rotting inside a few centuries, so that the majority of borders on any current map are human borders and a good share of them will be wrong within a generation. Human archives are the shortest and the most frequently rewritten, and human historians are the busiest people in their profession and the least believed.\n### Callings: \nAll of them, which is the point. Fighters and bards everywhere, clerics of every borrowed faith, and two callings where humans lead the world and it is not close: warlocks, because a people with no Patron learns to make pacts, and that is structure, not scandal; and converts, because every church on Libris grows through humans or does not grow.\n### Neighbors: \nEveryone deals with humans, because humans are everywhere, in a hurry, and dead soon by everyone else's standards, a combination other races find exhausting and profitable. Elves grieve for them fondly. Orcs respect their urgency, which reads to an orc as fighting spirit wearing a calendar. The other Patrons' churches compete for human souls with an intensity they do not spend on any other people, partly from charity and partly because the humans are unclaimed, and everyone at that table can count.\n\n## Orcs\n[img:orc-83cacf57.png]\nKhargun, the First Scar, shaped the orcs to survive things, loudly. Orc country is a steppe confederation of bands under war-chiefs whose authority lasts exactly as long as their strength does, gathering seasonally at old fighting grounds that serve as fair, court, and festival in one. Orc history is kept as scar-lineages and battle songs, and orcish memory for insults and rescues is equally perfect and equally permanent. An orc funeral is short. The dead are ahead, in Khavora, fighting, and the living are expected to catch up in their own time.\n### Callings: \nBarbarians and fighters first, in overwhelming numbers, with druids of the wild land and scar-priests of Khargun carrying the faith between bands. Rangers run the borders. Arcane casters are rare and watched until proven, except for sorcerers, whose wild gifts are read as a touch of the Maelstrom and treated with respect.\n### Neighbors: \nHumans are the orcs' oldest enemies and oldest customers, and orc mercenary companies are a settled institution on every human border, which tells you most of what you need to know about both peoples. Dwarves are a balanced account, brought up at festivals. Goliaths are contest-kin. Elves sorrow over them at length, which orcs find hilarious, and say so, which elves find sorrowful. Both peoples consider this a working relationship.\n\n## Tieflings\n[img:tiefling-6998f796.png]\nSevara, the One Who Answers, gathered what the other Patrons left: unclaimed souls, strays, the overlooked and the given-up-on, and shaped the tieflings out of them. It shows, gloriously and on purpose. Horns, tails, ember eyes, stranger marks: a people visibly made from mixed inheritance, with no homeland and no intention of apologizing for either fact. Tiefling country is a quarter in somebody else's city, a network of Sevara's temples that double as shelters, orphanages, and banks of favors, and a diaspora that can find its own kind in any port on Libris within a day. Tiefling history is the shortest of all and the most argued over, since no other race's archives mention them early, and scholars still debate whether Sevara's shaping was the last of the eight, or merely the last one anyone noticed.\n### Callings: \nWarlocks, because bargaining is the ancestral trade and Sevara's people are good at it. Sorcerers, whose mixed inheritance keeps surfacing as power. Bards and rogues throughout the diaspora. And paladins of Sevara, who swear the Answering Oath, to come when called by anyone with no one else to call, which makes them the most welcome knights on the continent and the most overworked.\n### Neighbors: \nDragonborn grate on them and they on the dragonborn, honor against bargain, with that marked-people kinship underneath that neither side enjoys admitting. Humans are hosts, customers, family, and persecutors, sometimes in the same household. Elves are unsettled by them in a way elves cannot articulate: the tieflings are what unfinished actually looks like, walking around, doing fine.\n\n##Mixed races\nChildren of mixed peoples are born in every border town and port on Libris, and they take their form from one parent or the other, never a blend. Folk say the stronger shape wins. Priests say the soul chooses its coat. The children themselves, asked, tend to say they take after whoever is not in the room.",
       "tags": [],
-      "id": 16
+      "id": 16,
+      "parentId": null,
+      "relations": []
     }
   ],
   "timeline": [
@@ -306,5 +332,7 @@ window.PLAYER_DATA = {
     }
   ],
   "statblocks": [],
+  "calendars": [],
+  "maps": [],
   "npcs": []
 };
