@@ -409,6 +409,33 @@ window.PLAYER_DATA = {
       "id": "calmvz3kjll"
     }
   ],
-  "maps": [],
+  "maps": [
+    {
+      "id": "mapmvz3ofqn",
+      "name": "Test Map",
+      "image": "mapp-b80ff45d.jpg",
+      "visibility": "player",
+      "markers": [
+        {
+          "x": 27.6,
+          "y": 38,
+          "label": "Bed",
+          "kind": "pin",
+          "visibility": "player",
+          "targetKind": null,
+          "targetId": null
+        },
+        {
+          "x": 65.5,
+          "y": 50,
+          "label": "Shrine to the Patron",
+          "kind": "pin",
+          "visibility": "player",
+          "targetKind": "article",
+          "targetId": 15
+        }
+      ]
+    }
+  ],
   "npcs": []
 };
