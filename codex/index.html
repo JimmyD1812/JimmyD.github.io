@@ -68,6 +68,19 @@
   #linkPreview h4{margin:2px 0 4px;font-family:var(--display);color:var(--titlered);font-size:1.2rem}
   #linkPreview .pv-meta{font-family:'Scaly Sans Caps',sans-serif;font-size:.82rem;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
   #linkPreview .pv-text{font-size:.95rem;margin:0}
+  .consult-btn{margin-top:14px;background:none;border:1px solid var(--ribbon);color:#f3e5c0;border-radius:999px;padding:6px 18px;font-family:var(--display);letter-spacing:.08em;font-size:.95rem;cursor:pointer}
+  .consult-btn:hover{background:rgba(230,154,40,.16)}
+  #consultOverlay{position:fixed;inset:0;background:rgba(23,16,9,.62);z-index:75;display:flex;align-items:center;justify-content:center;padding:16px}
+  .consult-card{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--titlered);max-width:430px;width:100%;padding:20px 22px;box-shadow:0 18px 50px rgba(0,0,0,.45);text-align:center}
+  .consult-card .c-line{font-family:var(--flavor);font-style:italic;color:var(--titlered);min-height:1.5em;transition:opacity .5s}
+  .consult-card .c-orn{color:var(--ribbon);letter-spacing:.9em;font-size:.75rem;margin:8px 0}
+  .consult-card img.cov{width:100%;height:170px;object-fit:cover;border:1px solid var(--line);margin:6px 0 10px}
+  .consult-card h3{margin:4px 0 4px;font-family:var(--display);color:var(--titlered);font-size:1.55rem}
+  .consult-card .meta{font-family:'Scaly Sans Caps',sans-serif;font-size:.85rem;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
+  .consult-card .c-sum{font-size:1rem;margin:0 0 6px}
+  .consult-card .btnrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .consult-card .btnrow button{background:#58180D;color:#F7F2E5;border:1px solid #58180D;border-radius:4px;padding:7px 16px;font-family:var(--display);letter-spacing:.06em;cursor:pointer}
+  .consult-card .btnrow button.ghost{background:none;color:#58180D}
   .tag{display:inline-block;border:1px solid var(--titlered);color:var(--titlered);border-radius:999px;padding:1px 10px;margin:2px 2px 2px 0;font-size:.82rem;cursor:pointer;background:none;font-family:inherit}
   .tag:hover,.tag.active{background:var(--titlered);color:#F7F2E5}
   .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:12px;cursor:pointer;box-shadow:0 1px 3px rgba(36,26,16,.08);transition:border-color .15s, box-shadow .15s, transform .15s}
@@ -242,6 +255,7 @@
   <h1 id="siteTitle">World Codex</h1>
   <div class="orn">◆ ◆ ◆</div>
   <p>The world, as the players are allowed to know it.</p>
+  <button class="consult-btn" onclick="consultOpen()">◆ Consult the Shards</button>
 </header>
 <div class="wrap">
   <div class="tabs">
@@ -321,6 +335,18 @@
   </footer>
 </div>
 <div id="linkPreview" style="display:none"></div>
+<div id="consultOverlay" style="display:none" onclick="if (event.target === this) consultClose()">
+  <div class="consult-card">
+    <div class="c-line" id="cLine"></div>
+    <div class="c-orn">◆ ◆ ◆</div>
+    <div id="cBody"></div>
+    <div class="btnrow" style="justify-content:center;margin-top:14px">
+      <button id="cRead" onclick="consultRead()">Read</button>
+      <button class="ghost" onclick="consultDraw()">Consult again</button>
+      <button class="ghost" onclick="consultClose()">Close</button>
+    </div>
+  </div>
+</div>
 <script src="player-data.js"></script>
 <script>
 const DATA = window.PLAYER_DATA;
@@ -932,6 +958,56 @@ function renderGraph(){
     const k2 = Math.max(0.3, Math.min(2.6, G.view.k * (ev.deltaY < 0 ? 1.12 : 0.89)));
     G.view.x = pt.x - gx * k2; G.view.y = pt.y - gy * k2; G.view.k = k2; gApplyView();
   }, { passive: false });
+}
+/* — Consult the Shards (V3 Phase 7): a small ceremony in the masthead.
+   A rotating in-world line, then one player-visible article drawn at
+   random (never the same one twice in a row). Pure presentation: the
+   pool is DATA.articles, which is player-visible by construction. — */
+const CONSULT_LINES = [
+  "The shards stir…",
+  "Equilibrium sleeps. The shards speak in its place.",
+  "Ask, and the Cradle turns a page.",
+  "Time saw your question coming. It always has.",
+  "Light shows one face. Dark keeps the other. Both are true.",
+  "The shards are listening. They rarely answer plainly.",
+  "Somewhere in the deep, a shard turns toward you."
+];
+let consultIdx = 0, consultLast = null, consultTimer = 0, consultCurrent = null;
+function consultLineNext(){
+  const el = document.getElementById("cLine"); if (!el) return;
+  el.style.opacity = 0;
+  setTimeout(() => { el.textContent = CONSULT_LINES[consultIdx % CONSULT_LINES.length]; consultIdx++; el.style.opacity = 1; }, 260);
+}
+function consultDraw(){
+  const pool = DATA.articles;
+  if (!pool.length) return;
+  let a = pool[Math.floor(Math.random() * pool.length)];
+  if (pool.length > 1) { let guard = 0; while (a.id === consultLast && guard++ < 12) a = pool[Math.floor(Math.random() * pool.length)]; }
+  consultLast = a.id; consultCurrent = a;
+  document.getElementById("cBody").innerHTML = `
+    ${a.image && IMG_FILE.test(a.image) ? `<img class="cov" src="images/${a.image}" alt="">` : ""}
+    <h3>${esc(a.title)}</h3>
+    <div class="meta">${esc(a.type)} · ${esc(catName(a.categoryId))}</div>
+    ${a.summary ? `<p class="c-sum">${esc(a.summary)}</p>` : ""}`;
+  consultLineNext();
+}
+function consultOpen(){
+  document.getElementById("consultOverlay").style.display = "";
+  consultIdx = Math.floor(Math.random() * CONSULT_LINES.length);
+  consultDraw();
+  clearInterval(consultTimer);
+  consultTimer = setInterval(consultLineNext, 4200);
+}
+function consultClose(){
+  document.getElementById("consultOverlay").style.display = "none";
+  clearInterval(consultTimer);
+}
+function consultRead(){
+  if (!consultCurrent) return;
+  const id = consultCurrent.id;
+  consultClose();
+  showTab("articles");
+  openArticle(id);
 }
 /* — Hover link previews (V3 Phase 6): one floating card for every tagged
    link — article bodies, Relations panels, breadcrumbs, graph knots.
