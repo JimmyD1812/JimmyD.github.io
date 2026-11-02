@@ -255,6 +255,17 @@
         <p class="small">Shown on the player site. Blank = the "World Codex" defaults. Takes effect when you Publish.</p>
         <p class="small" id="brandState"></p>
       </div>
+      <div class="box fold" data-fold="snapshots">
+        <h3>Snapshots & rollback</h3>
+        <p class="small" style="margin-top:0">Full copies of everything in this Desk, kept in this browser under their own key, so they survive "Discard local edits" and never get published. One is taken automatically before each Publish and on the first open of each day. Restoring replaces what's in the Desk now, and a safety snapshot is taken first, so a rollback can itself be undone.</p>
+        <label>Snapshot name (optional)</label>
+        <input type="text" id="snapName" placeholder="e.g. before the Patrons rewrite">
+        <div class="btnrow">
+          <button onclick="snapManual()">Snapshot now</button>
+        </div>
+        <p class="small" id="snapMsg"></p>
+        <div id="snapList" class="small">No snapshots yet.</div>
+      </div>
       <div class="box">
         <h3>Publish</h3>
         <p class="small" style="margin-top:0"><strong>Pending images <span id="imgCount"></span></strong></p>
@@ -403,7 +414,11 @@ function seed(){
   const settings = Object.assign(
     { siteTitle: "World Codex", footerText: "World Codex — kept by the DM, shared with the party." },
     window.PLAYER_DATA.settings || {});
-  return { categories: cats, articles: arts, timeline: tl, statblocks: sb, npcs: Object.values(npcMap), settings };
+  const mapsMap = {};
+  (window.PLAYER_DATA.maps || []).forEach(m => { mapsMap[m.id] = m; });
+  (window.DM_DATA.maps || []).forEach(m => { mapsMap[m.id] = m; }); // DM records win, same rule as NPCs
+  return { categories: cats, articles: arts, timeline: tl, statblocks: sb, npcs: Object.values(npcMap), settings,
+    templates: window.DM_DATA.templates || [], calendars: window.PLAYER_DATA.calendars || [], maps: Object.values(mapsMap) };
 }
 function load(){
   try { const raw = localStorage.getItem(KEY); db = raw ? JSON.parse(raw) : seed(); }
@@ -412,6 +427,18 @@ function load(){
   if (!Array.isArray(db.statblocks)) db.statblocks = [];
   if (!Array.isArray(db.npcs)) db.npcs = [];
   if (!db.settings) db.settings = { siteTitle: "World Codex", footerText: "World Codex — kept by the DM, shared with the party." };
+  normalizeDb();
+}
+// V3 Phase 0: every article/NPC record carries parentId + relations (empty
+// until Phases 3-4 use them), and the Desk state carries the templates,
+// calendars and maps collections, so older saved states upgrade in place.
+function normalizeDb(){
+  if (!Array.isArray(db.templates)) db.templates = [];
+  if (!Array.isArray(db.calendars)) db.calendars = [];
+  if (!Array.isArray(db.maps)) db.maps = [];
+  const fix = r => { if (r.parentId === undefined) r.parentId = null; if (!Array.isArray(r.relations)) r.relations = []; };
+  (db.articles || []).forEach(fix);
+  (db.npcs || []).forEach(fix);
 }
 function persist(){
   localStorage.setItem(KEY, JSON.stringify(db));
@@ -796,11 +823,14 @@ function download(name, text){
 }
 function buildPlayerText(){
   const data = {
+    schema: 3,
     settings: db.settings,
     categories: db.categories,
     articles: db.articles.filter(a => a.visibility === "player"),
     timeline: db.timeline.filter(e => e.visibility === "player"),
     statblocks: db.statblocks.filter(s => s.visibility === "player"),
+    calendars: db.calendars || [],
+    maps: (db.maps || []).filter(m => m.visibility === "player"),
     npcs: db.npcs.filter(n => n.visibility === "player").map(n => {
       const pub = { id: n.id, name: n.name, role: n.role || "", location: n.location || "", met: n.met || "", publicNotes: n.publicNotes || "" };
       if (n.image) pub.image = n.image;
@@ -812,15 +842,81 @@ function buildPlayerText(){
 }
 function buildDmText(){
   const data = {
+    schema: 3,
     articles: db.articles.filter(a => a.visibility !== "player"),
     timeline: db.timeline.filter(e => e.visibility !== "player"),
     statblocks: db.statblocks.filter(s => s.visibility !== "player"),
+    templates: db.templates || [],
+    maps: (db.maps || []).filter(m => m.visibility !== "player"),
     npcs: db.npcs
   };
   return "// DM-only data — lives inside the secret DM folder only. Generated from the DM Desk.\nwindow.DM_DATA = " + JSON.stringify(data, null, 2) + ";\n";
 }
 function exportPlayer(){ download("player-data.js", buildPlayerText()); }
 function exportDM(){ download("dm-data.js", buildDmText()); }
+
+// ---- Snapshots & rollback (V3 Phase 1) ----
+// Full copies of the Desk state under their own localStorage key: they
+// survive "Discard local edits" and never enter the published data files.
+// Automatic snapshots (before Publish, daily, before a rollback) keep the
+// newest SNAP_AUTO_KEEP; manual snapshots are pinned forever.
+const SNAP_KEY = "game-dm-snapshots-v1";
+const SNAP_AUTO_KEEP = 10;
+function snapRead(){ try { const v = JSON.parse(localStorage.getItem(SNAP_KEY)); return Array.isArray(v) ? v : []; } catch(e){ return []; } }
+function snapWrite(list){
+  try { localStorage.setItem(SNAP_KEY, JSON.stringify(list)); return true; }
+  catch(e){
+    const autos = list.filter(s => s.kind !== "manual");
+    if (autos.length) return snapWrite(list.filter(s => s.id !== autos[autos.length - 1].id));
+    return false;
+  }
+}
+function snapCounts(d){ return `${(d.articles || []).length} articles · ${(d.npcs || []).length} NPCs · ${(d.timeline || []).length} events · ${(d.statblocks || []).length} statblocks`; }
+function snapMsg(t){ const el = document.getElementById("snapMsg"); if (el) el.textContent = t; }
+function takeSnapshot(kind, name){
+  const rec = { id: Date.now(), ts: new Date().toISOString(), kind, name: (name || "").trim(), data: JSON.parse(JSON.stringify(db)) };
+  const list = [rec, ...snapRead()];
+  let autos = 0;
+  const kept = list.filter(s => { if (s.kind === "manual") return true; autos++; return autos <= SNAP_AUTO_KEEP; });
+  if (!snapWrite(kept)) { snapMsg("Snapshot could not be saved — this browser's storage is full."); return null; }
+  renderSnapshots();
+  return rec;
+}
+function snapKindLabel(k){ return { "manual": "manual", "auto-publish": "before publish", "auto-daily": "daily", "pre-restore": "before rollback" }[k] || k; }
+function renderSnapshots(){
+  const el = document.getElementById("snapList"); if (!el) return;
+  const list = snapRead();
+  if (!list.length) { el.innerHTML = "No snapshots yet."; return; }
+  el.innerHTML = list.map(s => `
+    <div style="border-top:1px solid var(--line);padding:7px 0">
+      <div><strong>${esc(new Date(s.ts).toLocaleString())}</strong> · ${esc(snapKindLabel(s.kind))}${s.name ? " · " + esc(s.name) : ""}</div>
+      <div>${snapCounts(s.data)}</div>
+      <div class="btnrow" style="margin-top:4px">
+        <button class="ghost" onclick="snapRestore(${s.id})">Restore</button>
+        <button class="ghost" onclick="snapDelete(${s.id})">Delete</button>
+      </div>
+    </div>`).join("");
+}
+function snapManual(){
+  const rec = takeSnapshot("manual", document.getElementById("snapName").value);
+  if (rec) { document.getElementById("snapName").value = ""; snapMsg("Snapshot saved: " + snapCounts(rec.data) + "."); }
+}
+function snapDelete(id){
+  if (!confirm("Delete this snapshot? This cannot be undone.")) return;
+  snapWrite(snapRead().filter(s => s.id !== id));
+  renderSnapshots();
+}
+function snapRestore(id){
+  const rec = snapRead().find(s => s.id === id); if (!rec) return;
+  if (!confirm("Restore the snapshot from " + new Date(rec.ts).toLocaleString() + "?\n\nEverything currently in the Desk will be replaced. A safety snapshot of the current state is taken first, so you can undo this.")) return;
+  takeSnapshot("pre-restore", "Before restoring " + new Date(rec.ts).toLocaleString());
+  localStorage.setItem(KEY, JSON.stringify(rec.data));
+  location.reload();
+}
+function snapDailyCheck(){
+  const today = new Date().toDateString();
+  if (!snapRead().some(s => s.kind === "auto-daily" && new Date(s.ts).toDateString() === today)) takeSnapshot("auto-daily", "");
+}
 
 // ---- Images ----
 // Picked images are resized/compressed in the browser, given a scrambled
@@ -1006,6 +1102,7 @@ async function putRepoFile(path, text, message){
 }
 async function publishToGitHub(){
   if (!ghToken()) { ghStatus("No token saved yet — create one with the steps in this box, paste it above, and Save token first."); return; }
+  takeSnapshot("auto-publish", "");
   const btn = document.getElementById("publishBtn");
   btn.disabled = true;
   let pending = [];
@@ -1111,7 +1208,7 @@ function fgRenderBody(text){
 function renderFmtGuide(){
   document.querySelectorAll(".fmtex").forEach(el => { el.innerHTML = fgRenderBody(el.dataset.md); });
 }
-load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide();
+load(); fillTypes(); fillCats(); renderList(); renderTimeline(); renderCatMgr(); renderSbMgr(); renderNpcMgr(); refreshTokenUI(); renderPending(); brandFill(); initFolds(); renderFmtGuide(); snapDailyCheck(); renderSnapshots();
 if (db.articles.length) select([...db.articles].sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title))[0].id);
 </script>
 </body>
