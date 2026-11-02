@@ -63,6 +63,11 @@
   .g-card{flex:0 1 250px;border:1px solid var(--line);border-top:3px solid var(--titlered);background:var(--paper);padding:12px 14px}
   .g-card h4{margin:2px 0 6px;font-family:var(--display);color:var(--titlered);font-size:1.15rem}
   #gSvg{display:block;width:100%;height:auto;touch-action:none}
+  #linkPreview{position:fixed;z-index:70;width:320px;max-width:calc(100vw - 16px);background:var(--paper);border:1px solid var(--line);border-top:3px solid var(--titlered);box-shadow:0 10px 30px rgba(30,18,6,.35);padding:12px 14px;pointer-events:none}
+  #linkPreview .pv-img{width:100%;height:110px;object-fit:cover;border:1px solid var(--line);margin-bottom:8px}
+  #linkPreview h4{margin:2px 0 4px;font-family:var(--display);color:var(--titlered);font-size:1.2rem}
+  #linkPreview .pv-meta{font-family:'Scaly Sans Caps',sans-serif;font-size:.82rem;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+  #linkPreview .pv-text{font-size:.95rem;margin:0}
   .tag{display:inline-block;border:1px solid var(--titlered);color:var(--titlered);border-radius:999px;padding:1px 10px;margin:2px 2px 2px 0;font-size:.82rem;cursor:pointer;background:none;font-family:inherit}
   .tag:hover,.tag.active{background:var(--titlered);color:#F7F2E5}
   .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:12px;cursor:pointer;box-shadow:0 1px 3px rgba(36,26,16,.08);transition:border-color .15s, box-shadow .15s, transform .15s}
@@ -315,6 +320,7 @@
     <div id="footLine">World Codex — kept by the DM, shared with the party.</div>
   </footer>
 </div>
+<div id="linkPreview" style="display:none"></div>
 <script src="player-data.js"></script>
 <script>
 const DATA = window.PLAYER_DATA;
@@ -335,7 +341,7 @@ function linkify(text){
   return esc(text).replace(/\[\[([^\]]+)\]\]/g, (m, t) => {
     const parts = t.split("|");
     const target = parts[0].trim(), label = (parts.length > 1 ? parts[1] : parts[0]).trim();
-    return byTitle[target] ? `<a class="xlink" onclick="openArticle(${byTitle[target].id})">${esc(label)}</a>` : esc(label);
+    return byTitle[target] ? `<a class="xlink" data-pv="a${byTitle[target].id}" onclick="openArticle(${byTitle[target].id})">${esc(label)}</a>` : esc(label);
   });
 }
 function imgify(html){
@@ -442,6 +448,7 @@ function renderStatblocks(){
     (items.length ? items.map(sbCard).join("") : `<p class="empty">No statblocks yet.</p>`) + `</div>`;
 }
 function showTab(name){
+  if (typeof pvHide === "function") pvHide();
   ["articles","timeline","npcs","statblocks","graph","dice"].forEach(t => {
     document.getElementById("view-"+t).style.display = t === name ? "" : "none";
     document.getElementById("tab-"+t).classList.toggle("active", t === name);
@@ -552,8 +559,8 @@ function relPanel(kind, id){
   const me = kind === "article" ? DATA.articles.find(a => a.id === id) : (DATA.npcs || []).find(n => n.id === id);
   if (!me) return "";
   const link = r => {
-    if (r.targetKind === "npc") { const t = (DATA.npcs || []).find(n => n.id === r.targetId); return t ? `<a class="xlink" onclick="showTab('npcs');openNpc(${t.id})">${esc(t.name)}</a>` : ""; }
-    const t = DATA.articles.find(a => a.id === r.targetId); return t ? `<a class="xlink" onclick="showTab('articles');openArticle(${t.id})">${esc(t.title)}</a>` : "";
+    if (r.targetKind === "npc") { const t = (DATA.npcs || []).find(n => n.id === r.targetId); return t ? `<a class="xlink" data-pv="n${t.id}" onclick="showTab('npcs');openNpc(${t.id})">${esc(t.name)}</a>` : ""; }
+    const t = DATA.articles.find(a => a.id === r.targetId); return t ? `<a class="xlink" data-pv="a${t.id}" onclick="showTab('articles');openArticle(${t.id})">${esc(t.title)}</a>` : "";
   };
   const groups = {};
   const push = (label, r) => { if (link(r)) (groups[label] = groups[label] || []).push(r); };
@@ -570,7 +577,7 @@ function crumbsFor(a){
   const chain = [];
   let p = a.parentId, guard = 0;
   while (p && guard++ < 60) { const par = DATA.articles.find(x => x.id === p); if (!par) break; chain.unshift(par); p = par.parentId; }
-  chain.forEach(par => parts.push(`<a onclick="openArticle(${par.id})">${esc(par.title)}</a>`));
+  chain.forEach(par => parts.push(`<a data-pv="a${par.id}" onclick="openArticle(${par.id})">${esc(par.title)}</a>`));
   return `<nav class="crumbs">${parts.join(" › ")}</nav>`;
 }
 function renderList(){
@@ -880,7 +887,7 @@ function renderGraph(){
     const p = G.pos[n.key]; const r = n.kind === "npc" ? 11 : 13;
     const isC = G.mode === "explore" && n.key === G.center, isS = n.key === G.sel;
     const short = n.label.length > 24 ? n.label.slice(0, 23) + "…" : n.label;
-    return `<g class="gnode" data-key="${n.key}" transform="translate(${p.x},${p.y})" style="cursor:grab">
+    return `<g class="gnode" data-key="${n.key}" data-pv="${n.key}" transform="translate(${p.x},${p.y})" style="cursor:grab">
       ${(isC || isS) ? `<circle r="${r + 5}" fill="none" stroke="${isC ? '#9C2B1B' : '#B89A67'}" stroke-width="1.6"></circle>` : ""}
       <circle r="${r}" fill="${n.kind === 'npc' ? '#B89A67' : '#58180D'}" stroke="#2b1c10" stroke-width="1"></circle>
       <text class="gt" y="${r + 16}">${esc(short)}</text>
@@ -894,6 +901,7 @@ function renderGraph(){
   gCard();
   const svg = document.getElementById("gSvg");
   svg.addEventListener("pointerdown", ev => {
+    pvHide();
     const gEl = ev.target.closest(".gnode");
     const pt = gSvgPoint(ev);
     G.drag = { key: gEl ? gEl.getAttribute("data-key") : null, last: pt, moved: 0, off: null };
@@ -925,7 +933,60 @@ function renderGraph(){
     G.view.x = pt.x - gx * k2; G.view.y = pt.y - gy * k2; G.view.k = k2; gApplyView();
   }, { passive: false });
 }
+/* — Hover link previews (V3 Phase 6): one floating card for every tagged
+   link — article bodies, Relations panels, breadcrumbs, graph knots.
+   Targets resolve only against player data, so a preview can never show
+   anything a player could not open. Touch: first tap previews, second
+   tap follows. — */
+const PV = { el: null, forKey: null, timer: 0 };
+function pvData(key){
+  if (key[0] === "a") {
+    const a = DATA.articles.find(x => x.id === +key.slice(1)); if (!a) return null;
+    return { title: a.title, meta: a.type + " · " + catName(a.categoryId), img: a.image, text: a.summary || "" };
+  }
+  const n = (DATA.npcs || []).find(x => x.id === +key.slice(1)); if (!n) return null;
+  return { title: n.name, meta: (n.role || "NPC") + (n.location ? " · " + n.location : ""), img: n.image, text: (n.publicNotes || "").slice(0, 220) };
+}
+function pvShow(key, rect){
+  const d = pvData(key); if (!d || !PV.el) return;
+  PV.forKey = key;
+  const text = d.text.length > 220 ? d.text.slice(0, 217) + "…" : d.text;
+  PV.el.innerHTML = `${d.img && IMG_FILE.test(d.img) ? `<img class="pv-img" src="images/${d.img}" alt="">` : ""}<h4>${esc(d.title)}</h4><div class="pv-meta">${esc(d.meta)}</div>${text ? `<p class="pv-text">${esc(text)}</p>` : ""}`;
+  PV.el.style.display = "";
+  const w = Math.min(320, window.innerWidth - 16), h = PV.el.offsetHeight;
+  let x = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8));
+  let y = rect.bottom + 8;
+  if (y + h > window.innerHeight - 8) y = Math.max(8, rect.top - h - 8);
+  PV.el.style.left = x + "px"; PV.el.style.top = y + "px";
+}
+function pvHide(){ if (PV.el) PV.el.style.display = "none"; PV.forKey = null; clearTimeout(PV.timer); }
+function pvSchedule(key, rect){ clearTimeout(PV.timer); PV.timer = setTimeout(() => pvShow(key, rect), 160); }
+document.addEventListener("mouseover", ev => {
+  const t = ev.target.closest ? ev.target.closest("[data-pv]") : null;
+  if (t && !t.contains(ev.relatedTarget)) pvSchedule(t.getAttribute("data-pv"), t.getBoundingClientRect());
+});
+document.addEventListener("mouseout", ev => {
+  const t = ev.target.closest ? ev.target.closest("[data-pv]") : null;
+  if (t && !t.contains(ev.relatedTarget)) { clearTimeout(PV.timer); PV.timer = setTimeout(pvHide, 120); }
+});
+document.addEventListener("focusin", ev => {
+  const t = ev.target.closest ? ev.target.closest("[data-pv]") : null;
+  if (t) pvSchedule(t.getAttribute("data-pv"), t.getBoundingClientRect());
+});
+document.addEventListener("focusout", pvHide);
+document.addEventListener("click", ev => {
+  const t = ev.target.closest ? ev.target.closest("[data-pv]") : null;
+  if (!window.matchMedia("(hover: none)").matches) { if (!t) pvHide(); return; }
+  if (!t) { pvHide(); return; }
+  const key = t.getAttribute("data-pv");
+  if (PV.forKey !== key || !PV.el || PV.el.style.display === "none") {
+    ev.preventDefault(); ev.stopPropagation();
+    pvShow(key, t.getBoundingClientRect());
+  } else pvHide();
+}, true);
+window.addEventListener("scroll", pvHide, { passive: true });
 renderCats(); renderTags(); renderTypes(); renderList(); renderTree();
+PV.el = document.getElementById("linkPreview");
 </script>
 </body>
 </html>
