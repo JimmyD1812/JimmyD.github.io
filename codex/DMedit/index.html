@@ -29,6 +29,9 @@
   .row{border:1px solid var(--line);background:var(--card);border-radius:4px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
   .row:hover{border-color:var(--brass)} .row.sel{border-color:#58180D;background:var(--tan);box-shadow:inset 3px 0 0 #58180D}
   .row .t{font-weight:600}.row .m{color:var(--muted);font-size:.86rem}
+  .tn-cat{display:flex;align-items:center;gap:6px;font-family:'Mr Eaves Small Caps',serif;letter-spacing:.05em;color:#58180D;cursor:pointer;padding:8px 2px 4px;border-bottom:1px solid var(--line);margin:10px 0 8px}
+  .tn-caret{display:inline-block;width:14px;text-align:center;cursor:pointer;color:var(--muted);font-size:.8rem;user-select:none;flex:none}
+  .tn-btn{padding:0 7px;font-size:.78rem;line-height:1.5}
   .badge{display:inline-block;border-radius:999px;padding:0 8px;font-size:.75rem;border:1px solid var(--muted);color:var(--muted)}
   .badge.player{border-color:#2e5e4e;color:#2e5e4e}.badge.dm_only{border-color:var(--danger);color:var(--danger)}.badge.draft{border-color:#8a6a14;color:#8a6a14}
   label{display:block;margin:12px 0 4px;font-size:.92rem;font-variant:small-caps;letter-spacing:.04em;color:#4a3d2c}
@@ -327,7 +330,9 @@
       <label>Type</label>
       <select id="f-type"></select>
       <label>Category</label>
-      <select id="f-cat"></select>
+      <select id="f-cat" onchange="fillParents()"></select>
+      <label>Parent article — nests this one under another article, in any category</label>
+      <select id="f-parent"></select>
       <label>Visibility</label>
       <select id="f-vis">
         <option value="player">Players can see</option>
@@ -472,16 +477,82 @@ function persist(){
 const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const catName = id => (db.categories.find(c => c.id === id) || {}).name || "Uncategorised";
 
+// ---- Article tree (V3 Phase 3): categories are collapsible folders and
+// articles nest under their parentId. Collapse state is kept per device.
+// Searching flattens the tree back to a simple match list. ----
+const TREE_KEY = "game-dm-tree-v1";
+let treeState = (() => { try { return JSON.parse(localStorage.getItem(TREE_KEY)) || {}; } catch(e){ return {}; } })();
+if (!treeState.cats) treeState.cats = {};
+if (!treeState.arts) treeState.arts = {};
+function treePersist(){ try { localStorage.setItem(TREE_KEY, JSON.stringify(treeState)); } catch(e){} }
+function treeToggleCat(ev, id){ ev.stopPropagation(); treeState.cats[id] = !treeState.cats[id]; treePersist(); renderList(); }
+function treeToggleArt(ev, id){ ev.stopPropagation(); treeState.arts[id] = !treeState.arts[id]; treePersist(); renderList(); }
+function treeKids(id){ return db.articles.filter(a => a.parentId === id).sort((a,b) => a.title.localeCompare(b.title)); }
+function treeRoots(catId){
+  // Roots of a category folder: articles filed there whose parent is unset
+  // or gone. A child whose parent lives in another category renders under
+  // its parent, not here — nesting ignores category lines.
+  const allIds = new Set(db.articles.map(a => a.id));
+  return db.articles.filter(a => a.categoryId === catId && (!a.parentId || !allIds.has(a.parentId)))
+    .sort((a,b) => a.title.localeCompare(b.title));
+}
+function treeRowHtml(a, depth){
+  const kids = treeKids(a.id);
+  const closed = !!treeState.arts[a.id];
+  const caret = kids.length ? `<span class="tn-caret" onclick="treeToggleArt(event, ${a.id})">${closed ? "▸" : "▾"}</span>` : '<span class="tn-caret"></span>';
+  const moveBtns = a.id === selId ? ` <button class="ghost tn-btn" title="Nest under the sibling above" onclick="treeIndent(event, ${a.id})">▶ indent</button><button class="ghost tn-btn" title="Move out one level" onclick="treeOutdent(event, ${a.id})">◀ outdent</button>` : "";
+  let h = `<div class="row ${a.id===selId?'sel':''}" style="margin-left:${depth * 18}px" onclick="select(${a.id})">
+      <div class="t">${caret}${esc(a.title)}</div>
+      <div class="m">${esc(a.type)} · ${esc(catName(a.categoryId))} · <span class="badge ${a.visibility}">${a.visibility === 'player' ? 'players' : a.visibility === 'dm_only' ? 'DM only' : 'draft'}</span>${a.pinned ? ' · ★' : ''}${moveBtns}</div>
+    </div>`;
+  if (kids.length && !closed) h += kids.map(k => treeRowHtml(k, depth + 1)).join("");
+  return h;
+}
+function treeIndent(ev, id){
+  ev.stopPropagation();
+  const a = db.articles.find(x => x.id === id); if (!a) return;
+  const sibs = a.parentId ? treeKids(a.parentId) : treeRoots(a.categoryId);
+  const i = sibs.findIndex(s => s.id === id);
+  if (i <= 0) return;
+  a.parentId = sibs[i - 1].id;
+  persist(); renderList(); select(id);
+}
+function treeOutdent(ev, id){
+  ev.stopPropagation();
+  const a = db.articles.find(x => x.id === id); if (!a || !a.parentId) return;
+  const par = db.articles.find(x => x.id === a.parentId);
+  a.parentId = par ? par.parentId : null;
+  persist(); renderList(); select(id);
+}
 function renderList(){
   const q = document.getElementById("q").value.trim().toLowerCase();
-  const items = db.articles.filter(a => !q || (a.title + " " + a.summary + " " + a.tags.join(" ")).toLowerCase().includes(q))
-    .sort((a,b) => a.title.localeCompare(b.title));
   document.getElementById("count").textContent = `(${db.articles.length})`;
-  document.getElementById("list").innerHTML = items.map(a => `
+  if (q) {
+    const items = db.articles.filter(a => (a.title + " " + a.summary + " " + a.tags.join(" ")).toLowerCase().includes(q))
+      .sort((a,b) => a.title.localeCompare(b.title));
+    document.getElementById("list").innerHTML = items.map(a => `
     <div class="row ${a.id===selId?'sel':''}" onclick="select(${a.id})">
       <div class="t">${esc(a.title)}</div>
       <div class="m">${esc(a.type)} · ${esc(catName(a.categoryId))} · <span class="badge ${a.visibility}">${a.visibility === 'player' ? 'players' : a.visibility === 'dm_only' ? 'DM only' : 'draft'}</span>${a.pinned ? ' · ★' : ''}</div>
-    </div>`).join("") || '<p class="small">No articles yet.</p>';
+    </div>`).join("") || '<p class="small">No articles match.</p>';
+    renderTodo();
+    return;
+  }
+  const cats = db.categories.slice().sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  const known = new Set(cats.map(c => c.id));
+  let html = cats.map(c => {
+    const n = db.articles.filter(a => a.categoryId === c.id).length;
+    const closed = !!treeState.cats[c.id];
+    let h = `<div class="tn-cat" onclick="treeToggleCat(event, ${c.id})"><span class="tn-caret">${closed ? "▸" : "▾"}</span>${esc(c.name)} <span style="color:var(--muted);font-size:.85em">(${n})</span></div>`;
+    if (!closed) h += treeRoots(c.id).map(a => treeRowHtml(a, 0)).join("");
+    return h;
+  }).join("");
+  const orphans = db.articles.filter(a => !known.has(a.categoryId));
+  if (orphans.length) {
+    html += `<div class="tn-cat"><span class="tn-caret"></span>Uncategorised <span style="color:var(--muted);font-size:.85em">(${orphans.length})</span></div>`
+      + orphans.sort((a,b) => a.title.localeCompare(b.title)).map(a => treeRowHtml(a, 0)).join("");
+  }
+  document.getElementById("list").innerHTML = html || '<p class="small">No articles yet.</p>';
   renderTodo();
 }
 function renderTodo(){
@@ -912,6 +983,30 @@ function fillCats(){
 function fillTypes(){
   document.getElementById("f-type").innerHTML = TYPES.map(t => `<option>${t}</option>`).join("");
 }
+// Parent picker options: every article, in tree order, except the article
+// itself and anything underneath it (that would make a loop). Nesting
+// ignores category lines — Jim's Cosmology > Shards > Elements crosses two.
+function fillParents(){
+  const sel = document.getElementById("f-parent"); if (!sel) return;
+  const banned = new Set();
+  if (selId) {
+    const collect = id => { banned.add(id); db.articles.filter(a => a.parentId === id).forEach(a => collect(a.id)); };
+    collect(selId);
+  }
+  const allIds = new Set(db.articles.map(a => a.id));
+  const opts = ['<option value="">— top level (no parent) —</option>'];
+  const walk = (parentId, depth) => {
+    db.articles.filter(a => (a.parentId || null) === parentId && !banned.has(a.id))
+      .sort((a,b) => a.title.localeCompare(b.title))
+      .forEach(a => { opts.push(`<option value="${a.id}">${"··· ".repeat(depth)}${esc(a.title)}</option>`); walk(a.id, depth + 1); });
+  };
+  walk(null, 0);
+  // Articles whose parent is missing show up as roots too:
+  db.articles.filter(a => a.parentId && !allIds.has(a.parentId) && !banned.has(a.id))
+    .sort((a,b) => a.title.localeCompare(b.title))
+    .forEach(a => { opts.push(`<option value="${a.id}">${esc(a.title)}</option>`); walk(a.id, 1); });
+  sel.innerHTML = opts.join("");
+}
 function select(id){
   selId = id;
   const a = db.articles.find(x => x.id === id); if (!a) return;
@@ -920,6 +1015,8 @@ function select(id){
   if (!TYPES.includes(a.type)) { const o = document.createElement("option"); o.textContent = a.type; document.getElementById("f-type").appendChild(o); }
   document.getElementById("f-type").value = a.type;
   document.getElementById("f-cat").value = a.categoryId;
+  fillParents();
+  document.getElementById("f-parent").value = a.parentId || "";
   document.getElementById("f-vis").value = a.visibility;
   document.getElementById("f-pinned").checked = !!a.pinned;
   document.getElementById("f-summary").value = a.summary;
@@ -939,6 +1036,8 @@ function newArticle(prefillTitle){
   document.getElementById("f-summary").value = "";
   document.getElementById("f-body").value = "";
   document.getElementById("f-tags").value = "";
+  fillParents();
+  document.getElementById("f-parent").value = "";
   currentImage = "";
   showCover();
   renderList();
@@ -947,6 +1046,16 @@ function newArticle(prefillTitle){
 function save(){
   const title = document.getElementById("f-title").value.trim();
   if (!title) { alert("Give it a title first."); return; }
+  // Parent must exist and not be the article itself or one of its
+  // descendants (loop guard, in case the picker was stale).
+  let parentId = +document.getElementById("f-parent").value || null;
+  if (parentId) {
+    const par = db.articles.find(a => a.id === parentId);
+    let ok = !!par && parentId !== selId;
+    let p = parentId, guard = 0;
+    while (ok && p && guard++ < 60) { if (p === selId) ok = false; const up = db.articles.find(a => a.id === p); p = up ? up.parentId : null; }
+    if (!ok) parentId = null;
+  }
   const data = {
     title,
     type: document.getElementById("f-type").value,
@@ -955,17 +1064,19 @@ function save(){
     pinned: document.getElementById("f-pinned").checked,
     summary: document.getElementById("f-summary").value.trim(),
     body: document.getElementById("f-body").value,
-    tags: document.getElementById("f-tags").value.split(",").map(s => s.trim()).filter(Boolean)
+    tags: document.getElementById("f-tags").value.split(",").map(s => s.trim()).filter(Boolean),
+    parentId
   };
   if (currentImage) data.image = currentImage;
   if (selId) { const t = db.articles.find(a => a.id === selId); if (!currentImage) delete t.image; Object.assign(t, data); }
-  else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; data.parentId = null; data.relations = []; db.articles.push(data); selId = data.id; }
+  else { data.id = Math.max(0, ...db.articles.map(a => a.id)) + 1; data.relations = []; db.articles.push(data); selId = data.id; }
   persist(); renderList(); renderTimeline(); renderCatMgr(); select(selId);
 }
 function del(){
   if (!selId) return;
   const a = db.articles.find(x => x.id === selId);
   if (!confirm(`Delete "${a.title}"? This only affects this browser until you export.`)) return;
+  db.articles.forEach(x => { if (x.parentId === selId) x.parentId = a.parentId || null; }); // children step up a level
   db.articles = db.articles.filter(x => x.id !== selId); selId = null;
   persist(); renderTimeline(); renderCatMgr(); newArticle();
 }
@@ -974,12 +1085,21 @@ function download(name, text){
   a.href = URL.createObjectURL(new Blob([text], {type: "text/javascript"}));
   a.download = name; a.click(); URL.revokeObjectURL(a.href);
 }
+// The player file must never point at a hidden parent: rewrite each player
+// article's parentId to its nearest player-visible ancestor (or null), so
+// the tree and breadcrumbs on the player side only ever name visible pages.
+function effParentId(a){
+  const byId = {}; db.articles.forEach(x => byId[x.id] = x);
+  let p = a.parentId, guard = 0;
+  while (p && guard++ < 60) { const par = byId[p]; if (!par) return null; if (par.visibility === "player") return par.id; p = par.parentId; }
+  return null;
+}
 function buildPlayerText(){
   const data = {
     schema: 3,
     settings: db.settings,
     categories: db.categories,
-    articles: db.articles.filter(a => a.visibility === "player"),
+    articles: db.articles.filter(a => a.visibility === "player").map(a => ({ ...a, parentId: effParentId(a) })),
     timeline: db.timeline.filter(e => e.visibility === "player"),
     statblocks: db.statblocks.filter(s => s.visibility === "player"),
     calendars: db.calendars || [],

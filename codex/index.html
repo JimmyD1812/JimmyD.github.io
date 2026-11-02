@@ -41,6 +41,13 @@
   .cat-btn{display:block;width:100%;text-align:left;background:none;border:none;padding:6px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:1.02rem;color:var(--ink)}
   .cat-btn:hover{background:#efe3c2}.cat-btn.active{background:var(--tan);font-weight:600;box-shadow:inset 3px 0 0 var(--titlered)}
   .cat-btn .n{color:var(--muted);font-size:.85em;float:right}
+  .tn-row{display:block;width:100%;text-align:left;background:none;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:.98rem;color:var(--ink)}
+  .tn-row:hover{background:#efe3c2}.tn-row.active{background:var(--tan);font-weight:600;box-shadow:inset 3px 0 0 var(--titlered)}
+  .tn-cat{display:flex;align-items:center;gap:4px;width:100%;text-align:left;background:none;border:none;padding:7px 4px 2px;cursor:pointer;font-family:var(--display);font-size:1.02rem;letter-spacing:.04em;color:var(--titlered)}
+  .tn-caret{display:inline-block;width:13px;text-align:center;color:var(--muted);font-size:.72rem;flex:none}
+  .crumbs{font-size:.92rem;color:var(--muted);margin-bottom:6px}
+  .crumbs a{color:var(--titlered);cursor:pointer;text-decoration:none}
+  .crumbs a:hover{text-decoration:underline}
   .tag{display:inline-block;border:1px solid var(--titlered);color:var(--titlered);border-radius:999px;padding:1px 10px;margin:2px 2px 2px 0;font-size:.82rem;cursor:pointer;background:none;font-family:inherit}
   .tag:hover,.tag.active{background:var(--titlered);color:#F7F2E5}
   .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:12px;cursor:pointer;box-shadow:0 1px 3px rgba(36,26,16,.08);transition:border-color .15s, box-shadow .15s, transform .15s}
@@ -234,6 +241,10 @@
         <div class="box">
           <h3>Categories</h3>
           <div id="cats"></div>
+        </div>
+        <div class="box">
+          <h3>Browse</h3>
+          <div id="treeNav"></div>
         </div>
         <div class="box">
           <h3>Type</h3>
@@ -476,7 +487,45 @@ function filtered(){
     (!q || (a.title + " " + a.summary + " " + a.body + " " + a.tags.join(" ")).toLowerCase().includes(q))
   ).sort((a,b) => (b.pinned - a.pinned) || a.title.localeCompare(b.title));
 }
+/* — Browse tree (V3 Phase 3): categories as folders, articles nested by
+   parentId. The Desk already rewrote parentId to the nearest visible
+   ancestor when exporting, so this only ever sees visible pages. — */
+let openArtId = null;
+const pClosed = new Set();
+function pToggle(key){ pClosed.has(key) ? pClosed.delete(key) : pClosed.add(key); renderTree(); }
+function pKids(id){ return DATA.articles.filter(a => a.parentId === id).sort((a,b) => a.title.localeCompare(b.title)); }
+function pRoots(catId){
+  const allIds = new Set(DATA.articles.map(a => a.id));
+  return DATA.articles.filter(a => a.categoryId === catId && (!a.parentId || !allIds.has(a.parentId)))
+    .sort((a,b) => a.title.localeCompare(b.title));
+}
+function pRow(a, depth){
+  const kids = pKids(a.id);
+  const closed = pClosed.has("a" + a.id);
+  const caret = kids.length ? `<span class="tn-caret" onclick="event.stopPropagation();pToggle('a${a.id}')">${closed ? "▸" : "▾"}</span>` : '<span class="tn-caret"></span>';
+  let h = `<button class="tn-row ${a.id===openArtId?'active':''}" style="padding-left:${8 + depth * 14}px" onclick="openArticle(${a.id})">${caret}${esc(a.title)}</button>`;
+  if (kids.length && !closed) h += kids.map(k => pRow(k, depth + 1)).join("");
+  return h;
+}
+function renderTree(){
+  const el = document.getElementById("treeNav"); if (!el) return;
+  el.innerHTML = [...DATA.categories].sort((a,b) => a.sortOrder - b.sortOrder).map(c => {
+    const closed = pClosed.has("c" + c.id);
+    let h = `<button class="tn-cat" onclick="pToggle('c${c.id}')"><span class="tn-caret">${closed ? "▸" : "▾"}</span>${esc(c.name)}</button>`;
+    if (!closed) h += pRoots(c.id).map(a => pRow(a, 0)).join("");
+    return h;
+  }).join("");
+}
+function crumbsFor(a){
+  const parts = [`<a onclick="setCat(${a.categoryId});renderList()">${esc(catName(a.categoryId))}</a>`];
+  const chain = [];
+  let p = a.parentId, guard = 0;
+  while (p && guard++ < 60) { const par = DATA.articles.find(x => x.id === p); if (!par) break; chain.unshift(par); p = par.parentId; }
+  chain.forEach(par => parts.push(`<a onclick="openArticle(${par.id})">${esc(par.title)}</a>`));
+  return `<nav class="crumbs">${parts.join(" › ")}</nav>`;
+}
 function renderList(){
+  openArtId = null; renderTree();
   document.getElementById("reader").style.display = "none";
   const el = document.getElementById("list"); el.style.display = "";
   const items = filtered();
@@ -491,11 +540,13 @@ function renderList(){
 }
 function openArticle(id){
   const a = DATA.articles.find(x => x.id === id); if (!a) return;
+  openArtId = id; renderTree();
   document.getElementById("list").style.display = "none";
   const r = document.getElementById("reader"); r.style.display = "";
   r.innerHTML = `
     <button class="back" onclick="renderList()">← All articles</button>
     <article class="reader">
+      ${crumbsFor(a)}
       <h2>${esc(a.title)}</h2>
       <div class="meta">${esc(a.type)} · ${esc(catName(a.categoryId))} · ${a.tags.map(t => `<span class="tag" onclick="setTag('${esc(t)}');renderList()">${esc(t)}</span>`).join(" ")}</div>
       ${a.image && IMG_FILE.test(a.image) ? `<img class="cover-img" src="images/${a.image}" alt="">` : ''}
@@ -659,7 +710,7 @@ function removeDie(i){
 function rollAll(){ if (!tray.length) return; tumble(tray.map((_, i) => i), () => { resolvePairs(); renderTray(); logRoll(); }); }
 function clearTray(){ tray = []; renderTray(); }
 renderPalette();
-renderCats(); renderTags(); renderTypes(); renderList();
+renderCats(); renderTags(); renderTypes(); renderList(); renderTree();
 </script>
 </body>
 </html>
