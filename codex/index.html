@@ -59,7 +59,8 @@
   .gnode .gt{font-size:12.5px;font-weight:600}
   .gnode .gs{font-size:9.5px;fill:var(--muted);font-family:'Scaly Sans',sans-serif}
   .g-flex{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
-  .g-stage{flex:1 1 520px;background:var(--paper);border:1px solid var(--line);border-radius:4px}
+  .g-stage{flex:1 1 520px;background:var(--paper);border:1px solid var(--line);border-radius:4px;user-select:none;-webkit-user-select:none}
+  body.g-noselect, body.g-noselect *{user-select:none !important;-webkit-user-select:none !important}
   .g-card{flex:0 1 250px;border:1px solid var(--line);border-top:3px solid var(--titlered);background:var(--paper);padding:12px 14px}
   .g-card h4{margin:2px 0 6px;font-family:var(--display);color:var(--titlered);font-size:1.15rem}
   #gSvg{display:block;width:100%;height:auto;touch-action:none}
@@ -1043,6 +1044,7 @@ function renderGraph(){
     G.drag = { key: gEl ? gEl.getAttribute("data-key") : null, last: pt, moved: 0, off: null };
     if (G.drag.key) { const p = G.pos[G.drag.key]; G.drag.off = { x: p.x - (pt.x - G.view.x) / G.view.k, y: p.y - (pt.y - G.view.y) / G.view.k }; }
     svg.setPointerCapture(ev.pointerId);
+    document.body.classList.add("g-noselect");
   });
   svg.addEventListener("pointermove", ev => {
     if (!G.drag) return;
@@ -1060,6 +1062,8 @@ function renderGraph(){
   svg.addEventListener("pointerup", () => {
     if (G.drag && G.drag.key && G.drag.moved < 4) { G.sel = G.drag.key; renderGraph(); }
     G.drag = null;
+    document.body.classList.remove("g-noselect");
+    if (window.getSelection) window.getSelection().removeAllRanges();
   });
   svg.addEventListener("wheel", ev => {
     ev.preventDefault();
