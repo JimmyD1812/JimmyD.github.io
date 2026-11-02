@@ -255,7 +255,23 @@ window.PLAYER_DATA = {
         },
         {
           "targetKind": "article",
+          "targetId": 13,
+          "label": "created",
+          "inverse": "created by",
+          "note": "",
+          "visibility": "player"
+        },
+        {
+          "targetKind": "article",
           "targetId": 11,
+          "label": "became",
+          "inverse": "became",
+          "note": "",
+          "visibility": "player"
+        },
+        {
+          "targetKind": "article",
+          "targetId": 5,
           "label": "created",
           "inverse": "created by",
           "note": "",
