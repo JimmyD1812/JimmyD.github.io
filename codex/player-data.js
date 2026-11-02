@@ -81,7 +81,7 @@ window.PLAYER_DATA = {
         "vaelos"
       ],
       "pinned": false,
-      "parentId": null,
+      "parentId": 1,
       "relations": []
     },
     {
@@ -99,7 +99,7 @@ window.PLAYER_DATA = {
         "khavos"
       ],
       "pinned": false,
-      "parentId": null,
+      "parentId": 1,
       "relations": []
     },
     {
@@ -137,7 +137,7 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "image": "gemini-generated-image-bqancrbqancrbqan-2a0a548c.jpg",
-      "parentId": null,
+      "parentId": 7,
       "relations": []
     },
     {
@@ -156,7 +156,7 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "image": "gemini-generated-image-t9nyi8t9nyi8t9ny-d1c274a2.jpg",
-      "parentId": null,
+      "parentId": 7,
       "relations": []
     },
     {
@@ -332,7 +332,83 @@ window.PLAYER_DATA = {
     }
   ],
   "statblocks": [],
-  "calendars": [],
+  "calendars": [
+    {
+      "name": "The Reckoning of Libris",
+      "era": "Second Age",
+      "months": [
+        {
+          "name": "January",
+          "days": 31
+        },
+        {
+          "name": "February",
+          "days": 28
+        },
+        {
+          "name": "March",
+          "days": 31
+        },
+        {
+          "name": "April",
+          "days": 30
+        },
+        {
+          "name": "May",
+          "days": 31
+        },
+        {
+          "name": "June",
+          "days": 30
+        },
+        {
+          "name": "July",
+          "days": 31
+        },
+        {
+          "name": "August",
+          "days": 31
+        },
+        {
+          "name": "September",
+          "days": 30
+        },
+        {
+          "name": "October",
+          "days": 31
+        },
+        {
+          "name": "November",
+          "days": 30
+        },
+        {
+          "name": "December",
+          "days": 31
+        }
+      ],
+      "weekdays": [
+        "Firstday",
+        "Seconday",
+        "Thirday",
+        "Fourthday",
+        "Fifthday",
+        "Sixthday",
+        "Seventhday"
+      ],
+      "moons": [],
+      "leap": {
+        "days": 1,
+        "month": 2,
+        "every": 4
+      },
+      "current": {
+        "y": 26,
+        "m": 10,
+        "d": 2
+      },
+      "id": "calmvz3kjll"
+    }
+  ],
   "maps": [],
   "npcs": []
 };
