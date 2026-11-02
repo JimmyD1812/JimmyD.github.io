@@ -115,6 +115,10 @@
   .die svg{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 4px rgba(23,16,9,.35))}
   .die .val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:900;font-size:1.28rem;color:#FDF1DC;text-shadow:0 1px 2px rgba(0,0,0,.55);pointer-events:none}
   .die .val.crit{color:#ffd968}.die .val.fumble{color:#ff9a8a}
+  .die.dropped{opacity:.45}
+  .die.dropped svg{filter:grayscale(.75) drop-shadow(0 3px 4px rgba(23,16,9,.35))}
+  .die.dropped .val{text-decoration:line-through;color:#e8ddc4}
+  .die .pairtag{position:absolute;left:0;right:0;bottom:-17px;text-align:center;font-family:'Scaly Sans Caps',sans-serif;font-size:.66rem;letter-spacing:.14em;color:var(--titlered);pointer-events:none}
   @keyframes tumble{0%{transform:rotate(0) translate(0,0)}25%{transform:rotate(38deg) translate(3px,-7px)}50%{transform:rotate(-30deg) translate(-4px,2px)}75%{transform:rotate(18deg) translate(2px,-4px)}100%{transform:rotate(0) translate(0,0)}}
   .die.rolling{animation:tumble .55s ease-in-out}
   .dice-palette{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:8px}
@@ -261,6 +265,8 @@
       <div class="dice-controls">
         <label>Modifier <input type="number" id="diceMod" value="0" oninput="updTotal()"></label>
         <button class="btn" onclick="rollAll()">Roll all</button>
+        <button class="btn ghosty" onclick="addPair('adv')" title="Roll 2d20, keep the higher">Advantage</button>
+        <button class="btn ghosty" onclick="addPair('dis')" title="Roll 2d20, keep the lower">Disadvantage</button>
         <button class="btn ghosty" onclick="clearTray()">Clear tray</button>
       </div>
       <div class="dice-hist" id="diceHist"></div>
@@ -576,16 +582,17 @@ function renderPalette(){
 function renderTray(){
   const el = document.getElementById("diceTray");
   el.innerHTML = tray.length ? tray.map((d, i) => `
-    <div class="die" id="die-${i}" onclick="removeDie(${i})" title="Tap to remove">
+    <div class="die ${d.dropped ? 'dropped' : ''}" id="die-${i}" onclick="removeDie(${i})" title="${d.pair ? 'Tap to remove the pair' : 'Tap to remove'}">
       ${dieSVG(d.sides)}
-      <div class="val ${d.value === d.sides ? 'crit' : d.value === 1 ? 'fumble' : ''}">${d.value}</div>
+      <div class="val ${!d.dropped && d.value === d.sides ? 'crit' : !d.dropped && d.value === 1 ? 'fumble' : ''}">${d.value}</div>
+      ${d.pair ? `<div class="pairtag">${d.mode === 'adv' ? 'ADV' : 'DIS'}</div>` : ''}
     </div>`).join("")
     : `<span class="dice-empty">Tap a die below to add it to the tray and roll it.</span>`;
   updTotal();
 }
 function updTotal(){
   const mod = +document.getElementById("diceMod").value || 0;
-  const sum = tray.reduce((a, d) => a + d.value, 0);
+  const sum = tray.reduce((a, d) => a + (d.dropped ? 0 : d.value), 0);
   document.getElementById("diceTotal").textContent = tray.length ? (sum + mod) : "—";
 }
 function tumble(indices, done){
@@ -600,10 +607,20 @@ function tumble(indices, done){
 function logRoll(){
   if (!tray.length) return;
   const mod = +document.getElementById("diceMod").value || 0;
+  const parts = [];
+  const seenPairs = new Set();
+  tray.filter(d => d.pair).forEach(d => {
+    if (seenPairs.has(d.pair)) return; seenPairs.add(d.pair);
+    const pair = tray.filter(x => x.pair === d.pair);
+    if (pair.length === 2) {
+      const kept = pair.find(x => !x.dropped), drop = pair.find(x => x.dropped);
+      parts.push(`2d20 ${d.mode} [${kept.value} kept, ${drop.value} dropped]`);
+    }
+  });
   const groups = {};
-  tray.forEach(d => { (groups[d.sides] = groups[d.sides] || []).push(d.value); });
-  const parts = Object.keys(groups).sort((a,b) => a - b).map(s => `${groups[s].length}d${s}[${groups[s].join(",")}]`);
-  const total = tray.reduce((a, d) => a + d.value, 0) + mod;
+  tray.filter(d => !d.pair).forEach(d => { (groups[d.sides] = groups[d.sides] || []).push(d.value); });
+  parts.push(...Object.keys(groups).sort((a,b) => a - b).map(s => `${groups[s].length}d${s}[${groups[s].join(",")}]`));
+  const total = tray.reduce((a, d) => a + (d.dropped ? 0 : d.value), 0) + mod;
   diceHist.unshift(parts.join(" + ") + (mod ? ` ${mod > 0 ? "+" : "−"} ${Math.abs(mod)}` : "") + ` = ${total}`);
   document.getElementById("diceHist").innerHTML = diceHist.slice(0, 6).map(esc).join("<br>");
 }
@@ -612,8 +629,34 @@ function addDie(s){
   renderTray();
   tumble([tray.length - 1], logRoll);
 }
-function removeDie(i){ tray.splice(i, 1); renderTray(); }
-function rollAll(){ if (!tray.length) return; tumble(tray.map((_, i) => i), logRoll); }
+/* Advantage / disadvantage: a linked pair of d20s. Both tumble; when they stop,
+   resolvePairs greys out the loser (higher kept for adv, lower for dis), and the
+   loser is excluded from totals and shown struck-through in the tray. */
+let pairSeq = 1;
+function addPair(mode){
+  const id = "p" + (pairSeq++);
+  tray.push({ sides: 20, value: rollOne(20), pair: id, mode });
+  tray.push({ sides: 20, value: rollOne(20), pair: id, mode });
+  renderTray();
+  tumble([tray.length - 2, tray.length - 1], () => { resolvePairs(); renderTray(); logRoll(); });
+}
+function resolvePairs(){
+  const byPair = {};
+  tray.forEach(d => { if (d.pair) (byPair[d.pair] = byPair[d.pair] || []).push(d); });
+  Object.values(byPair).forEach(pair => {
+    if (pair.length !== 2) { pair.forEach(d => { d.dropped = false; }); return; }
+    const [a, b] = pair;
+    const keepFirst = a.mode === "adv" ? a.value >= b.value : a.value <= b.value;
+    a.dropped = !keepFirst; b.dropped = keepFirst;
+  });
+}
+function removeDie(i){
+  const d = tray[i]; if (!d) return;
+  if (d.pair) tray = tray.filter(x => x.pair !== d.pair);
+  else tray.splice(i, 1);
+  renderTray();
+}
+function rollAll(){ if (!tray.length) return; tumble(tray.map((_, i) => i), () => { resolvePairs(); renderTray(); logRoll(); }); }
 function clearTray(){ tray = []; renderTray(); }
 renderPalette();
 renderCats(); renderTags(); renderTypes(); renderList();
