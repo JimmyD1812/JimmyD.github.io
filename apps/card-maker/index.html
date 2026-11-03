@@ -63,39 +63,40 @@
         repeating-linear-gradient(-41deg, rgba(88,24,13,.014) 0 2px, transparent 2px 6px);
     }
 
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 26px 24px 44px; }
 
-    /* Dark masthead, same treatment as the Codex / homepage header */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 20px;
+    /* Full-bleed masthead — copied from the homepage: same sizes, fonts, ornament */
+    header.site {
       background: var(--header-bg);
-      border: 1px solid var(--gold);
+      color: #f3e5c0;
+      text-align: center;
+      padding: 36px 20px 26px;
       border-bottom: 3px solid var(--gold-bright);
-      box-shadow: 0 4px 0 var(--titlered), 0 10px 24px rgba(23,16,9,.30);
-      border-radius: 4px;
-      margin-bottom: 20px;
+      box-shadow: 0 4px 0 var(--titlered), 0 10px 24px rgba(23,16,9,.35);
     }
-
-    header .title {
+    .masthead-mark { line-height: 0; }
+    .masthead-mark .title-icon { width: 54px; height: 54px; color: var(--gold-bright); }
+    header.site .title {
+      margin-top: 12px;
       font-family: var(--display);
       font-weight: 900;
-      font-size: 1.3rem;
-      letter-spacing: .06em;
+      font-size: 2.6rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      line-height: 1.1;
       color: #F3E5C0;
-      text-shadow: 0 2px 0 #000, 0 0 22px rgba(230,154,40,.25);
+      text-shadow: 0 2px 0 #000, 0 0 26px rgba(230,154,40,.25);
     }
-    header .muted { color: #a8977a; }
-    header .small { font-size: .85rem; font-family: var(--flavor); font-style: italic; }
+    header.site .orn { color: var(--ribbon); letter-spacing: .9em; font-size: .8rem; margin-top: 10px; }
+    header.site .flavor { margin: 8px 0 0; color: #cdbd97; font-family: var(--flavor); font-style: italic; font-size: 1.12rem; }
     .home-link {
-      font-family: var(--display); font-size: .75rem; font-weight: 700; letter-spacing: .08em;
+      display: inline-block; margin-top: 18px;
+      font-family: var(--display); font-size: .72rem; font-weight: 700; letter-spacing: .08em;
       text-transform: uppercase; color: #cdbd97; text-decoration: none; white-space: nowrap;
       border: 1px solid var(--gold); border-radius: 999px; padding: 6px 14px; transition: all .15s ease;
     }
     .home-link:hover { background: var(--ribbon); border-color: var(--ribbon); color: #171009; }
+    @media (max-width: 600px) { header.site .title { font-size: 1.85rem; } }
 
     /* Layout Structure Grid */
     .grid { display: grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start; }
@@ -152,7 +153,12 @@
 
     /* Buttons */
     .btn {
-      background: var(--titlered);
+      background-color: var(--titlered);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F7F2E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5V15m0 0l-4.2-4.2M12 15l4.2-4.2'/%3E%3Cpath d='M4 17.5V19a1.5 1.5 0 001.5 1.5h13A1.5 1.5 0 0020 19v-1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 12px center;
+      background-size: 15px;
+      padding-left: 36px;
       border: 1px solid var(--rulered);
       color: #F7F2E5;
       padding: 10px 20px;
@@ -168,12 +174,13 @@
       align-items: center;
       justify-content: center;
     }
-    .btn:hover { background: var(--rulered); }
+    .btn:hover { background-color: var(--rulered); }
 
     .file-input-wrapper { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
-    .file-label { background: var(--tan); border: 1px solid var(--gold); padding: 8px 12px; border-radius: 2px; cursor: pointer; font-size: 0.9rem; color: var(--ink); }
+    .file-label { display: inline-flex; align-items: center; gap: 8px; background: var(--tan); border: 1px solid var(--gold); padding: 8px 12px; border-radius: 2px; cursor: pointer; font-size: 0.9rem; color: var(--ink); }
     .file-label:hover { background: var(--panel-hover); }
     input[type=file] { display: none; }
+    .btn-icon { width: 17px; height: 17px; flex: none; }
 
 /* =================== MTG CARD RENDERING STYLES =================== */
     .card-preview-container { display: flex; justify-content: center; position: sticky; top: 24px; }
@@ -224,14 +231,14 @@
     </style>
 </head>
 <body>
+  <header class="site">
+    <div class="masthead-mark"><svg class="title-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><g transform="rotate(32 12 12)" opacity="0.7"><path d="M12 .8l1.45 2.1-.85 10.7h-1.1L10.6 2.9z"/><rect x="7.6" y="13.8" width="8.8" height="1.9" rx="0.95"/><rect x="11.05" y="15.9" width="1.9" height="3.9" rx="0.7"/><circle cx="12" cy="21.3" r="1.5"/></g><g transform="rotate(-32 12 12)"><path d="M12 .8l1.45 2.1-.85 10.7h-1.1L10.6 2.9z"/><rect x="7.6" y="13.8" width="8.8" height="1.9" rx="0.95"/><rect x="11.05" y="15.9" width="1.9" height="3.9" rx="0.7"/><circle cx="12" cy="21.3" r="1.5"/></g></svg></div>
+    <div class="title">Crucible Card Maker</div>
+    <div class="orn">◆ ◆ ◆</div>
+    <p class="flavor">V2 • Client-Side HTML Workspace</p>
+    <a class="home-link" href="https://jimmyd.space/">← jimmyd.space</a>
+  </header>
 <div class="wrap">
-    <header>
-      <div>
-        <div class="title">⚔️ Crucible Card Maker</div>
-        <div class="muted small">V2 • Client-Side HTML Workspace</div>
-      </div>
-      <a class="home-link" href="https://jimmyd.space/">← jimmyd.space</a>
-    </header>
 
     <div class="grid">
       <main class="panel">
@@ -276,7 +283,7 @@ Creatures and nonbasic lands your opponents control enter tapped.</textarea>
           </label>
 
           <div class="file-input-wrapper">
-            <label class="file-label" for="inputArt">🖼️ Upload Card Artwork</label>
+            <label class="file-label" for="inputArt"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M5 17.2l4.6-4.6 3 3 2.2-2.2 4.2 4.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Upload Card Artwork</label>
             <input type="file" id="inputArt" accept="image/*">
             <button class="btn" id="btnExport">Export PNG</button>
           </div>
