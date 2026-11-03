@@ -1,0 +1,37 @@
+/* Font Awesome 6 Free (solid) — trimmed to the icons this page uses. Font Awesome Free license: icons CC BY 4.0, fonts SIL OFL 1.1. */
+@font-face{font-family:'Font Awesome 6 Free';font-style:normal;font-weight:900;font-display:block;src:url(fa-solid-900.woff2) format('woff2')}
+.fa-solid{font-family:'Font Awesome 6 Free';font-weight:900;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;line-height:1;text-rendering:auto}
+.fa-award:before{content:"\f559"}
+.fa-biohazard:before{content:"\f780"}
+.fa-book:before{content:"\f02d"}
+.fa-chevron-right:before{content:"\f054"}
+.fa-circle-check:before{content:"\f058"}
+.fa-dna:before{content:"\f471"}
+.fa-feather-pointed:before{content:"\f56b"}
+.fa-gem:before{content:"\f3a5"}
+.fa-handshake:before{content:"\f2b5"}
+.fa-horse:before{content:"\f6f0"}
+.fa-hourglass-end:before{content:"\f253"}
+.fa-image:before{content:"\f03e"}
+.fa-landmark:before{content:"\f66f"}
+.fa-meteor:before{content:"\f753"}
+.fa-paw:before{content:"\f1b0"}
+.fa-plus:before{content:"\2b"}
+.fa-robot:before{content:"\f544"}
+.fa-scroll:before{content:"\f70e"}
+.fa-shield-halved:before{content:"\f3ed"}
+.fa-shrimp:before{content:"\e448"}
+.fa-skull-crossbones:before{content:"\f714"}
+.fa-sliders:before{content:"\f1de"}
+.fa-trophy:before{content:"\f091"}
+.fa-users:before{content:"\f0c0"}
+.fa-users-rectangle:before{content:"\e594"}
+.fa-volume-xmark:before{content:"\f6a9"}
+.fa-wand-magic-sparkles:before{content:"\e2ca"}
+.fa-wand-sparkles:before{content:"\f72b"}
+.fa-circle-pause:before{content:"\f28b"}
+.fa-heart-pulse:before{content:"\f21e"}
+.fa-minus:before{content:"\f068"}
+.fa-screwdriver-wrench:before{content:"\f7d9"}
+.fa-triangle-exclamation:before{content:"\f071"}
+.fa-volume-high:before{content:"\f028"}
