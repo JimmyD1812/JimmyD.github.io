@@ -215,7 +215,7 @@ window.PLAYER_DATA = {
         "conjoined"
       ],
       "id": 10,
-      "image": "gemini-generated-image-ba8lurba8lurba8l-69550e2e.jpg",
+      "image": "light-and-dark-crystals.jpg",
       "parentId": 14,
       "relations": [
         {
