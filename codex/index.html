@@ -649,11 +649,11 @@ function crumbsFor(a){
   chain.forEach(par => parts.push(`<a data-pv="a${par.id}" onclick="openArticle(${par.id})">${esc(par.title)}</a>`));
   return `<nav class="crumbs">${parts.join(" › ")}</nav>`;
 }
-/* Article list pagination: 10 per page with Previous/Next at the bottom.
+/* Article list pagination: 5 per page with Previous/Next at the bottom.
    Any change to the filter signature (category, tag, type, search text)
    restarts the list at page 1; paging itself and opening an article and
    coming back leave the page where it was. */
-const LIST_PAGE_SIZE = 10;
+const LIST_PAGE_SIZE = 5;
 let listPage = 0, listSig = null;
 function listGo(dir){
   listPage += dir;
