@@ -39,6 +39,24 @@ window.DM_DATA = {
       "pinned": false,
       "parentId": null,
       "relations": []
+    },
+    {
+      "id": 20,
+      "title": "DM Draft: Libris",
+      "type": "Character",
+      "categoryId": 2,
+      "summary": "Libris is the Element shard whose power stands behind all stone and ground: the shell of the world, the bearer of every road, wall, and grave, and the ground in which the sleeping god lies cradled.",
+      "body": "Libris is one of the four [[Elements]], the [[Shards]] whose power stands behind the foundations of the world, and it carries a confusion no other shard has to bear: it shares its name with the world itself. Ask a scholar about [[The world of Libris]] and you will hear about the planet. Ask about Libris and you should hear about the power behind the planet's stone, but the two conversations tangle constantly, and which took the name from which is an argument the scholars have never settled.\n\n## What it stands behind\n\nLibris is not the rock. It is the power standing behind every instance of rock there is: the mountain and the pebble, the cliff face and the foundation stone, the gravel under a cart wheel and the vault of a deep mine. Where stone holds, bears weight, and lasts, that lasting is Libris at work.\n\nThe deepest of its domain lies closest to the world's heart, where [[Equilibrium]] sleeps. To dig down is to dig toward the god, through layer on layer of the shard that cradles it, and miners who work the deep places tend to speak quietly without being able to say exactly why.\n\n## What mortals live with\n\nMortals build their permanence out of Libris. Roads, walls, towers, graves: everything a people makes that is meant to outlast them is borrowed lasting, loaned by a shard that thinks in ages. Stone does not hurry and it does not forgive. A wall badly founded may stand for the builder's whole life and fall on his grandchildren.\n\nAnd sometimes the ground moves. Ground-quakes roll through the deep stone, and the old tavern saying attaches the cause to the tenant at the center of it all:\n\n> Tread lightly on the Cradle, lest you wake the child.\n\n## Where it contends\n\nLibris's oldest argument is with [[Water]], and it is losing. Coasts grind down to sand, rivers saw through gorges, rain finds every crack: Water is patient in the opposite way, wearing where Libris bears, and given enough centuries Water wins every wall it bothers to fight. Deep below, [[Fire]] melts Libris's work and remakes it, and where Fire rises through a mountain the two of them contend in the open. [[Air]] barely touches it at all, brushing the surface with weather and moving on. More [[Nature Spirits]] align with Libris than with any other Element, spirits of mountain, cave, and standing stone, content to be as slow as their patron power.\n\n## The answering\n\nLibris answers at the pace of stone, which is to say that a prayer offered today may be answered in a grandchild's lifetime, and its faithful have made their peace with that. They are patient people by selection: quarrymen, masons, gravediggers, and the delvers of deep mines, who swear that in the furthest dark, past where the lamps give out, the rock sometimes sounds as if it is listening. What a blessing from Libris looks like is simple and total: a foundation that holds. Houses, marriages of stone and beam, whole towns stand on answered prayers of exactly that kind.",
+      "visibility": "draft",
+      "tags": [
+        "element",
+        "stone",
+        "ground",
+        "the cradle"
+      ],
+      "pinned": false,
+      "parentId": 14,
+      "relations": []
     }
   ],
   "timeline": [],
