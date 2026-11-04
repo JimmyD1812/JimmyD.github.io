@@ -215,7 +215,7 @@ window.PLAYER_DATA = {
         "conjoined"
       ],
       "id": 10,
-      "image": "light-and-dark-crystals.jpg",
+      "image": "light-and-dark-cabin.jpg",
       "parentId": 14,
       "relations": [
         {
