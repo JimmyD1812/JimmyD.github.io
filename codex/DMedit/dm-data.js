@@ -93,6 +93,24 @@ window.DM_DATA = {
       "pinned": false,
       "parentId": 14,
       "relations": []
+    },
+    {
+      "id": 23,
+      "title": "DM Draft: Air",
+      "type": "Character",
+      "categoryId": 2,
+      "summary": "Air is the Element shard whose power stands behind all air and wind: the breath in every living chest, the carrier of rain, voice, and weather, the unseen Element that every mortal holds inside themselves and returns, breath by breath.",
+      "body": "Air is one of the four [[Elements]], the [[Shards]] whose power stands behind the foundations of the world, and it is the one nobody has ever seen. Stone can be pointed at, water cupped, flame watched. Air is known only by its works: the sail filling, the grass bending, the curtain of rain arriving over the hill. It is the power behind every instance of air there is, the stillness in a sealed room and the gale that takes the roof, and of all the Elements it is the one mortals know most intimately, because they keep a piece of its work inside their own chests.\n\n## What it stands behind\n\nAir is not the wind. It is the power standing behind all air, and its arrangement with mortals is the closest any Element comes to a partnership. Breath is borrowed. Every living thing takes Air's power in, holds it a moment, and gives it back changed, breath by breath, from the first cry to the last sigh, and the loan is never called in early and never forgiven long. A mortal can go days without [[Water]] and longer without food grown in [[Libris]]'s soil, but the account with Air settles in minutes.\n\nEverything spoken rides on that loan. Voice is breath shaped on its way out, which means every song, every oath, every lie, and every prayer ever offered to any shard in creation was carried on Air's power, including the prayers offered to Air itself. The other shards receive worship. Air delivers it.\n\n## What mortals live with\n\nMortals live downwind of everything. Air brings the weather and the news of it, carries scent and sound and seed and smoke, fills the sails that make [[Water]]'s roads worth traveling, and turns the mills that grind the grain. It is also dangerous in the way of things too ordinary to fear. The becalmed ship rots in sight of no shore at all, and air that stops moving in a deep mine or a sealed hold kills quietly, without malice and without witnesses, the only Element that can kill by simply staying still. Shepherds, sailors, and millers read its moods the way other people read faces, and they are right to: of the four Elements, Air's mood is the one that changes by the hour.\n\n## Where it contends\n\nAir contends the least of the four, because Air cooperates the most. It feeds [[Fire]] with every breath a flame takes, bellows and chimney draft and the wind that runs a wildfire across a plain. It carries Water into the sky and across whole countries as rain, the partnership that feeds the world, and when the partnership turns to contention the result is the storm, both of them at full strength and neither in charge. Against Libris it barely contends at all, wearing at exposed stone with dust and frost over centuries, more caress than feud. [[Nature Spirits]] aligned with Air are the most restless of their kind, spirits of high peaks, storm coasts, and open plains, here and gone and impossible to make an appointment with.\n\n## The answering\n\n> Pray to Air with your face to the wind, so it does not have to turn around to hear you.\n> — high pasture saying\n\nAir answers in signs and in weather, quickly and without ceremony. Its faithful are the people whose living depends on reading the sky: shepherds on the high pastures, millers, sail wrights and the sailors they share with Water's church, keepers of messenger birds, and singers, who hold that the shard that carries every song deserves a tithe of them. A blessing from Air is a fair wind that holds for the whole crossing, three dry days for the harvest when the clouds had promised otherwise, breath coming easy in a sickroom. The faithful do not find its speed strange. Every other power must be reached. Air is already inside the prayer.",
+      "visibility": "draft",
+      "tags": [
+        "element",
+        "wind",
+        "breath",
+        "voice"
+      ],
+      "pinned": false,
+      "parentId": 14,
+      "relations": []
     }
   ],
   "timeline": [],
