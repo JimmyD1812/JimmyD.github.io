@@ -437,7 +437,8 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "parentId": 14,
-      "relations": []
+      "relations": [],
+      "image": "water-river-journey.jpg"
     },
     {
       "id": 22,
@@ -455,7 +456,8 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "parentId": 14,
-      "relations": []
+      "relations": [],
+      "image": "fire-three-scales.jpg"
     },
     {
       "id": 23,
@@ -473,7 +475,8 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "parentId": 14,
-      "relations": []
+      "relations": [],
+      "image": "air-unseen-wind.jpg"
     },
     {
       "id": 24,
@@ -492,7 +495,8 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "parentId": 5,
-      "relations": []
+      "relations": [],
+      "image": "nature-spirits-grove.jpg"
     }
   ],
   "timeline": [
