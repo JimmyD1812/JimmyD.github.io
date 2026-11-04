@@ -57,6 +57,24 @@ window.DM_DATA = {
       "pinned": false,
       "parentId": 14,
       "relations": []
+    },
+    {
+      "id": 21,
+      "title": "DM Draft: Water",
+      "type": "Character",
+      "categoryId": 2,
+      "summary": "Water is the Element shard whose power stands behind all water: the seas, the rivers, the rain, and the well, the great carrier of the world, which lasts not by staying, but by going.",
+      "body": "Water is one of the four [[Elements]], the [[Shards]] whose power stands behind the foundations of the world. Where [[Libris]] is the shard of the place, Water is the shard of the journey. It is the power behind every instance of water there is: the deep sea and the cupped handful, the river in flood and the tear on a cheek, the rain on the roof and the water in the blood. No mortal goes a day without borrowing from it, and nothing living holds together without its leave.\n\n## What it stands behind\n\nWater is not the sea. It is the power standing behind all water, and its nature is the opposite of stone's in nearly every way. Libris lasts by staying; Water lasts by going. It cannot be held, only briefly borrowed. It takes the shape of whatever carries it and abandons that shape without regret, it finds every crack, and in the whole of creation it is the only power that has been everywhere: there is no corner of the world, high or deep, living or dead, that water has not visited and does not still visit.\n\nSailors swear that water remembers. Rivers return to old courses men thought they had moved for good, and the sea gives back what it took, years later and miles away, worn smooth and changed. Whether that is true memory or only the nature of a power that circles the world forever, coming back around to every shore, no scholar has managed to settle.\n\n## What mortals live with\n\nMortals live by Water's roads. Rivers are boundaries on every map and highways in every boat, dividing lands with the same water that connects them. Wells decide where towns stand. Rain decides whether they eat. And the same power that fills the cup fills the lungs: flood and drought are Water arriving too much and too little, and a calm sea and a drowning sea are one sea on different days.\n\n> Ask the river the way, but do not ask it twice. It will not give the same answer.\n> — sailor's proverb\n\n## Where it contends\n\nWater's oldest argument is with Libris, and Water is winning it. Coasts grind down to sand, rivers saw gorges through mountains, and the sea reclaims harbors that stone swore were permanent. Against [[Fire]] the contention is total and simple: each one unmakes the other, drowned flame and vanished steam, and neither can abide the other's presence at all. With [[Air]] the relation is partnership as often as rivalry: Air carries Water into the sky and across the land as rain, and when the two contend instead, the result is the storm. Many [[Nature Spirits]] align with Water, spirits of river, spring, and lake, quicker and more changeable than their stone-aligned kin.\n\n## The answering\n\nWater answers faster than stone and less predictably. Its faithful are the people who work on it and beside it: sailors, fisherfolk, millers, well-diggers, and the keepers of ferries, and their prayers are practical ones, for a safe crossing, a fair current, a spring that holds through the dry season. A blessing from Water is rarely a monument. It is a well that does not fail in the drought year, a tide that brings the boat home, a ford that is passable the morning the army needed it. The faithful say that is the shape of all its answers: exactly enough, exactly when needed, and never promised twice.",
+      "visibility": "draft",
+      "tags": [
+        "element",
+        "sea",
+        "river",
+        "rain"
+      ],
+      "pinned": false,
+      "parentId": 14,
+      "relations": []
     }
   ],
   "timeline": [],
