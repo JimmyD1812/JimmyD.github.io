@@ -418,7 +418,8 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "parentId": 14,
-      "relations": []
+      "relations": [],
+      "image": "libris-element-canyon.jpg"
     },
     {
       "id": 21,
