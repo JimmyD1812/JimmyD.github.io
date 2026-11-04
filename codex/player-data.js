@@ -82,7 +82,8 @@ window.PLAYER_DATA = {
       ],
       "pinned": false,
       "parentId": 1,
-      "relations": []
+      "relations": [],
+      "image": "vaelos-order-incarnate.jpg"
     },
     {
       "id": 6,
