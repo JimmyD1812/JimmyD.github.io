@@ -75,6 +75,24 @@ window.DM_DATA = {
       "pinned": false,
       "parentId": 14,
       "relations": []
+    },
+    {
+      "id": 22,
+      "title": "DM Draft: Fire",
+      "type": "Character",
+      "categoryId": 2,
+      "summary": "Fire is the Element shard whose power stands behind all flame: the hearth, the forge, and the wildfire, the one Element mortals can summon themselves, and the great remaker, which lives by consuming and dies unfed.",
+      "body": "Fire is one of the four [[Elements]], the [[Shards]] whose power stands behind the foundations of the world, and it is the odd one among them. Stone is found, water is found, air is simply there. Fire is *made*. It is the power behind every instance of flame there is, the candle and the forge fire, the cook fire and the burning roof, the deep fires under the mountains where stone runs liquid, and it is the only Element whose instances mortals can call into being themselves, out of flint and friction and breath. No church agrees on how that gift arrived. One tradition says fire-making was stolen, and every hearth is lit with stolen goods. The other says it was taught, the one lesson the shard ever gave directly, and every hearth is a thank-you. Both traditions keep a fire burning at all times, just in case the question is ever asked.\n\n## What it stands behind\n\nFire is not the flame. It is the power standing behind all flame, and of the four Elements it is the one whose nature is change itself. [[Libris]] bears things and [[Water]] carries them; Fire unmakes and remakes them. Wood becomes heat and light and ash. Ore becomes metal. Raw becomes cooked, clay becomes pot, the dead become smoke and memory. Nothing Fire touches stays what it was.\n\nIt is also the most mortal of the Elements in one strange respect: its instances barely live. A mountain is [[Libris]] at work for a million years, a river is [[Water]] on a journey of centuries, but a flame is born, feeds, and dies in an evening, and even the oldest hearth fire is only a chain of new flames handing the place down. Fire lives by consuming and dies the moment it goes unfed. Of all the shards' works, only Fire's are mayflies, and Fire does not seem to mind. There is always another spark.\n\n## What mortals live with\n\nEvery home keeps a small, tamed piece of this shard and trusts it not to wake up hungry. Fire cooks the food, warms the room, holds back the dark and the winter, and runs the forges where the world's tools are born. It is the first servant every people ever had and the only one that can murder the household in its sleep. Wildfire, the burning house, the kiln gone wrong: Fire uncontrolled is not evil, only honest, doing at full size exactly what it does small in the hearth. The difference between the cook fire and the catastrophe is nothing but attention.\n\n> Feed it, watch it, or bury it. There is no fourth way to keep a fire.\n> — smith's saying\n\n## Where it contends\n\nAgainst Water the contention is total: each unmakes the other on contact, drowned flame, vanished steam, no truce and no shared ground anywhere in creation. Against Libris it works from below, melting stone in the deep places and now and then rising through a mountain to remake a whole landscape in a night, the one occasion where slow Libris is forced to move at Fire's speed. With [[Air]] it is bound closer than with any other: flame breathes. Bellows, chimneys, the wind that carries a wildfire across a plain, all of it is Air feeding Fire, the same kindness Air does for every mortal lung. [[Nature Spirits]] aligned with Fire are the rarest of their kind and the least trusted, spirits of volcano, wildfire, and the forge, quick to answer and hard to dismiss.\n\n## The answering\n\nFire answers at once, in front of you, and never in words. Its faithful are the people who work it daily: smiths above all, and cooks, bakers, glassblowers, charcoal burners, and those who tend the funeral pyres, and their prayers are requests for steadiness rather than miracles, a forge at the right heat, a kiln that fires true, a hearth that holds through the storm. A blessing from Fire is real and it is warm and it comes with the shard's one eternal condition attached: it must be fed. Every gift Fire gives is a living thing with an appetite, and the faithful consider that a fair price, plainly stated, which is more than they say for some other powers.",
+      "visibility": "draft",
+      "tags": [
+        "element",
+        "flame",
+        "forge",
+        "hearth"
+      ],
+      "pinned": false,
+      "parentId": 14,
+      "relations": []
     }
   ],
   "timeline": [],
