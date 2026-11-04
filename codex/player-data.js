@@ -378,6 +378,26 @@ window.PLAYER_DATA = {
       "image": "races-procession.jpg",
       "parentId": 15,
       "relations": []
+    },
+    {
+      "id": 19,
+      "title": "The Uncounted Time",
+      "type": "Generic",
+      "categoryId": 4,
+      "summary": "The time between the fracture and the first records, when the shards settled into their places, the stars were thrown out, and the races were shaped, and nobody was counting the years.",
+      "body": "The Uncounted Time is the stretch of the world's past that lies between the fracture and the beginning of records. It is not called uncounted because little happened in it. Almost everything happened in it: the settling of the [[Shards]], the making of the stars, the shaping of the [[Races]], the first deaths and the first funerals. It is called uncounted because nobody kept a count that survived, in any form the rest of the world could check.\n\n## Why it has no dates\n\n[[Time]], the shard, was present from the first seconds, and moments passed in order from the start, one after another, never repeating. But a year is not something time does on its own. A year is something mortals agree to count, and for all of the Uncounted Time, nobody was agreeing. Peoples kept their own reckonings, by reigns, by generations, by winters, and none of them matched, and most of them are lost.\n\nElven memory reaches further than any archive, but memory handed from elder to elder across that much time arrives as teaching, not testimony. The dwarves have a saying for the whole problem: a date without a ledger is a story. Every date ever offered for an event in the Uncounted Time is a story.\n\n## What happened, in the order everyone agrees on\n\nStrip the dates away, and the sources agree on the sequence.\n\nThe [[United Being]] fractured, and [[Time]] broke away first, which is what allowed the rest to happen in sequence at all. See [[The Creation: The Twins and the Fracture]].\n\nWhat remained of the United Being settled at the core of the world and slept, and it sleeps still, as [[Equilibrium]], the source of all magic. The shards it shed were left to shape the world as they saw fit, and no one was set over them.\n\nThe greater shards took up their work. The Elements settled into their domains, stone and sea and sky and flame, with [[Light and Dark]] together from the first moments. Lesser shards took places instead of domains, a river, a mountain, a forest, and became the first Nature Spirits.\n\nThe smallest shards, too small to stand behind anything in the world, were thrown out into the cosmos, and they became the stars. Many of them joined together to make the sun, through which the power of Fire and Light is poured out on the world.\n\nThe [[Patrons]] gathered the souls the United Being had made and shaped them into the eight peoples, each in its Patron's image, each carrying its Patron's priorities into the world. The order in which the peoples were shaped is argued about. Two things are agreed. The shaping of the humans was left unfinished, and whether their Patron stopped during the Uncounted Time or long after, no record says. And the tieflings come last in every other people's account, though whether [[Sevara]] shaped her people last, or only went unnoticed the longest, is argued still.\n\nDeath was new, and the Patrons carried their dead to [[Aethelis, the Unchanging|Aethelis]] and [[Khavora, the Maelstrom Womb|Khavora]] from the beginning. There were no churches yet, in the settled sense. There were peoples, Patrons who answered, and rites growing up around the answers.\n\n## How any of this is known\n\nPartly from the shards themselves, who were there, and who are interested parties in every telling. Partly from church teaching, which preserves a great deal and flatters its own Patron in the preserving. Partly from song, which keeps names faithfully and order badly. Every written account dates from the First Age or later, set down long after the fact from all three.\n\nOne rule serves a reader well: where two accounts give the Uncounted Time a length in years, at least one of them invented it. The keepers of Time, who record all of this, say only that it was long, longer than everything that has been counted since. That is as close to a measurement as exists.\n\n## Where it ends\n\nThe Uncounted Time did not end with a disaster or a sign. It ended when a dwarven clerk opened the first page of the First Ledger and wrote: one.\n\nIt did not end when something happened. It ended when somebody wrote something down.",
+      "visibility": "player",
+      "tags": [
+        "history",
+        "uncounted time",
+        "fracture",
+        "shards",
+        "stars",
+        "races"
+      ],
+      "pinned": false,
+      "parentId": null,
+      "relations": []
     }
   ],
   "timeline": [
