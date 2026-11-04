@@ -691,7 +691,7 @@ function calAbs(cal, date){ let days = 0; const y = +date.y || 1;
   for (let mm = 0; mm < (+date.m || 0); mm++) days += calMonthDays(cal, y, mm);
   return days + ((+date.d || 1) - 1); }
 function calOrdinal(n){ const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-function calFmt(cal, date){ if (!cal || !date || !cal.months[date.m]) return ""; return `${calOrdinal(date.d)} of ${cal.months[date.m].name}, ${date.y}${cal.era ? " " + cal.era : ""}`; }
+function calFmt(cal, date){ if (!cal || !date || !cal.months[date.m]) return ""; return `${calOrdinal(date.d)} of ${cal.months[date.m].name}, ${date.y}${(date.age || cal.era) ? " " + (date.age || cal.era) : ""}`; }
 function calWeekday(cal, date){ if (!cal.weekdays || !cal.weekdays.length) return ""; const n = cal.weekdays.length; return cal.weekdays[((calAbs(cal, date) % n) + n) % n]; }
 const MOON_PHASES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
 function calMoonPhase(cal, moon, date){ const cyc = +moon.cycle || 0; if (cyc < 1) return null; const pos = ((calAbs(cal, date) + (+moon.offset || 0)) % cyc + cyc) % cyc; const frac = pos / cyc; return { name: MOON_PHASES[Math.floor(((frac + 1 / 16) % 1) * 8)], frac }; }
@@ -785,7 +785,7 @@ function renderCalendar(){
   const wdCount = Math.max(1, cal.weekdays.length);
   const lead = ((calAbs(cal, { y, m, d: 1 }) % wdCount) + wdCount) % wdCount;
   const evs = tlEvents();
-  const evOn = d => evs.filter(e => e.date && e.date.cal === cal.id && e.date.y === y && e.date.m === m && e.date.d === d);
+  const evOn = d => evs.filter(e => e.date && e.date.cal === cal.id && e.date.y === y && e.date.m === m && e.date.d === d && (!e.date.age || e.date.age === cal.era));
   let cells = "";
   for (let i = 0; i < lead; i++) cells += `<div></div>`;
   for (let d = 1; d <= daysIn; d++) {

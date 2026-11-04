@@ -175,6 +175,7 @@
           <label style="margin:0">Year <input type="number" id="tl-y" style="width:84px"></label>
           <label style="margin:0">Month <select id="tl-m" style="width:auto"></select></label>
           <label style="margin:0">Day <input type="number" id="tl-d" min="1" style="width:64px"></label>
+          <label style="margin:0">Age <select id="tl-age" style="width:auto"><option value="First Age">First Age</option><option value="Second Age">Second Age</option></select></label>
         </div>
         <label>Order (lower comes first)</label>
         <input type="number" id="tl-sort" step="any">
@@ -859,7 +860,7 @@ function calAbs(cal, date){ let days = 0; const y = +date.y || 1;
   for (let mm = 0; mm < (+date.m || 0); mm++) days += calMonthDays(cal, y, mm);
   return days + ((+date.d || 1) - 1); }
 function calOrdinal(n){ const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-function calFmt(cal, date){ if (!cal || !date || !cal.months[date.m]) return ""; return `${calOrdinal(date.d)} of ${cal.months[date.m].name}, ${date.y}${cal.era ? " " + cal.era : ""}`; }
+function calFmt(cal, date){ if (!cal || !date || !cal.months[date.m]) return ""; return `${calOrdinal(date.d)} of ${cal.months[date.m].name}, ${date.y}${(date.age || cal.era) ? " " + (date.age || cal.era) : ""}`; }
 function calWeekday(cal, date){ if (!cal.weekdays || !cal.weekdays.length) return ""; const n = cal.weekdays.length; return cal.weekdays[((calAbs(cal, date) % n) + n) % n]; }
 const MOON_PHASES = ["New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous", "Full Moon", "Waning Gibbous", "Last Quarter", "Waning Crescent"];
 function calMoonPhase(cal, moon, date){ const cyc = +moon.cycle || 0; if (cyc < 1) return null; const pos = ((calAbs(cal, date) + (+moon.offset || 0)) % cyc + cyc) % cyc; const frac = pos / cyc; return { name: MOON_PHASES[Math.floor(((frac + 1 / 16) % 1) * 8)], frac }; }
@@ -997,6 +998,8 @@ function tlSelect(id){
     document.getElementById("tl-y").value = e.date.y;
     document.getElementById("tl-m").value = e.date.m;
     document.getElementById("tl-d").value = e.date.d;
+    const calEra = (calById(e.date.cal) || {}).era;
+    document.getElementById("tl-age").value = e.date.age || (calEra === "First Age" || calEra === "Second Age" ? calEra : "First Age");
   } else {
     document.getElementById("tl-cal").value = ""; tlCalChanged();
     document.getElementById("tl-y").value = ""; document.getElementById("tl-d").value = "";
@@ -1013,6 +1016,7 @@ function tlClear(){
   document.getElementById("tl-article").value = "";
   document.getElementById("tl-cal").value = ""; tlCalChanged();
   document.getElementById("tl-y").value = ""; document.getElementById("tl-d").value = "";
+  document.getElementById("tl-age").value = "First Age";
   renderTimeline();
 }
 function tlSave(){
@@ -1033,7 +1037,7 @@ function tlSave(){
     const cal = calById(calId);
     const y = parseInt(document.getElementById("tl-y").value, 10), m = parseInt(document.getElementById("tl-m").value, 10), d = parseInt(document.getElementById("tl-d").value, 10);
     if (!(y >= 1 && Number.isFinite(m) && d >= 1 && d <= calMonthDays(cal, y, m))) { alert("That calendar date does not fit the calendar. Check the year, month, and day."); return; }
-    data.date = { cal: calId, y, m, d };
+    data.date = { cal: calId, y, m, d, age: document.getElementById("tl-age").value };
   }
   if (tlSelId) { const t = db.timeline.find(e => e.id === tlSelId); if (!art) delete t.articleId; if (!calId) delete t.date; Object.assign(t, data); }
   else { data.id = Math.max(0, ...db.timeline.map(e => e.id)) + 1; db.timeline.push(data); tlSelId = data.id; }
