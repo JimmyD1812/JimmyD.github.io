@@ -583,6 +583,15 @@ function filtered(){
    ancestor when exporting, so this only ever sees visible pages. — */
 let openArtId = null;
 const pClosed = new Set();
+let pTreeInit = false;
+/* The tree starts fully folded — every category and every parent article —
+   so a player unfurls it themselves. Opening an article unfurls just the
+   branch it lives on (see openArticle), so you can always see where you are. */
+function pInitClosed(){
+  if (pTreeInit) return; pTreeInit = true;
+  DATA.categories.forEach(c => pClosed.add("c" + c.id));
+  DATA.articles.forEach(a => { if (pKids(a.id).length) pClosed.add("a" + a.id); });
+}
 function pToggle(key){ pClosed.has(key) ? pClosed.delete(key) : pClosed.add(key); renderTree(); }
 function pKids(id){ return DATA.articles.filter(a => a.parentId === id).sort((a,b) => a.title.localeCompare(b.title)); }
 function pRoots(catId){
@@ -599,6 +608,7 @@ function pRow(a, depth){
   return h;
 }
 function renderTree(){
+  pInitClosed();
   const el = document.getElementById("treeNav"); if (!el) return;
   el.innerHTML = [...DATA.categories].sort((a,b) => a.sortOrder - b.sortOrder).map(c => {
     const closed = pClosed.has("c" + c.id);
@@ -651,7 +661,10 @@ function renderList(){
 }
 function openArticle(id){
   const a = DATA.articles.find(x => x.id === id); if (!a) return;
-  openArtId = id; renderTree();
+  openArtId = id;
+  pClosed.delete("c" + a.categoryId);
+  let anc = a.parentId; while (anc) { pClosed.delete("a" + anc); const pa = DATA.articles.find(x => x.id === anc); anc = pa ? pa.parentId : null; }
+  renderTree();
   document.getElementById("list").style.display = "none";
   const r = document.getElementById("reader"); r.style.display = "";
   r.innerHTML = `
