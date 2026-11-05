@@ -517,7 +517,7 @@ window.PLAYER_DATA = {
         "counting"
       ],
       "pinned": false,
-      "parentId": null,
+      "parentId": 45,
       "relations": [],
       "image": "first-ledger-first-entry.jpg"
     },
@@ -537,7 +537,7 @@ window.PLAYER_DATA = {
         "seven days of the bier"
       ],
       "pinned": false,
-      "parentId": null,
+      "parentId": 45,
       "relations": [],
       "image": "seven-days-of-the-bier.jpg"
     },
@@ -617,7 +617,7 @@ window.PLAYER_DATA = {
         "foundings"
       ],
       "pinned": false,
-      "parentId": null,
+      "parentId": 45,
       "relations": []
     }
   ],
