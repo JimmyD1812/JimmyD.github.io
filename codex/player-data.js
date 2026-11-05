@@ -558,7 +558,7 @@ window.PLAYER_DATA = {
         "tharnok"
       ],
       "pinned": false,
-      "parentId": null,
+      "parentId": 45,
       "relations": [],
       "image": "melted-silver.jpg"
     },
