@@ -622,7 +622,7 @@ window.PLAYER_DATA = {
     },
     {
       "id": 30,
-      "title": "DM Draft: The Settling of the Church of Tharnok",
+      "title": "The Settling of the Church of Tharnok",
       "type": "Organization",
       "categoryId": 4,
       "summary": "The first of the peoples' churches to settle, because it had to: somebody had to keep the First Ledger, and the clerks who kept it became priests. Tharnok's church is the world's record-keeper, and its holy days are audit days.",
