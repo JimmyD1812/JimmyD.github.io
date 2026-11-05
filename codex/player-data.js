@@ -583,6 +583,42 @@ window.PLAYER_DATA = {
       "parentId": 28,
       "relations": [],
       "image": "treaty-stone.jpg"
+    },
+    {
+      "id": 45,
+      "title": "The First Age",
+      "type": "Generic",
+      "categoryId": 4,
+      "summary": "The first age of the count: 1,384 years from the opening of the First Ledger to the night a star fell and ended it.",
+      "body": "The First Age is the first age of the count: the 1,384 years that began when a dwarven clerk opened [[The First Ledger and the Start of Counting|the First Ledger]] and carved its first entry, and ended on the night a star fell.\n\nAn age needs a count before it needs anything else, and for most of its length nobody called it the First Age at all. It was simply the count, the years since the Ledger opened, in a world that had not yet had a second age to need the distinction. The name arrived after the ending, when the auditors closed the age and the next one had to be called something else.\n\nWhat the count contains is most of this history. The churches settled, one by one, from the Church of Libris in the year 12 to Sevara's in 911. The dwarves and orcs fought the [[The War of the Foothills: How It Started|War of the Foothills]] and ended it with [[The Balanced Account: How It Ended|the Balanced Account]]. The churches built [[The Founding of the Conclave|the Conclave]] so that claims would never be settled by force again. And on the last night of the year 1,384, a star fell in the high country, and the age ended with [[The First Fall|the Fall]].",
+      "visibility": "player",
+      "tags": [
+        "history",
+        "first age",
+        "ages",
+        "count"
+      ],
+      "pinned": false,
+      "parentId": null,
+      "relations": []
+    },
+    {
+      "id": 47,
+      "title": "The Settling of the Churches",
+      "type": "Organization",
+      "categoryId": 4,
+      "summary": "The foundings of the churches, gathered in one place: what a settling is, and the order the churches settled in, from Libris in the year 12 of the First Age to Sevara in 911.",
+      "body": "Every church in the counted years began as a following of a shard, and became a church when it settled. A settling is the point where a following gains priests set apart to keep its customs and takes charge of named duties of its own. Before a settling, the followers served the shard as their families and trades allowed, and no single order answered for the customs. After it, an order did, and that order could be held to account for them.\n\nThe churches settled one at a time, across almost nine hundred years, and no two settled in the same way. [[The Settling of the Church of Libris|Libris]] settled first, in the year 12 of the First Age. [[The Settling of the Church of Tharnok|Tharnok]] followed in 30, the first of the peoples' churches. Then came [[The Settling of the Church of Fire|Fire]] in 61, [[The Settling of the Shared Church|the Shared Church]] of Light and Dark in 88, [[The Settling of the Church of Khargun|Khargun]] in 96, [[The Settling of the Church of Vharess|Vharess]] in 167, [[The Settling of the Church of Aelith|Aelith]] in 214, [[The Settling of the Church of Urgath|Urgath]] in 260, [[The Settling of the Church of Water|Water]] in 275, [[The Settling of the Church of Air|Air]] in 390, and [[The Settling of the Church of Fennik|Fennik]] in 503. [[The Settling of the Church of Sevara|Sevara]] settled last, in 911.\n\nOne people is missing from the list. The humans never settled a church, because their Patron is the Missing Shard and there was no one to settle around. The faiths they borrowed instead are told in [[The Borrowed Faiths of Humans]].\n\nEach settling has its own article, gathered under this one. The order above is the order the churches still use when they sign together, oldest first. It is the order they signed the charter of [[The Founding of the Conclave]] in.",
+      "visibility": "player",
+      "tags": [
+        "history",
+        "churches",
+        "settling",
+        "foundings"
+      ],
+      "pinned": false,
+      "parentId": null,
+      "relations": []
     }
   ],
   "timeline": [
