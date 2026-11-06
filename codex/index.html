@@ -217,15 +217,24 @@
     background:rgba(23,16,9,.65);color:#F3E5C0;font-size:1.15rem;cursor:pointer;z-index:3}
   .tl-arrow:hover{background:var(--titlered)}
   .tl-prev{left:12px}.tl-next{right:12px}
-  .tl-nav{position:relative;background:var(--paper);border:1px solid var(--line);border-top:none;padding:20px 18px 12px}
-  .tl-track{position:relative;height:2px;background:linear-gradient(90deg,var(--gold),var(--titlered),var(--gold));margin:16px 8px 6px}
-  .tl-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;background:var(--paper);border:3px solid var(--gold);cursor:pointer;padding:0}
+  .tl-nav{position:relative;background:var(--paper);border:1px solid var(--line);border-top:none;padding:14px 18px 12px}
+  /* — Breathing Axis nav: dots on a line, nothing else at rest. The focused or
+     selected event gets a pocket of clear space (tlLayout computes positions)
+     and the strip's only flag. — */
+  .tl-track{position:relative;height:96px;margin:2px 8px 0;cursor:pointer;touch-action:none}
+  .tl-line{position:absolute;left:0;right:0;top:60px;height:2px;background:linear-gradient(90deg,var(--gold),var(--titlered),var(--gold))}
+  .tl-marker{position:absolute;top:60px;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;background:var(--paper);border:3px solid var(--gold);cursor:pointer;padding:0;z-index:2;transition:left .38s cubic-bezier(.32,.72,.28,1)}
   .tl-marker.active{background:var(--titlered);border-color:var(--titlered);box-shadow:0 0 0 4px rgba(88,24,13,.2)}
-  .tl-flag{position:absolute;transform:translateX(-50%);top:-24px;font-family:var(--display);font-weight:700;font-size:.66rem;letter-spacing:.06em;
-    text-transform:uppercase;color:var(--muted);white-space:nowrap;cursor:pointer;background:none;border:none}
-  .tl-flag.active{color:var(--titlered)}
+  .tl-marker.near{border-color:#8a6f45}
+  .tl-flag{position:absolute;top:2px;transform:translateX(-50%);max-width:340px;background:#fffaf0;border:1px solid var(--gold);box-shadow:0 3px 10px rgba(36,26,16,.25);padding:5px 10px 6px;text-align:center;z-index:5;pointer-events:none;transition:left .38s cubic-bezier(.32,.72,.28,1),opacity .18s}
+  .tl-flag .tf-era{display:block;font-family:var(--display);font-weight:700;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--titlered);white-space:nowrap}
+  .tl-flag .tf-title{display:block;font-size:.84rem;color:var(--ink);white-space:nowrap;margin-top:1px}
+  .tl-flag .tf-stem{position:absolute;bottom:-13px;width:1px;height:13px;background:var(--gold)}
+  .tl-chip{position:absolute;top:76px;transform:translateX(-50%);font-family:var(--display);font-size:.64rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;white-space:nowrap;pointer-events:none;transition:left .38s cubic-bezier(.32,.72,.28,1),opacity .2s}
+  .tl-era-div{position:absolute;top:60px;transform:translate(-50%,-50%);color:var(--titlered);font-size:.78rem;pointer-events:none;z-index:1;transition:left .38s cubic-bezier(.32,.72,.28,1)}
+  .tl-era-cap{position:absolute;top:76px;transform:translateX(-50%);font-family:var(--display);font-size:.62rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;white-space:nowrap;pointer-events:none;transition:left .38s cubic-bezier(.32,.72,.28,1),opacity .2s}
   .tl-count{text-align:center;color:var(--muted);font-size:.85rem;margin-top:8px;font-variant:small-caps;letter-spacing:.08em}
-  @media (max-width:760px){.tl-slide{padding:24px 46px}.tl-head{font-size:1.5rem}.tl-flag{display:none}.tl-flag.active{display:block}.tl-arrow{width:34px;height:34px;font-size:1rem}.tl-prev{left:6px}.tl-next{right:6px}}
+  @media (max-width:760px){.tl-slide{padding:24px 46px}.tl-head{font-size:1.5rem}.tl-arrow{width:34px;height:34px;font-size:1rem}.tl-prev{left:6px}.tl-next{right:6px}.tl-flag{max-width:250px}.tl-flag .tf-title{white-space:normal}}
   /* — NPC gallery — */
   .npc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
   .npc-card{background:var(--card);border:1px solid var(--gold);box-shadow:0 2px 8px rgba(36,26,16,.12);cursor:pointer;overflow:hidden;transition:transform .15s, box-shadow .15s}
@@ -704,6 +713,103 @@ function openArticle(id){
     </article>`;
   window.scrollTo(0, 0);
 }
+/* — Breathing Axis (player timeline nav) —
+   At rest the track is dots on a line. Hovering (or touch-dragging) focuses the
+   nearest event: tlLayout opens a pocket around it, sliding neighbours aside,
+   and the strip's single flag shows that event's date and title. Clicking
+   latches the event as the current slide; the pocket then rests on the
+   selection. Neighbours with genuine room show a small year chip. */
+let tlFocus = -1, tlDots = [], tlChips = [], tlEraIdx = -1;
+function tlChipText(e){
+  if (e.date) { const a = e.date.age; return (a === "First Age" ? "FA " : a === "Second Age" ? "SA " : "") + e.date.y; }
+  const l = e.whenLabel || "", m = l.match(/Year (\d+)/);
+  if (m) return (l.includes("Second Age") ? "SA " : "FA ") + m[1];
+  if (/before/i.test(l)) return "Before";
+  return "";
+}
+function tlBuildNav(evs){
+  const track = document.getElementById("tlTrack"); if (!track) return;
+  track.querySelectorAll(".tl-marker,.tl-chip,.tl-era-div,.tl-era-cap").forEach(x => x.remove());
+  tlDots = []; tlChips = []; tlFocus = -1;
+  evs.forEach((e, j) => {
+    const d = document.createElement("button");
+    d.className = "tl-marker"; d.setAttribute("aria-label", e.title);
+    d.addEventListener("click", ev => { ev.stopPropagation(); tlShow(j + 1); });
+    track.appendChild(d); tlDots.push(d);
+    const c = document.createElement("div");
+    c.className = "tl-chip"; c.textContent = tlChipText(e); c.style.opacity = "0";
+    track.appendChild(c); tlChips.push(c);
+  });
+  tlEraIdx = evs.findIndex(e => e.date ? e.date.age === "Second Age" : /Second Age/i.test(e.whenLabel || ""));
+  if (tlEraIdx > 0) {
+    const div = document.createElement("div"); div.className = "tl-era-div"; div.id = "tlEraDiv"; div.textContent = "◆"; track.appendChild(div);
+    const cap = document.createElement("div"); cap.className = "tl-era-cap"; cap.id = "tlEraCap"; cap.textContent = "Second Age"; track.appendChild(cap);
+  }
+  track.onpointermove = ev => {
+    const r = track.getBoundingClientRect(), x = ev.clientX - r.left, n = tlDots.length;
+    if (!n) return;
+    let best = 0, bd = 1e12;
+    for (let i = 0; i < n; i++) { const b = n === 1 ? r.width / 2 : r.width * (0.05 + 0.90 * i / (n - 1)), d = Math.abs(b - x); if (d < bd) { bd = d; best = i; } }
+    if (best !== tlFocus) { tlFocus = best; tlLayout(); }
+  };
+  track.onpointerleave = () => { tlFocus = -1; tlLayout(); };
+  track.onclick = ev => { if ((ev.target === track || ev.target.classList.contains("tl-line")) && tlFocus >= 0) tlShow(tlFocus + 1); };
+}
+function tlLayout(){
+  const track = document.getElementById("tlTrack"); if (!track || !tlDots.length) return;
+  const W = track.clientWidth; if (W < 40) return;
+  const evs = tlEvents(), n = tlDots.length, selEv = tlIdx - 1;
+  const f = tlFocus >= 0 ? tlFocus : selEv;
+  const base = tlDots.map((_, i) => n === 1 ? W / 2 : W * (0.05 + 0.90 * i / (n - 1)));
+  const flag = document.getElementById("tlFlag");
+  let pos = base.slice();
+  if (f >= 0 && evs[f]) {
+    document.getElementById("tlFlagEra").textContent = tlDateLabel(evs[f]);
+    document.getElementById("tlFlagTitle").textContent = evs[f].title;
+    const keepT = flag.style.transition; flag.style.transition = "none"; flag.style.left = "-999px";
+    const flagW = Math.min(flag.offsetWidth + 2, W - 12);
+    flag.style.transition = keepT;
+    const gaps = [];
+    for (let i = 0; i < n - 1; i++) {
+      let g = base[i + 1] - base[i];
+      if (i === f - 1 || i === f) g = Math.max(g, flagW / 2 + 24);
+      else g = Math.min(Math.max(g, 5), 34);
+      gaps.push(g);
+    }
+    let total = gaps.reduce((s, g) => s + g, 0);
+    const avail = W - 24;
+    if (total > avail) {
+      const pocketSum = gaps.reduce((s, g, i) => s + ((i === f - 1 || i === f) ? g : 0), 0);
+      const rest = total - pocketSum, room = Math.max(avail - pocketSum, 0);
+      const k = rest > 0 ? Math.max(room / rest, 3.4 / 34) : 1;
+      for (let i = 0; i < gaps.length; i++) if (i !== f - 1 && i !== f) gaps[i] = Math.max(3.4, gaps[i] * k);
+      total = gaps.reduce((s, g) => s + g, 0);
+      if (total > avail) {   // very narrow track: slim the pocket margins too
+        for (let i = 0; i < gaps.length; i++) if (i === f - 1 || i === f) gaps[i] = Math.max(gaps[i] - 14, flagW / 2 + 10);
+        total = gaps.reduce((s, g) => s + g, 0);
+      }
+    }
+    let x = Math.max(8, (W - total) / 2);
+    pos = [x];
+    for (let i = 0; i < gaps.length; i++) pos.push(pos[i] + gaps[i]);
+    const fx = Math.max(flagW / 2 + 4, Math.min(W - flagW / 2 - 4, pos[f]));
+    flag.style.left = fx + "px"; flag.style.opacity = "1";
+    document.getElementById("tlFlagStem").style.left = (pos[f] - fx + flagW / 2) + "px";
+    tlChips.forEach((c, i) => { c.style.left = pos[i] + "px"; c.style.opacity = (Math.abs(i - f) === 1 && Math.abs(pos[i] - pos[f]) > flagW / 2 + 46) ? "1" : "0"; });
+  } else {
+    flag.style.opacity = "0";
+    tlChips.forEach((c, i) => { c.style.left = pos[i] + "px"; c.style.opacity = "0"; });
+  }
+  tlDots.forEach((d, i) => { d.style.left = pos[i] + "px"; d.classList.toggle("active", i === selEv); d.classList.toggle("near", f >= 0 && Math.abs(i - f) === 1); });
+  if (tlEraIdx > 0) {
+    const mid = (pos[tlEraIdx - 1] + pos[tlEraIdx]) / 2;
+    const div = document.getElementById("tlEraDiv"), cap = document.getElementById("tlEraCap");
+    if (div) div.style.left = mid + "px";
+    if (cap) { cap.style.left = mid + "px"; cap.style.opacity = (f >= 0 && Math.abs(f - tlEraIdx) <= 1) ? "0" : "1"; }
+  }
+}
+window.addEventListener("resize", () => tlLayout());
+
 /* — Calendar maths (V3 Phase 8), mirrored in the DM Desk. A date is
    {cal, y, m, d} with m 0-based; years count from 1. — */
 function calById(id){ return (DATA.calendars || []).find(c => c.id === id) || null; }
@@ -736,9 +842,13 @@ function renderTimeline(){
   el.innerHTML = `
     <div class="tl-stage" id="tlStage"></div>
     <div class="tl-nav">
-      <div class="tl-track" id="tlTrack"></div>
+      <div class="tl-track" id="tlTrack">
+        <div class="tl-line"></div>
+        <div class="tl-flag" id="tlFlag" style="opacity:0"><span class="tf-era" id="tlFlagEra"></span><span class="tf-title" id="tlFlagTitle"></span><span class="tf-stem" id="tlFlagStem"></span></div>
+      </div>
       <div class="tl-count" id="tlCount"></div>
     </div>`;
+  tlBuildNav(evs);
   tlShow(tlIdx);
 }
 function tlShow(i){
@@ -771,13 +881,7 @@ function tlShow(i){
     </div>
     <button class="tl-arrow tl-prev" onclick="tlShow(tlIdx-1)" ${tlIdx === 0 ? 'disabled style="opacity:.35"' : ''}>‹</button>
     <button class="tl-arrow tl-next" onclick="tlShow(tlIdx+1)" ${tlIdx === evs.length ? 'disabled style="opacity:.35"' : ''}>›</button>`;
-  const track = document.getElementById("tlTrack");
-  track.innerHTML = evs.map((e, j) => {
-    const pct = evs.length === 1 ? 50 : 5 + (j / (evs.length - 1)) * 90;
-    const shift = j === 0 ? "-6%" : j === evs.length - 1 ? "-94%" : "-50%";
-    return `<button class="tl-flag ${tlIdx === j + 1 ? 'active' : ''}" style="left:${pct}%;transform:translateX(${shift})" onclick="tlShow(${j + 1})">${esc(tlDateLabel(e) || e.title)}</button>
-            <button class="tl-marker ${tlIdx === j + 1 ? 'active' : ''}" style="left:${pct}%" onclick="tlShow(${j + 1})" aria-label="${esc(e.title)}"></button>`;
-  }).join("");
+  tlLayout();
   document.getElementById("tlCount").textContent = tlIdx === 0 ? `Title slide · ${total} slides` : `${esc(evs[tlIdx - 1].title)} · slide ${tlIdx + 1} of ${total}`;
 }
 /* — Calendar page (V3 Phase 8): the world's today, a browsable month
