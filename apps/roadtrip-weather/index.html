@@ -2,237 +2,749 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Road Trip Weather</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="/jimmyd-theme.css">
+<link rel="stylesheet" href="../../codex/fonts/fonts.css">
 <style>
-  /* ===== App-specific overrides: Road Trip Weather ===== */
   :root {
-    --bg: #faf8f5;
-    --surface: #ffffff;
-    --border: #e2ddd6;
-    --text: #2c2824;
-    --text-dim: #7a736b;
-    --accent: #b45309;
-    --accent2: #2e7d32;
-    --warn: #e65100;
-    --danger: #c62828;
+    --parchment:#EEE5CE; --paper:#F7F2E5; --card:#FDF1DC; --ink:#241a10; --body-ink:#33261a;
+    --muted:#7a6a55; --titlered:#58180D; --rulered:#9C2B1B; --ribbon:#E69A28;
+    --gold:#B89A67; --gold-bright:#C9AD6A; --line:#D8C9A3; --tan:#E5D5AC;
+    --header-bg:#171009;
+    --title-font:'Nodesto Caps Condensed','Cinzel',serif;
+    --display:'Mr Eaves Small Caps','Cinzel',serif;
+    --body:'Bookinsanity','EB Garamond',Georgia,serif;
+    --label:'Scaly Sans',sans-serif;
+    --label-caps:'Scaly Sans Caps','Scaly Sans',sans-serif;
+    --flavor:'IM Fell English',Georgia,serif;
+    --surface:var(--paper);
+    --input-bg:#fffdf6;
+    --ok-ink:#2d5a30; --ok-bg:#e5efe0;
+    --warn-ink:#7a4b09; --warn-bg:#f8ebd0; --warn-line:#d4a34a;
+    --err-ink:#7c1b12; --err-bg:#f6e2dc; --err-line:#c77d72;
   }
-  .dark {
-    --bg: #1a1a1a;
-    --surface: #242424;
-    --border: #3a3a3a;
-    --text: #e8e4df;
-    --text-dim: #9a948c;
-    --accent: #d97706;
-    --accent2: #4ade80;
-    --warn: #f97316;
-    --danger: #ef4444;
+  body.dark {
+    --parchment:#1a130c; --paper:#231910; --card:#2d2115; --ink:#f3e5c0; --body-ink:#e5d5ac;
+    --muted:#b4a282; --line:#4a3926; --tan:#38291b; --surface:#231910; --input-bg:#1b130b;
+    --ok-ink:#8ed18f; --ok-bg:#1f2e1f;
+    --warn-ink:#f2be6a; --warn-bg:#332612; --warn-line:#8f6524;
+    --err-ink:#f0a39a; --err-bg:#361b18; --err-line:#9c2b1b;
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  ::selection { background: var(--titlered); color: var(--paper); }
 
-  .app { display: grid; grid-template-columns: 420px 1fr; grid-template-rows: auto 1fr; height: 100vh; gap: 0; }
+  html, body {
+    height: 100%;
+    font-family: var(--body);
+    background-color: var(--parchment);
+    color: var(--body-ink);
+    line-height: 1.45;
+  }
 
-  header { grid-column: 1 / -1; background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif; font-size: 1.15rem; font-weight: 700; color: var(--text); white-space: nowrap; }
-  header h1 span { color: var(--accent); }
+  .app {
+    display: grid;
+    grid-template-columns: 440px 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
 
-  .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+  /* Masthead */
+  header.site {
+    grid-column: 1 / -1;
+    background: var(--header-bg);
+    color: #F3E5C0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px 12px;
+    border-bottom: 3px solid var(--gold-bright);
+    box-shadow: 0 4px 0 var(--rulered), 0 8px 18px rgba(23,16,9,.32);
+    position: relative;
+    z-index: 20;
+  }
+  .m-left { display: flex; align-items: center; gap: 10px; justify-self: start; }
+  .m-home {
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 5px 11px;
+    color: var(--gold-bright);
+    text-decoration: none;
+    font-family: var(--label-caps);
+    font-size: .74rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background .15s, color .15s;
+  }
+  .m-home:hover { background: var(--gold-bright); color: var(--header-bg); }
+  .m-center { text-align: center; }
+  .m-title {
+    margin: 0;
+    font-family: var(--title-font);
+    font-weight: 400;
+    font-size: 2.05rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #F3E5C0;
+    line-height: 1.05;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 2px 0 #000;
+  }
+  .m-title svg { width: 24px; height: 24px; color: var(--gold-bright); flex: none; }
+  .m-orn { color: var(--ribbon); letter-spacing: .8em; font-size: .68rem; margin-top: 3px; }
+  .m-right { justify-self: end; display: flex; align-items: center; gap: 8px; }
+  .m-btn {
+    background: transparent;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 6px 12px;
+    color: var(--gold-bright);
+    font-family: var(--label-caps);
+    font-size: .74rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s, color .15s;
+  }
+  .m-btn:hover { background: var(--gold-bright); color: var(--header-bg); }
+  .m-btn svg { width: 14px; height: 14px; }
 
-  .form-section { padding: 20px; border-bottom: 1px solid var(--border); }
-  .form-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
-  .form-section h2.clickable { background: rgba(0,0,0,0.04); margin: -8px -12px 8px; padding: 8px 12px; border-radius: 3px; }
+  /* Sidebar */
+  .sidebar {
+    background: var(--paper);
+    border-right: 1px solid var(--gold);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 5px; font-weight: 500; }
+  /* API Key Notice Banner */
+  .key-banner {
+    background: var(--warn-bg);
+    border-bottom: 2px solid var(--warn-line);
+    padding: 13px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .key-banner.hidden { display: none; }
+  .key-banner-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--display);
+    font-size: .92rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--titlered);
+  }
+  body.dark .key-banner-head { color: var(--warn-ink); }
+  .key-banner p {
+    font-family: var(--label);
+    font-size: .78rem;
+    color: var(--body-ink);
+    line-height: 1.4;
+  }
+  .key-banner a { color: var(--titlered); font-weight: 600; }
+  body.dark .key-banner a { color: var(--gold-bright); }
+  .key-banner-row { display: flex; gap: 6px; }
+  .key-banner-row input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 9px;
+    font-family: var(--label);
+    font-size: .82rem;
+    background: var(--input-bg);
+    color: var(--ink);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+  }
+  .key-banner-row button { width: auto; padding: 6px 12px; font-size: .76rem; }
+
+  /* Form Section */
+  .form-section {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--gold);
+    background: var(--card);
+  }
+  .form-section h2 {
+    font-family: var(--display);
+    font-size: .95rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--titlered);
+    margin-bottom: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+  }
+  body.dark .form-section h2 { color: var(--gold-bright); }
+  .form-section h2::after { content: '▾'; font-size: .75rem; transition: transform .2s; }
+  .form-section.collapsed h2 { margin-bottom: 0; }
+  .form-section.collapsed h2::after { transform: rotate(-90deg); }
+  .form-section.collapsed .form-fields { display: none; }
+
+  .field { margin-bottom: 11px; position: relative; }
+  .field label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--label-caps);
+    font-size: .72rem;
+    letter-spacing: .05em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .find-me-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--titlered);
+    text-decoration: none;
+    font-family: var(--label-caps);
+    font-size: .72rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+  }
+  body.dark .find-me-link { color: var(--gold-bright); }
+  .find-me-link:hover { text-decoration: underline; }
+  .find-me-link svg { width: 12px; height: 12px; }
+
   .field input, .field select {
-    width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border);
-    border-radius: 2px; color: var(--text); font-size: 16px; outline: none; transition: border-color 0.15s;
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .15s;
   }
-  .field input:focus, .field select:focus { border-color: var(--accent); }
-  .field input:-webkit-autofill, .field input:-webkit-autofill:hover, .field input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 30px var(--bg) inset !important;
-    -webkit-text-fill-color: var(--text) !important;
-    caret-color: var(--text);
-  }
+  .field input:focus, .field select:focus { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .btn {
-    width: 100%; padding: 11px; border: none; border-radius: 2px; font-size: 0.9rem;
-    font-weight: 600; cursor: pointer; transition: background 0.15s;
+  .geo-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--paper);
+    border: 1px solid var(--gold);
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+    max-height: 190px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 6px 14px rgba(23,16,9,.2);
   }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #92400e; }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .geo-option {
+    padding: 8px 11px;
+    font-family: var(--body);
+    font-size: .92rem;
+    color: var(--ink);
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .geo-option:last-child { border-bottom: none; }
+  .geo-option:hover { background: var(--tan); }
 
-  .results-section { flex: 1; padding: 20px; overflow-y: auto; }
-  .results-section h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: .88rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn:hover:not(:disabled) { background: var(--tan); border-color: var(--titlered); color: var(--titlered); }
+  .btn-primary { background: var(--titlered); border-color: var(--titlered); color: #F7F2E5; }
+  .btn-primary:hover:not(:disabled) { background: var(--rulered); border-color: var(--rulered); color: #F7F2E5; }
+  .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-danger { background: transparent; border-color: var(--err-line); color: var(--err-ink); }
+  .btn-danger:hover:not(:disabled) { background: var(--titlered); border-color: var(--titlered); color: #F7F2E5; }
+  .btn-inline { width: auto; padding: 7px 14px; font-size: .8rem; }
 
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-  .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 14px; }
-  .stat-card .value { font-size: 1.4rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
-  .stat-card .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-top: 2px; font-weight: 600; }
+  /* Results Section */
+  .results-section { flex: 1; padding: 16px 18px; overflow-y: auto; }
+  .results-section > h2 {
+    font-family: var(--display);
+    font-size: .92rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--titlered);
+    margin-bottom: 12px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--gold);
+    font-weight: 400;
+  }
+  body.dark .results-section > h2 { color: var(--gold-bright); }
 
-  .chart-container { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
+  .empty-note {
+    font-family: var(--flavor);
+    font-style: italic;
+    font-size: .96rem;
+    color: var(--muted);
+    padding: 12px 0;
+  }
+
+  .warning-badge {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    border-left: 3px solid var(--ribbon);
+    color: var(--warn-ink);
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-family: var(--label);
+    font-size: .8rem;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .warning-badge svg { width: 16px; height: 16px; flex: none; margin-top: 1px; }
+
+  .surface-note {
+    font-family: var(--label);
+    font-size: .75rem;
+    color: var(--muted);
+    margin: -6px 0 12px;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--titlered);
+    border-radius: 3px;
+    padding: 9px 8px;
+  }
+  .stat-card .value {
+    font-family: var(--title-font);
+    font-size: 1.25rem;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .stat-card .sub-traffic {
+    display: block;
+    font-family: var(--label);
+    font-size: .68rem;
+    color: var(--warn-ink);
+    margin-top: 2px;
+  }
+  .stat-card .label {
+    font-family: var(--label-caps);
+    font-size: .64rem;
+    letter-spacing: .05em;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .slider-box {
+    display: none;
+    margin-bottom: 14px;
+    padding: 11px 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+  .slider-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .slider-head label {
+    font-family: var(--label-caps);
+    font-size: .74rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+  .slider-val {
+    font-family: var(--label);
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--titlered);
+  }
+  body.dark .slider-val { color: var(--gold-bright); }
+  .slider-track { display: flex; align-items: center; gap: 8px; }
+  .slider-track input[type=range] { flex: 1; accent-color: var(--titlered); cursor: pointer; }
+  .slider-bound { font-family: var(--label); font-size: .72rem; color: var(--muted); min-width: 30px; }
+  .slider-foot { display: flex; justify-content: space-between; margin-top: 3px; font-family: var(--label); font-size: .66rem; color: var(--muted); }
+
+  .chart-container {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+  .chart-container h3 {
+    font-family: var(--display);
+    font-size: .84rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--titlered);
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  body.dark .chart-container h3 { color: var(--gold-bright); }
   .chart-container canvas { width: 100% !important; }
 
-  .timeline { margin-top: 10px; }
-  .timeline-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
-  .timeline-item:last-child { border-bottom: none; }
-  .timeline-time { font-size: 0.8rem; font-weight: 600; min-width: 55px; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
-  .timeline-loc { font-size: 0.75rem; color: var(--text-dim); min-width: 40px; }
-  .timeline-temp { font-size: 0.9rem; font-weight: 700; min-width: 45px; }
-  .timeline-cond { font-size: 0.75rem; flex: 1; }
-  .timeline-wind { font-size: 0.7rem; color: var(--text-dim); min-width: 60px; text-align: right; line-height: 1.3; }
-  .timeline-sun { font-size: 0.9rem; }
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; }
-  .stat-card .value { font-size: 1.1rem; font-weight: 700; color: var(--accent); font-family: "SF Mono", "Fira Code", monospace; }
-  .stat-card .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-top: 2px; font-weight: 600; }
+  .timeline { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    transition: border-color .15s, background .15s;
+  }
+  .timeline-item.highlight {
+    background: var(--tan);
+    border-color: var(--titlered);
+    border-left: 3px solid var(--titlered);
+  }
+  .timeline-time {
+    font-family: var(--label);
+    font-size: .76rem;
+    font-weight: 700;
+    min-width: 56px;
+    color: var(--titlered);
+  }
+  body.dark .timeline-time { color: var(--gold-bright); }
+  .timeline-loc { font-family: var(--label); font-size: .7rem; color: var(--muted); min-width: 32px; }
+  .timeline-temp { font-family: var(--title-font); font-size: 1.05rem; color: var(--ink); min-width: 40px; }
+  .timeline-cond {
+    font-family: var(--label);
+    font-size: .76rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    color: var(--body-ink);
+  }
+  .wx-ico { width: 15px; height: 15px; flex: none; color: var(--titlered); }
+  body.dark .wx-ico { color: var(--gold-bright); }
+  .traffic-badge {
+    font-family: var(--label);
+    font-size: .66rem;
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    color: var(--warn-ink);
+    padding: 1px 5px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .timeline-wind {
+    font-family: var(--label);
+    font-size: .68rem;
+    color: var(--muted);
+    min-width: 54px;
+    text-align: right;
+    line-height: 1.3;
+  }
 
-  .loading { text-align: center; padding: 40px; color: var(--text-dim); }
-  .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  .loading { text-align: center; padding: 30px 16px; color: var(--muted); font-family: var(--flavor); font-style: italic; }
+  .loading .spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--line);
+    border-top-color: var(--titlered);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin-bottom: 10px;
+  }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .error { background: #fce8e8; border: 1px solid var(--danger); border-radius: 4px; padding: 12px; color: var(--danger); font-size: 0.85rem; margin-bottom: 14px; }
+  .error {
+    background: var(--err-bg);
+    border: 1px solid var(--err-line);
+    border-left: 3px solid var(--titlered);
+    border-radius: 3px;
+    padding: 12px;
+    color: var(--err-ink);
+    font-family: var(--label);
+    font-size: .82rem;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+  .error-actions { margin-top: 8px; }
 
-  #map { width: 100%; height: 100%; background: var(--bg); }
+  .sidebar-footer {
+    padding: 10px 18px;
+    border-top: 1px solid var(--line);
+    font-family: var(--label);
+    font-size: .68rem;
+    color: var(--muted);
+    background: var(--card);
+  }
+  .sidebar-footer a { color: var(--titlered); text-decoration: none; }
+  body.dark .sidebar-footer a { color: var(--gold-bright); }
+  .sidebar-footer a:hover { text-decoration: underline; }
 
-  .waypoint-marker { background: var(--accent); border: 2px solid #fff; border-radius: 50%; width: 12px; height: 12px; }
-  .waypoint-marker.start { background: var(--accent2); width: 16px; height: 16px; }
-  .waypoint-marker.end { background: var(--danger); width: 16px; height: 16px; }
+  #map { width: 100%; height: 100%; background: var(--parchment); }
+
+  /* Settings Modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(23,16,9,.75);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-card {
+    background: var(--paper);
+    border: 1px solid var(--gold);
+    border-top: 3px solid var(--titlered);
+    border-radius: 4px;
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 14px 36px rgba(0,0,0,.45);
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    background: var(--card);
+    border-bottom: 1px solid var(--gold);
+  }
+  .modal-head h3 {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--titlered);
+    font-weight: 400;
+  }
+  body.dark .modal-head h3 { color: var(--gold-bright); }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 2px 6px;
+    line-height: 1;
+  }
+  .modal-close:hover { color: var(--titlered); }
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .setting-group label.group-label {
+    font-family: var(--label-caps);
+    font-size: .74rem;
+    letter-spacing: .06em;
+    color: var(--titlered);
+    display: block;
+    margin-bottom: 7px;
+  }
+  body.dark .setting-group label.group-label { color: var(--gold-bright); }
+  .setting-help { font-family: var(--label); font-size: .78rem; color: var(--muted); margin-bottom: 8px; line-height: 1.45; }
+  .setting-help a { color: var(--titlered); font-weight: 600; }
+  body.dark .setting-help a { color: var(--gold-bright); }
+  .setting-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .setting-input {
+    width: 100%;
+    padding: 9px 11px;
+    font-family: var(--label);
+    font-size: .9rem;
+    background: var(--input-bg);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    color: var(--ink);
+  }
+  .setting-input:focus { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
+  .wind-unit-btn.active { background: var(--titlered); border-color: var(--titlered); color: #F7F2E5; }
 
   @media (max-width: 900px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: auto 30vh 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .app { grid-template-columns: 1fr; grid-template-rows: auto 34vh 1fr; }
+    header.site { grid-template-columns: auto 1fr auto; padding: 10px 14px; }
+    .m-title { font-size: 1.45rem; }
+    .m-orn { display: none; }
+    .sidebar { grid-row: 3; border-right: none; border-top: 1px solid var(--gold); }
     #map { grid-row: 2; }
-    .sidebar { grid-row: 3; }
-    .form-section { padding: 12px 16px; }
-    .form-section h2 { margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 3px; }
-    .form-section h2::after { content: '▾'; font-size: 0.65rem; transition: transform 0.2s; }
-    .form-section.collapsed h2::after { transform: rotate(-90deg); }
-    .form-section.collapsed .field,
-    .form-section.collapsed .field-row,
-    .form-section.collapsed .btn { display: none; }
-    .results-section { padding: 12px 16px; }
-    .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .stat-card { padding: 10px; }
-    .stat-card .value { font-size: 1rem; }
-    .stat-card .label { font-size: 0.6rem; }
-    .timeline-item { gap: 6px; padding: 4px 0; }
-    .timeline-time { font-size: 0.75rem; min-width: 48px; }
-    .timeline-loc { font-size: 0.7rem; min-width: 32px; }
-    .timeline-temp { font-size: 0.85rem; min-width: 36px; }
-    .timeline-cond { font-size: 0.7rem; }
-    .timeline-wind { font-size: 0.65rem; min-width: 50px; }
-    .timeline-sun { font-size: 0.8rem; }
-    .geo-dropdown div { font-size: 16px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <header>
-    <h1><span>&#9928;</span> Road Trip Weather</h1>
-    <div style="flex:1"></div>
-    <button id="settingsBtn" class="btn" style="padding:6px 12px;font-size:13px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:2px">&#9881; Settings</button>
+  <header class="site">
+    <div class="m-left">
+      <a class="m-home" href="https://jimmyd.space/">&larr; jimmyd.space</a>
+    </div>
+    <div class="m-center">
+      <h1 class="m-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+          <path d="M13 12l-2 4h3l-2 4"/>
+        </svg>
+        <span>Road Trip Weather</span>
+      </h1>
+      <div class="m-orn" aria-hidden="true">◆ ◆ ◆</div>
+    </div>
+    <div class="m-right">
+      <button type="button" id="settingsBtn" class="m-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </button>
+    </div>
   </header>
 
   <div class="sidebar">
+    <div id="apiKeyBanner" class="key-banner hidden" role="region" aria-label="OpenWeatherMap API Key Required">
+      <div class="key-banner-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        <span>OpenWeatherMap API Key Required</span>
+      </div>
+      <p>Weather forecasts and city geocoding require a free OpenWeatherMap API key (<a href="https://home.openweathermap.org/api_keys" target="_blank" rel="noopener">get one at home.openweathermap.org/api_keys</a>). Paste it below to save it in your browser.</p>
+      <div class="key-banner-row">
+        <input type="text" id="bannerKeyInput" placeholder="Paste your OpenWeatherMap API key...">
+        <button type="button" id="bannerKeySave" class="btn btn-primary">Save Key</button>
+      </div>
+    </div>
+
     <div class="form-section">
       <h2 id="formToggle">Trip Details</h2>
-      <div class="field">
-        <label>Start Location <a href="#" id="findMe" style="font-size:13px;color:var(--accent);white-space:nowrap;text-decoration:none">📍 Find Me</a></label>
-        <input type="text" id="startInput" placeholder="Denver, CO">
-      </div>
-      <div class="field">
-        <label>End Location</label>
-        <input type="text" id="endInput" placeholder="Moab, UT">
-      </div>
-      <div class="field-row">
+      <div class="form-fields">
         <div class="field">
-          <label>Departure Date</label>
-          <input type="date" id="dateInput">
+          <label>
+            <span>Start Location</span>
+            <a href="#" id="findMe" class="find-me-link">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span id="findMeLabel">Find Me</span>
+            </a>
+          </label>
+          <input type="text" id="startInput" placeholder="Denver, CO" autocomplete="off">
         </div>
         <div class="field">
-          <label>Departure Time</label>
-          <input type="time" id="timeInput" value="08:00">
+          <label><span>End Location</span></label>
+          <input type="text" id="endInput" placeholder="Moab, UT" autocomplete="off">
         </div>
+        <div class="field-row">
+          <div class="field">
+            <label><span>Departure Date</span></label>
+            <input type="date" id="dateInput">
+          </div>
+          <div class="field">
+            <label><span>Departure Time</span></label>
+            <input type="time" id="timeInput" value="08:00">
+          </div>
+        </div>
+        <div class="field">
+          <label><span>Avg Speed (mph)</span></label>
+          <select id="speedInput">
+            <option value="auto" selected>Auto (OSM Speed Limits)</option>
+            <option value="55">55 mph</option>
+            <option value="65">65 mph</option>
+            <option value="75">75 mph</option>
+            <option value="85">85 mph</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="goBtn" onclick="planTrip()">Plan Trip</button>
       </div>
-      <div class="field">
-        <label>Avg Speed (mph)</label>
-        <select id="speedInput">
-          <option value="20">20 mph</option><option value="25">25 mph</option><option value="30">30 mph</option>
-          <option value="35">35 mph</option><option value="40">40 mph</option><option value="45">45 mph</option>
-          <option value="50">50 mph</option><option value="55">55 mph</option><option value="60">60 mph</option>
-          <option value="65">65 mph</option><option value="70">70 mph</option><option value="75" selected>75 mph</option>
-          <option value="80">80 mph</option><option value="85">85 mph</option><option value="90">90 mph</option>
-          <option value="95">95 mph</option><option value="100">100 mph</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" id="goBtn" onclick="planTrip()">Plan Trip</button>
     </div>
 
     <div class="results-section" id="results">
       <h2>Results</h2>
       <div id="resultsContent">
-        <p style="color:var(--text-dim);font-size:13px">Enter a route and click Plan Trip to see weather along your drive.</p>
+        <p class="empty-note">Enter a route and click Plan Trip to see weather along your drive.</p>
       </div>
     </div>
 
-    <div style="padding:12px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--text-dim)">
-      Powered by <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:var(--accent);text-decoration:none">OpenStreetMap</a> + <a href="https://openweathermap.org" target="_blank" style="color:var(--accent);text-decoration:none">OpenWeatherMap</a>
+    <div class="sidebar-footer">
+      Powered by <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap</a> + <a href="https://openweathermap.org" target="_blank" rel="noopener">&copy; OpenWeatherMap</a> + <a href="https://leafletjs.com" target="_blank" rel="noopener">&copy; Leaflet</a> + <a href="https://carto.com/" target="_blank" rel="noopener">&copy; CARTO</a>
     </div>
   </div>
 
   <div id="map"></div>
 </div>
 
-<!-- ── Settings Modal ────────────────────────────────────────────── -->
-<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;width:90%;height:90%;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,0.4);position:relative;">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
-      <h3 style="font-size:1.05rem;font-weight:600">&#9881; Settings</h3>
-      <button id="settingsClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-dim);padding:4px 8px">&times;</button>
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="settingsTitle">Settings</h3>
+      <button type="button" id="settingsClose" class="modal-close" aria-label="Close Settings">&times;</button>
     </div>
-    <!-- Content -->
-    <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px">
-      <!-- Wind Speed Unit -->
-      <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Wind Speed Unit</label>
-        <div style="display:flex;gap:8px">
-          <button class="wind-unit-btn btn" data-unit="kmh" style="width:auto;padding:8px 16px;background:var(--accent);color:#fff;border-radius:2px;font-size:0.85rem">km/h</button>
-          <button class="wind-unit-btn btn" data-unit="mph" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:2px;font-size:0.85rem">mph</button>
-          <button class="wind-unit-btn btn" data-unit="ms" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:2px;font-size:0.85rem">m/s</button>
+    <div class="modal-body">
+      <div class="setting-group">
+        <label class="group-label">OpenWeatherMap API Key (BYOK)</label>
+        <p class="setting-help">Create a free key at <a href="https://home.openweathermap.org/api_keys" target="_blank" rel="noopener">home.openweathermap.org/api_keys</a> (60 calls/min, no daily cap). New keys can take up to 2 hours to activate. Stored locally in your browser.</p>
+        <input type="text" id="settingsKeyInput" class="setting-input" placeholder="Paste your OpenWeatherMap API key here">
+        <div class="setting-row" style="margin-top:8px">
+          <button type="button" id="settingsKeySave" class="btn btn-primary btn-inline">Save Key</button>
+          <button type="button" id="settingsKeyClear" class="btn btn-danger btn-inline">Clear Key</button>
         </div>
       </div>
-      <!-- API Key (BYOK) -->
-      <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">API Key (BYOK)</label>
-        <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:8px">If the default key is rate-limited, create your own free key at <a href="https://home.openweathermap.org/api_keys" target="_blank" style="color:var(--accent)">home.openweathermap.org/api_keys</a>. 60 calls/min, no daily cap.</p>
-        <input type="text" id="settingsKeyInput" placeholder="Paste your API key here" style="width:100%;padding:10px 12px;font-size:16px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);outline:none;box-sizing:border-box">
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="settingsKeyClear" class="btn" style="width:auto;padding:8px 16px;background:var(--bg);border:1px solid var(--border);color:var(--danger)">Clear Key</button>
-          <button id="settingsKeySave" class="btn btn-primary" style="width:auto;padding:8px 16px">Save Key</button>
+
+      <div class="setting-group">
+        <label class="group-label">Wind Speed Unit</label>
+        <div class="setting-row">
+          <button type="button" class="wind-unit-btn btn btn-inline" data-unit="kmh">km/h</button>
+          <button type="button" class="wind-unit-btn btn btn-inline" data-unit="mph">mph</button>
+          <button type="button" class="wind-unit-btn btn btn-inline" data-unit="ms">m/s</button>
         </div>
       </div>
-      <!-- Dark Mode -->
-      <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Theme</label>
-        <div style="display:flex;align-items:center;gap:12px">
-          <button id="darkToggle" class="btn" style="width:auto;padding:8px 20px;background:var(--bg);border:1px solid var(--border);color:var(--text-dim);border-radius:2px;font-size:0.85rem">🌙 Dark Mode</button>
-          <span id="darkModeStatus" style="font-size:0.8rem;color:var(--text-dim)"></span>
+
+      <div class="setting-group">
+        <label class="group-label">Theme</label>
+        <div class="setting-row">
+          <button type="button" id="darkToggle" class="btn btn-inline">Dark Mode</button>
+          <span id="darkModeStatus" class="setting-help" style="margin:0">Light</span>
         </div>
       </div>
-      <!-- Weather Map Overlay -->
-      <div>
-        <label style="font-size:0.8rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:8px">Map Overlay</label>
-        <select id="overlaySelect" style="width:100%;padding:10px 12px;font-size:16px;background:var(--bg);border:1px solid var(--border);border-radius:2px;color:var(--text);outline:none;cursor:pointer">
+
+      <div class="setting-group">
+        <label class="group-label" for="overlaySelect">Weather Map Overlay</label>
+        <select id="overlaySelect" class="setting-input">
           <option value="none">None</option>
           <option value="clouds">Clouds</option>
           <option value="precipitation">Precipitation</option>
@@ -241,10 +753,10 @@
           <option value="pressure">Pressure</option>
           <option value="visibility">Visibility</option>
         </select>
-        <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
-          <span style="font-size:0.8rem;color:var(--text-dim);min-width:60px">Opacity</span>
-          <input type="range" id="overlayOpacity" min="10" max="100" value="60" style="flex:1;accent-color:var(--accent);cursor:pointer">
-          <span id="overlayOpacityVal" style="font-size:0.8rem;color:var(--text-dim);min-width:32px;text-align:right">60%</span>
+        <div class="setting-row" style="margin-top:10px">
+          <span class="setting-help" style="margin:0;min-width:54px">Opacity</span>
+          <input type="range" id="overlayOpacity" min="10" max="100" value="60" style="flex:1;accent-color:var(--titlered);cursor:pointer">
+          <span id="overlayOpacityVal" class="setting-help" style="margin:0;min-width:34px;text-align:right">60%</span>
         </div>
       </div>
     </div>
@@ -252,49 +764,232 @@
 </div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────
+// === CONFIGURATION ===================================================
+// Replace the placeholder below with your free OpenWeatherMap API key
+// (or paste your key directly in the app's API Key banner / Settings).
+// Get a free key at: https://home.openweathermap.org/api_keys
+const OWM_KEY_PLACEHOLDER = 'PASTE_YOUR_OPENWEATHERMAP_API_KEY_HERE';
+const OWM_DEFAULT_KEY = OWM_KEY_PLACEHOLDER;
+// =====================================================================
+
 let map, routeLayer, markers = [];
 let OWM_USER_KEY = localStorage.getItem('owmUserKey') || null;
-let OWM_DEFAULT_KEY = '2c372e81868c63672c739d9f1fa71485';
 let OWM_KEY = OWM_USER_KEY || OWM_DEFAULT_KEY;
 let WIND_UNIT = localStorage.getItem('windUnit') || 'kmh';
 let WEATHER_OVERLAY = localStorage.getItem('weatherOverlay') || 'clouds';
 let weatherOverlayLayer = null;
 let overlayRefreshTimer = null;
+let _tripData = null;
+let _currentTimeline = null;
+let chart = null;
+
 const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 const FORECAST_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 const OSRM_URL = 'https://router.project-osrm.org/route/v1/driving';
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+
+function hasValidOwmKey() {
+  return Boolean(OWM_KEY && OWM_KEY.trim() && OWM_KEY !== OWM_KEY_PLACEHOLDER && OWM_KEY !== '__DEFAULT_KEY__');
+}
+
+function updateKeyBanner() {
+  const banner = document.getElementById('apiKeyBanner');
+  if (banner) banner.classList.toggle('hidden', hasValidOwmKey());
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Traffic Congestion Zones (North America)
+const CONGESTION_ZONES = [
+  { name: "New York Tri-State Area", minLat: 40.50, maxLat: 41.00, minLon: -74.25, maxLon: -73.70, delayMinutes: 50 },
+  { name: "Los Angeles Basin", minLat: 33.70, maxLat: 34.30, minLon: -118.60, maxLon: -118.10, delayMinutes: 45 },
+  { name: "Chicagoland", minLat: 41.60, maxLat: 42.15, minLon: -88.15, maxLon: -87.50, delayMinutes: 35 },
+  { name: "Dallas-Fort Worth Metroplex", minLat: 32.55, maxLat: 33.15, minLon: -97.45, maxLon: -96.55, delayMinutes: 30 },
+  { name: "Greater Houston", minLat: 29.50, maxLat: 30.10, minLon: -95.75, maxLon: -95.10, delayMinutes: 30 },
+  { name: "Washington DC DMV Area", minLat: 38.75, maxLat: 39.15, minLon: -77.25, maxLon: -76.85, delayMinutes: 35 },
+  { name: "Philadelphia Metro", minLat: 39.80, maxLat: 40.15, minLon: -75.35, maxLon: -74.95, delayMinutes: 25 },
+  { name: "Miami South Florida Metro", minLat: 25.50, maxLat: 26.35, minLon: -80.40, maxLon: -80.10, delayMinutes: 35 },
+  { name: "Atlanta Metro", minLat: 33.55, maxLat: 34.10, minLon: -84.60, maxLon: -84.15, delayMinutes: 30 },
+  { name: "Boston Greater Area", minLat: 42.20, maxLat: 42.50, minLon: -71.25, maxLon: -70.95, delayMinutes: 35 },
+  { name: "Phoenix Valley of the Sun", minLat: 33.25, maxLat: 33.75, minLon: -112.35, maxLon: -111.75, delayMinutes: 25 },
+  { name: "San Francisco Bay Area", minLat: 37.30, maxLat: 38.00, minLon: -122.60, maxLon: -121.90, delayMinutes: 40 },
+  { name: "Riverside-San Bernardino (Inland Empire)", minLat: 33.70, maxLat: 34.15, minLon: -117.65, maxLon: -117.15, delayMinutes: 30 },
+  { name: "Detroit Metro", minLat: 42.15, maxLat: 42.65, minLon: -83.35, maxLon: -82.90, delayMinutes: 20 },
+  { name: "Seattle Puget Sound", minLat: 47.40, maxLat: 47.80, minLon: -122.45, maxLon: -122.15, delayMinutes: 30 },
+  { name: "Minneapolis-St. Paul Twin Cities", minLat: 44.75, maxLat: 45.15, minLon: -93.50, maxLon: -92.95, delayMinutes: 20 },
+  { name: "San Diego Metro", minLat: 32.55, maxLat: 33.10, minLon: -117.30, maxLon: -116.90, delayMinutes: 25 },
+  { name: "Tampa Bay Area", minLat: 27.60, maxLat: 28.20, minLon: -82.80, maxLon: -82.30, delayMinutes: 25 },
+  { name: "Denver Metro", minLat: 39.50, maxLat: 39.90, minLon: -105.15, maxLon: -104.70, delayMinutes: 25 },
+  { name: "Baltimore Metro", minLat: 39.15, maxLat: 39.40, minLon: -76.75, maxLon: -76.50, delayMinutes: 25 },
+  { name: "St. Louis Metro Area", minLat: 38.45, maxLat: 38.85, minLon: -90.55, maxLon: -90.15, delayMinutes: 20 },
+  { name: "Orlando Metro", minLat: 28.35, maxLat: 28.65, minLon: -81.55, maxLon: -81.20, delayMinutes: 25 },
+  { name: "Charlotte Metro", minLat: 35.05, maxLat: 35.40, minLon: -81.00, maxLon: -80.65, delayMinutes: 20 },
+  { name: "San Antonio Metro", minLat: 29.30, maxLat: 29.65, minLon: -98.70, maxLon: -98.30, delayMinutes: 20 },
+  { name: "Portland Metro", minLat: 45.40, maxLat: 45.65, minLon: -122.85, maxLon: -122.45, delayMinutes: 25 },
+  { name: "Sacramento Metro", minLat: 38.45, maxLat: 38.75, minLon: -121.60, maxLon: -121.30, delayMinutes: 20 },
+  { name: "Pittsburgh Metro", minLat: 40.30, maxLat: 40.55, minLon: -80.15, maxLon: -79.85, delayMinutes: 20 },
+  { name: "Austin Metro", minLat: 30.15, maxLat: 30.50, minLon: -97.90, maxLon: -97.60, delayMinutes: 25 },
+  { name: "Las Vegas Valley", minLat: 35.95, maxLat: 36.30, minLon: -115.35, maxLon: -115.00, delayMinutes: 20 },
+  { name: "Cincinnati Metro Area", minLat: 39.00, maxLat: 39.25, minLon: -84.65, maxLon: -84.35, delayMinutes: 15 },
+  { name: "Kansas City Metro", minLat: 38.85, maxLat: 39.25, minLon: -94.75, maxLon: -94.40, delayMinutes: 15 },
+  { name: "Columbus Metro", minLat: 39.85, maxLat: 40.15, minLon: -83.15, maxLon: -82.80, delayMinutes: 15 },
+  { name: "Indianapolis Metro", minLat: 39.65, maxLat: 39.95, minLon: -86.30, maxLon: -85.95, delayMinutes: 15 },
+  { name: "Cleveland Metro", minLat: 41.35, maxLat: 41.60, minLon: -81.85, maxLon: -81.50, delayMinutes: 15 },
+  { name: "Nashville Metro Area", minLat: 35.95, maxLat: 36.30, minLon: -86.90, maxLon: -86.60, delayMinutes: 20 },
+  { name: "Virginia Beach-Norfolk Hampton Roads", minLat: 36.65, maxLat: 37.00, minLon: -76.50, maxLon: -75.95, delayMinutes: 15 },
+  { name: "Providence Metro (Rhode Island)", minLat: 41.70, maxLat: 41.95, minLon: -71.55, maxLon: -71.30, delayMinutes: 15 },
+  { name: "Milwaukee Metro", minLat: 42.90, maxLat: 43.15, minLon: -88.10, maxLon: -87.85, delayMinutes: 15 },
+  { name: "Jacksonville Metro", minLat: 30.15, maxLat: 30.45, minLon: -81.80, maxLon: -81.50, delayMinutes: 15 },
+  { name: "Oklahoma City Metro", minLat: 35.35, maxLat: 35.65, minLon: -97.65, maxLon: -97.35, delayMinutes: 15 },
+  { name: "Raleigh-Durham Research Triangle", minLat: 35.65, maxLat: 36.05, minLon: -79.05, maxLon: -78.50, delayMinutes: 20 },
+  { name: "Memphis Metro Area", minLat: 34.95, maxLat: 35.25, minLon: -90.15, maxLon: -89.80, delayMinutes: 15 },
+  { name: "Richmond Metro", minLat: 37.40, maxLat: 37.65, minLon: -77.60, maxLon: -77.30, delayMinutes: 15 },
+  { name: "Greater New Orleans", minLat: 29.85, maxLat: 30.10, minLon: -90.25, maxLon: -89.90, delayMinutes: 15 },
+  { name: "Louisville Metro", minLat: 38.10, maxLat: 38.35, minLon: -85.85, maxLon: -85.55, delayMinutes: 15 },
+  { name: "Salt Lake City", minLat: 40.50, maxLat: 40.85, minLon: -112.05, maxLon: -111.80, delayMinutes: 20 },
+  { name: "Hartford Metro", minLat: 41.65, maxLat: 41.90, minLon: -72.80, maxLon: -72.55, delayMinutes: 15 },
+  { name: "Buffalo Metro", minLat: 42.80, maxLat: 43.05, minLon: -78.95, maxLon: -78.70, delayMinutes: 15 },
+  { name: "Birmingham Metro", minLat: 33.35, maxLat: 33.65, minLon: -86.95, maxLon: -86.65, delayMinutes: 10 },
+  { name: "Rochester Metro", minLat: 43.05, maxLat: 43.30, minLon: -77.75, maxLon: -77.45, delayMinutes: 10 },
+  { name: "Grand Rapids Metro", minLat: 42.85, maxLat: 43.10, minLon: -85.75, maxLon: -85.50, delayMinutes: 10 },
+  { name: "Tucson Metro", minLat: 32.10, maxLat: 32.35, minLon: -111.05, maxLon: -110.75, delayMinutes: 15 },
+  { name: "Honolulu Urban Core (Oahu)", minLat: 21.25, maxLat: 21.40, minLon: -158.05, maxLon: -157.75, delayMinutes: 25 },
+  { name: "Tulsa Metro", minLat: 35.95, maxLat: 36.25, minLon: -96.05, maxLon: -95.75, delayMinutes: 10 },
+  { name: "Fresno Metro", minLat: 36.65, maxLat: 36.85, minLon: -119.90, maxLon: -119.65, delayMinutes: 15 },
+  { name: "Omaha Metro", minLat: 41.15, maxLat: 41.35, minLon: -96.15, maxLon: -95.85, delayMinutes: 10 },
+  { name: "Albuquerque Metro", minLat: 34.95, maxLat: 35.25, minLon: -106.75, maxLon: -106.45, delayMinutes: 15 },
+  { name: "Greater Toronto Area", minLat: 43.55, maxLat: 43.90, minLon: -79.65, maxLon: -79.15, delayMinutes: 40 },
+  { name: "Greater Montreal", minLat: 45.40, maxLat: 45.70, minLon: -73.95, maxLon: -73.45, delayMinutes: 30 },
+  { name: "Metro Vancouver", minLat: 49.10, maxLat: 49.35, minLon: -123.25, maxLon: -122.70, delayMinutes: 35 },
+  { name: "Calgary Region", minLat: 50.85, maxLat: 51.20, minLon: -114.25, maxLon: -113.90, delayMinutes: 15 },
+  { name: "Edmonton Metropolitan Region", minLat: 53.40, maxLat: 53.65, minLon: -113.70, maxLon: -113.30, delayMinutes: 15 },
+  { name: "Ottawa-Gatineau", minLat: 45.30, maxLat: 45.50, minLon: -75.90, maxLon: -75.55, delayMinutes: 20 },
+  { name: "Greater Mexico City (CDMX)", minLat: 19.15, maxLat: 19.65, minLon: -99.40, maxLon: -98.90, delayMinutes: 55 },
+  { name: "Greater Guadalajara", minLat: 20.55, maxLat: 20.80, minLon: -103.50, maxLon: -103.20, delayMinutes: 30 },
+  { name: "Monterrey Metropolitan Area", minLat: 25.55, maxLat: 25.85, minLon: -100.45, maxLon: -100.15, delayMinutes: 30 },
+  { name: "Puebla Metro", minLat: 18.95, maxLat: 19.15, minLon: -98.30, maxLon: -98.10, delayMinutes: 25 },
+  { name: "Toluca Metro", minLat: 19.20, maxLat: 19.40, minLon: -99.75, maxLon: -99.50, delayMinutes: 20 },
+  { name: "Tijuana Metro", minLat: 32.40, maxLat: 32.55, minLon: -117.15, maxLon: -116.80, delayMinutes: 25 },
+  { name: "León Metro", minLat: 21.05, maxLat: 21.20, minLon: -101.75, maxLon: -101.55, delayMinutes: 20 },
+  { name: "Querétaro Metro", minLat: 20.50, maxLat: 20.70, minLon: -100.50, maxLon: -100.30, delayMinutes: 20 },
+  { name: "Juárez Metro", minLat: 31.60, maxLat: 31.75, minLon: -106.55, maxLon: -106.35, delayMinutes: 20 }
+];
+
+// Approximate UTC offset from longitude (evaluated east-to-west)
+function approxUtcOffset(lon) {
+  if (lon >= -68) return -4;   // Atlantic
+  if (lon >= -85) return -5;   // Eastern
+  if (lon >= -102) return -6;  // Central
+  if (lon >= -115) return -7;  // Mountain
+  if (lon >= -130) return -8;  // Pacific
+  if (lon >= -154) return -9;  // Alaska
+  return -10;                  // Hawaii
+}
+
+function calculateTrafficDelay(lat, lon, arrivalDateUTC) {
+  const utcMs = arrivalDateUTC.getTime();
+  const localMs = utcMs + (approxUtcOffset(lon) * 3600000);
+  const localDate = new Date(localMs);
+  const hour = localDate.getUTCHours();
+  const minute = localDate.getUTCMinutes();
+  const timeAsDecimal = hour + (minute / 60);
+  const day = localDate.getUTCDay();
+
+  if (day === 0 || day === 6) return { delay: 0, zone: null };
+  const isRushHour = (timeAsDecimal >= 6.5 && timeAsDecimal <= 9.5) || (timeAsDecimal >= 15 && timeAsDecimal <= 19);
+  if (!isRushHour) return { delay: 0, zone: null };
+
+  for (const zone of CONGESTION_ZONES) {
+    if (lat >= zone.minLat && lat <= zone.maxLat && lon >= zone.minLon && lon <= zone.maxLon) {
+      return { delay: zone.delayMinutes, zone: zone.name };
+    }
+  }
+  return { delay: 0, zone: null };
+}
 
 const OWM_CONDITIONS = {
-  200:'⛈ Thunderstorm + light rain',201:'⛈ Thunderstorm + rain',202:'⛈ Thunderstorm + heavy rain',
-  210:'⛈ Light thunderstorm',211:'⛈ Thunderstorm',212:'⛈ Heavy thunderstorm',
-  221:'⛈ Ragged thunderstorm',230:'⛈ Thunderstorm + light drizzle',231:'⛈ Thunderstorm + drizzle',232:'⛈ Thunderstorm + heavy drizzle',
-  300:'🌧 Light drizzle',301:'🌧 Drizzle',302:'🌧 Heavy drizzle',
-  310:'🌧 Light drizzle rain',311:'🌧 Drizzle rain',312:'🌧 Heavy drizzle rain',
-  313:'🌧 Shower rain + drizzle',314:'🌧 Heavy shower rain + drizzle',
-  321:'🌧 Shower drizzle',
-  500:'🌧 Light rain',501:'🌧 Moderate rain',502:'🌧 Heavy rain',503:'🌧 Very heavy rain',504:'🌧 Extreme rain',
-  511:'🌧 Freezing rain',520:'🌧 Light shower rain',521:'🌧 Shower rain',522:'🌧 Heavy shower rain',531:'🌧 Ragged shower rain',
-  600:'🌨 Light snow',601:'🌨 Snow',602:'🌨 Heavy snow',
-  611:'🌨 Sleet',612:'🌨 Light shower sleet',613:'🌨 Shower sleet',
-  615:'🌨 Light rain + snow',616:'🌨 Rain + snow',
-  620:'🌨 Light shower snow',621:'🌨 Shower snow',622:'🌨 Heavy shower snow',
-  701:'🌫 Mist',711:'🌫 Smoke',721:'🌫 Haze',731:'🌫 Dust',741:'🌫 Fog',751:'🌫 Sand',761:'🌫 Dust',762:'🌫 Ash',771:'🌫 Squall',781:'🌫 Tornado',
-  800:'☀️ Clear',801:'🌤 Few clouds',802:'⛅ Scattered clouds',803:'☁️ Broken clouds',804:'☁️ Overcast clouds'
+  200:'Thunderstorm + light rain',201:'Thunderstorm + rain',202:'Thunderstorm + heavy rain',
+  210:'Light thunderstorm',211:'Thunderstorm',212:'Heavy thunderstorm',
+  221:'Ragged thunderstorm',230:'Thunderstorm + light drizzle',231:'Thunderstorm + drizzle',232:'Thunderstorm + heavy drizzle',
+  300:'Light drizzle',301:'Drizzle',302:'Heavy drizzle',
+  310:'Light drizzle rain',311:'Drizzle rain',312:'Heavy drizzle rain',
+  313:'Shower rain + drizzle',314:'Heavy shower rain + drizzle',321:'Shower drizzle',
+  500:'Light rain',501:'Moderate rain',502:'Heavy rain',503:'Very heavy rain',504:'Extreme rain',
+  511:'Freezing rain',520:'Light shower rain',521:'Shower rain',522:'Heavy shower rain',531:'Ragged shower rain',
+  600:'Light snow',601:'Snow',602:'Heavy snow',
+  611:'Sleet',612:'Light shower sleet',613:'Shower sleet',
+  615:'Light rain + snow',616:'Rain + snow',
+  620:'Light shower snow',621:'Shower snow',622:'Heavy shower snow',
+  701:'Mist',711:'Smoke',721:'Haze',731:'Dust',741:'Fog',751:'Sand',761:'Dust',762:'Ash',771:'Squall',781:'Tornado',
+  800:'Clear',801:'Few clouds',802:'Scattered clouds',803:'Broken clouds',804:'Overcast clouds'
 };
 
 function owmCond(id) { return OWM_CONDITIONS[id] || `Unknown (${id})`; }
 
-// ── Map ────────────────────────────────────────────────────────────
+function wxIconSvg(id) {
+  if (id >= 200 && id < 300) {
+    return '<svg class="wx-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><path d="M13 12l-2 4h3l-2 4"/></svg>';
+  }
+  if (id >= 300 && id < 600) {
+    return '<svg class="wx-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 13v8M8 13v8M12 15v8"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>';
+  }
+  if (id >= 600 && id < 700) {
+    return '<svg class="wx-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><path d="M8 16h.01M8 20h.01M12 18h.01M12 22h.01M16 16h.01M16 20h.01"/></svg>';
+  }
+  if (id >= 700 && id < 800) {
+    return '<svg class="wx-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8h18M5 12h14M3 16h18"/></svg>';
+  }
+  if (id === 800) {
+    return '<svg class="wx-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  }
+  return '<svg class="wx-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>';
+}
+
+function formatWind(mphVal) {
+  if (WIND_UNIT === 'mph') return mphVal;
+  if (WIND_UNIT === 'ms') return mphVal * 0.44704;
+  return mphVal * 1.60934;
+}
+
+function windUnitLabel() {
+  return WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s';
+}
+
+// OpenWeatherMap error-aware JSON helper
+async function fetchOwmJson(url) {
+  if (!hasValidOwmKey()) {
+    const err = new Error('OpenWeatherMap API key not configured. Paste your free key in the banner above or in Settings.');
+    err.code = 'NO_KEY';
+    throw err;
+  }
+  const resp = await fetch(url);
+  let data = null;
+  try { data = await resp.json(); } catch (_) {}
+  const cod = data && data.cod != null ? String(data.cod) : String(resp.status);
+  if (resp.status === 401 || resp.status === 403 || cod === '401' || cod === '403') {
+    const err = new Error('OpenWeatherMap rejected your API key (HTTP 401). Double-check your key in Settings, or wait up to 2 hours if you just created a brand-new key.');
+    err.code = 'INVALID_KEY';
+    throw err;
+  }
+  if (resp.status === 429 || cod === '429') {
+    const err = new Error('OpenWeatherMap rate limit reached (HTTP 429). Wait a minute and try again, or use a different key in Settings.');
+    err.code = 'RATE_LIMIT';
+    throw err;
+  }
+  if (!resp.ok) {
+    throw new Error((data && data.message) ? `OpenWeatherMap error: ${data.message}` : `OpenWeatherMap request failed (HTTP ${resp.status}).`);
+  }
+  return data;
+}
+
+// Map
 const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
-map = L.map('map', { dragging: true, touchZoom: true }).setView([39.5, -105.5], 7);
-let tileLayer = L.tileLayer(LIGHT_TILES, {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-  maxZoom: 19
-}).addTo(map);
-
+map = L.map('map', { dragging: true, touchZoom: true, attributionControl: false }).setView([39.5, -105.5], 7);
+let tileLayer = L.tileLayer(LIGHT_TILES, { maxZoom: 19 }).addTo(map);
 let mapFitted = false;
 
 function fitMapToLocation(lat, lon, zoom) {
@@ -303,8 +998,6 @@ function fitMapToLocation(lat, lon, zoom) {
   map.setView([lat, lon], zoom || 9);
 }
 
-// On mobile: disable single-finger drag so page scroll passes through;
-// two-finger pinch-zoom and two-finger pan still work natively.
 if ('ontouchstart' in window) {
   map.dragging.disable();
   map.touchZoom.enable();
@@ -312,67 +1005,56 @@ if ('ontouchstart' in window) {
   map.scrollWheelZoom.disable();
 }
 
-// ── Geocoding ──────────────────────────────────────────────────────
+// Geocoding
 let geoTimer = null;
 const GEO_DEBOUNCE = 300;
 
 async function geocodeSearch(query) {
-  // Auto-detect US zip code (5 digits or ZIP+4)
-  const zipMatch = query.match(/^(\d{5}(-\d{4})?)$/);
+  const zipMatch = query.match(/^(\d{5})(-\d{4})?$/);
   if (zipMatch) {
-    // Use the zip-specific endpoint
-    const url = `https://api.openweathermap.org/geo/1.0/zip?zip=${zipMatch[1]},US&appid=${OWM_KEY}`;
-    const data = await fetch(url).then(r => r.json());
-    if (data && data.lat) {
+    const url = `https://api.openweathermap.org/geo/1.0/zip?zip=${zipMatch[1]},US&appid=${encodeURIComponent(OWM_KEY)}`;
+    const data = await fetchOwmJson(url);
+    if (data && data.lat != null) {
       return [{ name: data.name || 'Unknown', lat: data.lat, lon: data.lon, country: 'US', state: '' }];
     }
     return [];
   }
-  const url = `${GEO_URL}?q=${encodeURIComponent(query)}&limit=5&appid=${OWM_KEY}`;
-  const data = await fetch(url).then(r => r.json());
-  // Filter to North America only: US, MX, CA
+  const url = `${GEO_URL}?q=${encodeURIComponent(query)}&limit=5&appid=${encodeURIComponent(OWM_KEY)}`;
+  const data = await fetchOwmJson(url);
   const allowed = new Set(['US', 'MX', 'CA']);
-  return (data || []).filter(r => allowed.has(r.country));
+  return (Array.isArray(data) ? data : []).filter(r => allowed.has(r.country));
 }
 
 function showGeoDropdown(inputEl, results, onSelect) {
   const existing = inputEl.parentElement.querySelector('.geo-dropdown');
   if (existing) existing.remove();
-  if (results.length === 0) return;
+  if (!results.length) return;
 
   const dropdown = document.createElement('div');
   dropdown.className = 'geo-dropdown';
-  dropdown.style.cssText = 'position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:2px;max-height:180px;overflow-y:auto;width:100%;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.08);';
 
   results.forEach(r => {
     const opt = document.createElement('div');
+    opt.className = 'geo-option';
     const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
     opt.textContent = label;
-    opt.style.cssText = 'padding:9px 12px;font-size:16px;cursor:pointer;border-bottom:1px solid var(--border);';
+    const choose = () => {
+      inputEl.value = label;
+      dropdown.remove();
+      onSelect({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
+    };
     opt.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
-    opt.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      inputEl.value = label;
-      dropdown.remove();
-      onSelect({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
-    });
-    opt.addEventListener('mouseenter', () => { opt.style.background = 'var(--bg)'; });
-    opt.addEventListener('mouseleave', () => { opt.style.background = ''; });
-    opt.addEventListener('click', () => {
-      inputEl.value = label;
-      dropdown.remove();
-      onSelect({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
-    });
+    opt.addEventListener('touchend', (e) => { e.preventDefault(); choose(); });
+    opt.addEventListener('mousedown', (e) => { e.preventDefault(); choose(); });
     dropdown.appendChild(opt);
   });
 
-  inputEl.parentElement.style.position = 'relative';
   inputEl.parentElement.appendChild(dropdown);
 }
 
 function hideGeoDropdown(inputEl) {
   const dd = inputEl.parentElement.querySelector('.geo-dropdown');
-  if (dd) setTimeout(() => dd.remove(), 300);
+  if (dd) setTimeout(() => dd.remove(), 220);
 }
 
 function setupGeoInput(inputEl) {
@@ -381,12 +1063,17 @@ function setupGeoInput(inputEl) {
     clearTimeout(geoTimer);
     cachedResult = null;
     const val = inputEl.value.trim();
-    if (val.length < 2) { hideGeoDropdown(inputEl); return; }
+    if (val.length < 2 || !hasValidOwmKey()) { hideGeoDropdown(inputEl); return; }
     geoTimer = setTimeout(async () => {
-      // Suppress dropdown for zip codes — they geocode directly on Plan Trip
       if (val.match(/^\d{5}(-\d{4})?$/)) return;
-      const results = await geocodeSearch(val);
-      showGeoDropdown(inputEl, results, (r) => { cachedResult = r; });
+      try {
+        const results = await geocodeSearch(val);
+        showGeoDropdown(inputEl, results, (r) => { cachedResult = r; });
+      } catch (err) {
+        if (err.code === 'INVALID_KEY' || err.code === 'NO_KEY') {
+          showError(err.message, true);
+        }
+      }
     }, GEO_DEBOUNCE);
   });
   inputEl.addEventListener('blur', () => { hideGeoDropdown(inputEl); });
@@ -397,52 +1084,31 @@ function setupGeoInput(inputEl) {
 setupGeoInput(document.getElementById('startInput'));
 setupGeoInput(document.getElementById('endInput'));
 
-// ── Find Me (geolocation) ─────────────────────────────────────────
-document.getElementById('findMe').addEventListener('click', async function(e) {
+// Find Me (Geolocation)
+document.getElementById('findMe').addEventListener('click', function(e) {
   e.preventDefault();
   if (!navigator.geolocation) {
-    alert('Geolocation is not supported by this browser.');
+    showError('Geolocation is not supported by this browser.');
     return;
   }
-  this.textContent = '⏳ Locating...';
+  const labelEl = document.getElementById('findMeLabel');
+  labelEl.textContent = 'Locating...';
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       const { latitude, longitude } = pos.coords;
-      // Reverse geocode via OWM
-      try {
-        const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${OWM_KEY}`;
-        const data = await fetch(url).then(r => r.json());
-        if (data.length > 0) {
-          const r = data[0];
-          const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
-          document.getElementById('startInput').value = label;
-          // Trigger geocoding cache so planTrip uses it
-          window._geoCache = window._geoCache || {};
-          window._geoCache[label.toLowerCase()] = { name: label, lat: r.lat, lon: r.lon, tz: 'auto' };
-          const inputEl = document.getElementById('startInput');
-          if (inputEl._setCachedResult) {
-            inputEl._setCachedResult({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
-          } else {
-            inputEl._getCachedResult = () => ({ name: label, lat: r.lat, lon: r.lon, tz: 'auto' });
-          }
-        } else {
-          document.getElementById('startInput').value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-        }
-      } catch (err) {
-        document.getElementById('startInput').value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-      }
-      this.textContent = '📍 Find Me';
+      applyLocation(latitude, longitude);
+      labelEl.textContent = 'Find Me';
     },
     (err) => {
-      this.textContent = '📍 Find Me';
+      labelEl.textContent = 'Find Me';
       if (err.code === err.PERMISSION_DENIED) {
-        alert('Location permission denied. Please enable it in your browser settings or type a city manually.');
+        showError('Location permission denied. Enable it in your browser settings or type a city manually.');
       } else if (err.code === err.POSITION_UNAVAILABLE) {
-        alert('Location unavailable. Please type a city manually.');
+        showError('Location unavailable. Type a city manually.');
       } else if (err.code === err.TIMEOUT) {
-        alert('Location request timed out. Please try again or type a city manually.');
+        showError('Location request timed out. Try again or type a city manually.');
       } else {
-        alert('Could not get location: ' + err.message);
+        showError('Could not get location: ' + err.message);
       }
     },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
@@ -452,30 +1118,34 @@ document.getElementById('findMe').addEventListener('click', async function(e) {
 async function geocode(inputEl) {
   const cached = inputEl._getCachedResult();
   if (cached) return cached;
-  // If user typed a zip code (5 digits or ZIP+4), geocode directly without requiring dropdown selection
   const val = inputEl.value.trim();
-  const zipMatch = val.match(/^\d{5}(-\d{4})?$/);
-  if (zipMatch) {
-    const results = await geocodeSearch(val);
-    if (results.length > 0) {
-      const r = results[0];
-      const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
-      inputEl.value = label;
-      const result = { name: label, lat: r.lat, lon: r.lon, tz: 'auto' };
-      inputEl._setCachedResult(result);
-      return result;
-    }
+  const coordMatch = val.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+  if (coordMatch) {
+    const res = { name: val, lat: parseFloat(coordMatch[1]), lon: parseFloat(coordMatch[2]), tz: 'auto' };
+    inputEl._setCachedResult(res);
+    return res;
   }
-  throw new Error(`Please select a location from the dropdown for "${inputEl.placeholder}".`);
+  const results = await geocodeSearch(val);
+  if (results.length > 0) {
+    const r = results[0];
+    const label = `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`;
+    inputEl.value = label;
+    const result = { name: label, lat: r.lat, lon: r.lon, tz: 'auto' };
+    inputEl._setCachedResult(result);
+    return result;
+  }
+  throw new Error(`Could not find location "${val}". Try entering "City, State" or a 5-digit US ZIP code.`);
 }
 
-// ── OSRM Route ─────────────────────────────────────────────────────
+// OSRM Route (key-free)
 async function getRoute(start, end) {
   const url = `${OSRM_URL}/${start.lon},${start.lat};${end.lon},${end.lat}?overview=full&geometries=geojson`;
   const data = await fetch(url).then(r => r.json());
-  if (data.code !== 'Ok') throw new Error(data.message || 'Routing failed');
+  if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+    throw new Error(data.message || 'Routing failed');
+  }
   const route = data.routes[0];
-  const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);  // Leaflet wants [lat, lon]
+  const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
   return {
     distanceMi: route.distance / 1609.34,
     durationMin: route.duration / 60,
@@ -483,26 +1153,195 @@ async function getRoute(start, end) {
   };
 }
 
-// ── Weather ────────────────────────────────────────────────────────
-async function getForecast(lat, lon, tz) {
-  const url = `${FORECAST_URL}?lat=${lat}&lon=${lon}&units=imperial&appid=${OWM_KEY}`;
-  const data = await fetch(url).then(r => r.json());
-  // OWM returns 5-day / 3-hour steps as list[]. Normalize to a hourly-like structure.
-  // We'll interpolate between 3-hour points to approximate hourly for the chart,
-  // but for the timeline we pick the nearest 3-hour step.
+// Overpass Road Metadata (key-free)
+async function getRoadMetadata(route) {
+  if (!route || !route.coords || route.coords.length === 0) return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+  if (route.distanceMi > 450) return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+
+  const sampleRate = Math.max(1, Math.floor(route.coords.length / 30));
+  const sampledPoints = [];
+  for (let i = 0; i < route.coords.length; i += sampleRate) sampledPoints.push(route.coords[i]);
+  if (sampledPoints[sampledPoints.length - 1] !== route.coords[route.coords.length - 1]) {
+    sampledPoints.push(route.coords[route.coords.length - 1]);
+  }
+
+  const polylineString = sampledPoints
+    .map(([lat, lon]) => `${Number(lat).toFixed(5)},${Number(lon).toFixed(5)}`)
+    .join(',');
+
+  const query = `[out:json][timeout:10];
+    way(around:500,${polylineString})["highway"~"motorway|trunk|primary|secondary|tertiary"]["maxspeed"];
+    out tags center;`;
+
+  const allWays = [];
+  try {
+    const resp = await fetch(OVERPASS_URL, { method: 'POST', body: query });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.elements) {
+      for (const e of data.elements) {
+        if (e.type !== 'way') continue;
+        const tags = e.tags || {};
+        if (e.center && e.center.lat && e.center.lon) {
+          allWays.push({
+            center: [e.center.lat, e.center.lon],
+            highway: tags.highway,
+            maxspeed: tags.maxspeed,
+            surface: tags.surface || null
+          });
+        }
+      }
+    }
+  } catch (_) {
+    return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+  }
+
+  if (allWays.length === 0) return { avgSpeed: null, surfaces: [], segmentCount: 0 };
+
+  const segmentSpeeds = [];
+  const surfaceTypes = {};
+
+  for (const [lat, lon] of sampledPoints) {
+    let bestDist = Infinity, bestWay = null;
+    for (const w of allWays) {
+      const d = Math.abs(w.center[0] - lat) + Math.abs(w.center[1] - lon);
+      if (d < bestDist) { bestDist = d; bestWay = w; }
+    }
+    if (bestWay && bestDist < 0.02) {
+      let mph = null;
+      const ms = bestWay.maxspeed;
+      if (ms) {
+        const mphMatch = ms.match(/(\d+(?:\.\d+)?)\s*mph/i);
+        const kmhMatch = ms.match(/(\d+(?:\.\d+)?)\s*km\/h/i);
+        const numMatch = ms.match(/^(\d+(?:\.\d+)?)$/);
+        if (mphMatch) mph = parseFloat(mphMatch[1]);
+        else if (kmhMatch) mph = parseFloat(kmhMatch[1]) * 0.621371;
+        else if (numMatch) mph = parseFloat(numMatch[1]);
+      }
+      if (mph) segmentSpeeds.push(mph);
+      if (bestWay.surface) surfaceTypes[bestWay.surface] = (surfaceTypes[bestWay.surface] || 0) + 1;
+    }
+  }
+
+  const avgSpeed = segmentSpeeds.length > 0
+    ? Math.round(segmentSpeeds.reduce((a, b) => a + b, 0) / segmentSpeeds.length)
+    : null;
+  const totalSurf = Object.values(surfaceTypes).reduce((a, b) => a + b, 0) || 1;
+  const surfaces = Object.entries(surfaceTypes)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => ({ type, pct: Math.round((count / totalSurf) * 100) }));
+
+  return { avgSpeed, surfaces, segmentCount: segmentSpeeds.length };
+}
+
+function buildTimeline(depart, totalHours, waypoints, forecasts, route) {
+  const timeline = [];
+  const times = [0];
+  for (let m = 60; m < totalHours * 60; m += 60) times.push(m);
+  if (times[times.length - 1] < totalHours * 60) times.push(totalHours * 60);
+
+  let cumulativeDelayMinutes = 0;
+  const seenZones = new Set();
+
+  for (const m of times) {
+    let arrival = new Date(depart.getTime() + (m + cumulativeDelayMinutes) * 60000);
+    const frac = totalHours > 0 ? Math.min((m / 60) / totalHours, 1) : 0;
+    const coordIdx = Math.min(Math.round(frac * (route.coords.length - 1)), route.coords.length - 1);
+    const latlng = route.coords[coordIdx];
+
+    const traffic = calculateTrafficDelay(latlng[0], latlng[1], arrival);
+    let appliedZone = null;
+    let appliedDelay = 0;
+    if (traffic.delay > 0 && !seenZones.has(traffic.zone)) {
+      seenZones.add(traffic.zone);
+      cumulativeDelayMinutes += traffic.delay;
+      appliedZone = traffic.zone;
+      appliedDelay = traffic.delay;
+      arrival = new Date(depart.getTime() + (m + cumulativeDelayMinutes) * 60000);
+    }
+
+    let wpIdx = 0, minDist = Infinity;
+    for (let w = 0; w < waypoints.length; w++) {
+      const d = Math.abs(waypoints[w].lat - latlng[0]) + Math.abs(waypoints[w].lon - latlng[1]);
+      if (d < minDist) { minDist = d; wpIdx = w; }
+    }
+    const wx = pickHourly(forecasts[wpIdx].steps, arrival);
+
+    timeline.push({
+      hour: (m + cumulativeDelayMinutes) / 60,
+      arrival,
+      frac,
+      wx,
+      wpIdx,
+      lat: latlng[0],
+      lon: latlng[1],
+      trafficZone: appliedZone,
+      trafficDelay: appliedDelay
+    });
+  }
+
+  route.trafficDelayMin = cumulativeDelayMinutes;
+  route.durationMinWithTraffic = (totalHours * 60) + cumulativeDelayMinutes;
+  return timeline;
+}
+
+// Departure Time Slider
+function initDepartureSlider() {
+  const container = document.getElementById('departureSliderContainer');
+  if (!container || !_tripData) return;
+  container.style.display = 'block';
+
+  const slider = document.getElementById('departureSlider');
+  const label = document.getElementById('departureSliderLabel');
+  slider.min = -120;
+  slider.max = 120;
+  slider.step = 15;
+  slider.value = 0;
+  label.textContent = '±0 min';
+
+  slider.oninput = function() {
+    const offsetMin = parseInt(this.value, 10);
+    label.textContent = offsetMin === 0 ? '±0 min' : `${offsetMin > 0 ? '+' : ''}${offsetMin} min`;
+  };
+
+  slider.onchange = function() {
+    const offsetMin = parseInt(this.value, 10);
+    label.textContent = offsetMin === 0 ? '±0 min' : `${offsetMin > 0 ? '+' : ''}${offsetMin} min`;
+    document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
+
+    const originalDepart = new Date(document.getElementById('dateInput').value + 'T' + document.getElementById('timeInput').value);
+    const shiftedDepart = new Date(originalDepart.getTime() + offsetMin * 60000);
+    const { forecasts, waypoints, route, totalHours, roadMeta, speed } = _tripData;
+    const timeline = buildTimeline(shiftedDepart, totalHours, waypoints, forecasts, route);
+
+    _currentTimeline = timeline;
+    const start = { name: document.getElementById('startInput').value };
+    const end = { name: document.getElementById('endInput').value };
+    renderTimelineList(start, end, route, timeline, shiftedDepart, speed, roadMeta);
+    renderChart(timeline);
+  };
+}
+
+// Weather Forecast
+async function getForecast(lat, lon) {
+  const url = `${FORECAST_URL}?lat=${lat}&lon=${lon}&units=imperial&appid=${encodeURIComponent(OWM_KEY)}`;
+  const data = await fetchOwmJson(url);
+  if (!data || !Array.isArray(data.list)) {
+    throw new Error('Unexpected forecast response from OpenWeatherMap.');
+  }
   const steps = data.list.map(s => ({
     time: new Date(s.dt * 1000),
     dt: s.dt,
     tempF: s.main.temp,
     feelsF: s.main.feels_like,
     rain: Math.round((s.pop || 0) * 100),
-    wind: WIND_UNIT === 'mph' ? s.wind.speed : WIND_UNIT === 'ms' ? s.wind.speed * 0.447 : s.wind.speed * 2.237,
-    gust: WIND_UNIT === 'mph' ? (s.wind.gust || s.wind.speed) : WIND_UNIT === 'ms' ? (s.wind.gust || s.wind.speed) * 0.447 : (s.wind.gust || s.wind.speed) * 2.237,
+    windMph: s.wind.speed,
+    gustMph: s.wind.gust || s.wind.speed,
     code: s.weather[0].id,
     cond: owmCond(s.weather[0].id),
-    vis: (s.visibility || 10000) / 1000,  // m to km
+    vis: (s.visibility || 10000) / 1000,
     cloud: s.clouds.all,
-    rain3h: (s.rain?.['3h'] || 0) * 0.03937,  // mm to inches
+    rain3h: (s.rain?.['3h'] || 0) * 0.03937,
     snow3h: (s.snow?.['3h'] || 0) * 0.03937
   }));
   return { steps, city: data.city };
@@ -514,15 +1353,15 @@ function pickHourly(steps, targetDate) {
     const dt = Math.abs(steps[i].time - targetDate);
     if (dt < bestDt) { bestDt = dt; best = i; }
   }
-  if (bestDt > 7200000) return null; // >2h off
+  if (bestDt > 7200000) return null;
   const s = steps[best];
   return {
     time: s.time,
     tempF: s.tempF,
     feelsF: s.feelsF,
     rain: s.rain,
-    wind: s.wind,
-    gust: s.gust,
+    windMph: s.windMph,
+    gustMph: s.gustMph,
     code: s.code,
     cond: s.cond,
     vis: s.vis,
@@ -530,47 +1369,43 @@ function pickHourly(steps, targetDate) {
   };
 }
 
-// ── Main ───────────────────────────────────────────────────────────
-let chart = null;
-
+// Main Trip Planner
 async function planTrip() {
   const startVal = document.getElementById('startInput').value.trim();
   const endVal = document.getElementById('endInput').value.trim();
   const date = document.getElementById('dateInput').value;
   const time = document.getElementById('timeInput').value;
-  const speed = parseFloat(document.getElementById('speedInput').value) || 75;
+  const speedChoice = document.getElementById('speedInput').value;
 
   if (!startVal || !endVal || !date || !time) {
-    showError('Please fill in all fields.');
+    showError('Please fill in start location, end location, departure date, and departure time.');
     return;
   }
+  if (!hasValidOwmKey()) {
+    showError('No OpenWeatherMap API key is configured. Paste your free key in the banner above or open Settings.', true);
+    return;
+  }
+
   let depart = new Date(`${date}T${time}`);
-  if (depart.getTime() < Date.now() - 60000) {
-    depart = new Date();
-  }
-  if (!OWM_USER_KEY && OWM_DEFAULT_KEY === '__DEFAULT_KEY__') {
-    showError('No default API key set. Click "Settings" in the header to enter your own.');
-    return;
-  }
+  if (depart.getTime() < Date.now() - 60000) depart = new Date();
 
   const goBtn = document.getElementById('goBtn');
   goBtn.disabled = true;
   goBtn.textContent = 'Planning...';
+  document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
   showLoading('Geocoding locations...');
 
+  let succeeded = false;
   try {
-    // Step 1: Geocode
     const [start, end] = await Promise.all([
       geocode(document.getElementById('startInput')),
       geocode(document.getElementById('endInput'))
     ]);
+
     showLoading('Getting route from OpenStreetMap...');
-
-    // Step 2: Route
     const route = await getRoute(start, end);
-    showLoading('Fetching weather forecasts...');
 
-    // Step 3: Generate waypoints along the route
+    showLoading('Fetching weather forecasts...');
     const numWaypoints = Math.min(Math.max(Math.ceil(route.distanceMi / 40), 4), 12);
     const waypoints = [];
     for (let i = 0; i <= numWaypoints; i++) {
@@ -579,56 +1414,43 @@ async function planTrip() {
       waypoints.push({ lat: route.coords[idx][0], lon: route.coords[idx][1], frac });
     }
 
-    // Step 4: Fetch forecasts for each waypoint
     const forecasts = [];
     for (const wp of waypoints) {
-      const fc = await getForecast(wp.lat, wp.lon, 'auto');
-      forecasts.push(fc);
+      forecasts.push(await getForecast(wp.lat, wp.lon));
     }
 
-    // Step 5: Build timeline — one entry per hour, including start (m=0)
-    const depart = new Date(`${date}T${time}`);
-    const totalHours = route.durationMin / 60;
-    const timeline = [];
-    // Include m=0 (start), then every hour, plus ensure end is included
-    const times = [0];
-    for (let m = 60; m < totalHours * 60; m += 60) times.push(m);
-    if (times[times.length - 1] < totalHours * 60) times.push(totalHours * 60);
-    for (const m of times) {
-      const arrival = new Date(depart.getTime() + m * 60000);
-      const frac = totalHours > 0 ? Math.min(m / 60 / totalHours, 1) : 0;
-      // Find route coordinate at this fraction
-      const coordIdx = Math.min(Math.round(frac * (route.coords.length - 1)), route.coords.length - 1);
-      const latlng = route.coords[coordIdx];
-      // Find nearest waypoint index for weather lookup
-      let wpIdx = 0, minDist = Infinity;
-      for (let w = 0; w < waypoints.length; w++) {
-        const d = Math.abs(waypoints[w].lat - latlng[0]) + Math.abs(waypoints[w].lon - latlng[1]);
-        if (d < minDist) { minDist = d; wpIdx = w; }
-      }
-      const wx = pickHourly(forecasts[wpIdx].steps, arrival);
-      timeline.push({ hour: m / 60, arrival, frac, wx, wpIdx, lat: latlng[0], lon: latlng[1] });
-    }
+    showLoading('Fetching road speed metadata...');
+    const roadMeta = await getRoadMetadata(route);
 
-    // Step 6: Render
+    const manualSpeed = speedChoice === 'auto' ? null : parseFloat(speedChoice);
+    const speed = manualSpeed || roadMeta?.avgSpeed || 75;
+    const totalHours = manualSpeed ? (route.distanceMi / manualSpeed) : (route.durationMin / 60);
+
+    _tripData = { forecasts, waypoints, route, totalHours, roadMeta, speed, depart };
+    const timeline = buildTimeline(depart, totalHours, waypoints, forecasts, route);
+    _currentTimeline = timeline;
+
     renderMap(start, end, route, waypoints, timeline);
-    renderResults(start, end, route, timeline, depart, speed, forecasts);
+    renderResults(start, end, route, timeline, depart, speed, forecasts, roadMeta);
     renderChart(timeline);
-
+    initDepartureSlider();
+    succeeded = true;
   } catch (err) {
-    showError(err.message);
+    const showKeyBtn = err.code === 'INVALID_KEY' || err.code === 'NO_KEY' || err.code === 'RATE_LIMIT';
+    showError(err.message, showKeyBtn);
     console.error(err);
   } finally {
     goBtn.disabled = false;
     goBtn.textContent = 'Plan Trip';
-    if (window.innerWidth <= 900) {
-      document.querySelector('.form-section').classList.add('collapsed');
-      if (map) setTimeout(() => map.invalidateSize(), 100);
+    if (succeeded) {
+      const fSection = document.querySelector('.form-section');
+      if (fSection) fSection.classList.add('collapsed');
     }
+    if (map) setTimeout(() => map.invalidateSize(), 100);
   }
 }
 
-// ── Weather Map Overlay ────────────────────────────────────────────
+// Weather Map Overlay
 const OVERLAY_LAYERS = {
   clouds: { name: 'Clouds', layer: 'clouds_new', opacity: 0.6 },
   precipitation: { name: 'Precipitation', layer: 'precipitation_new', opacity: 0.7 },
@@ -640,13 +1462,8 @@ const OVERLAY_LAYERS = {
 
 function createOverlayLayer(type, opacity) {
   const info = OVERLAY_LAYERS[type];
-  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`;
-  const layer = L.tileLayer(url, {
-    opacity: opacity,
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>'
-  }).addTo(map);
-  // Tint overlay tiles for better visibility on light map background
+  const url = `https://tile.openweathermap.org/map/${info.layer}/{z}/{x}/{y}.png?appid=${encodeURIComponent(OWM_KEY)}`;
+  const layer = L.tileLayer(url, { opacity, maxZoom: 19 }).addTo(map);
   if (!document.body.classList.contains('dark')) {
     const container = layer.getContainer();
     if (container) container.style.filter = 'saturate(1.4) contrast(1.2)';
@@ -655,146 +1472,188 @@ function createOverlayLayer(type, opacity) {
 }
 
 function setWeatherOverlay(type) {
-  // Remove existing overlay
   if (weatherOverlayLayer) {
     map.removeLayer(weatherOverlayLayer);
     weatherOverlayLayer = null;
   }
-  // Clear existing refresh timer
   if (overlayRefreshTimer) {
     clearInterval(overlayRefreshTimer);
     overlayRefreshTimer = null;
   }
-  // If "none" selected, just return
-  if (type === 'none' || !OVERLAY_LAYERS[type]) {
-    WEATHER_OVERLAY = type;
-    localStorage.setItem('weatherOverlay', type);
-    return;
-  }
-  // Use saved per-layer opacity or fall back to default
+  WEATHER_OVERLAY = type;
+  localStorage.setItem('weatherOverlay', type);
+  if (type === 'none' || !OVERLAY_LAYERS[type] || !hasValidOwmKey()) return;
+
   const savedOpacities = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
   const opacity = savedOpacities[type] ?? OVERLAY_LAYERS[type].opacity;
   weatherOverlayLayer = createOverlayLayer(type, opacity);
-  // Bring overlay to front (above base tiles, below route)
   if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
-  WEATHER_OVERLAY = type;
-  localStorage.setItem('weatherOverlay', type);
-  // Set up 10-minute refresh
   overlayRefreshTimer = setInterval(refreshWeatherOverlay, 600000);
 }
 
 function refreshWeatherOverlay() {
-  if (WEATHER_OVERLAY === 'none' || !OVERLAY_LAYERS[WEATHER_OVERLAY]) return;
-  if (weatherOverlayLayer) {
-    map.removeLayer(weatherOverlayLayer);
-  }
+  if (WEATHER_OVERLAY === 'none' || !OVERLAY_LAYERS[WEATHER_OVERLAY] || !hasValidOwmKey()) return;
+  if (weatherOverlayLayer) map.removeLayer(weatherOverlayLayer);
   const savedOpacities = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
   const opacity = savedOpacities[WEATHER_OVERLAY] ?? OVERLAY_LAYERS[WEATHER_OVERLAY].opacity;
   weatherOverlayLayer = createOverlayLayer(WEATHER_OVERLAY, opacity);
   if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
 }
 
-// ── Map Rendering ──────────────────────────────────────────────────
+// Map Rendering
 function renderMap(start, end, route, waypoints, timeline) {
   if (routeLayer) map.removeLayer(routeLayer);
   markers.forEach(m => map.removeLayer(m));
   markers = [];
 
-  routeLayer = L.polyline(route.coords, { color: '#b45309', weight: 4, opacity: 0.8 }).addTo(map);
+  routeLayer = L.polyline(route.coords, { color: '#9C2B1B', weight: 4, opacity: 0.85 }).addTo(map);
 
-  // Timeline-driven markers: one dot per timeline entry, at route coords
   const totalEntries = timeline.length;
   timeline.forEach((t, i) => {
     const isFirst = i === 0;
     const isLast = i === totalEntries - 1;
-    const color = isFirst ? '#2e7d32' : isLast ? '#c62828' : '#b45309';
+    const color = isFirst ? '#2d5a30' : isLast ? '#9C2B1B' : '#E69A28';
     const radius = isFirst || isLast ? 8 : 5;
     const marker = L.circleMarker([t.lat, t.lon], {
       radius,
       fillColor: color,
-      color: '#fff',
+      color: '#FDF1DC',
       weight: isFirst || isLast ? 2 : 1.5,
       fillOpacity: 1
     }).addTo(map);
-    if (isFirst) marker.bindPopup(start.name);
-    if (isLast) marker.bindPopup(end.name);
+    if (isFirst) marker.bindPopup(esc(start.name));
+    if (isLast) marker.bindPopup(esc(end.name));
+    marker.on('click', () => {
+      document.querySelectorAll('.timeline-item.highlight').forEach(el => el.classList.remove('highlight'));
+      const target = document.querySelector(`.timeline-item[data-idx="${i}"]`);
+      if (target) {
+        target.classList.add('highlight');
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
     markers.push(marker);
   });
 
   map.fitBounds(routeLayer.getBounds(), { padding: [30, 30] });
 
-  // Re-add overlay if active (it persists through renderMap, but just in case)
   if (weatherOverlayLayer && !map.hasLayer(weatherOverlayLayer) && WEATHER_OVERLAY !== 'none') {
     weatherOverlayLayer.addTo(map);
     if (weatherOverlayLayer.bringToFront) weatherOverlayLayer.bringToFront();
   }
 }
 
-// ── Results Rendering ──────────────────────────────────────────────
-function renderResults(start, end, route, timeline, depart, speed, forecasts) {
+// Results Rendering
+function buildStatsHtml(route, depart, speed) {
   const dist = route.distanceMi;
-  const dur = route.durationMin;
+  const dur = route.durationMinWithTraffic || route.durationMin;
+  const trafficExtra = route.trafficDelayMin || 0;
   const eta = new Date(depart.getTime() + dur * 60000);
+  const trafficSub = trafficExtra > 0 ? `<span class="sub-traffic">(+${Math.round(trafficExtra)}m traffic)</span>` : '';
+  return `
+    <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
+    <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m${trafficSub}</div><div class="label">Drive Time</div></div>
+    <div class="stat-card"><div class="value">${Math.round(speed)} mph</div><div class="label">Avg Speed</div></div>
+    <div class="stat-card"><div class="value">${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
+  `;
+}
 
-  let html = `
-    <div class="stats-grid">
-      <div class="stat-card"><div class="value">${dist.toFixed(0)} mi</div><div class="label">Distance</div></div>
-      <div class="stat-card"><div class="value">${Math.floor(dur/60)}h ${Math.round(dur%60)}m</div><div class="label">Drive Time</div></div>
-      <div class="stat-card"><div class="value">${speed} mph</div><div class="label">Avg Speed</div></div>
-      <div class="stat-card"><div class="value">${eta.toLocaleDateString([], {month:'short',day:'numeric'})} ${eta.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}</div><div class="label">ETA</div></div>
-    </div>
-
-    <div class="timeline">`;
-
-  // Build all entries into an array, then sort by trip progress (frac)
-  const allEntries = [];
-
-  // Build timeline weather entries
-  for (const t of timeline) {
+function buildTimelineItemsHtml(timeline) {
+  const unit = windUnitLabel();
+  const entries = [];
+  for (let i = 0; i < timeline.length; i++) {
+    const t = timeline[i];
     if (!t.wx) continue;
     const timeStr = t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const fracStr = `${Math.round(t.frac*100)}%`;
-    allEntries.push({
+    const fracStr = `${Math.round(t.frac * 100)}%`;
+    const trafficBadge = t.trafficZone ? `<span class="traffic-badge">Traffic: ${esc(t.trafficZone)} +${t.trafficDelay}m</span>` : '';
+    entries.push({
       frac: t.frac,
       html: `
-      <div class="timeline-item">
-        <span class="timeline-time">${timeStr}</span>
-        <span class="timeline-loc">${fracStr}</span>
-        <span class="timeline-temp">${t.wx.tempF.toFixed(0)}°F</span>
-        <span class="timeline-cond">${t.wx.cond}</span>
-        <span class="timeline-wind">${t.wx.wind.toFixed(0)} ${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'}<br>${t.wx.rain}%</span>
-      </div>`
+        <div class="timeline-item" data-idx="${i}">
+          <span class="timeline-time">${timeStr}</span>
+          <span class="timeline-loc">${fracStr}</span>
+          <span class="timeline-temp">${t.wx.tempF.toFixed(0)}&deg;F</span>
+          <span class="timeline-cond">${wxIconSvg(t.wx.code)}<span>${esc(t.wx.cond)}</span>${trafficBadge}</span>
+          <span class="timeline-wind">${formatWind(t.wx.windMph).toFixed(0)} ${unit}<br>${t.wx.rain}% rain</span>
+        </div>`
     });
   }
+  entries.sort((a, b) => a.frac - b.frac);
+  if (!entries.length) {
+    return '<p class="empty-note">Departure time is outside OpenWeatherMap\'s 5-day forecast window.</p>';
+  }
+  return entries.map(e => e.html).join('');
+}
 
-  allEntries.sort((a, b) => a.frac - b.frac);
-  html += allEntries.map(e => e.html).join('');
+function renderResults(start, end, route, timeline, depart, speed, forecasts, roadMeta) {
+  let warningHtml = '';
+  if (route.distanceMi > 450) {
+    warningHtml = `
+      <div class="warning-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div><strong>Long Route Warning:</strong> Because this trip exceeds 450 miles, accuracy of estimated time to waypoints may drop.</div>
+      </div>`;
+  }
 
-  html += `</div>`;
+  let surfaceHtml = '';
+  if (roadMeta && roadMeta.surfaces && roadMeta.surfaces.length) {
+    const topSurfaces = roadMeta.surfaces.slice(0, 3).map(s => `${esc(s.type)} (${s.pct}%)`).join(', ');
+    surfaceHtml = `<div class="surface-note">Sampled road surfaces: ${topSurfaces}</div>`;
+  }
+
+  const html = `
+    ${warningHtml}
+    <div class="stats-grid">${buildStatsHtml(route, depart, speed)}</div>
+    ${surfaceHtml}
+    <div id="departureSliderContainer" class="slider-box">
+      <div class="slider-head">
+        <label for="departureSlider">Departure Time Shift</label>
+        <span id="departureSliderLabel" class="slider-val">&plusmn;0 min</span>
+      </div>
+      <div class="slider-track">
+        <span class="slider-bound" style="text-align:right">-120</span>
+        <input type="range" id="departureSlider" min="-120" max="120" step="15" value="0">
+        <span class="slider-bound">+120</span>
+      </div>
+      <div class="slider-foot">
+        <span>2h earlier</span>
+        <span>2h later</span>
+      </div>
+    </div>
+    <div class="timeline">${buildTimelineItemsHtml(timeline)}</div>`;
   document.getElementById('resultsContent').innerHTML = html;
 }
 
-// ── Chart ──────────────────────────────────────────────────────────
+function renderTimelineList(start, end, route, timeline, depart, speed, roadMeta) {
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) statsGrid.innerHTML = buildStatsHtml(route, depart, speed);
+  const timelineEl = document.querySelector('.results-section .timeline');
+  if (timelineEl) timelineEl.innerHTML = buildTimelineItemsHtml(timeline);
+}
+
+// Chart
 function renderChart(timeline) {
   const valid = timeline.filter(t => t.wx);
-  const labels = valid.map(t => t.arrival.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}));
+  if (chart) { chart.destroy(); chart = null; }
+  const results = document.getElementById('resultsContent');
+  const existingChart = results.querySelector('.chart-container');
+  if (existingChart) existingChart.remove();
+  if (!valid.length) return;
+
+  const isDark = document.body.classList.contains('dark');
+  const tickColor = isDark ? '#b4a282' : '#7a6a55';
+  const gridColor = isDark ? 'rgba(184,154,103,0.16)' : 'rgba(184,154,103,0.28)';
+  const labels = valid.map(t => t.arrival.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
   const temps = valid.map(t => t.wx.tempF);
   const rain = valid.map(t => t.wx.rain);
-  const wind = valid.map(t => t.wx.wind);
-
-  if (chart) chart.destroy();
+  const wind = valid.map(t => Number(formatWind(t.wx.windMph).toFixed(1)));
 
   const ctx = document.createElement('canvas');
   ctx.id = 'weatherChart';
   const container = document.createElement('div');
   container.className = 'chart-container';
-  container.innerHTML = '<h2 style="margin-bottom:12px">Temperature & Precipitation</h2>';
+  container.innerHTML = '<h3>Temperature &amp; Precipitation</h3>';
   container.appendChild(ctx);
-
-  // Insert chart at top of results (before timeline)
-  const results = document.getElementById('resultsContent');
-  const existingChart = results.querySelector('.chart-container');
-  if (existingChart) existingChart.remove();
   results.insertBefore(container, results.firstChild);
 
   chart = new Chart(ctx, {
@@ -805,8 +1664,8 @@ function renderChart(timeline) {
         {
           label: 'Temp (°F)',
           data: temps,
-          borderColor: '#b45309',
-          backgroundColor: 'rgba(180,83,9,0.08)',
+          borderColor: '#9C2B1B',
+          backgroundColor: 'rgba(156,43,27,0.10)',
           fill: true,
           tension: 0.3,
           yAxisID: 'y'
@@ -814,16 +1673,16 @@ function renderChart(timeline) {
         {
           label: 'Precip %',
           data: rain,
-          borderColor: '#2e7d32',
-          backgroundColor: 'rgba(46,125,50,0.08)',
+          borderColor: '#2d5a30',
+          backgroundColor: 'rgba(45,90,48,0.10)',
           fill: true,
           tension: 0.3,
           yAxisID: 'y1'
         },
         {
-          label: `Wind (${WIND_UNIT === 'kmh' ? 'km/h' : WIND_UNIT === 'mph' ? 'mph' : 'm/s'})`,
+          label: `Wind (${windUnitLabel()})`,
           data: wind,
-          borderColor: '#e65100',
+          borderColor: '#B89A67',
           borderDash: [4, 4],
           tension: 0.3,
           pointRadius: 0,
@@ -835,27 +1694,36 @@ function renderChart(timeline) {
       responsive: true,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { labels: { color: '#7a736b', font: { size: 11 } } },
-        tooltip: { backgroundColor: '#fff', titleColor: '#2c2824', bodyColor: '#2c2824', borderColor: '#e2ddd6', borderWidth: 1 }
+        legend: { labels: { color: tickColor, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: isDark ? '#231910' : '#F7F2E5',
+          titleColor: isDark ? '#F3E5C0' : '#241a10',
+          bodyColor: isDark ? '#e5d5ac' : '#33261a',
+          borderColor: '#B89A67',
+          borderWidth: 1
+        }
       },
       scales: {
-        x: { ticks: { color: '#7a736b', font: { size: 10 } }, grid: { color: 'rgba(226,221,214,0.5)' } },
-        y: { type: 'linear', position: 'left', ticks: { color: '#b45309', font: { size: 10 }, callback: v => v + '°' }, grid: { color: 'rgba(226,221,214,0.5)' }, title: { display: true, text: 'Temp °F', color: '#b45309', font: { size: 11 } } },
-        y1: { type: 'linear', position: 'right', min: 0, max: 100, ticks: { color: '#2e7d32', font: { size: 10 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Precip %', color: '#2e7d32', font: { size: 11 } } }
+        x: { ticks: { color: tickColor, font: { size: 10 } }, grid: { color: gridColor } },
+        y: { type: 'linear', position: 'left', ticks: { color: '#9C2B1B', font: { size: 10 }, callback: v => v + '°' }, grid: { color: gridColor }, title: { display: true, text: 'Temp °F', color: '#9C2B1B', font: { size: 11 } } },
+        y1: { type: 'linear', position: 'right', min: 0, max: 100, ticks: { color: '#2d5a30', font: { size: 10 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Precip %', color: '#2d5a30', font: { size: 11 } } }
       }
     }
   });
 }
 
-// ── UI Helpers ─────────────────────────────────────────────────────
+// UI Helpers
 function showLoading(msg) {
-  document.getElementById('resultsContent').innerHTML = `<div class="loading"><div class="spinner"></div><div>${msg}</div></div>`;
+  document.getElementById('resultsContent').innerHTML = `<div class="loading"><div class="spinner"></div><div>${esc(msg)}</div></div>`;
 }
-function showError(msg) {
-  document.getElementById('resultsContent').innerHTML = `<div class="error">${msg}</div>`;
+function showError(msg, includeSettingsAction = false) {
+  const btn = includeSettingsAction
+    ? '<div class="error-actions"><button type="button" class="btn btn-inline btn-primary" onclick="openSettings()">Open API Key Settings</button></div>'
+    : '';
+  document.getElementById('resultsContent').innerHTML = `<div class="error">${esc(msg)}${btn}</div>`;
 }
 
-// ── Weather Overlay UI ─────────────────────────────────────────────
+// Weather Overlay UI
 const overlaySelect = document.getElementById('overlaySelect');
 const overlayOpacity = document.getElementById('overlayOpacity');
 const overlayOpacityVal = document.getElementById('overlayOpacityVal');
@@ -881,28 +1749,38 @@ overlaySelect.addEventListener('change', () => {
 });
 
 overlayOpacity.addEventListener('input', () => {
-  const val = parseInt(overlayOpacity.value);
+  const val = parseInt(overlayOpacity.value, 10);
   overlayOpacityVal.textContent = val + '%';
   const layer = WEATHER_OVERLAY;
   if (layer !== 'none') {
-    if (weatherOverlayLayer) {
-      weatherOverlayLayer.setOpacity(val / 100);
-    }
+    if (weatherOverlayLayer) weatherOverlayLayer.setOpacity(val / 100);
     const prefs = JSON.parse(localStorage.getItem('overlayOpacities') || '{}');
     prefs[layer] = val / 100;
     localStorage.setItem('overlayOpacities', JSON.stringify(prefs));
   }
 });
 
-// ── Settings Modal ─────────────────────────────────────────────────
+// Settings Modal & Banner Key Save
 const settingsModal = document.getElementById('settingsModal');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsClose = document.getElementById('settingsClose');
 const settingsKeyInput = document.getElementById('settingsKeyInput');
 const settingsKeySave = document.getElementById('settingsKeySave');
 const settingsKeyClear = document.getElementById('settingsKeyClear');
+const bannerKeyInput = document.getElementById('bannerKeyInput');
+const bannerKeySave = document.getElementById('bannerKeySave');
 const darkToggle = document.getElementById('darkToggle');
 const darkModeStatus = document.getElementById('darkModeStatus');
+
+function applyNewKey(val) {
+  const trimmed = (val || '').trim();
+  if (!trimmed) return;
+  OWM_USER_KEY = trimmed;
+  OWM_KEY = trimmed;
+  localStorage.setItem('owmUserKey', trimmed);
+  updateKeyBanner();
+  if (WEATHER_OVERLAY !== 'none') setWeatherOverlay(WEATHER_OVERLAY);
+}
 
 function openSettings() {
   settingsKeyInput.value = OWM_USER_KEY || '';
@@ -917,16 +1795,7 @@ function closeSettings() {
 }
 
 function saveSettingsKey() {
-  const val = settingsKeyInput.value.trim();
-  if (val) {
-    OWM_USER_KEY = val;
-    OWM_KEY = val;
-    localStorage.setItem('owmUserKey', val);
-    // Refresh overlay with new API key
-    if (WEATHER_OVERLAY !== 'none') {
-      setWeatherOverlay(WEATHER_OVERLAY);
-    }
-  }
+  applyNewKey(settingsKeyInput.value);
   closeSettings();
 }
 
@@ -934,10 +1803,8 @@ function clearSettingsKey() {
   OWM_USER_KEY = null;
   OWM_KEY = OWM_DEFAULT_KEY;
   localStorage.removeItem('owmUserKey');
-  // Refresh overlay with new API key
-  if (WEATHER_OVERLAY !== 'none') {
-    setWeatherOverlay(WEATHER_OVERLAY);
-  }
+  updateKeyBanner();
+  setWeatherOverlay(WEATHER_OVERLAY);
   closeSettings();
 }
 
@@ -945,77 +1812,66 @@ function setWindUnit(unit) {
   WIND_UNIT = unit;
   localStorage.setItem('windUnit', unit);
   updateWindUnitButtons();
+  if (_tripData && _currentTimeline) {
+    const start = { name: document.getElementById('startInput').value };
+    const end = { name: document.getElementById('endInput').value };
+    renderTimelineList(start, end, _tripData.route, _currentTimeline, _currentTimeline[0]?.arrival || _tripData.depart, _tripData.speed, _tripData.roadMeta);
+    renderChart(_currentTimeline);
+  }
 }
 
 function updateWindUnitButtons() {
   document.querySelectorAll('.wind-unit-btn').forEach(btn => {
-    const isActive = btn.dataset.unit === WIND_UNIT;
-    btn.style.background = isActive ? 'var(--accent)' : 'var(--bg)';
-    btn.style.color = isActive ? '#fff' : 'var(--text)';
-    btn.style.border = isActive ? 'none' : '1px solid var(--border)';
+    btn.classList.toggle('active', btn.dataset.unit === WIND_UNIT);
   });
 }
 
 function updateDarkModeUI() {
   const isDark = document.body.classList.contains('dark');
+  darkToggle.textContent = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
   darkModeStatus.textContent = isDark ? 'Dark' : 'Light';
 }
 
 function setDarkMode(on) {
   document.body.classList.toggle('dark', on);
-  darkToggle.innerHTML = on ? '☀ Light' : '🌙 Dark Mode';
-  darkModeStatus.textContent = on ? 'Dark' : 'Light';
-  if (on) {
-    tileLayer.setUrl(DARK_TILES);
-  } else {
-    tileLayer.setUrl(LIGHT_TILES);
-  }
+  updateDarkModeUI();
+  tileLayer.setUrl(on ? DARK_TILES : LIGHT_TILES);
   if (map) setTimeout(() => map.invalidateSize(), 50);
+  if (_currentTimeline) renderChart(_currentTimeline);
   localStorage.setItem('darkMode', on ? '1' : '0');
   document.cookie = `darkMode=${on ? '1' : '0'};path=/;max-age=31536000`;
 }
 
 settingsBtn.addEventListener('click', openSettings);
 settingsClose.addEventListener('click', closeSettings);
-settingsModal.addEventListener('click', (e) => {
-  if (e.target === settingsModal) closeSettings();
-});
+settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
 settingsKeySave.addEventListener('click', saveSettingsKey);
 settingsKeyClear.addEventListener('click', clearSettingsKey);
 settingsKeyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') saveSettingsKey();
   if (e.key === 'Escape') closeSettings();
 });
-
+bannerKeySave.addEventListener('click', () => {
+  applyNewKey(bannerKeyInput.value);
+  bannerKeyInput.value = '';
+});
+bannerKeyInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    applyNewKey(bannerKeyInput.value);
+    bannerKeyInput.value = '';
+  }
+});
 document.querySelectorAll('.wind-unit-btn').forEach(btn => {
   btn.addEventListener('click', () => setWindUnit(btn.dataset.unit));
 });
+darkToggle.addEventListener('click', () => setDarkMode(!document.body.classList.contains('dark')));
 
-darkToggle.addEventListener('click', () => {
-  const isDark = document.body.classList.contains('dark');
-  setDarkMode(!isDark);
-});
-
-// ── Init ───────────────────────────────────────────────────────────
-// OWM_USER_KEY and OWM_KEY are already initialized from localStorage at declaration
-
-const today = new Date();
-const yyyy = today.getFullYear();
-const mm = String(today.getMonth()+1).padStart(2,'0');
-const dd = String(today.getDate()).padStart(2,'0');
-document.getElementById('dateInput').value = `${yyyy}-${mm}-${dd}`;
-const hh = String(today.getHours()).padStart(2,'0');
-const min = String(today.getMinutes()).padStart(2,'0');
-document.getElementById('timeInput').value = `${hh}:${min}`;
-
-// Initialize weather overlay (default: clouds)
-setWeatherOverlay(WEATHER_OVERLAY);
-
-// ── Geolocation ───────────────────────────────────────────────────
+// Geolocation & Reverse Geocoding
 async function reverseGeocode(lat, lon) {
-  const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OWM_KEY}`;
-  const data = await fetch(url).then(r => r.json());
-  if (data && data.length > 0) {
+  if (!hasValidOwmKey()) return null;
+  const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${encodeURIComponent(OWM_KEY)}`;
+  const data = await fetchOwmJson(url);
+  if (Array.isArray(data) && data.length > 0) {
     const r = data[0];
     return `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`.replace(/, ,/g, ',');
   }
@@ -1023,9 +1879,8 @@ async function reverseGeocode(lat, lon) {
 }
 
 function applyLocation(latitude, longitude) {
-  let label = null;
   reverseGeocode(latitude, longitude).then(label => {
-    const displayLabel = label || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    const displayLabel = label || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     const input = document.getElementById('startInput');
     input.value = displayLabel;
     input._setCachedResult({
@@ -1034,11 +1889,9 @@ function applyLocation(latitude, longitude) {
       lon: longitude,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
-    input.style.borderColor = 'var(--accent2)';
-    setTimeout(() => { input.style.borderColor = ''; }, 1500);
     fitMapToLocation(latitude, longitude, 9);
   }).catch(() => {
-    const displayLabel = `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+    const displayLabel = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     const input = document.getElementById('startInput');
     input.value = displayLabel;
     input._setCachedResult({
@@ -1047,36 +1900,45 @@ function applyLocation(latitude, longitude) {
       lon: longitude,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
-    input.style.borderColor = 'var(--accent2)';
-    setTimeout(() => { input.style.borderColor = ''; }, 1500);
     fitMapToLocation(latitude, longitude, 9);
   });
 }
 
-// Try Android bridge first (APK/WebView), then fallback to browser geolocation
 function requestLocation() {
   if (window.AndroidBridge && window.AndroidBridge.getLocation) {
-    // Android WebView injects this interface
     window.AndroidBridge.getLocation();
     return;
   }
   if ('geolocation' in navigator && 'ontouchstart' in window) {
     navigator.geolocation.getCurrentPosition(
       (pos) => applyLocation(pos.coords.latitude, pos.coords.longitude),
-      () => { /* permission denied — user types manually */ },
+      () => {},
       { timeout: 8000, maximumAge: 600000, enableHighAccuracy: true }
     );
   }
 }
 
-// Called from Android when location is ready
 function onAndroidLocation(lat, lon) {
   applyLocation(lat, lon);
 }
 
+// Init
+const today = new Date();
+document.getElementById('dateInput').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+document.getElementById('timeInput').value = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+
+const darkLS = localStorage.getItem('darkMode');
+const darkCookie = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('darkMode='));
+if (darkLS === '1' || (darkLS === null && darkCookie && darkCookie.split('=')[1] === '1')) {
+  document.body.classList.add('dark');
+  tileLayer.setUrl(DARK_TILES);
+}
+updateDarkModeUI();
+updateWindUnitButtons();
+updateKeyBanner();
+setWeatherOverlay(WEATHER_OVERLAY);
 requestLocation();
 
-// Mobile form collapse toggle
 const formSection = document.querySelector('.form-section');
 const formToggle = document.getElementById('formToggle');
 if (formToggle) {
@@ -1086,33 +1948,7 @@ if (formToggle) {
   });
 }
 
-// Re-validate map size on resize
 window.addEventListener('resize', () => { if (map) map.invalidateSize(); });
-
-// iOS: prevent zoom on input focus, zoom back out on blur
-document.querySelectorAll('input, select, textarea').forEach(el => {
-  el.addEventListener('focus', () => {
-    document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-  });
-  el.addEventListener('blur', () => {
-    document.querySelector('meta[name="viewport"]').setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-    // Force zoom back out
-    window.scrollTo(0, 0);
-  });
-});
-
-// Restore dark mode from localStorage (or cookie fallback)
-const darkLS = localStorage.getItem('darkMode');
-if (darkLS === '1') {
-  document.body.classList.add('dark');
-  tileLayer.setUrl(DARK_TILES);
-} else {
-  const darkCookie = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('darkMode='));
-  if (darkCookie && darkCookie.split('=')[1] === '1') {
-    document.body.classList.add('dark');
-    tileLayer.setUrl(DARK_TILES);
-  }
-}
 </script>
 </body>
 </html>
