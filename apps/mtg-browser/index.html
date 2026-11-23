@@ -1,376 +1,433 @@
 <!DOCTYPE html>
-<!-- saved from url=(0038)https://jimmyd.space/apps/mtg-browser/ -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MTG Collection Browser</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net/" crossorigin="">
-  <link rel="icon" type="image/svg+xml" href="https://jimmyd.space/JimmyD.png">
-  <script src="./MTG Collection Browser_files/dexie.min.js.download"></script>
-  <script src="./MTG Collection Browser_files/index.min.js.download"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net/" crossorigin>
+  <link rel="icon" type="image/png" href="https://jimmyd.space/JimmyD.png">
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
   <link rel="stylesheet" href="/jimmyd-theme.css">
+  <link rel="stylesheet" href="../../codex/fonts/fonts.css">
   <style>
-    /* ===== App-specific overrides: MTG Collection Browser ===== */
     :root {
-      --bg: #faf8f5;
-      --panel: #ffffff;
-      --panel-hover: #f5f0ea;
-      --border: #e2ddd6;
-      --text: #2c2824;
-      --muted: #7a736b;
-      --accent: #b45309;
-      --accent-hover: #92400e;
-      --input-bg: #faf8f5;
-      --danger: #c62828;
-      --danger-hover: #b71c1c;
-      --success: #2e7d32;
-      --card: #f0ebe4;
-      --chip: #f0ebe4;
-      --btn-fs: 14px;
-      --btn-lh: 1.15;
-      --btn-fw: 600;
-      --results-col-min: 260px;
+      --parchment:#EEE5CE; --paper:#F7F2E5; --card:#FDF1DC; --ink:#241a10; --body-ink:#33261a;
+      --muted:#7a6a55; --titlered:#58180D; --rulered:#9C2B1B; --ribbon:#E69A28;
+      --gold:#B89A67; --gold-bright:#C9AD6A; --line:#D8C9A3; --tan:#E5D5AC;
+      --header-bg:#171009;
+      --title-font:'Nodesto Caps Condensed','Cinzel',serif;
+      --display:'Mr Eaves Small Caps','Cinzel',serif;
+      --body:'Bookinsanity','EB Garamond',Georgia,serif;
+      --label:'Scaly Sans',sans-serif;
+      --label-caps:'Scaly Sans Caps','Scaly Sans',sans-serif;
+      --flavor:'IM Fell English',Georgia,serif;
+      --input-bg:#fffdf6;
+      --ok-ink:#2d5a30; --ok-bg:#e5efe0;
+      --err-ink:#7c1b12; --err-bg:#f6e2dc; --err-line:#c77d72;
+      --results-col-min:250px;
+      --deck-w:440px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    ::selection { background: var(--titlered); color: var(--paper); }
 
     html, body {
       min-height: 100vh;
-      color: var(--text);
-      background: var(--bg);
-      font-family: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--accent-hover); text-decoration: underline; }
-
-    .wrap { max-width: 1400px; margin: 0 auto; padding: 24px; }
-
-    /* Flat Header */
-    header {
       display: flex;
+      flex-direction: column;
+      color: var(--body-ink);
+      font-family: var(--body);
+      font-size: 1rem;
+      line-height: 1.48;
+      background-color: var(--parchment);
+      background-image:
+        radial-gradient(1200px 500px at 50% -80px, rgba(184,154,103,.20), transparent 70%),
+        radial-gradient(900px 600px at 110% 110%, rgba(88,24,13,.07), transparent 60%),
+        radial-gradient(700px 500px at -10% 60%, rgba(88,24,13,.05), transparent 60%),
+        repeating-linear-gradient(43deg, rgba(88,24,13,.016) 0 2px, transparent 2px 5px),
+        repeating-linear-gradient(-41deg, rgba(88,24,13,.014) 0 2px, transparent 2px 6px);
+    }
+
+    a { color: var(--titlered); text-decoration: none; }
+    a:hover { color: var(--rulered); text-decoration: underline; }
+
+    /* Masthead */
+    header.site {
+      background: var(--header-bg);
+      color: #F3E5C0;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      background: var(--panel);
-      border: 1px solid var(--border);
+      gap: 16px;
+      padding: 22px 26px 18px;
+      border-bottom: 3px solid var(--gold-bright);
+      box-shadow: 0 4px 0 var(--rulered), 0 10px 24px rgba(23,16,9,.35);
+    }
+    .m-left { justify-self: start; }
+    .m-home {
+      border: 1px solid var(--gold);
+      border-radius: 3px;
+      padding: 6px 12px;
+      color: var(--gold-bright);
+      font-family: var(--label-caps);
+      font-size: .76rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: background .15s, color .15s;
+    }
+    .m-home:hover { background: var(--gold-bright); color: var(--header-bg); text-decoration: none; }
+    .m-center { text-align: center; }
+    .m-title {
+      margin: 0;
+      font-family: var(--title-font);
+      font-weight: 400;
+      font-size: 2.65rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #F3E5C0;
+      line-height: 1.05;
+      text-shadow: 0 2px 0 #000;
+    }
+    .m-orn { color: var(--ribbon); letter-spacing: .9em; font-size: .76rem; margin-top: 6px; }
+    .m-sub { margin: 5px 0 0; color: #cdbd97; font-family: var(--flavor); font-style: italic; font-size: 1.02rem; }
+    .m-right { justify-self: end; }
+
+    /* Main Workspace */
+    .wrap { flex: 1; width: 100%; max-width: 1420px; margin: 0 auto; padding: 20px 20px 40px; transition: margin-right .25s ease; }
+    body.deck-open .wrap { margin-right: var(--deck-w); }
+    @media (max-width: 1180px) { body.deck-open .wrap { margin-right: 0; } }
+
+    /* Command Ribbon */
+    .ribbon-bar {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--titlered);
       border-radius: 4px;
-      margin-bottom: 20px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 4px rgba(36,26,16,.08);
     }
-
-    header .title {
-      font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-      font-weight: 800;
-      font-size: 1.25rem;
-      color: var(--text);
-    }
-
-    /* Toolbar */
-    .bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .bar-sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
 
     /* Buttons */
     .btn, a.btn, label.btn {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 16px;
-      border-radius: 2px;
+      background: var(--card);
+      border: 1px solid var(--gold);
+      color: var(--ink);
+      padding: 7px 13px;
+      border-radius: 3px;
       cursor: pointer;
-      font-size: var(--btn-fs);
-      line-height: var(--btn-lh);
-      font-weight: var(--btn-fw);
+      font-family: var(--display);
+      font-size: .84rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      line-height: 1.2;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      transition: background 0.15s, border-color 0.15s;
+      justify-content: center;
+      gap: 6px;
+      transition: background .15s, border-color .15s, color .15s;
     }
-    .btn:hover, a.btn:hover, label.btn:hover {
-      background: var(--panel-hover);
-      border-color: #d0c8bd;
-    }
-
-    .btn.deck-toggle {
-      background: var(--accent);
-      border-color: var(--accent-hover);
-      color: #fff;
-    }
-    .btn.deck-toggle:hover { background: var(--accent-hover); }
-
-    .btn.danger { border-color: rgba(196, 40, 40, 0.3); }
-    .btn.danger:hover { background: #fce8e8; border-color: var(--danger); color: var(--danger); }
-
-    .ghost { background: transparent; border-color: transparent; }
-    .ghost:hover { background: rgba(0,0,0,0.03); }
+    .btn:hover, a.btn:hover, label.btn:hover { background: var(--tan); border-color: var(--titlered); color: var(--titlered); text-decoration: none; }
+    .btn svg, label.btn svg { width: 14px; height: 14px; flex: none; }
+    .btn.primary, .btn.deck-toggle { background: var(--titlered); border-color: var(--titlered); color: #F7F2E5; }
+    .btn.primary:hover, .btn.deck-toggle:hover { background: var(--rulered); border-color: var(--rulered); color: #F7F2E5; }
+    .btn.danger { background: transparent; border-color: var(--err-line); color: var(--err-ink); }
+    .btn.danger:hover { background: var(--titlered); border-color: var(--titlered); color: #F7F2E5; }
+    .btn.ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+    .btn.ghost:hover { background: var(--tan); border-color: var(--gold); color: var(--ink); }
+    .btn.small { padding: 5px 10px; font-size: .76rem; }
 
     .file { position: relative; overflow: hidden; }
     .file input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
-    /* Layout */
-    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+    /* Layout Grid */
+    .grid { display: grid; grid-template-columns: 330px 1fr; gap: 20px; align-items: start; }
 
-    /* Panels */
+    /* Book-Plate Panels */
     .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--titlered);
       border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: 0 1px 4px rgba(36,26,16,.09);
       overflow: hidden;
     }
-
     .panel .head {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      background: var(--card);
+      border-bottom: 1px solid var(--gold);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      font-size: 0.75rem;
+      gap: 10px;
+      font-family: var(--display);
+      font-size: .96rem;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--muted);
-      font-weight: 600;
+      letter-spacing: .09em;
+      color: var(--titlered);
     }
-
     .panel .body { padding: 16px; }
 
-    .muted { color: var(--muted); font-size: 0.9rem; }
-    .small { font-size: 0.8rem; }
-    .muted.small { color: var(--muted); opacity: 0.85; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .small { font-family: var(--label); font-size: .8rem; }
+    .tiny { font-family: var(--label); font-size: .74rem; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .grow { flex: 1 1 auto; }
 
     /* Form Controls */
     input[type=text], select {
       background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 10px 12px;
+      color: var(--ink);
+      border: 1px solid var(--gold);
+      border-radius: 3px;
+      padding: 8px 10px;
       width: 100%;
-      font-family: inherit;
+      font-family: var(--body);
+      font-size: .95rem;
       outline: none;
-      transition: border-color 0.15s;
     }
-    input[type=text]::placeholder { color: rgba(122, 115, 107, 0.6); }
-    input[type=text]:focus, select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.12);
-    }
+    input[type=text]:focus, select:focus { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
 
-    /* Chips */
+    /* Identity Chips */
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: var(--chip);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: 500;
+      gap: 5px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-family: var(--label-caps);
+      font-size: .78rem;
       cursor: pointer;
       user-select: none;
+      white-space: nowrap;
     }
-    .chip, .stat { white-space: nowrap; }
-    label.chip input { accent-color: var(--accent); margin-right: 2px; }
-    label.chip:has(input:checked) {
-      background: #fef3c7;
-      border-color: var(--accent);
-      color: var(--accent);
+    label.chip input { accent-color: var(--titlered); }
+    label.chip:has(input:checked) { background: var(--tan); border-color: var(--titlered); color: var(--titlered); }
+
+    /* Switch */
+    .switch { display: inline-flex; align-items: center; gap: 8px; user-select: none; cursor: pointer; }
+    .switch .toggle {
+      width: 40px; height: 22px; border-radius: 3px;
+      background: var(--input-bg); border: 1px solid var(--gold);
+      position: relative; transition: background .15s, border-color .15s;
     }
+    .switch .toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+      border-radius: 2px; background: var(--muted); transition: transform .15s, background .15s;
+    }
+    .switch input { position: absolute; opacity: 0; pointer-events: none; }
+    .switch input:checked + .toggle { background: var(--titlered); border-color: var(--titlered); }
+    .switch input:checked + .toggle::after { transform: translateX(18px); background: #F7F2E5; }
+    .switch .label { font-family: var(--label); font-size: .8rem; color: var(--body-ink); }
 
     /* Results Cards */
     .results {
       display: grid;
-      gap: 16px;
+      gap: 14px;
       grid-template-columns: repeat(auto-fill, minmax(var(--results-col-min), 1fr));
     }
-
     .card {
-      background: #fff;
-      border: 1px solid var(--border);
+      background: var(--card);
+      border: 1px solid var(--line);
       border-radius: 4px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: border-color 0.15s;
+      transition: border-color .15s, box-shadow .15s;
     }
-    .card:hover { border-color: #d0c8bd; }
-
+    .card:hover { border-color: var(--gold); box-shadow: 0 3px 10px rgba(36,26,16,.12); }
     .card img {
       width: 100%;
       aspect-ratio: 3/4;
       object-fit: cover;
       display: block;
-      background: var(--card);
+      background: var(--tan);
     }
-
-    .card .meta { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .card-no-img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: var(--tan);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      text-align: center;
+      font-family: var(--display);
+      font-size: 1.05rem;
+      color: var(--titlered);
+      border-bottom: 1px solid var(--line);
+    }
+    .card .meta { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
     .card .line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
-    .qty input {
-      width: 56px;
-      text-align: center;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      color: var(--text);
-      padding: 6px;
-    }
-
-    .stat {
+    .stat, .badge, .pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      background: var(--chip);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.8rem;
+      gap: 5px;
+      padding: 2px 8px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      font-family: var(--label);
+      font-size: .74rem;
+      color: var(--body-ink);
+      white-space: nowrap;
     }
-
-    .inline-msg { font-size: 0.8rem; color: var(--muted); }
-    .err { color: var(--danger); font-weight: 500; }
-
     #status {
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 4px 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--accent);
+      background: var(--tan);
+      border: 1px solid var(--gold);
+      border-radius: 2px;
+      padding: 2px 10px;
+      font-family: var(--label-caps);
+      font-size: .72rem;
+      color: var(--titlered);
+    }
+    .kbd {
+      background: var(--card);
+      border: 1px solid var(--gold);
+      padding: 1px 5px;
+      border-radius: 2px;
+      font-family: monospace;
+      font-size: .74rem;
+      color: var(--titlered);
+    }
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 36px 18px;
+      background: var(--card);
+      border: 1px dashed var(--gold);
+      border-radius: 3px;
+      color: var(--muted);
+      font-family: var(--flavor);
+      font-style: italic;
+      font-size: 1rem;
     }
 
-    /* Combo / Commander */
-    .combo-wrap { position: relative; display: inline-block; }
-    .combo-chip.btn {
-      background: #fef3c7;
-      border-color: var(--border);
-      color: var(--accent);
-    }
-    .combo-chip.btn:hover { background: #fde68a; border-color: var(--accent); }
-
-    .combo-pop {
-      position: absolute;
-      bottom: calc(100% + 8px);
-      right: 0;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 12px;
-      min-width: 260px;
-      max-width: 520px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      z-index: 1000;
-      display: none;
-    }
-    .combo-wrap.open .combo-pop { display: block; }
-
-    /* Toggle Switch */
-    .switch { display: inline-flex; align-items: center; gap: 8px; user-select: none; cursor: pointer; }
-    .switch .toggle {
-      width: 44px; height: 24px; border-radius: 4px;
-      background: var(--input-bg); border: 1px solid var(--border);
-      position: relative; transition: all 0.15s;
-    }
-    .switch .toggle::after {
-      content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
-      border-radius: 2px; background: var(--muted); transition: all 0.15s;
-    }
-    .switch input { position: absolute; opacity: 0; pointer-events: none; }
-    .switch input:checked + .toggle { background: var(--accent); border-color: var(--accent-hover); }
-    .switch input:checked + .toggle::after { transform: translateX(20px); background: #fff; }
-    .switch .label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
-
-    /* Scrollbars */
-    .wall-feed, #deckBody {
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) var(--bg);
-    }
-    .wall-feed::-webkit-scrollbar, #deckBody::-webkit-scrollbar { width: 6px; }
-    .wall-feed::-webkit-scrollbar-track, #deckBody::-webkit-scrollbar-track { background: var(--bg); }
-    .wall-feed::-webkit-scrollbar-thumb, #deckBody::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 3px; }
-
-    /* Drawer */
-    :root { var-deck-w: 440px; }
+    /* Deck Drawer */
     #deckPanel {
-      position: fixed; top: 0; right: -440px; width: 440px; max-width: 90vw;
-      height: 100dvh; background: var(--panel); border-left: 1px solid var(--border);
-      z-index: 200; transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: -4px 0 12px rgba(0,0,0,0.08); display: flex; flex-direction: column;
+      position: fixed; top: 0; right: calc(-1 * var(--deck-w)); width: var(--deck-w); max-width: 92vw;
+      height: 100dvh; background: var(--paper); border-left: 2px solid var(--gold);
+      z-index: 200; transition: right .25s ease;
+      box-shadow: -6px 0 22px rgba(23,16,9,.28); display: flex; flex-direction: column;
     }
     #deckPanel.open { right: 0; }
-    #deckHead { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-    #deckBody { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
-
-    body.deck-open .wrap { margin-right: 440px; transition: margin-right 0.25s ease; }
-    @media (max-width: 1100px) { body.deck-open .wrap { margin-right: 0; } }
-
-    #deckScrim { position: fixed; inset: 0; z-index: 190; background: rgba(0,0,0,0.3); opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+    #deckHead {
+      padding: 14px 18px;
+      background: var(--header-bg);
+      color: #F3E5C0;
+      border-bottom: 3px solid var(--gold-bright);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #deckHead strong { font-family: var(--display); font-weight: 400; font-size: 1.05rem; letter-spacing: .08em; text-transform: uppercase; }
+    #deckStatus { background: rgba(201,173,106,.16); border-color: var(--gold); color: #F3E5C0; }
+    #deckBody { padding: 16px 18px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    #deckScrim { position: fixed; inset: 0; z-index: 190; background: rgba(23,16,9,.45); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
     body.deck-open #deckScrim { opacity: 1; pointer-events: auto; }
 
-    .pill { display: inline-flex; align-items: center; gap: 6px; background: var(--chip); border: 1px solid var(--border); padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; }
-    .sec { border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .sec { border-bottom: 1px solid var(--line); padding-bottom: 14px; }
     .sec:last-of-type { border-bottom: none; }
-    .sec h4 { margin-bottom: 8px; font-size: 0.75rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+    .sec h4 {
+      margin-bottom: 8px;
+      font-family: var(--display);
+      font-size: .88rem;
+      color: var(--titlered);
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .deck-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--line);
+      font-family: var(--label);
+      font-size: .82rem;
+    }
+    .deck-row:last-child { border-bottom: none; }
+    .deck-qtypill {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 24px; padding: 1px 6px; border-radius: 2px;
+      background: var(--tan); border: 1px solid var(--gold); color: var(--titlered); font-weight: 700;
+    }
+    .mini-btn {
+      background: var(--card); border: 1px solid var(--gold); padding: 4px 9px;
+      border-radius: 3px; font-family: var(--label-caps); font-size: .74rem;
+      color: var(--ink); cursor: pointer; transition: background .15s, border-color .15s;
+    }
+    .mini-btn:hover { background: var(--tan); border-color: var(--titlered); color: var(--titlered); }
+    .droptarget { border: 1px dashed var(--gold); border-radius: 3px; padding: 10px; min-height: 54px; background: var(--card); }
+    .droptarget.drag { border-color: var(--titlered); background: var(--tan); }
+    progress { width: 100%; height: 8px; accent-color: var(--titlered); border-radius: 2px; overflow: hidden; }
+    .exp-box {
+      margin-top: 8px; font-family: monospace; font-size: .76rem; white-space: pre-wrap;
+      background: var(--input-bg); border: 1px solid var(--line); padding: 8px;
+      border-radius: 3px; max-height: 120px; overflow-y: auto; display: none;
+    }
 
-    .deck-row { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; border-bottom: 1px dashed var(--border); }
-    .deck-title { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 0.9rem; }
-    .deck-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.8rem; }
-    .deck-qtypill { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 2px 6px; border-radius: 2px; background: var(--input-bg); border: 1px solid var(--border); color: var(--accent); font-weight: 700; }
-    .deck-avail { color: var(--muted); margin-right: 4px; }
-    .slot { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .slot strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+    footer.site { text-align: center; color: var(--muted); padding: 8px 16px 26px; font-family: var(--flavor); font-style: italic; font-size: .9rem; }
+    footer.site .orn { color: var(--ribbon); letter-spacing: .9em; font-size: .74rem; font-style: normal; margin-bottom: 4px; }
 
-    .kpi { display: flex; gap: 8px; flex-wrap: wrap; }
-    .badge { border: 1px solid var(--border); background: var(--chip); border-radius: 2px; padding: 2px 8px; font-size: 0.75rem; color: var(--text); }
-    .mini-btn { background: var(--input-bg); border: 1px solid var(--border); padding: 4px 10px; border-radius: 2px; font-size: 0.75rem; color: var(--text); cursor: pointer; font-weight: 600; transition: all 0.15s; }
-    .mini-btn:hover { border-color: var(--accent); background: var(--panel-hover); }
-
-    progress { width: 100%; height: 8px; accent-color: var(--accent); border-radius: 2px; overflow: hidden; }
-    progress::-webkit-progress-bar { background: var(--bg); }
-    progress::-webkit-progress-value { background: var(--accent); }
-
-    .droptarget { border: 1px dashed var(--border); border-radius: 4px; padding: 12px; min-height: 60px; background: var(--bg); }
-    .droptarget.drag { border-color: var(--accent); background: #fef3c7; }
-    .kbd { background: var(--chip); border: 1px solid var(--border); padding: 1px 5px; border-radius: 2px; font-family: monospace; font-size: 0.75rem; color: var(--accent); }
-
-    /* Mobile */
-    @media (max-width:900px) {
+    @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr; }
-      .details { position: sticky; top: 12px; z-index: 30; }
+      header.site { grid-template-columns: 1fr; justify-items: center; padding: 18px 16px; }
+      .m-left, .m-right { justify-self: center; }
+      .m-title { font-size: 2rem; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="title">🧰 MTG Collection Browser</div>
-      <div class="muted small">Local-first • Works offline • Zero backend</div>
-      <button class="btn deck-toggle" id="btnDeck">🧩 Deck Mode</button>
-    </header>
+  <header class="site">
+    <div class="m-left">
+      <a class="m-home" href="https://jimmyd.space/">&larr; jimmyd.space</a>
+    </div>
+    <div class="m-center">
+      <h1 class="m-title">MTG Collection Browser</h1>
+      <div class="m-orn" aria-hidden="true">◆ ◆ ◆</div>
+      <p class="m-sub">Local-first &bull; Works offline &bull; Zero backend</p>
+    </div>
+    <div class="m-right">
+      <button type="button" class="btn deck-toggle" id="btnDeck">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="17" rx="2"/><path d="M7 2h12a2 2 0 0 1 2 2v14"/></svg>
+        <span>Deck Mode</span>
+      </button>
+    </div>
+  </header>
 
-    <div class="bar">
-      <button class="btn" id="btnUpdateDB" title="Force reindex database index schema asset maps">Update Database</button>
-      <button class="btn" id="btnExport">⬇️ Export Collection (JSON)</button>
-      <label class="btn file">
-        A₁ Import Collection (JSON)
-        <input id="importCollection" type="file" accept=".json">
-      </label>
-      <label class="btn file">
-        📄 Add Cards (CSV)
-        <input id="importCSV" type="file" accept=".csv">
-      </label>
-      <label class="btn file">
-        📝 Add Cards (TXT)
-        <input id="importTXT" type="file" accept=".txt">
-      </label>
-      <div style="flex-basis:100%"></div>
-      <button class="btn danger" id="btnClearDB" title="Delete all cards from the local database caching arrays">🗑️ Clear Card DB</button>
-      <button class="btn danger" id="btnClearCollection" title="Clear only your local quantities metrics data">🧹 Clear Collection</button>
-      <div class="muted small" style="margin-top: 4px; width: 100%;">
+  <div class="wrap">
+    <div class="ribbon-bar">
+      <div class="bar">
+        <button type="button" class="btn" id="btnUpdateDB" title="Force reindex database index schema asset maps">Update Database</button>
+        <button type="button" class="btn" id="btnExport">Export Collection (JSON)</button>
+        <label class="btn file">
+          <span>Import Collection (JSON)</span>
+          <input id="importCollection" type="file" accept=".json">
+        </label>
+        <label class="btn file">
+          <span>Add Cards (CSV)</span>
+          <input id="importCSV" type="file" accept=".csv">
+        </label>
+        <label class="btn file">
+          <span>Add Cards (TXT)</span>
+          <input id="importTXT" type="file" accept=".txt">
+        </label>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <button type="button" class="btn danger" id="btnClearDB" title="Delete all cards from the local database caching arrays">Clear Card DB</button>
+        <button type="button" class="btn danger" id="btnClearCollection" title="Clear only your local quantities metrics data">Clear Collection</button>
+      </div>
+      <div class="muted small">
         Tip: Supports structured file dumps generated from the <span class="kbd">Dragon Shield MTG Scanner</span> CSV platform or raw output from <span class="kbd">TCGplayer Scanner</span> TXT clipboard tools.
       </div>
     </div>
@@ -378,28 +435,25 @@
     <div class="grid">
       <section class="panel details" id="searchPanelContainer">
         <div class="head">Search Controls</div>
-        <div class="body" style="display: flex; flex-direction: column; gap: 12px;">
-          <input id="qName" type="text" placeholder="Name contains… (supports ^prefix or suffix$)">
-          <input id="qText" type="text" placeholder="Oracle rules text text... (e.g. Deathtouch)">
-          
-          <div class="row" style="gap: 8px;">
-            <div class="grow" style="flex: 1;">
-              <select id="qType">
+        <div class="body" style="display:flex;flex-direction:column;gap:11px">
+          <input id="qName" type="text" placeholder="Name contains... (supports ^prefix or suffix$)">
+          <input id="qText" type="text" placeholder="Oracle rules text... (e.g. Deathtouch)">
+          <div class="row">
+            <div class="grow" style="flex:1">
+              <select id="qType" aria-label="Card Type">
                 <option value="">Any Type</option>
                 <option>Creature</option><option>Instant</option><option>Sorcery</option>
                 <option>Artifact</option><option>Enchantment</option><option>Planeswalker</option><option>Land</option>
               </select>
             </div>
-            <div class="grow" style="flex: 1;">
-              <select id="qRarity">
+            <div class="grow" style="flex:1">
+              <select id="qRarity" aria-label="Card Rarity">
                 <option value="">Any Rarity</option>
                 <option>common</option><option>uncommon</option><option>rare</option><option>mythic</option>
               </select>
             </div>
           </div>
-          
           <input id="qSubtype" type="text" placeholder="Subtype (e.g. Dragon)">
-          
           <div class="chips">
             <label class="chip"><input type="checkbox" class="ci" value="W"> W</label>
             <label class="chip"><input type="checkbox" class="ci" value="U"> U</label>
@@ -408,22 +462,19 @@
             <label class="chip"><input type="checkbox" class="ci" value="G"> G</label>
             <label class="chip"><input type="checkbox" class="ci" value="C"> C</label>
           </div>
-          
-          <select id="colorMode" title="Color parameters match metrics rules">
+          <select id="colorMode" title="Color parameters match metrics rules" aria-label="Color Identity Match Mode">
             <option value="include">Include selected identity colors</option>
             <option value="exact">Exact color boundaries matching</option>
           </select>
-          
-          <div class="row" style="justify-content: space-between; margin-top: 6px;">
+          <div class="row" style="justify-content:space-between;margin-top:4px">
             <label class="switch">
               <input type="checkbox" id="filterCommander">
               <span class="toggle" aria-hidden="true"></span>
               <span class="label">Legal Commander</span>
             </label>
-            <button class="btn" id="btnSearch" style="background: var(--accent); color: white; border-color: var(--accent-hover);">Run Search</button>
+            <button type="button" class="btn primary" id="btnSearch">Run Search</button>
           </div>
-          
-          <div class="muted small" id="dbStats" style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px;">DB Cache: 0 definitions | Inventory: 0 items</div>
+          <div class="muted small" id="dbStats" style="border-top:1px solid var(--line);padding-top:10px;margin-top:4px">DB Cache: 0 definitions | Inventory: 0 items</div>
         </div>
       </section>
 
@@ -433,21 +484,21 @@
           <div id="status">Workspace Idle</div>
         </div>
         <div class="body">
-          <div id="importBox" class="muted small" style="display: none; margin-bottom: 12px;">
+          <div id="importBox" class="muted small" style="display:none;margin-bottom:12px">
             <div>Parsing flat cards payload... <progress id="importProgress" max="100" value="0"></progress></div>
             <div id="importNote" class="muted small">Contacting catalog database index asset layer...</div>
           </div>
-          <div id="csvBox" class="muted small" style="display:none; margin-bottom:12px">
+          <div id="csvBox" class="muted small" style="display:none;margin-bottom:12px">
             <div>Mapping incoming token stream... <progress id="csvProgress" max="100" value="0"></progress></div>
             <div id="csvNote" class="muted small"></div>
           </div>
-          
-          <div id="resolveBox" class="panel" style="display:none; margin-bottom:12px">
+
+          <div id="resolveBox" class="panel" style="display:none;margin-bottom:12px">
             <div class="head">
-              <strong>Resolve Unmatched Import Rows</strong>
-              <div class="row" style="gap:8px;align-items:center">
-                <div class="muted small" id="resolveStats">0 unresolved</div>
-                <button class="btn" id="resolveClear" title="Clear table log views">Clear All</button>
+              <span>Resolve Unmatched Import Rows</span>
+              <div class="row">
+                <span class="muted small" id="resolveStats">0 unresolved</span>
+                <button type="button" class="btn small" id="resolveClear" title="Clear table log views">Clear All</button>
               </div>
             </div>
             <div class="body">
@@ -455,58 +506,65 @@
             </div>
           </div>
 
-          <div id="results" class="results"><div class="muted" style="grid-column: 1/-1; text-align:center; padding:40px;">Your collection index workspace is currently empty. Upload a CSV or TXT file snapshot from your mobile scanning scanner utilities to populate.</div></div>
+          <div id="results" class="results">
+            <div class="empty-state">Your collection index workspace is currently empty. Upload a CSV or TXT file snapshot from your mobile scanner utilities to populate.</div>
+          </div>
         </div>
       </section>
     </div>
   </div>
 
-  <aside id="deckPanel" aria-label="Active Deck workspace configurations wrapper">
+  <footer class="site">
+    <div class="orn" aria-hidden="true">◆ ◆ ◆</div>
+    <div>MTG Collection Browser &middot; IndexedDB Local Archive</div>
+  </footer>
+
+  <aside id="deckPanel" aria-label="Active Deck workspace">
     <div id="deckHead">
       <strong>Active Workspace Drawer</strong>
-      <span class="badge" id="deckStatus">Commander Layout • 0/100</span>
+      <span class="badge" id="deckStatus">Commander Layout &bull; 0/100</span>
       <div class="grow"></div>
-      <button class="btn ghost" id="btnCloseDeck" style="padding: 6px 10px;">✕</button>
+      <button type="button" class="mini-btn" id="btnCloseDeck" aria-label="Close Deck Drawer">&times;</button>
     </div>
     <div id="deckBody">
       <div class="sec">
         <h4>Format Configuration</h4>
-        <div class="row" style="gap: 8px; margin-bottom: 8px;">
-          <select id="deckFormat" style="flex: 1;">
+        <div class="row" style="margin-bottom:8px">
+          <select id="deckFormat" style="flex:1" aria-label="Deck Format">
             <option value="commander">Commander Variant (EDH)</option>
             <option value="sixty">Constructed 60-Card</option>
           </select>
         </div>
-        <div class="row" style="gap: 12px;">
+        <div class="row" style="gap:12px">
           <label class="switch">
-            <input type="checkbox" id="deckSingleton" checked="">
+            <input type="checkbox" id="deckSingleton" checked>
             <span class="toggle"></span><span class="label">Singleton Limit</span>
           </label>
           <label class="switch">
-            <input type="checkbox" id="deckColorLock" checked="">
+            <input type="checkbox" id="deckColorLock" checked>
             <span class="toggle"></span><span class="label">Identity Restrict</span>
           </label>
         </div>
-        <div class="row" style="margin-top: 8px;">
+        <div class="row" style="margin-top:8px">
           <label class="switch">
             <input type="checkbox" id="deckProxies">
             <span class="toggle"></span><span class="label">Permit Unowned Proxies</span>
           </label>
         </div>
-        <div class="row tiny" id="deckLegalMsg" style="margin-top:6px; color: var(--danger); display:none"></div>
+        <div class="tiny" id="deckLegalMsg" style="margin-top:6px;color:var(--err-ink);display:none"></div>
       </div>
 
       <div class="sec" id="commanderSec">
         <h4>Assigned Commander</h4>
-        <div class="row" style="justify-content: space-between;">
+        <div class="row" style="justify-content:space-between">
           <div class="pill" id="cmdrPrimary">No Active Selection</div>
-          <button class="mini-btn" id="btnClearCmdr">Reset</button>
+          <button type="button" class="mini-btn" id="btnClearCmdr">Reset</button>
         </div>
       </div>
 
       <div class="sec">
         <h4>Composition Breakdown</h4>
-        <div class="row kpi" style="gap: 6px; margin-bottom: 6px;">
+        <div class="row" style="margin-bottom:6px">
           <div class="pill">Cards: <span id="kDeckSize">0</span>/<span id="kDeckTarget">100</span></div>
           <div class="pill">Crt: <span id="kCreatures">0</span></div>
           <div class="pill">Non: <span id="kNoncreatures">0</span></div>
@@ -518,44 +576,44 @@
       <div class="sec">
         <h4>Construct Stream Grid Target</h4>
         <div id="deckDrop" class="droptarget">
-          <div id="deckList"></div>
+          <div id="deckList" class="tiny muted">Drag cards here or click + Deck on any card.</div>
         </div>
-        <div class="row" style="margin-top:10px; gap: 6px;">
-          <button class="mini-btn" id="btnSaveDeck">💾 Save Architecture</button>
-          <button class="mini-btn" id="btnNewDeck">✨ Initialize New</button>
-          <select id="savedDecks" style="width: auto; flex: 1; padding: 6px;"></select>
-          <button class="mini-btn" id="btnLoadDeck">Open</button>
-          <button class="mini-btn" id="btnDeleteDeck" style="color: var(--danger)">Delete</button>
+        <div class="row" style="margin-top:10px">
+          <button type="button" class="mini-btn" id="btnSaveDeck">Save Architecture</button>
+          <button type="button" class="mini-btn" id="btnNewDeck">Initialize New</button>
+          <select id="savedDecks" style="width:auto;flex:1;padding:5px 8px;font-size:.82rem" aria-label="Saved Decks"></select>
+          <button type="button" class="mini-btn" id="btnLoadDeck">Open</button>
+          <button type="button" class="mini-btn" id="btnDeleteDeck" style="color:var(--err-ink)">Delete</button>
         </div>
       </div>
 
       <div class="sec">
         <h4>Functional Statistics</h4>
-        <div class="row kpi">
+        <div class="row">
           <div class="pill">Mean Operational Cost (CMC): <span id="sAvgCmc">0.0</span></div>
           <div class="pill">Pips: <span id="sPips">0/0/0/0/0</span></div>
         </div>
-        <div class="tiny" style="margin-top:6px; color: var(--muted);">Curve Matrix Breakdown: <span id="sCurveTxt">—</span></div>
+        <div class="tiny" style="margin-top:6px;color:var(--muted)">Curve Matrix Breakdown: <span id="sCurveTxt">&mdash;</span></div>
       </div>
 
       <div class="sec">
         <h4>Land Ratio Engine</h4>
         <div class="row">
-          <input id="landCount" type="text" value="36" style="width:60px; padding: 6px; text-align: center;">
-          <button class="mini-btn" id="btnSuggestLands">Calculate Split Weights</button>
-          <div class="tiny" id="landSuggest" style="margin-left:4px;"></div>
+          <input id="landCount" type="text" value="36" style="width:58px;padding:5px;text-align:center" aria-label="Target Land Count">
+          <button type="button" class="mini-btn" id="btnSuggestLands">Calculate Split Weights</button>
+          <div class="tiny" id="landSuggest"></div>
         </div>
       </div>
 
       <div class="sec">
         <h4>Core Archetype Packages</h4>
-        <div class="row" id="pkgRow" style="gap: 6px;">
-          <button class="mini-btn" data-pkg="ramp">Mana Accelerators</button>
-          <button class="mini-btn" data-pkg="draw">Draw Engine</button>
-          <button class="mini-btn" data-pkg="removal">Target Removal</button>
-          <button class="mini-btn" data-pkg="wipes">Board Sweepers</button>
+        <div class="row" id="pkgRow">
+          <button type="button" class="mini-btn" data-pkg="ramp">Mana Accelerators</button>
+          <button type="button" class="mini-btn" data-pkg="draw">Draw Engine</button>
+          <button type="button" class="mini-btn" data-pkg="removal">Target Removal</button>
+          <button type="button" class="mini-btn" data-pkg="wipes">Board Sweepers</button>
         </div>
-        <div class="tiny" id="pkgNote" style="margin-top:6px; color: var(--success)"></div>
+        <div class="tiny" id="pkgNote" style="margin-top:6px;color:var(--ok-ink)"></div>
       </div>
 
       <div class="sec">
@@ -570,27 +628,32 @@
 
       <div class="sec">
         <h4>Data Exports</h4>
-        <div class="row" style="gap: 6px;">
-          <button class="mini-btn" id="expText">Standard Text</button>
-          <button class="mini-btn" id="expMtgo">MTGO Format</button>
-          <button class="mini-btn" id="expMox">Moxfield Token String</button>
+        <div class="row">
+          <button type="button" class="mini-btn" id="expText">Standard Text</button>
+          <button type="button" class="mini-btn" id="expMtgo">MTGO Format</button>
+          <button type="button" class="mini-btn" id="expMox">Moxfield Token String</button>
         </div>
-        <div class="tiny" id="expOut" style="margin-top:6px; font-family: monospace; white-space: pre-wrap; background: var(--input-bg); padding: 6px; border-radius: 4px; max-height: 100px; overflow-y: auto;"></div>
+        <div class="exp-box" id="expOut"></div>
       </div>
     </div>
   </aside>
   <div id="deckScrim"></div>
 
   <script>
-    /* =================== Dexie IndexedDB Management Configuration =================== */
-    const db = new Dexie('mtgDB');
-    db.version(2).stores({
-      cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
-      collection: 'id, qty',
-      decks: '++id, name, updated_at'
-    });
+    function $(sel){ return document.querySelector(sel); }
+    function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+    const fmt = (n)=> (typeof n==='number' ? n.toLocaleString() : n);
+    function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-    /* =================== Central Application Elements Object Map =================== */
+    const db = (typeof Dexie !== 'undefined') ? new Dexie('mtgDB') : null;
+    if (db) {
+      db.version(2).stores({
+        cards: 'id, name, name_lc, rarity, set, set_name, type_lc, subtype_lc, *color_identity, collector_number',
+        collection: 'id, qty',
+        decks: '++id, name, updated_at'
+      });
+    }
+
     const els = {
       btnUpdateDB: $('#btnUpdateDB'), btnExport: $('#btnExport'),
       importCollection: $('#importCollection'), importCSV: $('#importCSV'), importTXT: $('#importTXT'),
@@ -601,7 +664,6 @@
       results: $('#results'), status: $('#status'), dbStats: $('#dbStats'),
       qName: $('#qName'), qText: $('#qText'), qType: $('#qType'), qSubtype: $('#qSubtype'), qRarity: $('#qRarity'),
       btnSearch: $('#btnSearch'), filterCommander: $('#filterCommander'), colorMode: $('#colorMode'),
-      searchPanel: $('#searchPanelContainer'),
       btnDeck: $('#btnDeck'), deckPanel: $('#deckPanel'), btnCloseDeck: $('#btnCloseDeck'), deckScrim: $('#deckScrim'),
       deckFormat: $('#deckFormat'), deckSingleton: $('#deckSingleton'), deckColorLock: $('#deckColorLock'), deckProxies: $('#deckProxies'),
       deckStatus: $('#deckStatus'), kDeckSize: $('#kDeckSize'), kDeckTarget: $('#kDeckTarget'),
@@ -616,227 +678,553 @@
       expText: $('#expText'), expMtgo: $('#expMtgo'), expMox: $('#expMox'), expOut: $('#expOut')
     };
 
-    /* =================== Drawer Slide Panel State Handlers =================== */
-    function openDeck(){ document.getElementById('deckPanel').classList.add('open'); document.body.classList.add('deck-open'); }
-    function closeDeck(){ document.getElementById('deckPanel').classList.remove('open'); document.body.classList.remove('deck-open'); }
-    
+    function openDeck(){ els.deckPanel.classList.add('open'); document.body.classList.add('deck-open'); }
+    function closeDeck(){ els.deckPanel.classList.remove('open'); document.body.classList.remove('deck-open'); }
     els.btnDeck.addEventListener('click', openDeck);
     els.btnCloseDeck.addEventListener('click', closeDeck);
     els.deckScrim.addEventListener('click', closeDeck);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeck(); });
 
-    function $(sel){ return document.querySelector(sel); }
-    function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
-    const fmt = (n)=> (typeof n==='number'? n.toLocaleString() : n);
-    const sleep = (ms)=> new Promise(r=>setTimeout(r,ms));
-    let suppressAutoUntil=0;
-
-    /* =================== Core Engine Identity Logic Matching Helpers =================== */
     function isPotentialCommanderFront(card){
-      const front = (Array.isArray(card.faces)&&card.faces.length)? card.faces[0] : null;
+      const front = (Array.isArray(card.faces) && card.faces.length) ? card.faces[0] : null;
       const frontTL = (front?.type_line || card.type_line || '');
-      const frontOT = (front?.oracle_text || '').toLowerCase();
+      const frontOT = (front?.oracle_text || card.oracle_text || '').toLowerCase();
       return /\blegendary\b.*\bcreature\b/i.test(frontTL) || /\blegendary\b.*\bvehicle\b/i.test(frontTL) || /can be your commander/i.test(frontOT);
     }
 
     function getColorLabel(ci){
-      const s = [...new Set(ci||[])].sort().join('');
-      const mono = {W:'White',U:'Blue',B:'Black',R:'Red',G:'Green','':'Colorless'};
-      if (s.length<=1) return mono[s] || 'Colorless';
-      const guilds = {UW:'Azorius', WR:'Boros', UB:'Dimir', BG:'Golgari', GR:'Gruul', UR:'Izzet', WB:'Orzhov', BR:'Rakdos', GW:'Selesnya', UG:'Simic'};
+      const s = [...new Set(ci || [])].sort().join('');
+      const mono = { W:'White', U:'Blue', B:'Black', R:'Red', G:'Green', '':'Colorless' };
+      if (s.length <= 1) return mono[s] || 'Colorless';
+      const guilds = { UW:'Azorius', RW:'Boros', BU:'Dimir', BG:'Golgari', GR:'Gruul', RU:'Izzet', BW:'Orzhov', BR:'Rakdos', GW:'Selesnya', GU:'Simic' };
       if (guilds[s]) return guilds[s];
-      const tri = {BGU:'Sultai', GRW:'Naya', BRW:'Mardu', BGW:'Abzan', URW:'Jeskai', BGR:'Jund', BRU:'Grixis', GUW:'Bant', GRU:'Temur'};
-      if (s.length===3){ for (const k in tri){ if ([...k].sort().join('')===s) return tri[k]; } }
+      const tri = { BGU:'Sultai', GRW:'Naya', BRW:'Mardu', BGW:'Abzan', RUW:'Jeskai', BGR:'Jund', BRU:'Grixis', GUW:'Bant', GRU:'Temur', BUW:'Esper' };
+      if (tri[s]) return tri[s];
       return s.split('').join('/');
     }
 
-    function sameBaseCardName(a,b){ return (a||'').toLowerCase().trim() === (b||'').toLowerCase().trim(); }
-
     function normalizeCard(raw){
-      const faces = Array.isArray(raw.card_faces)? raw.card_faces.map(f=>({name: f.name||'', mana_cost:f.mana_cost||'', type_line:f.type_line||'', oracle_text:f.oracle_text||'', colors:f.colors||[], image:f.image_uris?.normal||null })) : null;
-      const img = raw.image_uris?.normal || faces?.[0]?.image || null;
-      const oracle_text = raw.oracle_text || (faces?.map(f=>f.oracle_text).filter(Boolean).join('\n')) || '';
-      const type_line = raw.type_line || (faces?.map(f=>f.type_line).join(' // ')) || '';
-      const subtype = (type_line.split('—')[1]||'').trim();
+      const faces = Array.isArray(raw.card_faces) ? raw.card_faces.map(f => ({
+        name: f.name || '', mana_cost: f.mana_cost || '', type_line: f.type_line || '',
+        oracle_text: f.oracle_text || '', colors: f.colors || [], image: f.image_uris?.normal || null
+      })) : null;
+      const img = raw.image_uris?.normal || raw.image || faces?.[0]?.image || null;
+      const oracle_text = raw.oracle_text || (faces?.map(f => f.oracle_text).filter(Boolean).join('\n')) || '';
+      const type_line = raw.type_line || (faces?.map(f => f.type_line).join(' // ')) || '';
+      const subtype = (type_line.split('\u2014')[1] || type_line.split(' - ')[1] || '').trim();
+      const name = raw.name || 'Unknown Card';
+      const id = raw.id || `local-${name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${(raw.set||'custom').toLowerCase()}`;
       return {
-        id: raw.id, oracle_id: raw.oracle_id||'', name: raw.name, name_lc: raw.name.toLowerCase(),
-        set: raw.set, set_name: raw.set_name||'', rarity: raw.rarity||'', image: img, oracle_text,
-        cmc: raw.cmc??null, type_line, type_lc: type_line.toLowerCase(), subtype_lc: subtype.toLowerCase(),
-        color_identity: raw.color_identity||[], mana_cost: raw.mana_cost || '', purchase_uris: raw.purchase_uris||{},
-        scryfall_uri: raw.scryfall_uri||'', prices: raw.prices||{}, faces, combo_refs: raw.combo_refs || []
+        id, oracle_id: raw.oracle_id || '', name, name_lc: name.toLowerCase(),
+        set: raw.set || 'custom', set_name: raw.set_name || '', rarity: (raw.rarity || 'common').toLowerCase(),
+        image: img, oracle_text, cmc: raw.cmc ?? 0, type_line, type_lc: type_line.toLowerCase(),
+        subtype_lc: subtype.toLowerCase(), color_identity: raw.color_identity || [],
+        mana_cost: raw.mana_cost || '', purchase_uris: raw.purchase_uris || {},
+        scryfall_uri: raw.scryfall_uri || `https://scryfall.com/search?q=!${encodeURIComponent('"' + name + '"')}`,
+        prices: raw.prices || {}, faces, combo_refs: raw.combo_refs || []
       };
     }
 
-    /* =================== Remote flat file index asset loader pipeline =================== */
     const NDJSON_URL = "/db/cards.ndjson.gz";
-
-    async function importNDJSONFromURL(url=NDJSON_URL){
+    async function importNDJSONFromURL(url = NDJSON_URL){
+      if (!db) { els.status.textContent = 'IndexedDB Unavailable'; return; }
       els.importBox.style.display = 'block';
       els.importNote.textContent = 'Contacting catalog database index asset layer...';
-      
       try {
         const resp = await fetch(url);
-        if(!resp.ok) {
-          // Graceful catch for localized development setups without static flat dumps built
+        if (!resp.ok) {
           els.status.textContent = 'Local Engine Running';
-          els.importNote.textContent = 'Notice: Caching server offline. Import local CSV assets directly to construct layout tables.';
-          setTimeout(() => els.importBox.style.display = 'none', 5000);
+          els.importNote.textContent = 'Notice: Caching server offline. Import local CSV, TXT, or JSON files directly.';
+          setTimeout(() => { els.importBox.style.display = 'none'; }, 4000);
           return;
         }
-        els.status.textContent = 'Parsing live structures...';
-        // (Raw stream unzipping implementation placeholder mapped safely)
+        els.status.textContent = 'Catalog Connected';
         els.importBox.style.display = 'none';
-      } catch(e) {
+      } catch (_) {
         els.status.textContent = 'Local Caching Configured';
-        els.importNote.textContent = 'Ready for data imports via text and CSV.';
-        setTimeout(() => els.importBox.style.display = 'none', 4000);
+        els.importNote.textContent = 'Ready for data imports via CSV, TXT, or JSON.';
+        setTimeout(() => { els.importBox.style.display = 'none'; }, 3500);
       }
     }
 
-    function getUsdPrice(card, holo=false){
+    function getUsdPrice(card, holo = false){
       const p = card?.prices || {};
-      return holo ? (p.usd_foil || p.usd_etched || '—') : (p.usd || '—');
+      return holo ? (p.usd_foil || p.usd_etched || '-') : (p.usd || '-');
     }
 
-    /* =================== Interface Renderer System Layer Engine =================== */
-    const faceIndex = {};
     window.__cardsById = {};
+    let latestOwnedMap = {};
 
-    function renderCardCard(card, qty=0, showComboBtn=false, inDeckQty=0){
+    function renderCardCard(card, qty = 0, inDeckQty = 0){
       const colorLabel = getColorLabel(card.color_identity || []);
       const f = card.faces?.[0];
-      const avail = Math.max(0, (qty||0) - (inDeckQty||0));
+      const avail = Math.max(0, (qty || 0) - (inDeckQty || 0));
+      const imgSrc = f?.image || card.image || '';
+      const safeId = card.id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const mediaHtml = imgSrc
+        ? `<img id="img-${esc(card.id)}" loading="lazy" alt="${esc(card.name)}" src="${esc(imgSrc)}" onerror="this.style.display='none'">`
+        : `<div class="card-no-img">${esc(f?.name || card.name)}</div>`;
       return `
-        <div class="card" draggable="true" ondragstart="dragCard(event,'${card.id}')">
-          <img id="img-${card.id}" loading="lazy" alt="${card.name}" src="${(f?.image||card.image)||''}" onerror="this.src='';this.style.background='#131722'">
+        <div class="card" draggable="true" ondragstart="dragCard(event,'${safeId}')">
+          ${mediaHtml}
           <div class="meta">
             <div class="line">
-              <strong id="title-${card.id}">${f?.name || card.name}</strong>
-              <span class="stat" style="font-size: 0.75rem; font-weight:700;">${colorLabel}</span>
+              <strong id="title-${esc(card.id)}">${esc(f?.name || card.name)}</strong>
+              <span class="stat">${esc(colorLabel)}</span>
             </div>
             <div class="line">
-              <span class="muted small">${card.set.toUpperCase()} • ${card.rarity}</span>
-              <span class="badge">Available Inventory: ${avail}</span>
+              <span class="muted small">${esc((card.set || '').toUpperCase())} &bull; ${esc(card.rarity || '')}</span>
+              <span class="badge">Available: ${avail} / ${qty}</span>
             </div>
-            <div class="line" style="gap:6px; margin-top: 4px;">
-              <button class="btn small" onclick="addToDeck('${card.id}',1)" style="flex:1; padding: 6px; justify-content:center;">+ Deck</button>
-              <button class="btn small ghost" onclick="setCommander('${card.id}')" style="padding: 6px;">Set Cmdr</button>
+            <div class="line" style="gap:6px;margin-top:2px">
+              <button type="button" class="btn small primary" onclick="addToDeck('${safeId}',1)" style="flex:1">+ Deck</button>
+              <button type="button" class="btn small ghost" onclick="setCommander('${safeId}')">Set Cmdr</button>
             </div>
-            <div class="line" style="margin-top: 4px; justify-content: flex-start; gap: 8px;">
-              <a class="small" href="${card.scryfall_uri || '#'}" target="_blank">Scryfall ↗</a>
-              <a class="small" href="https://edhrec.com/cards/${card.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}" target="_blank">EDHREC ↗</a>
-              <span class="muted small" id="price-${card.id}" style="margin-left: auto; font-weight: 600;">$${getUsdPrice(card)}</span>
+            <div class="line" style="margin-top:2px;justify-content:flex-start;gap:10px">
+              <a class="small" href="${esc(card.scryfall_uri || '#')}" target="_blank" rel="noopener">Scryfall</a>
+              <a class="small" href="https://edhrec.com/cards/${encodeURIComponent(card.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'))}" target="_blank" rel="noopener">EDHREC</a>
+              <span class="muted small" style="margin-left:auto;font-weight:600">$${esc(getUsdPrice(card))}</span>
             </div>
           </div>
         </div>`;
     }
 
-    function dragCard(ev,id){ ev.dataTransfer.setData('text/plain', id); }
+    window.dragCard = function(ev, id){ ev.dataTransfer.setData('text/plain', id); };
 
-    /* =================== Search Index Parsing Execution Controllers =================== */
-    let latestOwnedMap = {};
+    function matchesNameQuery(nameLc, q){
+      if (!q) return true;
+      if (q.startsWith('^') && q.endsWith('$')) return nameLc === q.slice(1, -1);
+      if (q.startsWith('^')) return nameLc.startsWith(q.slice(1));
+      if (q.endsWith('$')) return nameLc.endsWith(q.slice(0, -1));
+      return nameLc.includes(q);
+    }
+
     async function search(){
-      const filters = { name: els.qName.value.trim().toLowerCase() };
-      els.status.textContent = 'Querying local arrays...';
-      
+      if (!db) return;
+      const qName = els.qName.value.trim().toLowerCase();
+      const qText = els.qText.value.trim().toLowerCase();
+      const qType = els.qType.value.trim().toLowerCase();
+      const qRarity = els.qRarity.value.trim().toLowerCase();
+      const qSubtype = els.qSubtype.value.trim().toLowerCase();
+      const selectedColors = $all('.ci:checked').map(c => c.value);
+      const colorMode = els.colorMode.value;
+      const onlyCommander = els.filterCommander.checked;
+
+      els.status.textContent = 'Querying local archive...';
       const owned = await db.collection.where('qty').above(0).toArray();
-      latestOwnedMap = Object.fromEntries(owned.map(e=>[e.id, e.qty]));
-      
-      if(!owned.length){
-        els.results.innerHTML = '<div class="muted" style="grid-column: 1/-1; text-align:center; padding:40px;">Your collection index workspace is currently empty. Upload a CSV or TXT file snapshot from your mobile scanning scanner utilities to populate.</div>';
+      latestOwnedMap = Object.fromEntries(owned.map(e => [e.id, e.qty]));
+
+      if (!owned.length) {
+        els.results.innerHTML = '<div class="empty-state">Your collection index workspace is currently empty. Upload a CSV, TXT, or JSON snapshot to populate.</div>';
         els.status.textContent = 'Workspace Idle';
         return;
       }
 
-      const cards = await db.cards.bulkGet(owned.map(e=>e.id));
-      const out = cards.filter(c => c && (!filters.name || c.name_lc.includes(filters.name)));
-      
-      els.results.innerHTML = out.slice(0, 40).map(c => {
+      const cards = await db.cards.bulkGet(owned.map(e => e.id));
+      const out = cards.filter(c => {
+        if (!c) return false;
+        if (!matchesNameQuery(c.name_lc || '', qName)) return false;
+        if (qText && !(c.oracle_text || '').toLowerCase().includes(qText)) return false;
+        if (qType && !(c.type_lc || '').includes(qType)) return false;
+        if (qRarity && (c.rarity || '').toLowerCase() !== qRarity) return false;
+        if (qSubtype && !(c.subtype_lc || '').includes(qSubtype)) return false;
+        if (onlyCommander && !isPotentialCommanderFront(c)) return false;
+        if (selectedColors.length) {
+          const ci = c.color_identity || [];
+          const wantColorless = selectedColors.includes('C');
+          const colorsOnly = selectedColors.filter(x => x !== 'C');
+          if (colorMode === 'exact') {
+            if (wantColorless && !colorsOnly.length) { if (ci.length !== 0) return false; }
+            else {
+              const a = [...new Set(ci)].sort().join('');
+              const b = [...new Set(colorsOnly)].sort().join('');
+              if (a !== b) return false;
+            }
+          } else {
+            if (wantColorless && ci.length === 0) return true;
+            if (colorsOnly.length && !colorsOnly.every(col => ci.includes(col))) return false;
+          }
+        }
+        return true;
+      });
+
+      if (!out.length) {
+        els.results.innerHTML = '<div class="empty-state">No cards in your collection match those filters.</div>';
+        els.status.textContent = '0 matches';
+        return;
+      }
+
+      els.results.innerHTML = out.slice(0, 60).map(c => {
         window.__cardsById[c.id] = c;
-        return renderCardCard(c, latestOwnedMap[c.id]||0, false, deck.entries.get(c.id)||0);
+        return renderCardCard(c, latestOwnedMap[c.id] || 0, deck.entries.get(c.id) || 0);
       }).join('');
-      els.status.textContent = `Displaying ${Math.min(out.length, 40)} of ${out.length} entries`;
+      els.status.textContent = `Displaying ${Math.min(out.length, 60)} of ${out.length} entries`;
     }
 
-    /* =================== Platform Parsing Engine Data Stream Readers =================== */
-    function stripSepAndBOM(text){ return text.charCodeAt(0)===0xFEFF ? text.slice(1) : text; }
-    
+    function stripSepAndBOM(text){ return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text; }
     function parseCSV(text){
       text = stripSepAndBOM(text);
       const rows = []; let row = [], field = '', inQ = false;
-      for(let i=0; i<text.length; i++){
+      for (let i = 0; i < text.length; i++) {
         const c = text[i];
-        if(inQ) { if(c==='"') { if(text[i+1]==='"') { field+='"'; i++; } else inQ=false; } else field+=c; }
-        else { if(c==='"') inQ=true; else if(c===',') { row.push(field); field=''; } else if(c==='\n') { row.push(field); rows.push(row); row=[]; field=''; } else if(c!=='\r') { field+=c; } }
+        if (inQ) {
+          if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+          else field += c;
+        } else {
+          if (c === '"') inQ = true;
+          else if (c === ',') { row.push(field); field = ''; }
+          else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+          else if (c !== '\r') field += c;
+        }
       }
-      row.push(field); if(row.length) rows.push(row); return rows;
+      if (field || row.length) { row.push(field); rows.push(row); }
+      return rows;
     }
 
-    /* CSV Import Event Bindings hooks */
-    els.importCSV.addEventListener('change', async (e)=>{
-      const file = e.target.files?.[0]; if(!file) return;
+    async function upsertImportedCard(name, qty, extra = {}) {
+      if (!db || !name) return;
+      const existing = await db.cards.where('name_lc').equals(name.toLowerCase()).first();
+      const card = existing || normalizeCard({ name, ...extra });
+      if (!existing) await db.cards.put(card);
+      const prev = await db.collection.get(card.id);
+      await db.collection.put({ id: card.id, qty: (prev?.qty || 0) + Math.max(1, qty || 1) });
+    }
+
+    els.importCSV.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]; if (!file || !db) return;
       els.csvBox.style.display = 'block';
-      els.csvNote.textContent = 'Parsing Dragon Shield schema metrics stream layers...';
-      
+      els.csvProgress.value = 10;
+      els.csvNote.textContent = 'Parsing CSV rows...';
       try {
-        const raw = await file.text();
-        const rows = parseCSV(raw);
-        if(rows.length > 1) {
-          // Baseline parsing loop matching existing storage variables
-          els.csvNote.textContent = 'Populating dataset structures safely...';
+        const rows = parseCSV(await file.text()).filter(r => r.some(cell => cell.trim()));
+        if (rows.length > 1) {
+          const header = rows[0].map(h => h.trim().toLowerCase());
+          const idxName = header.findIndex(h => h.includes('card name') || h === 'name');
+          const idxQty = header.findIndex(h => h === 'quantity' || h === 'qty' || h === 'count');
+          const idxSet = header.findIndex(h => h.includes('set code') || h === 'set' || h === 'edition');
+          const idxRarity = header.findIndex(h => h === 'rarity');
+          let added = 0;
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            const name = (idxName >= 0 ? r[idxName] : r[0] || '').trim();
+            if (!name) continue;
+            const qty = Math.max(1, parseInt(idxQty >= 0 ? r[idxQty] : '1', 10) || 1);
+            await upsertImportedCard(name, qty, {
+              set: idxSet >= 0 ? (r[idxSet] || '').trim() : 'csv',
+              rarity: idxRarity >= 0 ? (r[idxRarity] || '').trim() : 'common'
+            });
+            added += qty;
+            els.csvProgress.value = Math.round((i / rows.length) * 100);
+          }
+          els.csvNote.textContent = `Imported ${added} cards from CSV.`;
         }
-        await refreshStats(); search();
-      } catch(err) { alert('Stream payload indexing aborted.'); }
-      els.csvBox.style.display = 'none'; e.target.value='';
+        await refreshStats();
+        await search();
+      } catch (err) {
+        console.error(err);
+        els.csvNote.textContent = 'CSV import failed.';
+      }
+      setTimeout(() => { els.csvBox.style.display = 'none'; }, 2500);
+      e.target.value = '';
     });
 
-    /* =================== Deck Workspace Architecture Management State =================== */
+    els.importTXT.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]; if (!file || !db) return;
+      els.csvBox.style.display = 'block';
+      els.csvProgress.value = 15;
+      els.csvNote.textContent = 'Parsing TXT list...';
+      try {
+        const lines = stripSepAndBOM(await file.text()).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        let added = 0;
+        for (let i = 0; i < lines.length; i++) {
+          const m = lines[i].match(/^(\d+)\s*x?\s+(.+?)(?:\s+\(([A-Za-z0-9]+)\))?$/i);
+          const qty = m ? parseInt(m[1], 10) : 1;
+          const name = (m ? m[2] : lines[i]).trim();
+          const set = m && m[3] ? m[3].toLowerCase() : 'txt';
+          if (name) { await upsertImportedCard(name, qty, { set }); added += qty; }
+          els.csvProgress.value = Math.round(((i + 1) / lines.length) * 100);
+        }
+        els.csvNote.textContent = `Imported ${added} cards from TXT.`;
+        await refreshStats();
+        await search();
+      } catch (err) {
+        console.error(err);
+        els.csvNote.textContent = 'TXT import failed.';
+      }
+      setTimeout(() => { els.csvBox.style.display = 'none'; }, 2500);
+      e.target.value = '';
+    });
+
+    els.importCollection.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]; if (!file || !db) return;
+      try {
+        const payload = JSON.parse(await file.text());
+        if (Array.isArray(payload.cards) && payload.cards.length) {
+          await db.cards.bulkPut(payload.cards.map(normalizeCard));
+        }
+        if (Array.isArray(payload.collection) && payload.collection.length) {
+          await db.collection.bulkPut(payload.collection);
+        }
+        await refreshStats();
+        await search();
+      } catch (err) {
+        console.error(err);
+        alert('Invalid collection JSON file.');
+      }
+      e.target.value = '';
+    });
+
+    els.btnExport.addEventListener('click', async () => {
+      if (!db) return;
+      const [cards, collection] = await Promise.all([db.cards.toArray(), db.collection.toArray()]);
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), cards, collection }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mtg-collection.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+
+    els.btnUpdateDB.addEventListener('click', () => importNDJSONFromURL());
+    els.btnClearDB.addEventListener('click', async () => {
+      if (!db || !confirm('Delete all cached card definitions from the local database?')) return;
+      await db.cards.clear();
+      await refreshStats();
+      await search();
+    });
+    els.btnClearCollection.addEventListener('click', async () => {
+      if (!db || !confirm('Clear all card quantities in your local collection?')) return;
+      await db.collection.clear();
+      await refreshStats();
+      await search();
+    });
+    els.resolveClear.addEventListener('click', () => {
+      els.resolveList.innerHTML = '';
+      els.resolveStats.textContent = '0 unresolved';
+      els.resolveBox.style.display = 'none';
+    });
+
+    // Deck State & UI
     const deck = {
       name: 'Untitled Deck Configuration', id: null, format: 'commander', singleton: true, colorLock: true, proxies: false, commander: null,
       entries: new Map(),
-      get target(){ return this.format==='sixty'? 60 : 100; },
-      get size(){ let n=0; for(const q of this.entries.values()) n+=q; return n + (this.commander?1:0); },
-      get colors(){ return this.commander? (this.commander.color_identity || []) : []; },
-      clear(){ this.entries.clear(); this.commander = null; }
+      get target(){ return this.format === 'sixty' ? 60 : 100; },
+      get size(){ let n = 0; for (const q of this.entries.values()) n += q; return n + (this.commander ? 1 : 0); },
+      get colors(){ return this.commander ? (this.commander.color_identity || []) : []; },
+      clear(){ this.entries.clear(); this.commander = null; this.id = null; this.name = 'Untitled Deck Configuration'; }
     };
+
+    function countDeckStats() {
+      let crt = 0, non = 0, lnd = 0, cmcSum = 0, cmcCount = 0;
+      const pips = { W:0, U:0, B:0, R:0, G:0 };
+      const curve = {};
+      const allIds = [...deck.entries.entries()];
+      for (const [id, qty] of allIds) {
+        const c = window.__cardsById[id];
+        const tl = (c?.type_lc || '');
+        if (tl.includes('land')) lnd += qty;
+        else if (tl.includes('creature')) crt += qty;
+        else non += qty;
+        if (!tl.includes('land') && c) {
+          const cmc = Number(c.cmc) || 0;
+          cmcSum += cmc * qty;
+          cmcCount += qty;
+          const bucket = cmc >= 6 ? '6+' : String(Math.floor(cmc));
+          curve[bucket] = (curve[bucket] || 0) + qty;
+          const mc = String(c.mana_cost || '').toUpperCase();
+          for (const col of ['W','U','B','R','G']) {
+            const matches = mc.match(new RegExp(col, 'g'));
+            if (matches) pips[col] += matches.length * qty;
+          }
+        }
+      }
+      return { crt, non, lnd, avgCmc: cmcCount ? (cmcSum / cmcCount).toFixed(2) : '0.0', pips, curve };
+    }
 
     function updateDeckUI(){
       els.kDeckTarget.textContent = deck.target;
       els.kDeckSize.textContent = deck.size;
       els.deckProg.max = deck.target;
-      els.deckProg.value = deck.size;
+      els.deckProg.value = Math.min(deck.size, deck.target);
       els.cmdrPrimary.textContent = deck.commander ? deck.commander.name : 'No Active Selection';
-      els.deckStatus.textContent = `${deck.format==='sixty'?'Constructed 60-Card':'Commander Layout'} • ${deck.size}/${deck.target}`;
+      els.commanderSec.style.display = deck.format === 'commander' ? '' : 'none';
+      els.deckStatus.textContent = `${deck.format === 'sixty' ? 'Constructed 60-Card' : 'Commander Layout'} • ${deck.size}/${deck.target}`;
+
+      const stats = countDeckStats();
+      els.kCreatures.textContent = stats.crt;
+      els.kNoncreatures.textContent = stats.non;
+      els.kLands.textContent = stats.lnd;
+      els.sAvgCmc.textContent = stats.avgCmc;
+      els.sPips.textContent = `${stats.pips.W}/${stats.pips.U}/${stats.pips.B}/${stats.pips.R}/${stats.pips.G}`;
+      const curveKeys = Object.keys(stats.curve).sort();
+      els.sCurveTxt.textContent = curveKeys.length ? curveKeys.map(k => `${k}:${stats.curve[k]}`).join(' | ') : '—';
+
+      if (deck.entries.size === 0) {
+        els.deckList.innerHTML = '<div class="tiny muted">Drag cards here or click + Deck on any card.</div>';
+      } else {
+        els.deckList.innerHTML = [...deck.entries.entries()].map(([id, qty]) => {
+          const c = window.__cardsById[id];
+          const safeId = id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return `<div class="deck-row">
+            <span class="deck-qtypill">${qty}</span>
+            <span class="grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c ? c.name : id)}</span>
+            <button type="button" class="mini-btn" onclick="addToDeck('${safeId}',-1)">-</button>
+            <button type="button" class="mini-btn" onclick="addToDeck('${safeId}',1)">+</button>
+          </div>`;
+        }).join('');
+      }
     }
 
     window.addToDeck = function(id, delta){
       const cur = deck.entries.get(id) || 0;
       const next = cur + delta;
-      if(next <= 0) deck.entries.delete(id); else deck.entries.set(id, next);
-      updateDeckUI(); search();
+      if (delta > 0 && deck.singleton && next > 1) {
+        const c = window.__cardsById[id];
+        if (!c || !(c.type_lc || '').includes('basic land')) {
+          els.deckLegalMsg.textContent = 'Singleton limit is enabled (max 1 copy of non-basic cards).';
+          els.deckLegalMsg.style.display = 'block';
+          return;
+        }
+      }
+      els.deckLegalMsg.style.display = 'none';
+      if (next <= 0) deck.entries.delete(id); else deck.entries.set(id, next);
+      updateDeckUI();
+      search();
     };
 
     window.setCommander = function(id){
       const card = window.__cardsById[id];
-      if(card) { deck.commander = card; updateDeckUI(); }
+      if (card) { deck.commander = card; updateDeckUI(); openDeck(); }
     };
 
     els.btnClearCmdr.addEventListener('click', () => { deck.commander = null; updateDeckUI(); });
+    els.deckFormat.addEventListener('change', () => { deck.format = els.deckFormat.value; updateDeckUI(); });
+    els.deckSingleton.addEventListener('change', () => { deck.singleton = els.deckSingleton.checked; });
+    els.deckColorLock.addEventListener('change', () => { deck.colorLock = els.deckColorLock.checked; });
+    els.deckProxies.addEventListener('change', () => { deck.proxies = els.deckProxies.checked; });
+
+    els.deckDrop.addEventListener('dragover', (e) => { e.preventDefault(); els.deckDrop.classList.add('drag'); });
+    els.deckDrop.addEventListener('dragleave', () => els.deckDrop.classList.remove('drag'));
+    els.deckDrop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      els.deckDrop.classList.remove('drag');
+      const id = e.dataTransfer.getData('text/plain');
+      if (id) addToDeck(id, 1);
+    });
+
+    async function refreshSavedDecks() {
+      if (!db) return;
+      const list = await db.decks.orderBy('updated_at').reverse().toArray();
+      els.savedDecks.innerHTML = list.length
+        ? list.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('')
+        : '<option value="">No saved decks</option>';
+    }
+
+    els.btnSaveDeck.addEventListener('click', async () => {
+      if (!db) return;
+      const name = prompt('Deck name:', deck.name || 'My Deck');
+      if (!name || !name.trim()) return;
+      deck.name = name.trim();
+      const record = {
+        name: deck.name,
+        format: deck.format,
+        commander: deck.commander,
+        entries: [...deck.entries.entries()],
+        updated_at: Date.now()
+      };
+      if (deck.id) { record.id = deck.id; await db.decks.put(record); }
+      else { deck.id = await db.decks.add(record); }
+      await refreshSavedDecks();
+    });
+
+    els.btnNewDeck.addEventListener('click', () => { deck.clear(); updateDeckUI(); });
+
+    els.btnLoadDeck.addEventListener('click', async () => {
+      if (!db) return;
+      const id = parseInt(els.savedDecks.value, 10);
+      if (!id) return;
+      const rec = await db.decks.get(id);
+      if (!rec) return;
+      deck.id = rec.id;
+      deck.name = rec.name;
+      deck.format = rec.format || 'commander';
+      els.deckFormat.value = deck.format;
+      deck.commander = rec.commander || null;
+      deck.entries = new Map(rec.entries || []);
+      updateDeckUI();
+    });
+
+    els.btnDeleteDeck.addEventListener('click', async () => {
+      if (!db) return;
+      const id = parseInt(els.savedDecks.value, 10);
+      if (!id || !confirm('Delete selected saved deck?')) return;
+      await db.decks.delete(id);
+      if (deck.id === id) deck.id = null;
+      await refreshSavedDecks();
+    });
+
+    els.btnSuggestLands.addEventListener('click', () => {
+      const targetLands = Math.max(1, parseInt(els.landCount.value, 10) || 36);
+      const { pips } = countDeckStats();
+      const totalPips = Object.values(pips).reduce((a, b) => a + b, 0);
+      if (!totalPips) { els.landSuggest.textContent = `Add colored spells to compute split for ${targetLands} lands.`; return; }
+      const landNames = { W:'Plains', U:'Island', B:'Swamp', R:'Mountain', G:'Forest' };
+      const split = Object.entries(pips)
+        .filter(([, n]) => n > 0)
+        .map(([col, n]) => `${Math.max(1, Math.round((n / totalPips) * targetLands))} ${landNames[col]}`);
+      els.landSuggest.textContent = split.join(', ');
+    });
+
+    els.pkgRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-pkg]');
+      if (!btn) return;
+      const pkg = btn.dataset.pkg;
+      const hints = {
+        ramp: 'Target 8-12 ramp sources (Sol Ring, Arcane Signet, signets, land ramp).',
+        draw: 'Target 8-10 repeatable card draw engines.',
+        removal: 'Target 8-10 instant-speed targeted removal spells.',
+        wipes: 'Target 2-4 board sweepers.'
+      };
+      els.pkgNote.textContent = hints[pkg] || '';
+    });
+
+    function formatDeckExport(mode) {
+      const lines = [];
+      if (deck.commander) {
+        lines.push(mode === 'mox' ? `1 ${deck.commander.name} *CMDR*` : `1 ${deck.commander.name}`);
+      }
+      for (const [id, qty] of deck.entries.entries()) {
+        const c = window.__cardsById[id];
+        const name = c ? c.name : id;
+        lines.push(mode === 'mtgo' ? `${qty} ${name}` : `${qty} ${name}`);
+      }
+      const txt = lines.join('\n') || 'Deck is currently empty.';
+      els.expOut.textContent = txt;
+      els.expOut.style.display = 'block';
+    }
+    els.expText.addEventListener('click', () => formatDeckExport('text'));
+    els.expMtgo.addEventListener('click', () => formatDeckExport('mtgo'));
+    els.expMox.addEventListener('click', () => formatDeckExport('mox'));
+
+    els.btnSearch.addEventListener('click', search);
+    [els.qName, els.qText, els.qSubtype].forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') search(); }));
+    [els.qType, els.qRarity, els.colorMode, els.filterCommander].forEach(inp => inp.addEventListener('change', search));
+    $all('.ci').forEach(cb => cb.addEventListener('change', search));
 
     async function refreshStats(){
+      if (!db) return;
       const cc = await db.cards.count();
       const colc = await db.collection.count();
       els.dbStats.textContent = `DB Cache: ${fmt(cc)} definitions | Inventory: ${fmt(colc)} items`;
     }
 
-    /* Core lifecycle triggers initialization blocks */
     window.addEventListener('DOMContentLoaded', async () => {
       await importNDJSONFromURL();
       await refreshStats();
+      await refreshSavedDecks();
       updateDeckUI();
-      search();
+      await search();
     });
   </script>
-
-
-</body></html>
+</body>
+</html>
