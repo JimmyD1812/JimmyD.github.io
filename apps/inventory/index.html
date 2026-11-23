@@ -1,759 +1,1646 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TCGplayer vs Mana Pool Inventory Sync Engine</title>
-  
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0f9ff',
-              500: '#0284c7',
-              600: '#0284c7',
-              700: '#0369a1',
-              900: '#0c4a6e',
-            }
-          }
-        }
-      }
-    }
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCGplayer vs Mana Pool Inventory Sync &amp; Management Engine</title>
+<link rel="stylesheet" href="/codex/fonts/fonts.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root {
+    --parchment:#EEE5CE; --paper:#F7F2E5; --card:#FDF1DC; --ink:#241a10; --body-ink:#33261a;
+    --muted:#7a6a55; --titlered:#58180D; --rulered:#9C2B1B; --ribbon:#E69A28;
+    --gold:#B89A67; --gold-bright:#C9AD6A; --line:#D8C9A3; --tan:#E5D5AC;
+    --header-bg:#171009;
+    --title-font:'Nodesto Caps Condensed','Cinzel',serif;
+    --display:'Mr Eaves Small Caps','Cinzel',serif;
+    --body:'Bookinsanity','EB Garamond',Georgia,serif;
+    --label:'Scaly Sans',sans-serif;
+    --label-caps:'Scaly Sans Caps','Scaly Sans',sans-serif;
+    --flavor:'IM Fell English',Georgia,serif;
+    --ok-ink:#265434; --ok-bg:#e5efe3; --ok-line:#8fb08c;
+    --warn-ink:#7a4b09; --warn-bg:#f9ecd1; --warn-line:#d4a34a;
+    --err-ink:#7c1b12; --err-bg:#f7e2dc; --err-line:#c77d72;
+  }
 
-  <!-- PapaParse CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  ::selection { background:var(--titlered); color:var(--paper); }
 
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  body {
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    color:var(--body-ink);
+    font-family:var(--body);
+    font-size:1rem;
+    background-color:var(--parchment);
+    background-image:
+      radial-gradient(1200px 500px at 50% -80px, rgba(184,154,103,.20), transparent 70%),
+      radial-gradient(900px 600px at 110% 110%, rgba(88,24,13,.07), transparent 60%),
+      radial-gradient(700px 500px at -10% 60%, rgba(88,24,13,.05), transparent 60%),
+      repeating-linear-gradient(43deg, rgba(88,24,13,.016) 0 2px, transparent 2px 5px),
+      repeating-linear-gradient(-41deg, rgba(88,24,13,.014) 0 2px, transparent 2px 6px);
+  }
 
-  <style>
-    /* Custom scrollbar for dark mode tables */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
-    }
-  </style>
+  /* Masthead */
+  header.site {
+    background:var(--header-bg);
+    color:#F3E5C0;
+    text-align:center;
+    padding:26px 20px 20px;
+    border-bottom:3px solid var(--gold-bright);
+    box-shadow:0 4px 0 var(--rulered), 0 10px 24px rgba(23,16,9,.32);
+  }
+  header.site h1 {
+    margin:0;
+    font-family:var(--title-font);
+    font-weight:400;
+    font-size:2.65rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    line-height:1.05;
+    color:#F3E5C0;
+    text-shadow:0 2px 0 #000, 0 0 24px rgba(230,154,40,.22);
+  }
+  header.site .orn {
+    color:var(--ribbon);
+    letter-spacing:.85em;
+    font-size:.76rem;
+    margin-top:8px;
+  }
+  header.site p {
+    margin:6px 0 0;
+    color:#cdbd97;
+    font-family:var(--flavor);
+    font-style:italic;
+    font-size:1.08rem;
+  }
+
+  /* Command Ribbon */
+  nav.command-ribbon {
+    background:var(--paper);
+    border-bottom:1px solid var(--gold);
+    box-shadow:0 2px 6px rgba(36,26,16,.08);
+    padding:10px 20px;
+  }
+  .ribbon-inner {
+    max-width:1320px;
+    margin:0 auto;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px 18px;
+  }
+  .ribbon-group {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px 16px;
+  }
+  .ribbon-sep { color:var(--gold); font-size:.6rem; }
+
+  /* Parchment Toggles */
+  .toggle-label {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    font-family:var(--label-caps);
+    font-size:.84rem;
+    letter-spacing:.04em;
+    color:var(--ink);
+    user-select:none;
+  }
+  .toggle-label input {
+    appearance:none;
+    -webkit-appearance:none;
+    width:34px;
+    height:18px;
+    border-radius:2px;
+    background:var(--parchment);
+    border:1px solid var(--gold);
+    position:relative;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+    flex:none;
+  }
+  .toggle-label input::after {
+    content:"";
+    position:absolute;
+    top:2px;
+    left:2px;
+    width:12px;
+    height:12px;
+    border-radius:1px;
+    background:var(--muted);
+    transition:transform .15s, background .15s;
+  }
+  .toggle-label input:checked {
+    background:var(--titlered);
+    border-color:var(--titlered);
+  }
+  .toggle-label input:checked::after {
+    transform:translateX(16px);
+    background:var(--card);
+  }
+  .toggle-label input:focus-visible { outline:2px solid var(--gold-bright); outline-offset:2px; }
+
+  /* Buttons */
+  .btn {
+    background:var(--card);
+    color:var(--ink);
+    border:1px solid var(--gold);
+    border-radius:3px;
+    padding:6px 13px;
+    cursor:pointer;
+    font-family:var(--display);
+    font-weight:400;
+    font-size:.84rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:background .12s, border-color .12s, color .12s;
+  }
+  .btn svg { width:14px; height:14px; flex:none; }
+  .btn:hover:not(:disabled) { background:var(--tan); border-color:var(--titlered); color:var(--titlered); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+
+  .btn-primary {
+    background:var(--titlered);
+    border-color:var(--titlered);
+    color:var(--paper);
+  }
+  .btn-primary:hover:not(:disabled) { background:var(--rulered); border-color:var(--rulered); color:var(--paper); }
+
+  .btn-danger {
+    background:transparent;
+    border-color:var(--rulered);
+    color:var(--titlered);
+  }
+  .btn-danger:hover:not(:disabled) { background:var(--titlered); border-color:var(--titlered); color:var(--paper); }
+
+  .btn-ghost {
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--titlered);
+  }
+  .btn-ghost:hover:not(:disabled) { background:var(--tan); border-color:var(--titlered); }
+
+  /* Main Layout */
+  main.wrap {
+    flex:1;
+    width:100%;
+    max-width:1320px;
+    margin:0 auto;
+    padding:22px 18px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  /* Upload Plates */
+  .upload-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:18px;
+  }
+  .drop-plate {
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-top:3px solid var(--titlered);
+    border-radius:4px;
+    padding:14px;
+    box-shadow:0 1px 4px rgba(36,26,16,.08);
+    cursor:pointer;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .drop-plate:hover, .drop-plate.drag-over {
+    border-color:var(--gold);
+    border-top-color:var(--rulered);
+    box-shadow:0 4px 14px rgba(36,26,16,.14);
+  }
+  .drop-well {
+    border:1.5px dashed var(--gold);
+    background:var(--card);
+    border-radius:3px;
+    padding:22px 16px;
+    min-height:132px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    transition:background .15s;
+  }
+  .drop-plate.drag-over .drop-well { background:var(--tan); border-color:var(--titlered); }
+  .drop-icon {
+    width:40px;
+    height:40px;
+    border-radius:3px;
+    background:var(--paper);
+    border:1px solid var(--gold);
+    color:var(--titlered);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 10px;
+  }
+  .drop-icon svg { width:20px; height:20px; }
+  .drop-title {
+    font-family:var(--display);
+    font-size:1.05rem;
+    letter-spacing:.06em;
+    color:var(--ink);
+  }
+  .drop-sub {
+    font-family:var(--flavor);
+    font-style:italic;
+    font-size:.92rem;
+    color:var(--muted);
+    margin-top:3px;
+  }
+  .loaded-card {
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:var(--paper);
+    border:1px solid var(--gold);
+    border-left:4px solid var(--titlered);
+    border-radius:3px;
+    padding:12px 14px;
+    text-align:left;
+  }
+  .loaded-info { display:flex; align-items:center; gap:10px; min-width:0; }
+  .loaded-info svg { width:22px; height:22px; color:var(--titlered); flex:none; }
+  .loaded-name {
+    font-family:var(--label);
+    font-weight:700;
+    font-size:.92rem;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .loaded-meta {
+    font-family:var(--label-caps);
+    font-size:.78rem;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .icon-btn {
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:3px;
+    color:var(--muted);
+    width:28px;
+    height:28px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex:none;
+  }
+  .icon-btn:hover { color:var(--paper); background:var(--titlered); border-color:var(--titlered); }
+  .icon-btn svg { width:15px; height:15px; }
+
+  /* KPI Ledger Cards */
+  .kpi-grid {
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:14px;
+  }
+  .kpi-card {
+    background:var(--card);
+    border:1px solid var(--line);
+    border-top:3px solid var(--gold);
+    border-radius:4px;
+    padding:12px 14px;
+    box-shadow:0 1px 3px rgba(36,26,16,.08);
+  }
+  .kpi-card.kpi-warn { border-top-color:var(--ribbon); }
+  .kpi-card.kpi-err { border-top-color:var(--rulered); }
+  .kpi-card.kpi-ok { border-top-color:var(--ok-ink); }
+  .kpi-card.kpi-clickable { cursor:pointer; transition:border-color .15s, transform .15s, box-shadow .15s; }
+  .kpi-card.kpi-clickable:hover { border-color:var(--gold); transform:translateY(-1px); box-shadow:0 4px 12px rgba(36,26,16,.12); }
+  .kpi-head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    font-family:var(--label-caps);
+    font-size:.74rem;
+    letter-spacing:.06em;
+    color:var(--muted);
+  }
+  .kpi-head svg { width:15px; height:15px; color:var(--gold); flex:none; }
+  .kpi-val {
+    font-family:var(--title-font);
+    font-weight:400;
+    font-size:2.1rem;
+    line-height:1.1;
+    color:var(--ink);
+    margin-top:6px;
+    font-variant-numeric:tabular-nums;
+  }
+  .kpi-warn .kpi-val { color:var(--warn-ink); }
+  .kpi-err .kpi-val { color:var(--titlered); }
+  .kpi-ok .kpi-val { color:var(--ok-ink); }
+
+  /* Ledger Table Folio */
+  .ledger-plate {
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-top:3px solid var(--titlered);
+    border-radius:4px;
+    box-shadow:0 2px 8px rgba(36,26,16,.09);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .ledger-toolbar {
+    padding:12px 16px;
+    background:var(--card);
+    border-bottom:1px solid var(--gold);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; }
+  .tabs button {
+    background:transparent;
+    border:1px solid var(--gold);
+    color:var(--titlered);
+    border-radius:3px;
+    padding:6px 14px;
+    cursor:pointer;
+    font-family:var(--display);
+    font-weight:400;
+    font-size:.82rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .tabs button:hover { background:var(--tan); border-color:var(--titlered); }
+  .tabs button.active { background:var(--titlered); color:var(--paper); border-color:var(--titlered); }
+
+  .search-wrap { position:relative; width:300px; max-width:100%; }
+  .search-wrap svg {
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    width:15px;
+    height:15px;
+    color:var(--muted);
+    pointer-events:none;
+  }
+  .search-input {
+    width:100%;
+    padding:7px 10px 7px 32px;
+    background:#fffdf6;
+    border:1px solid var(--gold);
+    border-radius:3px;
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:.95rem;
+  }
+  .search-input:focus { outline:2px solid var(--gold-bright); outline-offset:1px; }
+
+  /* Data Table */
+  .table-scroll { overflow-x:auto; }
+  table.ledger {
+    width:100%;
+    border-collapse:collapse;
+    font-family:var(--label);
+    font-size:.84rem;
+    line-height:1.35;
+  }
+  table.ledger thead th {
+    background:var(--tan);
+    color:var(--titlered);
+    font-family:var(--label-caps);
+    font-weight:400;
+    font-size:.78rem;
+    letter-spacing:.05em;
+    text-align:left;
+    padding:9px 10px;
+    border-bottom:2px solid var(--titlered);
+    white-space:nowrap;
+    cursor:pointer;
+    user-select:none;
+  }
+  table.ledger thead th.col-c { text-align:center; }
+  table.ledger thead th.col-r { text-align:right; cursor:default; }
+  table.ledger thead th:hover:not(.col-r) { background:#dcc89a; }
+  .sort-ic { margin-left:3px; font-size:.7rem; color:var(--muted); }
+  .sort-ic.active { color:var(--titlered); font-weight:700; }
+
+  table.ledger tbody tr { border-bottom:1px solid var(--line); transition:background .1s; }
+  table.ledger tbody tr:nth-child(even) { background:rgba(184,154,103,.10); }
+  table.ledger tbody tr:hover { background:rgba(229,213,172,.55); }
+  table.ledger td { padding:8px 10px; vertical-align:middle; color:var(--body-ink); }
+  table.ledger td.col-c { text-align:center; }
+  table.ledger td.col-r { text-align:right; }
+
+  .card-name { font-family:var(--body); font-weight:600; font-size:.96rem; color:var(--ink); }
+  .card-set { color:var(--muted); font-size:.82rem; }
+  .num-cell { font-variant-numeric:tabular-nums; color:var(--muted); white-space:nowrap; }
+  .price-cell { font-variant-numeric:tabular-nums; font-weight:600; color:var(--ink); white-space:nowrap; }
+  .price-diff { font-size:.74rem; color:var(--rulered); font-weight:700; margin-top:1px; }
+
+  /* Inline Quantity Stepper */
+  .qty-ctrl { display:inline-flex; align-items:center; gap:3px; }
+  .qty-btn {
+    width:22px;
+    height:24px;
+    background:var(--card);
+    border:1px solid var(--gold);
+    border-radius:2px;
+    color:var(--ink);
+    font-family:var(--label);
+    font-weight:700;
+    font-size:.82rem;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .qty-btn:hover { background:var(--titlered); color:var(--paper); border-color:var(--titlered); }
+  .qty-input {
+    width:46px;
+    height:24px;
+    text-align:center;
+    background:#fffdf6;
+    border:1px solid var(--gold);
+    border-radius:2px;
+    color:var(--ink);
+    font-family:var(--label);
+    font-weight:700;
+    font-size:.82rem;
+    font-variant-numeric:tabular-nums;
+    -moz-appearance:textfield;
+  }
+  .qty-input::-webkit-inner-spin-button,
+  .qty-input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  .qty-input.is-zero { color:var(--muted); font-weight:400; background:var(--parchment); }
+  .qty-input:focus { outline:2px solid var(--gold-bright); outline-offset:0; }
+
+  /* Badges */
+  .badge {
+    display:inline-block;
+    padding:2px 7px;
+    border-radius:2px;
+    font-family:var(--label-caps);
+    font-size:.72rem;
+    letter-spacing:.04em;
+    border:1px solid transparent;
+    white-space:nowrap;
+  }
+  .badge-fo { background:#f8e6bd; color:#734904; border-color:#cfa24c; font-weight:700; }
+  .badge-et { background:#efe3ef; color:#5a265c; border-color:#b287b5; font-weight:700; }
+  .badge-nf { background:var(--parchment); color:var(--muted); border-color:var(--line); }
+
+  .badge-qty { background:var(--warn-bg); color:var(--warn-ink); border-color:var(--warn-line); }
+  .badge-price { background:var(--err-bg); color:var(--err-ink); border-color:var(--err-line); }
+  .badge-ok { background:var(--ok-bg); color:var(--ok-ink); border-color:var(--ok-line); }
+
+  .status-stack { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .delta-note { font-size:.74rem; font-weight:700; color:var(--warn-ink); font-variant-numeric:tabular-nums; }
+
+  .row-ignore-btn {
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:3px 8px;
+    color:var(--muted);
+    font-family:var(--label-caps);
+    font-size:.74rem;
+    letter-spacing:.04em;
+    cursor:pointer;
+  }
+  .row-ignore-btn:hover { background:var(--titlered); border-color:var(--titlered); color:var(--paper); }
+
+  .empty-state {
+    text-align:center;
+    padding:42px 20px;
+    color:var(--muted);
+    font-family:var(--flavor);
+    font-style:italic;
+    font-size:1.05rem;
+  }
+  .empty-state svg { width:32px; height:32px; color:var(--gold); display:block; margin:0 auto 10px; }
+
+  /* Modal */
+  .modal-backdrop {
+    position:fixed;
+    inset:0;
+    background:rgba(23,16,9,.64);
+    z-index:80;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+  }
+  .modal-card {
+    background:var(--paper);
+    border:1px solid var(--gold);
+    border-top:4px solid var(--titlered);
+    border-radius:4px;
+    max-width:600px;
+    width:100%;
+    max-height:82vh;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 18px 48px rgba(0,0,0,.42);
+  }
+  .modal-head {
+    padding:14px 18px;
+    border-bottom:1px solid var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .modal-head h2 {
+    font-family:var(--display);
+    font-weight:400;
+    font-size:1.35rem;
+    color:var(--titlered);
+    letter-spacing:.06em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .modal-head h2 svg { width:18px; height:18px; }
+  .modal-subbar {
+    padding:10px 18px;
+    background:var(--card);
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:var(--flavor);
+    font-style:italic;
+    font-size:.94rem;
+    color:var(--muted);
+  }
+  .modal-body { padding:12px 18px; overflow-y:auto; flex:1; }
+  .ignored-list { list-style:none; }
+  .ignored-list li {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 4px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--label);
+    font-size:.86rem;
+  }
+  .ignored-list li:last-child { border-bottom:none; }
+  .ignored-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .modal-foot {
+    padding:12px 18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:flex-end;
+    background:var(--card);
+  }
+
+  /* Toast */
+  .toast {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:var(--header-bg);
+    color:#F3E5C0;
+    border:1px solid var(--gold-bright);
+    border-left:4px solid var(--rulered);
+    padding:9px 15px;
+    border-radius:3px;
+    font-family:var(--label);
+    font-size:.85rem;
+    box-shadow:0 6px 18px rgba(23,16,9,.35);
+    z-index:120;
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity .2s, transform .2s;
+    pointer-events:none;
+  }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  /* Footer */
+  footer.site {
+    text-align:center;
+    color:var(--muted);
+    padding:6px 16px 26px;
+    font-family:var(--flavor);
+    font-style:italic;
+    font-size:.95rem;
+  }
+  footer.site .orn {
+    color:var(--ribbon);
+    letter-spacing:.85em;
+    font-size:.72rem;
+    font-style:normal;
+    margin-bottom:5px;
+  }
+
+  .hidden { display:none !important; }
+
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-track { background:var(--parchment); }
+  ::-webkit-scrollbar-thumb { background:var(--gold); border-radius:2px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--titlered); }
+
+  @media (max-width:960px) {
+    .kpi-grid { grid-template-columns:repeat(2, 1fr); }
+    .upload-grid { grid-template-columns:1fr; }
+    header.site h1 { font-size:2rem; }
+  }
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased">
+<body>
 
-  <!-- Navigation Bar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
-          <i data-lucide="layers" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="font-bold text-lg leading-none text-slate-100">MTG Inventory Sync</h1>
-          <p class="text-xs text-slate-400 mt-1">TCGplayer ↔ Mana Pool Discrepancy Engine</p>
-        </div>
-      </div>
-      <div class="flex items-center space-x-3">
-        <button id="openIgnoredModalBtn" class="hidden inline-flex items-center px-3 py-1.5 border border-slate-700 hover:border-slate-600 rounded-lg text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700/80 transition">
-          <i data-lucide="eye-off" class="w-4 h-4 mr-2 text-slate-400"></i>
-          Ignored List (<span id="ignoredCountBadge">0</span>)
-        </button>
-        <button id="resetAppBtn" class="inline-flex items-center px-3 py-1.5 border border-red-900/40 hover:border-red-800 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 bg-red-950/20 hover:bg-red-950/40 transition">
-          <i data-lucide="rotate-ccw" class="w-4 h-4 mr-2"></i>
-          Reset Data
-        </button>
-      </div>
-    </div>
-  </header>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+<!-- Dark Masthead -->
+<header class="site">
+  <h1>MTG Inventory Sync &amp; Manager</h1>
+  <div class="orn" aria-hidden="true">◆ ◆ ◆</div>
+  <p>TCGplayer &harr; Mana Pool Unified Inventory Engine</p>
+</header>
 
-    <!-- Upload Section -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
-      <!-- TCGplayer Dropzone -->
-      <div id="tcgDropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/80 bg-slate-900/50 hover:bg-slate-900/80 rounded-xl p-6 transition duration-200 cursor-pointer text-center relative group flex flex-col justify-center items-center min-h-[180px]">
-        <input type="file" id="tcgFileInput" accept=".csv" class="hidden" />
-        <div id="tcgEmptyState" class="space-y-3">
-          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-indigo-950 group-hover:text-indigo-400 text-slate-400 flex items-center justify-center mx-auto transition">
-            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <p class="font-semibold text-slate-200">Upload TCGplayer Export CSV</p>
-            <p class="text-xs text-slate-400 mt-1">Drag and drop file or click to browse</p>
-          </div>
-        </div>
-        <div id="tcgLoadedState" class="hidden space-y-2 text-left w-full">
-          <div class="flex items-center justify-between bg-indigo-950/40 border border-indigo-800/50 rounded-lg p-3">
-            <div class="flex items-center space-x-3 overflow-hidden">
-              <i data-lucide="file-check-2" class="w-6 h-6 text-indigo-400 shrink-0"></i>
-              <div class="truncate">
-                <p id="tcgFileName" class="text-sm font-medium text-indigo-200 truncate">tcgplayer.csv</p>
-                <p id="tcgFileMeta" class="text-xs text-slate-400">0 rows parsed</p>
-              </div>
-            </div>
-            <button id="removeTcgBtn" class="text-slate-400 hover:text-red-400 p-1 transition" title="Remove file">
-              <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mana Pool Dropzone -->
-      <div id="manaDropzone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500/80 bg-slate-900/50 hover:bg-slate-900/80 rounded-xl p-6 transition duration-200 cursor-pointer text-center relative group flex flex-col justify-center items-center min-h-[180px]">
-        <input type="file" id="manaFileInput" accept=".csv" class="hidden" />
-        <div id="manaEmptyState" class="space-y-3">
-          <div class="w-12 h-12 rounded-full bg-slate-800 group-hover:bg-cyan-950 group-hover:text-cyan-400 text-slate-400 flex items-center justify-center mx-auto transition">
-            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <p class="font-semibold text-slate-200">Upload Mana Pool Export CSV</p>
-            <p class="text-xs text-slate-400 mt-1">Drag and drop file or click to browse</p>
-          </div>
-        </div>
-        <div id="manaLoadedState" class="hidden space-y-2 text-left w-full">
-          <div class="flex items-center justify-between bg-cyan-950/40 border border-cyan-800/50 rounded-lg p-3">
-            <div class="flex items-center space-x-3 overflow-hidden">
-              <i data-lucide="file-check-2" class="w-6 h-6 text-cyan-400 shrink-0"></i>
-              <div class="truncate">
-                <p id="manaFileName" class="text-sm font-medium text-cyan-200 truncate">manapool.csv</p>
-                <p id="manaFileMeta" class="text-xs text-slate-400">0 rows parsed</p>
-              </div>
-            </div>
-            <button id="removeManaBtn" class="text-slate-400 hover:text-red-400 p-1 transition" title="Remove file">
-              <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Controls & Settings Bar -->
-    <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-xl p-4">
-      <div class="flex flex-wrap items-center gap-6">
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="filterNonMtgToggle" class="sr-only peer" checked>
-          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-          <span class="ml-3 text-sm font-medium text-slate-300">Magic: The Gathering Only</span>
-        </label>
-
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="filterTokensToggle" class="sr-only peer">
-          <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-          <span class="ml-3 text-sm font-medium text-slate-300">Ignore Tokens</span>
-        </label>
-      </div>
-
-      <div class="flex items-center space-x-3">
-        <button id="exportManaPoolUpdatesBtn" disabled class="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-lg transition shadow-sm">
-          <i data-lucide="download" class="w-4 h-4 mr-2 text-cyan-400"></i>
-          Export Mana Pool Fix CSV
-        </button>
-        <button id="exportTcgUpdatesBtn" disabled class="inline-flex items-center px-4 py-2 border border-slate-700 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200 font-medium text-sm rounded-lg transition shadow-sm">
-          <i data-lucide="download" class="w-4 h-4 mr-2 text-indigo-400"></i>
-          Export TCGplayer Fix CSV
-        </button>
-      </div>
+<!-- Command & Filter Ribbon -->
+<nav class="command-ribbon" aria-label="Inventory Controls">
+  <div class="ribbon-inner">
+    <div class="ribbon-group">
+      <label class="toggle-label">
+        <input type="checkbox" id="filterNonMtgToggle" checked>
+        <span>Magic: The Gathering Only</span>
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="filterTokensToggle">
+        <span>Ignore Tokens</span>
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" id="hideZeroStockToggle" checked>
+        <span>Hide 0 Stock Items</span>
+      </label>
     </div>
 
-    <!-- Summary KPI Cards -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Items Loaded</span>
-          <i data-lucide="boxes" class="w-4 h-4 text-slate-400"></i>
-        </div>
-        <p id="kpiTotalItems" class="text-2xl font-bold text-slate-100 mt-2">0</p>
-      </div>
+    <div class="ribbon-group">
+      <button id="openIgnoredModalBtn" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        <span>Ignored List (<span id="ignoredCountBadge">0</span>)</span>
+      </button>
+      <button id="resetAppBtn" class="btn btn-danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span>Reset Data</span>
+      </button>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-amber-400/90 uppercase tracking-wider">Quantity Discrepancies</span>
-          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
-        </div>
-        <p id="kpiQtyMismatch" class="text-2xl font-bold text-amber-400 mt-2">0</p>
-      </div>
+      <span class="ribbon-sep" aria-hidden="true">◆</span>
 
-      <div class="hidden bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ignored Items</span>
-          <i data-lucide="eye-off" class="w-4 h-4 text-slate-400"></i>
-        </div>
-        <p id="kpiTotalIgnored" class="text-2xl font-bold text-slate-400 mt-2">0</p>
-      </div>
-    </section>
-
-    <!-- Discrepancy Table Section -->
-    <section class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col flex-1 shadow-xl">
-      
-      <!-- Table Header Filters & Search -->
-      <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/80">
-        
-        <!-- Filter Info Label -->
-        <div class="flex items-center bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-semibold text-slate-300">
-          <i data-lucide="alert-circle" class="w-4 h-4 mr-2 text-amber-400"></i>
-          Discrepancy Report (<span id="countMismatch">0</span>)
-        </div>
-
-        <!-- Search Input -->
-        <div class="relative w-full md:w-72">
-          <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
-          <input type="text" id="tableSearchInput" placeholder="Search card name or set..." class="w-full bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:border-indigo-500 transition">
-        </div>
-      </div>
-
-      <!-- Data Table -->
-      <div class="overflow-x-auto flex-1">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr class="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-semibold tracking-wider uppercase">
-              <th class="py-3 px-4">Card Name</th>
-              <th class="py-3 px-4">Set</th>
-              <th class="py-3 px-4">Num</th>
-              <th class="py-3 px-4">Cond</th>
-              <th class="py-3 px-4 text-center">Finish</th>
-              <th class="py-3 px-4 text-center">TCG Qty</th>
-              <th class="py-3 px-4 text-center">Mana Qty</th>
-              <th class="py-3 px-4 text-center">Absolute Delta</th>
-              <th class="hidden py-3 px-4 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody id="discrepancyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-            <!-- Table rows populated dynamically -->
-            <tr>
-              <td colspan="8" class="py-12 text-center text-slate-500">
-                <i data-lucide="file-spreadsheet" class="w-8 h-8 mx-auto mb-2 stroke-1"></i>
-                Upload both TCGplayer and Mana Pool CSV exports to run discrepancy check.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Modal: Ignored Items Management -->
-  <div id="ignoredModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
-      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <i data-lucide="eye-off" class="w-5 h-5 text-indigo-400"></i>
-          <h2 class="font-bold text-slate-100">Ignored Cards Engine Rules</h2>
-        </div>
-        <button id="closeIgnoredModalBtn" class="text-slate-400 hover:text-white p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      
-      <div class="p-4 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between text-xs text-slate-400">
-        <span>Cards in this list will be ignored during discrepancy checks.</span>
-        <button id="clearAllIgnoredBtn" class="text-red-400 hover:text-red-300 font-medium">Clear All</button>
-      </div>
-
-      <div class="p-4 overflow-y-auto flex-1">
-        <ul id="ignoredListItems" class="space-y-2 text-xs divide-y divide-slate-800">
-          <!-- Populated dynamically -->
-        </ul>
-      </div>
-
-      <div class="p-4 border-t border-slate-800 text-right">
-        <button id="doneIgnoredModalBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition">Close</button>
-      </div>
+      <button id="exportManaPoolUpdatesBtn" class="btn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export Mana Pool Fix CSV</span>
+      </button>
+      <button id="exportTcgUpdatesBtn" class="btn btn-primary" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export TCGplayer Fix CSV</span>
+      </button>
     </div>
   </div>
+</nav>
 
-  <script>
-    // --- STATE MANAGEMENT ---
-    const STATE = {
-      tcgRaw: [],
-      manaRaw: [],
-      tcgMap: new Map(),
-      manaMap: new Map(),
-      discrepancies: [],
-      filteredDiscrepancies: [],
-      ignoredKeys: new Set(JSON.parse(localStorage.getItem('mtg_ignored_keys') || '[]')),
-      searchQuery: '',
-      filterMTGOnly: true,
-      filterTokens: false
-    };
-
-    // --- DOM ELEMENTS ---
-    const DOM = {
-      tcgDropzone: document.getElementById('tcgDropzone'),
-      tcgFileInput: document.getElementById('tcgFileInput'),
-      tcgEmptyState: document.getElementById('tcgEmptyState'),
-      tcgLoadedState: document.getElementById('tcgLoadedState'),
-      tcgFileName: document.getElementById('tcgFileName'),
-      tcgFileMeta: document.getElementById('tcgFileMeta'),
-      removeTcgBtn: document.getElementById('removeTcgBtn'),
-
-      manaDropzone: document.getElementById('manaDropzone'),
-      manaFileInput: document.getElementById('manaFileInput'),
-      manaEmptyState: document.getElementById('manaEmptyState'),
-      manaLoadedState: document.getElementById('manaLoadedState'),
-      manaFileName: document.getElementById('manaFileName'),
-      manaFileMeta: document.getElementById('manaFileMeta'),
-      removeManaBtn: document.getElementById('removeManaBtn'),
-
-      filterNonMtgToggle: document.getElementById('filterNonMtgToggle'),
-      filterTokensToggle: document.getElementById('filterTokensToggle'),
-      exportManaPoolUpdatesBtn: document.getElementById('exportManaPoolUpdatesBtn'),
-      exportTcgUpdatesBtn: document.getElementById('exportTcgUpdatesBtn'),
-
-      kpiTotalItems: document.getElementById('kpiTotalItems'),
-      kpiQtyMismatch: document.getElementById('kpiQtyMismatch'),
-      kpiTotalIgnored: document.getElementById('kpiTotalIgnored'),
-
-      tableBody: document.getElementById('discrepancyTableBody'),
-      searchInput: document.getElementById('tableSearchInput'),
-
-      countMismatch: document.getElementById('countMismatch'),
-
-      ignoredModal: document.getElementById('ignoredModal'),
-      openIgnoredModalBtn: document.getElementById('openIgnoredModalBtn'),
-      closeIgnoredModalBtn: document.getElementById('closeIgnoredModalBtn'),
-      doneIgnoredModalBtn: document.getElementById('doneIgnoredModalBtn'),
-      ignoredListItems: document.getElementById('ignoredListItems'),
-      ignoredCountBadge: document.getElementById('ignoredCountBadge'),
-      clearAllIgnoredBtn: document.getElementById('clearAllIgnoredBtn'),
-      resetAppBtn: document.getElementById('resetAppBtn')
-    };
-
-    // --- NORMALIZATION HELPER FUNCTIONS ---
-    function stripAccents(str) {
-      if (!str) return '';
-      return String(str).normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-    }
-
-    function normalizeCardName(name) {
-      if (!name) return '';
-      let s = stripAccents(name);
-      
-      // Strip treatments, special finishes, and variants in parens or trailing hyphens
-      s = s.replace(/\s*\((b|surge foil|foil|etched foil|borderless|showcase|full art|extended art|retro frame|textless|anime)\)/gi, '');
-      s = s.replace(/\s*-\s*(Full Art|Showcase|Extended Art|Borderless|Retro Frame|JP Alternate Art|Anime).*$/gi, '');
-      s = s.replace(/\(.*\)/g, ''); // Remove remaining parens
-      s = s.split('/')[0].trim();   // Keep front-face of split/adventure cards
-      
-      return s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
-
-    function normalizeCollectorNumber(num) {
-      if (!num) return '';
-      let s = String(num).trim().toLowerCase();
-      
-      s = s.replace(/†/g, '');                  // Strip dagger symbols (MKM)
-      s = s.replace(/^[a-z0-9]{2,5}-/g, '');    // Strip set prefixes (e.g. "chk-103" -> "103")
-      if (s.includes('/')) {
-        s = s.split('/')[0].trim();             // Strip total count ("079/274" -> "079")
-      }
-      s = s.replace(/^0+/, '');                 // Strip leading zeros ("079" -> "79")
-      return s.replace(/[^a-z0-9]/g, '');
-    }
-
-    function normalizeCondition(cond) {
-      if (!cond) return 'NM';
-      const c = cond.toUpperCase().trim();
-      if (c.includes('NEAR MINT') || c === 'NM') return 'NM';
-      if (c.includes('LIGHTLY PLAYED') || c === 'LP') return 'LP';
-      if (c.includes('MODERATELY PLAYED') || c === 'MP') return 'MP';
-      if (c.includes('HEAVILY PLAYED') || c === 'HP') return 'HP';
-      if (c.includes('DAMAGED') || c === 'DMG') return 'DMG';
-      return 'NM';
-    }
-
-    function getTcgFinish(row) {
-      const cond = String(row['Condition'] || '').toLowerCase();
-      if (cond.includes('etched')) return 'ET';
-      if (cond.includes('foil')) return 'FO';
-      return 'NF';
-    }
-    
-    function makeCompositeKey(name, number, condition, finish = 'NF') {
-      const normName = normalizeCardName(name);
-      const normNum = normalizeCollectorNumber(number);
-      const normCond = normalizeCondition(condition);
-      return `${normName}||${normNum}||${normCond}||${finish}`;
-    }
-
-    // --- FILE PARSING ENGINE ---
-    function initFileUploads() {
-      DOM.tcgDropzone.addEventListener('click', () => DOM.tcgFileInput.click());
-      DOM.tcgFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'tcg'));
-      setupDragAndDrop(DOM.tcgDropzone, (file) => handleFileSelect(file, 'tcg'));
-
-      DOM.manaDropzone.addEventListener('click', () => DOM.manaFileInput.click());
-      DOM.manaFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0], 'mana'));
-      setupDragAndDrop(DOM.manaDropzone, (file) => handleFileSelect(file, 'mana'));
-
-      DOM.removeTcgBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        STATE.tcgRaw = [];
-        STATE.tcgMap.clear();
-        DOM.tcgFileInput.value = '';
-        DOM.tcgEmptyState.classList.remove('hidden');
-        DOM.tcgLoadedState.classList.add('hidden');
-        runDiffEngine();
-      });
-
-      DOM.removeManaBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        STATE.manaRaw = [];
-        STATE.manaMap.clear();
-        DOM.manaFileInput.value = '';
-        DOM.manaEmptyState.classList.remove('hidden');
-        DOM.manaLoadedState.classList.add('hidden');
-        runDiffEngine();
-      });
-    }
-
-    function setupDragAndDrop(element, onDrop) {
-      ['dragenter', 'dragover'].forEach(eventName => {
-        element.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          element.classList.add('border-indigo-500', 'bg-slate-900');
-        });
-      });
-      ['dragleave', 'drop'].forEach(eventName => {
-        element.addEventListener(eventName, (e) => {
-          e.preventDefault();
-          element.classList.remove('border-indigo-500', 'bg-slate-900');
-        });
-      });
-      element.addEventListener('drop', (e) => {
-        const file = e.dataTransfer.files[0];
-        if (file && file.name.endsWith('.csv')) {
-          onDrop(file);
-        }
-      });
-    }
-
-    function handleFileSelect(file, type) {
-      if (!file) return;
-
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          if (type === 'tcg') {
-            STATE.tcgRaw = results.data;
-            DOM.tcgFileName.textContent = file.name;
-            DOM.tcgFileMeta.textContent = `${results.data.length.toLocaleString()} items parsed`;
-            DOM.tcgEmptyState.classList.add('hidden');
-            DOM.tcgLoadedState.classList.remove('hidden');
-          } else {
-            STATE.manaRaw = results.data;
-            DOM.manaFileName.textContent = file.name;
-            DOM.manaFileMeta.textContent = `${results.data.length.toLocaleString()} items parsed`;
-            DOM.manaEmptyState.classList.add('hidden');
-            DOM.manaLoadedState.classList.remove('hidden');
-          }
-          runDiffEngine();
-        }
-      });
-    }
-
-    // --- COMPOSITE INDEX & DIFF ENGINE ---
-    function runDiffEngine() {
-      STATE.tcgMap.clear();
-      STATE.manaMap.clear();
-      STATE.discrepancies = [];
-
-      // 1. Index TCGplayer Items
-      STATE.tcgRaw.forEach(row => {
-        const productLine = (row['Product Line'] || row['Category Name'] || '').toLowerCase().trim();
-        if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
-        
-        const rawName = row['Product Name'] || '';
-        if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
-
-        const number = row['Number'] || '';
-        const rawCondition = row['Condition'] || 'Near Mint';
-        const qty = parseInt(row['Total Quantity'] || '0', 10);
-        
-        const finish = getTcgFinish(row);
-        const cleanConditionStr = rawCondition.replace(/foil/gi, '').trim();
-        const condition = normalizeCondition(cleanConditionStr);
-        
-        const key = makeCompositeKey(rawName, number, condition, finish);
-        
-        if (STATE.tcgMap.has(key)) {
-          const existing = STATE.tcgMap.get(key);
-          existing.qty += qty;
-        } else {
-          STATE.tcgMap.set(key, {
-            key,
-            name: rawName,
-            set: row['Set Name'] || '',
-            number,
-            condition,
-            finish,
-            qty,
-            raw: row
-          });
-        }
-      });
-
-      // 2. Index Mana Pool Items
-      STATE.manaRaw.forEach(row => {
-        const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
-        if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg')) return;
-        
-        const rawName = row['name'] || '';
-        if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
-
-        const number = row['number'] || '';
-        const condition = row['condition'] || 'NM';
-        const finish = (row['finish'] || 'NF').toUpperCase();
-        const qty = parseInt(row['quantity'] || '0', 10);
-
-        const key = makeCompositeKey(rawName, number, condition, finish);
-
-        if (STATE.manaMap.has(key)) {
-          const existing = STATE.manaMap.get(key);
-          existing.qty += qty;
-        } else {
-          STATE.manaMap.set(key, {
-            key,
-            name: rawName,
-            set: row['set'] || '',
-            number,
-            condition: normalizeCondition(condition),
-            qty,
-            finish,
-            raw: row
-          });
-        }
-      });
-
-      // 3. Compute Primary Differences Across Sets
-      const allKeys = new Set([...STATE.tcgMap.keys(), ...STATE.manaMap.keys()]);
-
-      allKeys.forEach(key => {
-        if (STATE.ignoredKeys.has(key)) return;
-
-        const tcgItem = STATE.tcgMap.get(key);
-        const manaItem = STATE.manaMap.get(key);
-
-        const tcgQty = tcgItem ? tcgItem.qty : 0;
-        const manaQty = manaItem ? manaItem.qty : 0;
-
-        if (tcgQty !== manaQty) {
-          STATE.discrepancies.push({
-            key,
-            status: 'mismatch',
-            name: tcgItem ? tcgItem.name : manaItem.name,
-            set: tcgItem ? tcgItem.set : manaItem.set,
-            number: tcgItem ? tcgItem.number : manaItem.number,
-            condition: tcgItem ? tcgItem.condition : manaItem.condition,
-            finish: tcgItem ? tcgItem.finish : (manaItem ? manaItem.finish : 'NF'),
-            tcgQty,
-            manaQty,
-            delta: Math.abs(tcgQty - manaQty), // ABSOLUTE DELTA
-            tcgItem,
-            manaItem
-          });
-        }
-      });
-
-      // 4. Secondary Fallback Pass: Match unindexed items with missing collector numbers (e.g. Mystery Booster 2 / The List)
-      const unmatchedTcgKeys = new Set(
-        Array.from(STATE.tcgMap.keys()).filter(k => !STATE.manaMap.has(k))
-      );
-      const unmatchedManaKeys = new Set(
-        Array.from(STATE.manaMap.keys()).filter(k => !STATE.tcgMap.has(k))
-      );
-
-      unmatchedTcgKeys.forEach(tcgKey => {
-        const tcgItem = STATE.tcgMap.get(tcgKey);
-        const [tName, tNum, tCond, tFinish] = tcgKey.split('||');
-
-        if (!tNum) {
-          for (const manaKey of unmatchedManaKeys) {
-            const manaItem = STATE.manaMap.get(manaKey);
-            const [mName, mNum, mCond, mFinish] = manaKey.split('||');
-
-            if (tName === mName && tCond === mCond && tFinish === mFinish) {
-              STATE.discrepancies = STATE.discrepancies.filter(
-                d => d.key !== tcgKey && d.key !== manaKey
-              );
-
-              unmatchedManaKeys.delete(manaKey);
-
-              const absoluteDelta = Math.abs(tcgItem.qty - manaItem.qty);
-              if (absoluteDelta !== 0) {
-                STATE.discrepancies.push({
-                  key: `${tName}||fallback||${tCond}||${tFinish}`,
-                  status: 'mismatch',
-                  name: tcgItem.name,
-                  set: tcgItem.set,
-                  number: `${tcgItem.number || 'N/A'} / #${manaItem.number}`,
-                  condition: tcgItem.condition,
-                  finish: tcgItem.finish,
-                  tcgQty: tcgItem.qty,
-                  manaQty: manaItem.qty,
-                  delta: absoluteDelta, // ABSOLUTE DELTA
-                  tcgItem,
-                  manaItem
-                });
-              }
-              break;
-            }
-          }
-        }
-      });
-
-      updateUI();
-    }
-
-    // --- UI RENDER & FILTER ENGINE ---
-    function updateUI() {
-      updateKPIs();
-      renderTable();
-      updateIgnoredModal();
-      
-      const hasData = STATE.discrepancies.length > 0;
-      DOM.exportManaPoolUpdatesBtn.disabled = !hasData;
-      DOM.exportTcgUpdatesBtn.disabled = !hasData;
-
-      lucide.createIcons();
-    }
-
-    function updateKPIs() {
-      const totalParsed = STATE.tcgMap.size + STATE.manaMap.size;
-      const mismatch = STATE.discrepancies.length;
-
-      DOM.kpiTotalItems.textContent = totalParsed.toLocaleString();
-      DOM.kpiQtyMismatch.textContent = mismatch.toLocaleString();
-      DOM.kpiTotalIgnored.textContent = STATE.ignoredKeys.size.toLocaleString();
-
-      DOM.countMismatch.textContent = mismatch;
-      DOM.ignoredCountBadge.textContent = STATE.ignoredKeys.size;
-    }
-
-    function renderTable() {
-      STATE.filteredDiscrepancies = STATE.discrepancies.filter(item => {
-        const query = STATE.searchQuery.toLowerCase();
-        return !query || 
-          item.name.toLowerCase().includes(query) || 
-          item.set.toLowerCase().includes(query) ||
-          item.number.toLowerCase().includes(query);
-      });
-
-      if (STATE.filteredDiscrepancies.length === 0) {
-        DOM.tableBody.innerHTML = `
-          <tr>
-            <td colspan="8" class="py-12 text-center text-slate-500">
-              <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-slate-600 stroke-1"></i>
-              No discrepancies found matching current filters.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      DOM.tableBody.innerHTML = STATE.filteredDiscrepancies.map(item => {
-        const statusTag = `<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold">Qty Mismatch</span>`;
-        const finishBadge = item.finish === 'FO' 
-          ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold">FO</span>`
-          : item.finish === 'ET'
-          ? `<span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold">ET</span>`
-          : `<span class="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium">NF</span>`;
-
-        return `
-          <tr class="hover:bg-slate-800/40 transition group">
-            <td class="py-3 px-4 font-medium text-slate-100">
-              <div class="flex items-center space-x-2">
-                <span>${escapeHtml(item.name)}</span>
-                ${statusTag}
-              </div>
-            </td>
-            <td class="py-3 px-4 text-slate-400">${escapeHtml(item.set)}</td>
-            <td class="py-3 px-4 font-mono text-slate-400">#${escapeHtml(item.number)}</td>
-            <td class="py-3 px-4 font-semibold text-slate-300">${item.condition}</td>
-            <td class="py-3 px-4 text-center">${finishBadge}</td>
-            <td class="py-3 px-4 text-center font-mono font-medium ${item.tcgQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.tcgQty}</td>
-            <td class="py-3 px-4 text-center font-mono font-medium ${item.manaQty === 0 ? 'text-slate-600' : 'text-slate-200'}">${item.manaQty}</td>
-            <td class="py-3 px-4 text-center font-mono font-semibold text-amber-400">${item.delta}</td>
-            <td class="hidden py-3 px-4 text-right">
-              <button onclick="ignoreCard('${escapeJsString(item.key)}')" class="inline-flex items-center px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] border border-slate-700 transition">
-                Ignore
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // --- PERSISTENT IGNORE LIST SYSTEM ---
-    window.ignoreCard = function(key) {
-      STATE.ignoredKeys.add(key);
-      saveIgnoredKeys();
-      runDiffEngine();
-    };
-
-    window.unignoreCard = function(key) {
-      STATE.ignoredKeys.delete(key);
-      saveIgnoredKeys();
-      runDiffEngine();
-    };
-
-    function saveIgnoredKeys() {
-      localStorage.setItem('mtg_ignored_keys', JSON.stringify([...STATE.ignoredKeys]));
-    }
-
-    function updateIgnoredModal() {
-      if (STATE.ignoredKeys.size === 0) {
-        DOM.ignoredListItems.innerHTML = `<li class="py-4 text-center text-slate-500">No cards currently ignored.</li>`;
-        return;
-      }
-
-      DOM.ignoredListItems.innerHTML = Array.from(STATE.ignoredKeys).map(key => {
-        const parts = key.split('||');
-        const name = parts[0] || key;
-        const num = parts[1] ? `#${parts[1]}` : '';
-        const cond = parts[2] || '';
-
-        return `
-          <li class="flex items-center justify-between py-2 px-1">
-            <div class="flex items-center space-x-2">
-              <span class="font-medium text-slate-200 capitalize">${escapeHtml(name)}</span>
-              <span class="text-slate-500">${num}</span>
-              <span class="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${cond}</span>
+<main class="wrap">
+  <!-- Upload Book Plates -->
+  <section class="upload-grid">
+    <!-- TCGplayer Dropzone -->
+    <div id="tcgDropzone" class="drop-plate">
+      <input type="file" id="tcgFileInput" accept=".csv" class="hidden">
+      <div class="drop-well">
+        <div id="tcgEmptyState">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          </div>
+          <div class="drop-title">Upload TCGplayer Export CSV</div>
+          <div class="drop-sub">Drag and drop file or click to browse</div>
+        </div>
+        <div id="tcgLoadedState" class="loaded-card hidden">
+          <div class="loaded-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+            <div style="min-width:0">
+              <div id="tcgFileName" class="loaded-name">tcgplayer.csv</div>
+              <div id="tcgFileMeta" class="loaded-meta">0 rows parsed</div>
             </div>
-            <button onclick="unignoreCard('${escapeJsString(key)}')" class="text-slate-400 hover:text-red-400 text-xs flex items-center">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5 mr-1"></i> Remove
-            </button>
-          </li>
-        `;
-      }).join('');
+          </div>
+          <button id="removeTcgBtn" class="icon-btn" title="Remove file" aria-label="Remove TCGplayer file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mana Pool Dropzone -->
+    <div id="manaDropzone" class="drop-plate">
+      <input type="file" id="manaFileInput" accept=".csv" class="hidden">
+      <div class="drop-well">
+        <div id="manaEmptyState">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          </div>
+          <div class="drop-title">Upload Mana Pool Export CSV</div>
+          <div class="drop-sub">Drag and drop file or click to browse</div>
+        </div>
+        <div id="manaLoadedState" class="loaded-card hidden">
+          <div class="loaded-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
+            <div style="min-width:0">
+              <div id="manaFileName" class="loaded-name">manapool.csv</div>
+              <div id="manaFileMeta" class="loaded-meta">0 rows parsed</div>
+            </div>
+          </div>
+          <button id="removeManaBtn" class="icon-btn" title="Remove file" aria-label="Remove Mana Pool file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary KPI Cards -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-head">
+        <span>Total Unique Cards</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <div id="kpiTotalItems" class="kpi-val">0</div>
+    </div>
+
+    <div class="kpi-card kpi-warn">
+      <div class="kpi-head">
+        <span>Qty Mismatches</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div id="kpiQtyMismatch" class="kpi-val">0</div>
+    </div>
+
+    <div class="kpi-card kpi-err">
+      <div class="kpi-head">
+        <span>Price Mismatches</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div id="kpiPriceMismatch" class="kpi-val">0</div>
+    </div>
+
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-head">
+        <span>Fully Matched</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div id="kpiMatchedItems" class="kpi-val">0</div>
+    </div>
+
+    <div id="kpiIgnoredCard" class="kpi-card kpi-clickable" title="Click to manage ignored cards">
+      <div class="kpi-head">
+        <span>Ignored Items</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </div>
+      <div id="kpiTotalIgnored" class="kpi-val">0</div>
+    </div>
+  </section>
+
+  <!-- Unified Inventory Ledger -->
+  <section class="ledger-plate">
+    <div class="ledger-toolbar">
+      <div class="tabs">
+        <button id="viewTabAll" class="active">All Cards (<span id="countAll">0</span>)</button>
+        <button id="viewTabQtyMismatch">Qty Mismatches (<span id="countQtyMismatch">0</span>)</button>
+        <button id="viewTabPriceMismatch">Price Mismatches (<span id="countPriceMismatch">0</span>)</button>
+      </div>
+
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="tableSearchInput" class="search-input" placeholder="Search card name, set, or number...">
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th onclick="handleSort('name')">Card Name <span id="sort_icon_name" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('set')">Set <span id="sort_icon_set" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('number')">Num <span id="sort_icon_number" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('condition')">Cond <span id="sort_icon_condition" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('finish')" class="col-c">Finish <span id="sort_icon_finish" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('tcgQty')" class="col-c">TCG Qty <span id="sort_icon_tcgQty" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('manaQty')" class="col-c">Mana Qty <span id="sort_icon_manaQty" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('tcgPrice')" class="col-c">TCG Price <span id="sort_icon_tcgPrice" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('manaPrice')" class="col-c">Mana Price <span id="sort_icon_manaPrice" class="sort-ic">↕</span></th>
+            <th onclick="handleSort('status')" class="col-c">Status / Delta <span id="sort_icon_status" class="sort-ic">↕</span></th>
+            <th class="col-r">Action</th>
+          </tr>
+        </thead>
+        <tbody id="discrepancyTableBody">
+          <tr>
+            <td colspan="11" class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+              Upload TCGplayer or Mana Pool CSV export to view and manage inventory.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="orn" aria-hidden="true">◆ ◆ ◆</div>
+  <div>MTG Inventory Sync &amp; Manager &middot; Local browser ledger for TCGplayer and Mana Pool exports.</div>
+</footer>
+
+<!-- Modal: Ignored Items Management -->
+<div id="ignoredModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="ignoredModalTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="ignoredModalTitle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        <span>Ignored Cards Engine Rules</span>
+      </h2>
+      <button id="closeIgnoredModalBtn" class="icon-btn" aria-label="Close modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-subbar">
+      <span>Cards in this list are excluded from active inventory and discrepancy checks.</span>
+      <button id="clearAllIgnoredBtn" class="btn btn-danger" style="padding:4px 10px;font-size:.76rem;">Clear All</button>
+    </div>
+
+    <div class="modal-body">
+      <ul id="ignoredListItems" class="ignored-list"></ul>
+    </div>
+
+    <div class="modal-foot">
+      <button id="doneIgnoredModalBtn" class="btn btn-primary">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- STATE MANAGEMENT ---
+  const STATE = {
+    tcgRaw: [],
+    manaRaw: [],
+    tcgMap: new Map(),
+    manaMap: new Map(),
+    inventory: [],
+    filteredInventory: [],
+    ignoredKeys: new Set(loadIgnoredKeys()),
+    ignoredLabels: new Map(),
+    searchQuery: '',
+    activeViewTab: 'all', // 'all', 'qtyMismatch', 'priceMismatch'
+    filterMTGOnly: true,
+    filterTokens: false,
+    hideZeroStock: true,
+    sortColumn: 'name',
+    sortDirection: 'asc'
+  };
+
+  function loadIgnoredKeys() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('mtg_ignored_keys') || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // --- DOM ELEMENTS ---
+  const DOM = {
+    toast: document.getElementById('toast'),
+    tcgDropzone: document.getElementById('tcgDropzone'),
+    tcgFileInput: document.getElementById('tcgFileInput'),
+    tcgEmptyState: document.getElementById('tcgEmptyState'),
+    tcgLoadedState: document.getElementById('tcgLoadedState'),
+    tcgFileName: document.getElementById('tcgFileName'),
+    tcgFileMeta: document.getElementById('tcgFileMeta'),
+    removeTcgBtn: document.getElementById('removeTcgBtn'),
+
+    manaDropzone: document.getElementById('manaDropzone'),
+    manaFileInput: document.getElementById('manaFileInput'),
+    manaEmptyState: document.getElementById('manaEmptyState'),
+    manaLoadedState: document.getElementById('manaLoadedState'),
+    manaFileName: document.getElementById('manaFileName'),
+    manaFileMeta: document.getElementById('manaFileMeta'),
+    removeManaBtn: document.getElementById('removeManaBtn'),
+
+    filterNonMtgToggle: document.getElementById('filterNonMtgToggle'),
+    filterTokensToggle: document.getElementById('filterTokensToggle'),
+    hideZeroStockToggle: document.getElementById('hideZeroStockToggle'),
+    exportManaPoolUpdatesBtn: document.getElementById('exportManaPoolUpdatesBtn'),
+    exportTcgUpdatesBtn: document.getElementById('exportTcgUpdatesBtn'),
+
+    kpiTotalItems: document.getElementById('kpiTotalItems'),
+    kpiQtyMismatch: document.getElementById('kpiQtyMismatch'),
+    kpiPriceMismatch: document.getElementById('kpiPriceMismatch'),
+    kpiMatchedItems: document.getElementById('kpiMatchedItems'),
+    kpiTotalIgnored: document.getElementById('kpiTotalIgnored'),
+    kpiIgnoredCard: document.getElementById('kpiIgnoredCard'),
+
+    tableBody: document.getElementById('discrepancyTableBody'),
+    searchInput: document.getElementById('tableSearchInput'),
+
+    viewTabAll: document.getElementById('viewTabAll'),
+    viewTabQtyMismatch: document.getElementById('viewTabQtyMismatch'),
+    viewTabPriceMismatch: document.getElementById('viewTabPriceMismatch'),
+
+    countAll: document.getElementById('countAll'),
+    countQtyMismatch: document.getElementById('countQtyMismatch'),
+    countPriceMismatch: document.getElementById('countPriceMismatch'),
+
+    ignoredModal: document.getElementById('ignoredModal'),
+    openIgnoredModalBtn: document.getElementById('openIgnoredModalBtn'),
+    closeIgnoredModalBtn: document.getElementById('closeIgnoredModalBtn'),
+    doneIgnoredModalBtn: document.getElementById('doneIgnoredModalBtn'),
+    ignoredListItems: document.getElementById('ignoredListItems'),
+    ignoredCountBadge: document.getElementById('ignoredCountBadge'),
+    clearAllIgnoredBtn: document.getElementById('clearAllIgnoredBtn'),
+    resetAppBtn: document.getElementById('resetAppBtn')
+  };
+
+  let toastTimer = null;
+  function showToast(msg) {
+    if (!DOM.toast) return;
+    DOM.toast.textContent = msg;
+    DOM.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => DOM.toast.classList.remove('show'), 2600);
+  }
+
+  // --- NORMALIZATION HELPERS ---
+  function stripAccents(str) {
+    if (!str) return '';
+    return String(str).normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function normalizeCardName(name) {
+    if (!name) return '';
+    let s = stripAccents(name);
+    s = s.replace(/\s*\((b|surge foil|foil|etched foil|borderless|showcase|full art|extended art|retro frame|textless|anime)\)/gi, '');
+    s = s.replace(/\s*-\s*(Full Art|Showcase|Extended Art|Borderless|Retro Frame|JP Alternate Art|Anime).*$/gi, '');
+    s = s.replace(/\(.*\)/g, '');
+    s = s.split('/')[0].trim();
+    return s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  function normalizeCollectorNumber(num) {
+    if (!num) return '';
+    let s = String(num).trim().toLowerCase();
+    s = s.replace(/[\u2010-\u2015\u2212]/g, '-');
+    s = s.replace(/†/g, '');
+    s = s.replace(/^[a-z0-9]{2,5}-/g, '');
+    if (s.includes('/')) s = s.split('/')[0].trim();
+    s = s.replace(/^0+/, '');
+    return s.replace(/[^a-z0-9]/g, '');
+  }
+
+  function normalizeCondition(cond) {
+    if (!cond) return 'NM';
+    const c = String(cond).toUpperCase().trim();
+    if (c.includes('NEAR MINT') || c === 'NM') return 'NM';
+    if (c.includes('LIGHTLY PLAYED') || c === 'LP') return 'LP';
+    if (c.includes('MODERATELY PLAYED') || c === 'MP') return 'MP';
+    if (c.includes('HEAVILY PLAYED') || c === 'HP') return 'HP';
+    if (c.includes('DAMAGED') || c === 'DMG') return 'DMG';
+    return 'NM';
+  }
+
+  function formatTcgCondition(cond, finish) {
+    const map = {
+      NM: 'Near Mint',
+      LP: 'Lightly Played',
+      MP: 'Moderately Played',
+      HP: 'Heavily Played',
+      DMG: 'Damaged'
+    };
+    const base = map[cond] || 'Near Mint';
+    if (finish === 'ET') return `${base} Etched Foil`;
+    if (finish === 'FO') return `${base} Foil`;
+    return base;
+  }
+
+  function normalizeFinish(finish) {
+    const f = String(finish || '').toLowerCase().trim();
+    if (f === 'et' || f.includes('etched')) return 'ET';
+    if (f === 'fo' || f.includes('foil')) return 'FO';
+    return 'NF';
+  }
+
+  function getTcgFinish(row) {
+    const cond = String(row['Condition'] || row['condition'] || '').toLowerCase();
+    const title = String(row['Title'] || row['title'] || row['Product Name'] || row['product_name'] || '').toLowerCase();
+    const finishCol = String(row['Finish'] || row['finish'] || '').toLowerCase();
+    if (cond.includes('etched') || title.includes('etched') || finishCol.includes('etched')) return 'ET';
+    if (cond.includes('foil') || title.includes('foil') || finishCol.includes('foil')) return 'FO';
+    return 'NF';
+  }
+
+  function parseQty(val) {
+    const n = parseInt(val, 10);
+    return isNaN(n) ? 0 : Math.max(0, n);
+  }
+
+  function parsePrice(val) {
+    if (val === undefined || val === null || val === '') return null;
+    const str = String(val).replace(/[^0-9.]/g, '');
+    const num = parseFloat(str);
+    return isNaN(num) ? null : num;
+  }
+
+  function makeCompositeKey(name, number, condition, finish = 'NF') {
+    const normName = normalizeCardName(name);
+    const normNum = normalizeCollectorNumber(number);
+    const normCond = normalizeCondition(condition);
+    return `${normName}||${normNum}||${normCond}||${finish}`;
+  }
+
+  // --- FILE UPLOAD HANDLERS ---
+  function initFileUploads() {
+    setupDragAndDrop(DOM.tcgDropzone, DOM.tcgFileInput, file => handleFileSelect(file, 'tcg'));
+    setupDragAndDrop(DOM.manaDropzone, DOM.manaFileInput, file => handleFileSelect(file, 'mana'));
+
+    DOM.tcgFileInput.addEventListener('change', e => {
+      if (e.target.files.length > 0) handleFileSelect(e.target.files[0], 'tcg');
+    });
+    DOM.manaFileInput.addEventListener('change', e => {
+      if (e.target.files.length > 0) handleFileSelect(e.target.files[0], 'mana');
+    });
+
+    DOM.removeTcgBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      clearStoreData('tcg');
+      runInventoryEngine();
+    });
+
+    DOM.removeManaBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      clearStoreData('mana');
+      runInventoryEngine();
+    });
+  }
+
+  function clearStoreData(store) {
+    if (store === 'tcg') {
+      STATE.tcgRaw = [];
+      STATE.tcgMap.clear();
+      DOM.tcgFileInput.value = '';
+      DOM.tcgLoadedState.classList.add('hidden');
+      DOM.tcgEmptyState.classList.remove('hidden');
+    } else {
+      STATE.manaRaw = [];
+      STATE.manaMap.clear();
+      DOM.manaFileInput.value = '';
+      DOM.manaLoadedState.classList.add('hidden');
+      DOM.manaEmptyState.classList.remove('hidden');
+    }
+  }
+
+  function setupDragAndDrop(element, input, onDrop) {
+    element.addEventListener('click', e => {
+      if (e.target === input || e.target.closest('button')) return;
+      input.click();
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      element.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      element.addEventListener(eventName, () => element.classList.add('drag-over'));
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      element.addEventListener(eventName, () => element.classList.remove('drag-over'));
+    });
+
+    element.addEventListener('drop', e => {
+      const files = e.dataTransfer && e.dataTransfer.files;
+      if (!files || !files.length) return;
+      if (files[0].name.toLowerCase().endsWith('.csv')) {
+        onDrop(files[0]);
+      } else {
+        showToast('Please upload a .csv file.');
+      }
+    });
+  }
+
+  function handleFileSelect(file, type) {
+    if (!file) return;
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        if (!results || !Array.isArray(results.data)) {
+          showToast('Could not parse CSV file.');
+          return;
+        }
+        if (type === 'tcg') {
+          STATE.tcgRaw = results.data;
+          DOM.tcgFileName.textContent = file.name;
+          DOM.tcgFileMeta.textContent = `${results.data.length.toLocaleString()} rows parsed`;
+          DOM.tcgEmptyState.classList.add('hidden');
+          DOM.tcgLoadedState.classList.remove('hidden');
+        } else {
+          STATE.manaRaw = results.data;
+          DOM.manaFileName.textContent = file.name;
+          DOM.manaFileMeta.textContent = `${results.data.length.toLocaleString()} rows parsed`;
+          DOM.manaEmptyState.classList.add('hidden');
+          DOM.manaLoadedState.classList.remove('hidden');
+        }
+        runInventoryEngine();
+        showToast(`Loaded ${file.name}`);
+      },
+      error: () => showToast('Error reading CSV file.')
+    });
+  }
+
+  // --- COMPOSITE INDEX & MATCHING ENGINE ---
+  function runInventoryEngine() {
+    STATE.tcgMap.clear();
+    STATE.manaMap.clear();
+    STATE.inventory = [];
+
+    // 1. Index TCGplayer Items
+    STATE.tcgRaw.forEach((row, idx) => {
+      const productLine = (row['Product Line'] || row['Category Name'] || row['product_line'] || '').toLowerCase().trim();
+      if (STATE.filterMTGOnly && productLine && !productLine.includes('magic')) return;
+
+      const rawName = row['Product Name'] || row['product_name'] || row['Name'] || row['name'] || '';
+      if (!rawName) return;
+      if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
+
+      const number = row['Number'] || row['number'] || '';
+      const rawCondition = row['Condition'] || row['condition'] || 'Near Mint';
+      const qty = parseQty(row['Total Quantity'] ?? row['total_quantity'] ?? row['Quantity'] ?? row['quantity'] ?? 0);
+
+      const priceVal = row['TCG Marketplace Price'] !== undefined ? row['TCG Marketplace Price']
+                     : row['tcg_marketplace_price'] !== undefined ? row['tcg_marketplace_price']
+                     : row['TCG Market Price'] !== undefined ? row['TCG Market Price']
+                     : row['TCG Low Price'] !== undefined ? row['TCG Low Price']
+                     : row['Price'] ?? row['price'] ?? null;
+      const price = parsePrice(priceVal);
+
+      const finish = getTcgFinish(row);
+      const cleanConditionStr = String(rawCondition).replace(/etched/gi, '').replace(/foil/gi, '').trim();
+      const condition = normalizeCondition(cleanConditionStr);
+      const set = row['Set Name'] || row['set_name'] || row['Set'] || row['set'] || '';
+
+      const key = makeCompositeKey(rawName, number, condition, finish);
+      STATE.ignoredLabels.set(key, { name: rawName, set, number, condition, finish });
+
+      if (STATE.tcgMap.has(key)) {
+        const existing = STATE.tcgMap.get(key);
+        existing.qty += qty;
+        if (existing.price === null) existing.price = price;
+      } else {
+        STATE.tcgMap.set(key, {
+          id: `tcg_${idx}`,
+          key,
+          name: rawName,
+          set,
+          number,
+          condition,
+          finish,
+          qty,
+          price,
+          raw: row
+        });
+      }
+    });
+
+    // 2. Index Mana Pool Items
+    STATE.manaRaw.forEach((row, idx) => {
+      const productType = (row['product_type'] || row['product_category'] || '').toLowerCase().trim();
+      if (STATE.filterMTGOnly && productType && !productType.startsWith('mtg') && !productType.includes('magic')) return;
+
+      const rawName = row['name'] || row['Name'] || row['Product Name'] || '';
+      if (!rawName) return;
+      if (STATE.filterTokens && rawName.toLowerCase().includes('token')) return;
+
+      const number = row['number'] || row['Number'] || '';
+      const condition = normalizeCondition(row['condition'] || row['Condition'] || 'NM');
+      const finish = normalizeFinish(row['finish'] || row['Finish'] || 'NF');
+      const qty = parseQty(row['quantity'] ?? row['Quantity'] ?? 0);
+
+      const priceVal = row['price'] !== undefined ? row['price'] : (row['Price'] ?? row['PRICE'] ?? null);
+      const price = parsePrice(priceVal);
+      const set = row['set'] || row['Set'] || row['Set Name'] || '';
+
+      const key = makeCompositeKey(rawName, number, condition, finish);
+      if (!STATE.ignoredLabels.has(key)) {
+        STATE.ignoredLabels.set(key, { name: rawName, set, number, condition, finish });
+      }
+
+      if (STATE.manaMap.has(key)) {
+        const existing = STATE.manaMap.get(key);
+        existing.qty += qty;
+        if (existing.price === null) existing.price = price;
+      } else {
+        STATE.manaMap.set(key, {
+          id: `mana_${idx}`,
+          key,
+          name: rawName,
+          set,
+          number,
+          condition,
+          qty,
+          finish,
+          price,
+          raw: row
+        });
+      }
+    });
+
+    const matchedManaKeys = new Set();
+    const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
+
+    function buildRecord(key, tcgItem, manaItem) {
+      const tcgQty = tcgItem ? tcgItem.qty : 0;
+      const manaQty = manaItem ? manaItem.qty : 0;
+      const tcgPrice = tcgItem ? tcgItem.price : null;
+      const manaPrice = manaItem ? manaItem.price : null;
+
+      const qtyMismatch = bothStoresLoaded && tcgQty !== manaQty && (tcgQty > 0 || manaQty > 0);
+      const priceMismatch = (tcgPrice !== null && manaPrice !== null && tcgPrice > 0 && manaPrice > 0)
+        ? Math.abs(tcgPrice - manaPrice) > 0.005
+        : false;
+
+      return {
+        key,
+        name: tcgItem ? tcgItem.name : manaItem.name,
+        set: (tcgItem && tcgItem.set) || (manaItem && manaItem.set) || '',
+        number: (tcgItem && tcgItem.number) || (manaItem && manaItem.number) || '',
+        condition: tcgItem ? tcgItem.condition : manaItem.condition,
+        finish: tcgItem ? tcgItem.finish : manaItem.finish,
+        tcgQty,
+        manaQty,
+        tcgPrice,
+        manaPrice,
+        tcgItem,
+        manaItem,
+        qtyMismatch,
+        priceMismatch,
+        delta: (tcgQty === 0 && manaQty === 0) ? 0 : Math.abs(tcgQty - manaQty)
+      };
     }
 
-    // --- CSV EXPORT GENERATION ENGINE ---
-    function exportManaPoolAdjustments() {
-      const exportRows = [];
+    // 3. Exact Match + Bidirectional Unnumbered Fallback Pass (e.g., Mystery Booster 2 / The List)
+    STATE.tcgMap.forEach((tcgItem, key) => {
+      if (STATE.ignoredKeys.has(key)) {
+        if (STATE.manaMap.has(key)) matchedManaKeys.add(key);
+        return;
+      }
 
-      STATE.discrepancies.forEach(item => {
-        const targetQty = item.tcgQty;
-        
+      const manaItem = STATE.manaMap.get(key);
+      if (manaItem) {
+        matchedManaKeys.add(key);
+        STATE.inventory.push(buildRecord(key, tcgItem, manaItem));
+        return;
+      }
+
+      const [tName, tNum, tCond, tFinish] = key.split('||');
+      let matchedFallback = null;
+
+      for (const [mKey, mItem] of STATE.manaMap.entries()) {
+        if (matchedManaKeys.has(mKey) || STATE.tcgMap.has(mKey)) continue;
+        const [mName, mNum, mCond, mFinish] = mKey.split('||');
+        if ((!tNum || !mNum) && tName === mName && tCond === mCond && tFinish === mFinish) {
+          matchedFallback = { mKey, mItem };
+          break;
+        }
+      }
+
+      if (matchedFallback) {
+        matchedManaKeys.add(matchedFallback.mKey);
+        if (STATE.ignoredKeys.has(matchedFallback.mKey)) return;
+        STATE.inventory.push(buildRecord(key, tcgItem, matchedFallback.mItem));
+      } else {
+        STATE.inventory.push(buildRecord(key, tcgItem, null));
+      }
+    });
+
+    // 4. Unmatched Mana Pool Items
+    STATE.manaMap.forEach((manaItem, key) => {
+      if (matchedManaKeys.has(key) || STATE.ignoredKeys.has(key)) return;
+      STATE.inventory.push(buildRecord(key, null, manaItem));
+    });
+
+    updateUI();
+  }
+
+  // --- INTERACTIVE QUANTITY EDITING ---
+  window.changeQty = function(key, store, delta) {
+    const item = STATE.inventory.find(i => i.key === key);
+    if (!item) return;
+    const base = store === 'tcg' ? item.tcgQty : item.manaQty;
+    window.setQty(key, store, Math.max(0, base + delta));
+  };
+
+  window.setQty = function(key, store, value) {
+    const item = STATE.inventory.find(i => i.key === key);
+    if (!item) return;
+
+    const newQty = parseQty(value);
+
+    if (store === 'tcg') {
+      item.tcgQty = newQty;
+      if (item.tcgItem) {
+        item.tcgItem.qty = newQty;
+        if (item.tcgItem.raw) {
+          if (item.tcgItem.raw['Total Quantity'] !== undefined) item.tcgItem.raw['Total Quantity'] = newQty;
+          else if (item.tcgItem.raw['total_quantity'] !== undefined) item.tcgItem.raw['total_quantity'] = newQty;
+          else if (item.tcgItem.raw['Quantity'] !== undefined) item.tcgItem.raw['Quantity'] = newQty;
+          else if (item.tcgItem.raw['quantity'] !== undefined) item.tcgItem.raw['quantity'] = newQty;
+        }
+      }
+    } else if (store === 'mana') {
+      item.manaQty = newQty;
+      if (item.manaItem) {
+        item.manaItem.qty = newQty;
+        if (item.manaItem.raw) {
+          if (item.manaItem.raw['quantity'] !== undefined) item.manaItem.raw['quantity'] = newQty;
+          else if (item.manaItem.raw['Quantity'] !== undefined) item.manaItem.raw['Quantity'] = newQty;
+          else if (item.manaItem.raw['Total Quantity'] !== undefined) item.manaItem.raw['Total Quantity'] = newQty;
+        }
+      }
+    }
+
+    const bothStoresLoaded = STATE.tcgRaw.length > 0 && STATE.manaRaw.length > 0;
+    item.qtyMismatch = bothStoresLoaded && item.tcgQty !== item.manaQty && (item.tcgQty > 0 || item.manaQty > 0);
+    item.delta = (item.tcgQty === 0 && item.manaQty === 0) ? 0 : Math.abs(item.tcgQty - item.manaQty);
+
+    updateUI();
+  };
+
+  // --- PERSISTENT IGNORE LIST ---
+  window.ignoreCard = function(key) {
+    STATE.ignoredKeys.add(key);
+    saveIgnoredKeys();
+    runInventoryEngine();
+    showToast('Card added to Ignored List');
+  };
+
+  window.unignoreCard = function(key) {
+    STATE.ignoredKeys.delete(key);
+    saveIgnoredKeys();
+    runInventoryEngine();
+    showToast('Card restored from Ignored List');
+  };
+
+  function saveIgnoredKeys() {
+    try {
+      localStorage.setItem('mtg_ignored_keys', JSON.stringify([...STATE.ignoredKeys]));
+    } catch (e) {
+      console.warn('Could not save ignored keys:', e);
+    }
+  }
+
+  function updateIgnoredModal() {
+    DOM.ignoredCountBadge.textContent = STATE.ignoredKeys.size;
+    DOM.kpiTotalIgnored.textContent = STATE.ignoredKeys.size.toLocaleString();
+
+    if (STATE.ignoredKeys.size === 0) {
+      DOM.ignoredListItems.innerHTML = `<li style="justify-content:center;color:var(--muted);font-family:var(--flavor);font-style:italic;padding:18px 0;">No cards currently ignored.</li>`;
+      return;
+    }
+
+    DOM.ignoredListItems.innerHTML = Array.from(STATE.ignoredKeys).map(key => {
+      const meta = STATE.ignoredLabels.get(key);
+      const parts = key.split('||');
+      const displayName = meta ? meta.name : (parts[0] || key);
+      const displayNum = meta ? meta.number : (parts[1] || '');
+      const displayCond = meta ? meta.condition : (parts[2] || '');
+      const displayFinish = meta ? meta.finish : (parts[3] || '');
+
+      return `
+        <li>
+          <div class="ignored-meta">
+            <strong style="color:var(--ink);font-family:var(--body);font-size:.96rem;">${escapeHtml(displayName)}</strong>
+            ${displayNum ? `<span style="color:var(--muted);">#${escapeHtml(displayNum)}</span>` : ''}
+            ${displayCond ? `<span class="badge badge-nf">${escapeHtml(displayCond)}</span>` : ''}
+            ${displayFinish ? `<span class="badge ${displayFinish === 'FO' ? 'badge-fo' : displayFinish === 'ET' ? 'badge-et' : 'badge-nf'}">${escapeHtml(displayFinish)}</span>` : ''}
+          </div>
+          <button onclick="unignoreCard('${escapeJsString(key)}')" class="btn btn-danger" style="padding:3px 9px;font-size:.74rem;">Remove</button>
+        </li>
+      `;
+    }).join('');
+  }
+
+  // --- SORTING ENGINE ---
+  window.handleSort = function(colKey) {
+    if (STATE.sortColumn === colKey) {
+      STATE.sortDirection = STATE.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      STATE.sortColumn = colKey;
+      STATE.sortDirection = 'asc';
+    }
+    renderTable();
+  };
+
+  function updateSortIcons() {
+    const cols = ['name', 'set', 'number', 'condition', 'finish', 'tcgQty', 'manaQty', 'tcgPrice', 'manaPrice', 'status'];
+    cols.forEach(col => {
+      const el = document.getElementById(`sort_icon_${col}`);
+      if (!el) return;
+      if (STATE.sortColumn === col) {
+        el.textContent = STATE.sortDirection === 'asc' ? '▲' : '▼';
+        el.className = 'sort-ic active';
+      } else {
+        el.textContent = '↕';
+        el.className = 'sort-ic';
+      }
+    });
+  }
+
+  // --- UI RENDER ENGINE ---
+  function updateUI() {
+    updateKPIs();
+    renderTable();
+    updateIgnoredModal();
+
+    const hasData = STATE.inventory.length > 0;
+    DOM.exportManaPoolUpdatesBtn.disabled = !hasData;
+    DOM.exportTcgUpdatesBtn.disabled = !hasData;
+  }
+
+  function updateKPIs() {
+    const visibleInventory = STATE.hideZeroStock
+      ? STATE.inventory.filter(i => i.tcgQty > 0 || i.manaQty > 0)
+      : STATE.inventory;
+
+    const totalCards = visibleInventory.length;
+    const qtyMismatchCount = visibleInventory.filter(i => i.qtyMismatch).length;
+    const priceMismatchCount = visibleInventory.filter(i => i.priceMismatch).length;
+    const matchedCount = visibleInventory.filter(i => !i.qtyMismatch && !i.priceMismatch).length;
+
+    DOM.kpiTotalItems.textContent = totalCards.toLocaleString();
+    DOM.kpiQtyMismatch.textContent = qtyMismatchCount.toLocaleString();
+    DOM.kpiPriceMismatch.textContent = priceMismatchCount.toLocaleString();
+    DOM.kpiMatchedItems.textContent = matchedCount.toLocaleString();
+
+    DOM.countAll.textContent = totalCards;
+    DOM.countQtyMismatch.textContent = qtyMismatchCount;
+    DOM.countPriceMismatch.textContent = priceMismatchCount;
+  }
+
+  function renderTable() {
+    STATE.filteredInventory = STATE.inventory.filter(item => {
+      if (STATE.hideZeroStock && item.tcgQty === 0 && item.manaQty === 0) return false;
+
+      const query = STATE.searchQuery.toLowerCase().trim();
+      const matchesQuery = !query ||
+        item.name.toLowerCase().includes(query) ||
+        item.set.toLowerCase().includes(query) ||
+        String(item.number).toLowerCase().includes(query);
+
+      if (!matchesQuery) return false;
+      if (STATE.activeViewTab === 'qtyMismatch') return item.qtyMismatch;
+      if (STATE.activeViewTab === 'priceMismatch') return item.priceMismatch;
+      return true;
+    });
+
+    STATE.filteredInventory.sort((a, b) => {
+      let valA, valB;
+      if (STATE.sortColumn === 'status') {
+        valA = (a.qtyMismatch ? 2 : 0) + (a.priceMismatch ? 1 : 0);
+        valB = (b.qtyMismatch ? 2 : 0) + (b.priceMismatch ? 1 : 0);
+      } else {
+        valA = a[STATE.sortColumn];
+        valB = b[STATE.sortColumn];
+      }
+
+      if (valA === null || valA === undefined) valA = -1;
+      if (valB === null || valB === undefined) valB = -1;
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return STATE.sortDirection === 'asc' ? valA - valB : valB - valA;
+      }
+
+      if (STATE.sortColumn === 'number') {
+        const numA = parseInt(normalizeCollectorNumber(valA), 10) || 0;
+        const numB = parseInt(normalizeCollectorNumber(valB), 10) || 0;
+        if (numA !== numB) return STATE.sortDirection === 'asc' ? numA - numB : numB - numA;
+      }
+
+      const strA = String(valA).toLowerCase();
+      const strB = String(valB).toLowerCase();
+      if (strA < strB) return STATE.sortDirection === 'asc' ? -1 : 1;
+      if (strA > strB) return STATE.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    updateSortIcons();
+
+    if (STATE.filteredInventory.length === 0) {
+      const msg = STATE.inventory.length === 0
+        ? 'Upload TCGplayer or Mana Pool CSV export to view and manage inventory.'
+        : 'No cards found matching current filters.';
+      DOM.tableBody.innerHTML = `
+        <tr>
+          <td colspan="11" class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            ${msg}
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    DOM.tableBody.innerHTML = STATE.filteredInventory.map(item => {
+      let statusBadges = '';
+      if (item.qtyMismatch) statusBadges += `<span class="badge badge-qty">Qty Mismatch</span>`;
+      if (item.priceMismatch) statusBadges += `<span class="badge badge-price">Price Mismatch</span>`;
+      if (!item.qtyMismatch && !item.priceMismatch) statusBadges = `<span class="badge badge-ok">In Sync</span>`;
+
+      const finishBadge = item.finish === 'FO'
+        ? `<span class="badge badge-fo">FO</span>`
+        : item.finish === 'ET'
+        ? `<span class="badge badge-et">ET</span>`
+        : `<span class="badge badge-nf">NF</span>`;
+
+      const tcgPriceStr = item.tcgPrice !== null ? `$${item.tcgPrice.toFixed(2)}` : '-';
+      const manaPriceStr = item.manaPrice !== null ? `$${item.manaPrice.toFixed(2)}` : '-';
+
+      let priceDiffStr = '';
+      if (item.priceMismatch && item.tcgPrice !== null && item.manaPrice !== null) {
+        priceDiffStr = `<div class="price-diff">Δ $${Math.abs(item.tcgPrice - item.manaPrice).toFixed(2)}</div>`;
+      }
+
+      const safeKey = escapeJsString(item.key);
+
+      return `
+        <tr>
+          <td><div class="card-name">${escapeHtml(item.name)}</div></td>
+          <td><div class="card-set">${escapeHtml(item.set)}</div></td>
+          <td class="num-cell">${item.number ? '#' + escapeHtml(item.number) : '-'}</td>
+          <td><strong>${escapeHtml(item.condition)}</strong></td>
+          <td class="col-c">${finishBadge}</td>
+          <td class="col-c">
+            <div class="qty-ctrl">
+              <button type="button" class="qty-btn" onclick="changeQty('${safeKey}', 'tcg', -1)" aria-label="Decrease TCG quantity">-</button>
+              <input type="number" min="0" value="${item.tcgQty}" onchange="setQty('${safeKey}', 'tcg', this.value)" class="qty-input ${item.tcgQty === 0 ? 'is-zero' : ''}" aria-label="TCGplayer quantity">
+              <button type="button" class="qty-btn" onclick="changeQty('${safeKey}', 'tcg', 1)" aria-label="Increase TCG quantity">+</button>
+            </div>
+          </td>
+          <td class="col-c">
+            <div class="qty-ctrl">
+              <button type="button" class="qty-btn" onclick="changeQty('${safeKey}', 'mana', -1)" aria-label="Decrease Mana Pool quantity">-</button>
+              <input type="number" min="0" value="${item.manaQty}" onchange="setQty('${safeKey}', 'mana', this.value)" class="qty-input ${item.manaQty === 0 ? 'is-zero' : ''}" aria-label="Mana Pool quantity">
+              <button type="button" class="qty-btn" onclick="changeQty('${safeKey}', 'mana', 1)" aria-label="Increase Mana Pool quantity">+</button>
+            </div>
+          </td>
+          <td class="col-c price-cell">${tcgPriceStr}</td>
+          <td class="col-c price-cell">${manaPriceStr}${priceDiffStr}</td>
+          <td class="col-c">
+            <div class="status-stack">
+              ${statusBadges}
+              ${item.qtyMismatch ? `<span class="delta-note">Δ ${item.delta}</span>` : ''}
+            </div>
+          </td>
+          <td class="col-r">
+            <button type="button" class="row-ignore-btn" onclick="ignoreCard('${safeKey}')">Ignore</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // --- CSV EXPORT GENERATION ---
+  function exportManaPoolAdjustments() {
+    const exportRows = [];
+    STATE.inventory.forEach(item => {
+      if (item.manaQty > 0 || (item.manaItem && item.manaItem.raw)) {
         if (item.manaItem && item.manaItem.raw) {
           const row = { ...item.manaItem.raw };
-          row['quantity'] = targetQty;
+          if (row['quantity'] !== undefined) row['quantity'] = item.manaQty;
+          else if (row['Quantity'] !== undefined) row['Quantity'] = item.manaQty;
+          else row['quantity'] = item.manaQty;
           exportRows.push(row);
-        } else if (item.tcgItem) {
+        } else {
           exportRows.push({
             'product_type': 'mtg_single',
             'name': item.name,
@@ -761,104 +1648,156 @@
             'number': item.number,
             'condition': item.condition,
             'finish': item.finish || 'NF',
-            'quantity': targetQty
+            'quantity': item.manaQty,
+            'price': item.tcgPrice !== null ? item.tcgPrice.toFixed(2) : ''
           });
         }
-      });
+      }
+    });
 
-      downloadCSV(exportRows, `mana_pool_updates_${new Date().toISOString().slice(0,10)}.csv`);
+    if (!exportRows.length) {
+      showToast('No Mana Pool rows to export.');
+      return;
     }
+    downloadCSV(exportRows, `mana_pool_inventory_${new Date().toISOString().slice(0, 10)}.csv`);
+    showToast(`Exported ${exportRows.length.toLocaleString()} Mana Pool rows`);
+  }
 
-    function exportTcgplayerAdjustments() {
-      const exportRows = [];
-
-      STATE.discrepancies.forEach(item => {
-        const targetQty = item.manaQty;
-
+  function exportTcgplayerAdjustments() {
+    const exportRows = [];
+    STATE.inventory.forEach(item => {
+      if (item.tcgQty > 0 || (item.tcgItem && item.tcgItem.raw)) {
         if (item.tcgItem && item.tcgItem.raw) {
           const row = { ...item.tcgItem.raw };
-          row['Total Quantity'] = targetQty;
+          if (row['Total Quantity'] !== undefined) row['Total Quantity'] = item.tcgQty;
+          else if (row['total_quantity'] !== undefined) row['total_quantity'] = item.tcgQty;
+          else if (row['Quantity'] !== undefined) row['Quantity'] = item.tcgQty;
+          else row['Total Quantity'] = item.tcgQty;
           exportRows.push(row);
-        } else if (item.manaItem) {
+        } else {
           exportRows.push({
             'Product Line': 'Magic: The Gathering',
             'Product Name': item.name,
             'Set Name': item.set,
             'Number': item.number,
-            'Condition': item.condition === 'NM' ? 'Near Mint' : item.condition,
-            'Total Quantity': targetQty
+            'Condition': formatTcgCondition(item.condition, item.finish),
+            'Total Quantity': item.tcgQty,
+            'TCG Marketplace Price': item.manaPrice !== null ? item.manaPrice.toFixed(2) : ''
           });
         }
-      });
+      }
+    });
 
-      downloadCSV(exportRows, `tcgplayer_updates_${new Date().toISOString().slice(0,10)}.csv`);
+    if (!exportRows.length) {
+      showToast('No TCGplayer rows to export.');
+      return;
     }
+    downloadCSV(exportRows, `tcgplayer_inventory_${new Date().toISOString().slice(0, 10)}.csv`);
+    showToast(`Exported ${exportRows.length.toLocaleString()} TCGplayer rows`);
+  }
 
-    function downloadCSV(data, filename) {
-      if (!data || data.length === 0) return;
-      const csv = Papa.unparse(data);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+  function downloadCSV(data, filename) {
+    if (!data || data.length === 0) return;
+    const csv = Papa.unparse(data);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
-    // --- EVENT LISTENERS & INITIALIZATION ---
-    function init() {
-      initFileUploads();
+  // --- EVENT LISTENERS & INITIALIZATION ---
+  function setViewTab(tabName) {
+    STATE.activeViewTab = tabName;
+    DOM.viewTabAll.classList.toggle('active', tabName === 'all');
+    DOM.viewTabQtyMismatch.classList.toggle('active', tabName === 'qtyMismatch');
+    DOM.viewTabPriceMismatch.classList.toggle('active', tabName === 'priceMismatch');
+    renderTable();
+  }
 
-      DOM.searchInput.addEventListener('input', (e) => {
-        STATE.searchQuery = e.target.value;
-        renderTable();
-      });
+  function openIgnoredModal() {
+    updateIgnoredModal();
+    DOM.ignoredModal.classList.remove('hidden');
+  }
 
-      DOM.filterNonMtgToggle.addEventListener('change', (e) => {
-        STATE.filterMTGOnly = e.target.checked;
-        runDiffEngine();
-      });
+  function closeIgnoredModal() {
+    DOM.ignoredModal.classList.add('hidden');
+  }
 
-      DOM.filterTokensToggle.addEventListener('change', (e) => {
-        STATE.filterTokens = e.target.checked;
-        runDiffEngine();
-      });
+  function init() {
+    initFileUploads();
+    updateIgnoredModal();
 
-      DOM.openIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.remove('hidden'));
-      DOM.closeIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.add('hidden'));
-      DOM.doneIgnoredModalBtn.addEventListener('click', () => DOM.ignoredModal.classList.add('hidden'));
+    DOM.searchInput.addEventListener('input', e => {
+      STATE.searchQuery = e.target.value;
+      renderTable();
+    });
 
-      DOM.clearAllIgnoredBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to clear all ignored rules?')) {
-          STATE.ignoredKeys.clear();
-          saveIgnoredKeys();
-          runDiffEngine();
-        }
-      });
+    DOM.filterNonMtgToggle.addEventListener('change', e => {
+      STATE.filterMTGOnly = e.target.checked;
+      runInventoryEngine();
+    });
 
-      DOM.resetAppBtn.addEventListener('click', () => {
-        if (confirm('Reset uploaded files and active diff view?')) {
-          DOM.removeTcgBtn.click();
-          DOM.removeManaBtn.click();
-        }
-      });
+    DOM.filterTokensToggle.addEventListener('change', e => {
+      STATE.filterTokens = e.target.checked;
+      runInventoryEngine();
+    });
 
-      DOM.exportManaPoolUpdatesBtn.addEventListener('click', exportManaPoolAdjustments);
-      DOM.exportTcgUpdatesBtn.addEventListener('click', exportTcgplayerAdjustments);
+    DOM.hideZeroStockToggle.addEventListener('change', e => {
+      STATE.hideZeroStock = e.target.checked;
+      updateUI();
+    });
 
-      lucide.createIcons();
-    }
+    DOM.viewTabAll.addEventListener('click', () => setViewTab('all'));
+    DOM.viewTabQtyMismatch.addEventListener('click', () => setViewTab('qtyMismatch'));
+    DOM.viewTabPriceMismatch.addEventListener('click', () => setViewTab('priceMismatch'));
 
-    function escapeHtml(str) {
-      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-    function escapeJsString(str) {
-      return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    }
+    DOM.openIgnoredModalBtn.addEventListener('click', openIgnoredModal);
+    DOM.kpiIgnoredCard.addEventListener('click', openIgnoredModal);
+    DOM.closeIgnoredModalBtn.addEventListener('click', closeIgnoredModal);
+    DOM.doneIgnoredModalBtn.addEventListener('click', closeIgnoredModal);
+    DOM.ignoredModal.addEventListener('click', e => {
+      if (e.target === DOM.ignoredModal) closeIgnoredModal();
+    });
 
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+    DOM.clearAllIgnoredBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all ignored rules?')) {
+        STATE.ignoredKeys.clear();
+        saveIgnoredKeys();
+        runInventoryEngine();
+        showToast('Cleared all ignored rules');
+      }
+    });
+
+    DOM.resetAppBtn.addEventListener('click', () => {
+      if (confirm('Reset uploaded files and active inventory view?')) {
+        clearStoreData('tcg');
+        clearStoreData('mana');
+        STATE.searchQuery = '';
+        DOM.searchInput.value = '';
+        setViewTab('all');
+        runInventoryEngine();
+        showToast('Inventory data reset');
+      }
+    });
+
+    DOM.exportManaPoolUpdatesBtn.addEventListener('click', exportManaPoolAdjustments);
+    DOM.exportTcgUpdatesBtn.addEventListener('click', exportTcgplayerAdjustments);
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function escapeJsString(str) {
+    return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
